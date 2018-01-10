@@ -1,15 +1,21 @@
-use std::error::Error;
+use std::io::{Error, ErrorKind};
 use hap_type;
 
+pub mod firmware_revision;
+pub mod identify;
+pub mod manufacturer;
+pub mod model;
+pub mod name;
 pub mod on;
 pub mod outlet_in_use;
+pub mod serial_number;
 
 #[derive(Default)]
 pub struct Characteristic<T: Default> {
     id: u64,
     hap_type: hap_type::HAPType,
     perms: Vec<Perm>,
-    description: String,
+    description: Option<String>,
 
     value: T,
     unit: Option<Unit>,
@@ -26,23 +32,25 @@ impl<T: Default> Characteristic<T> {
     }
 
     fn set_description(&mut self, description: String) {
-        self.description = description;
+        self.description = Some(description);
     }
 
-    /*fn setValue(&mut self, val: T) -> Result<(), Error> {
-        if let Some(max) = self.max_value {
+    fn set_value(&mut self, val: T) -> Result<(), Error> {
+        /*if let Some(max) = self.max_value {
             if val > max {
-                return Err("value above max_value".into());
+                return Err(Error::new(ErrorKind::Other, "value above max_value"));
             }
         }
         if let Some(min) = self.min_value {
             if val < min {
-                return Err("value below min_value".into());
+                return Err(Error::new(ErrorKind::Other, "value below min_value"));
             }
-        }
+        }*/
 
         self.value = val;
-    }*/
+
+        Ok(())
+    }
 
     fn set_min_value(&mut self, val: T) {
         self.min_value = Some(val);
@@ -57,15 +65,13 @@ impl<T: Default> Characteristic<T> {
     }
 }
 
-/*trait UpdateValueFromCon {
-    fn updateValueFromCon();
+pub trait CharacteristicT {
+
 }
 
-impl<T> UpdateValueFromCon for Characteristic<T> {
-    fn updateValueFromCon(Json) -> Result<(), Error> {
+impl<T: Default> CharacteristicT for Characteristic<T> {
 
-    }
-}*/
+}
 
 enum Perm {
     PairedRead,
