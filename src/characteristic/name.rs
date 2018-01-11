@@ -6,7 +6,7 @@ pub fn new() -> Name {
     Name {
         hap_type: "23".into(),
         perms: vec![
-            characteristic::Perm::PairedRead
+            characteristic::Perm::PairedRead,
         ],
         value: "".into(),
         ..Default::default()

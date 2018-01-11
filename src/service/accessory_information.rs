@@ -7,17 +7,24 @@ pub struct AccessoryInformation {
     id: u64,
     hap_type: hap_type::HAPType,
 
-    identify: characteristic::identify::Identify,
-    manufacturer: characteristic::manufacturer::Manufacturer,
-    model: characteristic::model::Model,
-    name: characteristic::name::Name,
-    serial_number: characteristic::serial_number::SerialNumber,
-    firmware_revision: characteristic::firmware_revision::FirmwareRevision,
+    pub identify: characteristic::identify::Identify,
+    pub manufacturer: characteristic::manufacturer::Manufacturer,
+    pub model: characteristic::model::Model,
+    pub name: characteristic::name::Name,
+    pub serial_number: characteristic::serial_number::SerialNumber,
+    pub firmware_revision: characteristic::firmware_revision::FirmwareRevision,
 }
 
 impl ServiceT for AccessoryInformation {
     fn get_characteristics(&self) -> Vec<&characteristic::CharacteristicT> {
-        vec![&self.identify, &self.manufacturer, &self.model, &self.name, &self.serial_number, &self.firmware_revision]
+        vec![
+            &self.identify,
+            &self.manufacturer,
+            &self.model,
+            &self.name,
+            &self.serial_number,
+            &self.firmware_revision,
+        ]
     }
 }
 

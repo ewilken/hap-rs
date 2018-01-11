@@ -6,7 +6,7 @@ pub fn new() -> SerialNumber {
     SerialNumber {
         hap_type: "30".into(),
         perms: vec![
-            characteristic::Perm::PairedRead
+            characteristic::Perm::PairedRead,
         ],
         value: "".into(),
         ..Default::default()

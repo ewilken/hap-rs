@@ -7,7 +7,7 @@ pub fn new() -> OutletInUse {
         hap_type: "26".into(),
         perms: vec![
             characteristic::Perm::PairedRead,
-            characteristic::Perm::Events
+            characteristic::Perm::Events,
         ],
         value: false,
         ..Default::default()

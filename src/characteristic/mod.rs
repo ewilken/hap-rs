@@ -1,5 +1,5 @@
 use std::io::{Error, ErrorKind};
-use hap_type;
+use hap_type::HAPType;
 
 pub mod firmware_revision;
 pub mod identify;
@@ -13,7 +13,7 @@ pub mod serial_number;
 #[derive(Default)]
 pub struct Characteristic<T: Default> {
     id: u64,
-    hap_type: hap_type::HAPType,
+    hap_type: HAPType,
     perms: Vec<Perm>,
     description: Option<String>,
 
@@ -27,15 +27,15 @@ pub struct Characteristic<T: Default> {
 }
 
 impl<T: Default> Characteristic<T> {
-    fn set_id(&mut self, id: u64) {
+    pub fn set_id(&mut self, id: u64) {
         self.id = id;
     }
 
-    fn set_description(&mut self, description: String) {
+    pub fn set_description(&mut self, description: String) {
         self.description = Some(description);
     }
 
-    fn set_value(&mut self, val: T) -> Result<(), Error> {
+    pub fn set_value(&mut self, val: T) -> Result<(), Error> {
         /*if let Some(max) = self.max_value {
             if val > max {
                 return Err(Error::new(ErrorKind::Other, "value above max_value"));
@@ -52,15 +52,15 @@ impl<T: Default> Characteristic<T> {
         Ok(())
     }
 
-    fn set_min_value(&mut self, val: T) {
+    pub fn set_min_value(&mut self, val: T) {
         self.min_value = Some(val);
     }
 
-    fn set_max_value(&mut self, val: T) {
+    pub fn set_max_value(&mut self, val: T) {
         self.max_value = Some(val);
     }
 
-    fn set_step_value(&mut self, val: T) {
+    pub fn set_step_value(&mut self, val: T) {
         self.step_value = Some(val);
     }
 }

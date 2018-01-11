@@ -8,7 +8,7 @@ pub fn new() -> On {
         perms: vec![
             characteristic::Perm::PairedRead,
             characteristic::Perm::PairedWrite,
-            characteristic::Perm::Events
+            characteristic::Perm::Events,
         ],
         value: false,
         ..Default::default()

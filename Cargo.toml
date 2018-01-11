@@ -9,3 +9,5 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
+hwaddr = "0.1.3"
+mdns = { git = "https://github.com/plietar/rust-mdns" }

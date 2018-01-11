@@ -6,7 +6,7 @@ pub fn new() -> FirmwareRevision {
     FirmwareRevision {
         hap_type: "52".into(),
         perms: vec![
-            characteristic::Perm::PairedRead
+            characteristic::Perm::PairedRead,
         ],
         value: "".into(),
         ..Default::default()
