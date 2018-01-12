@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind};
+use std::io::{Error/*, ErrorKind*/};
 use hap_type::HAPType;
 
 pub mod firmware_revision;
@@ -36,13 +36,13 @@ impl<T: Default> Characteristic<T> {
     }
 
     pub fn set_value(&mut self, val: T) -> Result<(), Error> {
-        /*if let Some(max) = self.max_value {
-            if val > max {
+        /*if let Some(ref max) = self.max_value {
+            if &val > max {
                 return Err(Error::new(ErrorKind::Other, "value above max_value"));
             }
         }
-        if let Some(min) = self.min_value {
-            if val < min {
+        if let Some(ref min) = self.min_value {
+            if &val < min {
                 return Err(Error::new(ErrorKind::Other, "value below min_value"));
             }
         }*/
