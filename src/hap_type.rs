@@ -1,1 +1,1 @@
-pub type HAPType = String;
+pub type HapType = String;

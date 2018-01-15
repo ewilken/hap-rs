@@ -1,5 +1,5 @@
 use std::io::{Error/*, ErrorKind*/};
-use hap_type::HAPType;
+use hap_type::HapType;
 
 pub mod firmware_revision;
 pub mod identify;
@@ -13,7 +13,7 @@ pub mod serial_number;
 #[derive(Default)]
 pub struct Characteristic<T: Default> {
     id: u64,
-    hap_type: HAPType,
+    hap_type: HapType,
     perms: Vec<Perm>,
     description: Option<String>,
 

@@ -7,6 +7,9 @@ fn main() {
         serial_number: "12345".into(),
         ..Default::default()
     };
-
     let outlet = hap::accessory::outlet::new(information);
+
+    let config = hap::config::Config {
+        ..Default::default()
+    };
 }

@@ -5,7 +5,7 @@ use hap_type;
 #[derive(Default)]
 pub struct AccessoryInformation {
     id: u64,
-    hap_type: hap_type::HAPType,
+    hap_type: hap_type::HapType,
 
     pub identify: characteristic::identify::Identify,
     pub manufacturer: characteristic::manufacturer::Manufacturer,

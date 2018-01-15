@@ -6,7 +6,7 @@ use serde_json;
 
 use accessory::Category;
 
-use bonjour::{StatusFlag, FeatureFlag};
+use transport::bonjour::{StatusFlag, FeatureFlag};
 
 pub struct Config {
     pub storage_path: String,
@@ -42,7 +42,8 @@ impl Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            storage_path: "/tmp/".into(),
+            // TODO - default storage path should be == name automatically
+            storage_path: "Accessory".into(),
             port: 32000,
             ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             pin: "00102003".into(),
