@@ -62,13 +62,6 @@ impl Default for Config {
 
 fn new_random_mac_address() -> MacAddress {
     let mut rng = rand::thread_rng();
-    let eui = [
-        rng.gen::<u8>(),
-        rng.gen::<u8>(),
-        rng.gen::<u8>(),
-        rng.gen::<u8>(),
-        rng.gen::<u8>(),
-        rng.gen::<u8>(),
-    ];
+    let eui = rng.gen::<[u8; 6]>();
     MacAddress::new(eui)
 }

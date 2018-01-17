@@ -1,10 +1,12 @@
 extern crate eui48;
 extern crate mdns;
 extern crate rand;
-extern crate sha2;
+extern crate serde;
 #[macro_use]
 extern crate serde_json;
-extern crate ed25519_dalek;
+#[macro_use]
+extern crate serde_derive;
+extern crate crypto;
 
 pub mod accessory;
 pub mod characteristic;

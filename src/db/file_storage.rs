@@ -48,29 +48,28 @@ impl FileStorage {
     }
 }
 
-// TODO - rethink whether to use String or &str as key
 impl Storage for FileStorage {
-    fn get(&self, key: String) -> Result<String, Error> {
-        let file = self.file_for_read(key.as_str())?;
+    fn get(&self, key: &str) -> Result<Vec<u8>, Error> {
+        let file = self.file_for_read(key)?;
         let mut buf_reader = BufReader::new(file);
 
-        let mut value = String::new();
-        buf_reader.read_to_string(&mut value)?;
+        let mut value = Vec::new();
+        buf_reader.read_to_end(&mut value)?;
 
         Ok(value)
     }
 
-    fn set(&self, key: String, value: String) -> Result<(), Error> {
-        let file = self.file_for_write(key.as_str())?;
+    fn set(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
+        let file = self.file_for_write(key)?;
         let mut buf_writer = BufWriter::new(file);
 
-        buf_writer.write(value.as_bytes())?;
+        buf_writer.write(&value)?;
 
         Ok(())
     }
 
-    fn delete(&self, key: String) -> Result<(), Error> {
-        let file_path = self.path_to_file(key.as_str());
+    fn delete(&self, key: &str) -> Result<(), Error> {
+        let file_path = self.path_to_file(key);
         fs::remove_file(file_path)?;
 
         Ok(())
