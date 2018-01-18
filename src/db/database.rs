@@ -13,11 +13,6 @@ impl<S: Storage> Database<S> {
         Database {storage: storage}
     }
 
-    pub fn new_with_file_storage(dir: &str) -> Result<Database<file_storage::FileStorage>, Error> {
-        let storage = file_storage::FileStorage::new(dir)?;
-        Ok(Database {storage: storage})
-    }
-
     pub fn get_entity(&self, name: &str) -> Result<entity::Entity, Error> {
         let mut key = name.to_owned();
         key.push_str(".entity");
@@ -32,6 +27,13 @@ impl<S: Storage> Database<S> {
         let value = serde_json::to_vec(&entity)?;
         self.set(&key, value);
         Ok(())
+    }
+}
+
+impl Database<file_storage::FileStorage> {
+    pub fn new_with_file_storage(dir: &str) -> Result<Database<file_storage::FileStorage>, Error> {
+        let storage = file_storage::FileStorage::new(dir)?;
+        Ok(Database {storage: storage})
     }
 }
 
