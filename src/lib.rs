@@ -19,3 +19,4 @@ pub mod db;
 pub mod hap_type;
 pub mod transport;
 pub mod pin;
+pub mod protocol;

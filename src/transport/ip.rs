@@ -17,15 +17,19 @@ pub struct IpTransport<S: Storage, D: Storage> {
 }
 
 impl/*<A: AccessoryT>*/ IpTransport<FileStorage, FileStorage> {
-    fn new_single_device(config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+    fn new_single_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
         let pin = pin::new(&config.pin)?;
 
-        Ok(IpTransport {
+        config.load(&storage);
+
+        let ip_transport = IpTransport {
             config: config,
             storage: storage,
             database: database,
-        })
+        };
+
+        Ok(ip_transport)
     }
 }

@@ -1,7 +1,7 @@
 use std::io::Error;
-use serde_json;
 
-use db::{file_storage, entity};
+use db::entity::Entity;
+use db::file_storage;
 use db::storage::Storage;
 
 pub struct Database<S: Storage> {
@@ -13,18 +13,18 @@ impl<S: Storage> Database<S> {
         Database {storage: storage}
     }
 
-    pub fn get_entity(&self, name: &str) -> Result<entity::Entity, Error> {
+    pub fn get_entity<E: Entity>(&self, name: &str) -> Result<E, Error> {
         let mut key = name.to_owned();
         key.push_str(".entity");
         let value: Vec<u8> = self.storage.get_byte_vec(&key)?;
-        let entity = serde_json::from_slice(&value)?;
+        let entity = Entity::from_byte_vec(value)?;
         Ok(entity)
     }
 
-    pub fn set_entity(&self, name: &str, entity: entity::Entity) -> Result<(), Error> {
+    pub fn set_entity<E: Entity>(&self, name: &str, entity: E) -> Result<(), Error> {
         let mut key = name.to_owned();
         key.push_str(".entity");
-        let value = serde_json::to_vec(&entity)?;
+        let value = entity.as_byte_vec()?;
         self.storage.set_byte_vec(&key, value)?;
         Ok(())
     }

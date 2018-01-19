@@ -30,7 +30,7 @@ pub struct Config {
 }
 
 impl Config {
-    fn load(&mut self, storage: &Storage) {
+    pub fn load(&mut self, storage: &Storage) {
         if let Some(id) = storage.get_uuid("uuid").ok() {
             self.id = id;
         }
@@ -42,14 +42,14 @@ impl Config {
         }
     }
 
-    fn save(&self, storage: &Storage) -> Result<(), Error> {
+    pub fn save(&self, storage: &Storage) -> Result<(), Error> {
         storage.set_uuid("uuid", self.id)?;
         storage.set_u64("version", self.version)?;
         storage.set_u64("config_hash", self.config_hash)?;
         Ok(())
     }
 
-    fn update_hash(&mut self, config_hash: u64) {
+    pub fn update_hash(&mut self, config_hash: u64) {
         if self.config_hash != config_hash {
             self.version += 1;
             self.config_hash = config_hash;

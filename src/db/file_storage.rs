@@ -100,6 +100,7 @@ impl Storage for FileStorage {
         let mut buf = Vec::new();
         reader.read(&mut buf)?;
         let value = Uuid::from_bytes(&buf);
+        // TODO - that's kinda ugly
         match value {
             Ok(value) => Ok(value),
             _ => Err(Error::new(ErrorKind::Other, "there was a problem parsing the UUID")),
