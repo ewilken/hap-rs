@@ -83,6 +83,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "hap"
 version = "0.0.1"
 dependencies = [
+ "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "eui48 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mdns 0.2.0 (git+https://github.com/plietar/rust-mdns)",
  "rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",

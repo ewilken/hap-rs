@@ -31,21 +31,21 @@ pub struct Config {
 
 impl Config {
     fn load(&mut self, storage: &Storage) {
-        if let Some(id) = storage.get("uuid").ok() {
+        if let Some(id) = storage.get_uuid("uuid").ok() {
             self.id = id;
         }
-        if let Some(version) = storage.get("version").ok() {
+        if let Some(version) = storage.get_u64("version").ok() {
             self.version = version;
         }
-        if let Some(config_hash) = storage.get("config_hash").ok() {
+        if let Some(config_hash) = storage.get_u64("config_hash").ok() {
             self.config_hash = config_hash;
         }
     }
 
     fn save(&self, storage: &Storage) -> Result<(), Error> {
-        storage.set("uuid", self.id.as_bytes().to_vec())?;
-        storage.set("version", self.version)?;
-        storage.set("config_hash", self.config_hash)?;
+        storage.set_uuid("uuid", self.id)?;
+        storage.set_u64("version", self.version)?;
+        storage.set_u64("config_hash", self.config_hash)?;
         Ok(())
     }
 

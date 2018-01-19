@@ -1,7 +1,9 @@
 use std::fs;
-use std::io::{Error, Read, Write, BufReader, BufWriter};
+use std::io::{Error, ErrorKind, Read, Write, BufReader, BufWriter};
+use byteorder::{ByteOrder, BigEndian, ReadBytesExt, WriteBytesExt};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use uuid::Uuid;
 
 use db::storage::Storage;
 
@@ -49,21 +51,64 @@ impl FileStorage {
 }
 
 impl Storage for FileStorage {
-    fn get(&self, key: &str) -> Result<Vec<u8>, Error> {
+    fn get_reader(&self, key: &str) -> Result<BufReader<fs::File>, Error> {
         let file = self.file_for_read(key)?;
-        let mut buf_reader = BufReader::new(file);
+        let mut reader = BufReader::new(file);
 
+        Ok(reader)
+    }
+
+    fn get_writer(&self, key: &str) -> Result<BufWriter<fs::File>, Error> {
+        let file = self.file_for_write(key)?;
+        let mut writer = BufWriter::new(file);
+
+        Ok(writer)
+    }
+
+    fn get_byte_vec(&self, key: &str) -> Result<Vec<u8>, Error> {
+        let mut reader = self.get_reader(key)?;
         let mut value = Vec::new();
-        buf_reader.read_to_end(&mut value)?;
+        reader.read_to_end(&mut value)?;
 
         Ok(value)
     }
 
-    fn set(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
-        let file = self.file_for_write(key)?;
-        let mut buf_writer = BufWriter::new(file);
+    fn set_byte_vec(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
+        let mut writer = self.get_writer(key)?;
+        writer.write(&value)?;
 
-        buf_writer.write(&value)?;
+        Ok(())
+    }
+
+    fn get_u64(&self, key: &str) -> Result<u64, Error> {
+        let mut reader = self.get_reader(key)?;
+        let mut value = reader.read_u64::<BigEndian>()?;
+
+        Ok(value)
+    }
+
+    fn set_u64(&self, key: &str, value: u64) -> Result<(), Error> {
+        let mut buf = Vec::new();
+        BigEndian::write_u64(&mut buf, value);
+        self.set_byte_vec(key, buf)?;
+
+        Ok(())
+    }
+
+    fn get_uuid(&self, key: &str) -> Result<Uuid, Error> {
+        let mut reader = self.get_reader(key)?;
+        let mut buf = Vec::new();
+        reader.read(&mut buf)?;
+        let value = Uuid::from_bytes(&buf);
+        match value {
+            Ok(value) => Ok(value),
+            _ => Err(Error::new(ErrorKind::Other, "there was a problem parsing the UUID")),
+        }
+    }
+
+    fn set_uuid(&self, key: &str, value: Uuid) -> Result<(), Error> {
+        let mut writer = self.get_writer(key)?;
+        writer.write(value.as_bytes())?;
 
         Ok(())
     }

@@ -1,5 +1,4 @@
 use std::io::{Error, ErrorKind};
-use std::str;
 
 pub type Pin = String;
 
