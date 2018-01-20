@@ -29,14 +29,18 @@ impl Device {
         Device {name, private_key, public_key}
     }
 
-    fn load_or_new(name: String, database: &Database<FileStorage>) -> Device {
-        if let Some(entity) = database.get_entity(&name).ok() {
+    fn load_or_new(name: String, database: &Database<FileStorage>) -> Result<Device, Error> {
+        if let Some(device) = database.get_entity::<Device>(&name).ok() {
             return Device {
-                name: entity.name,
-                private_key: entity.private_key,
-                public_key: entity.public_key,
+                name: device.name,
+                private_key: device.private_key,
+                public_key: device.public_key,
             }
         }
+        let device = Device::new_random(name);
+        // TODO - don't move device
+        database.set_entity::<Device>(&device.name, device)?;
+        Ok(device)
     }
 }
 
