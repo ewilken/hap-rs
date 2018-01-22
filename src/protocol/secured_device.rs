@@ -12,8 +12,8 @@ pub struct SecuredDevice {
 }
 
 impl SecuredDevice {
-    pub fn new(id: Uuid, pin: Pin, database: &Database<FileStorage>) -> Result<SecuredDevice, Error> {
-        let device = Device::load_or_new(id, database)?;
+    pub fn new(name: String, pin: Pin, database: &Database<FileStorage>) -> Result<SecuredDevice, Error> {
+        let device = Device::load_or_new(name, database)?;
         Ok(SecuredDevice {
             device: device,
             pin: pin,

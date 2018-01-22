@@ -15,15 +15,15 @@ use transport::Transport;
 
 pub struct IpTransport<S: Storage, D: Storage> {
     config: Config,
-    context: Context,
+    //context: Context,
     storage: S,
     database: Database<D>,
     //responder: mdns::Responder,
     secured_device: SecuredDevice,
 }
 
-impl/*<A: AccessoryT>*/ IpTransport<FileStorage, FileStorage> {
-    fn new_single_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+impl IpTransport<FileStorage, FileStorage> {
+    fn new_single_device(mut config: Config, /*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
         let pin = pin::new(&config.pin)?;
@@ -31,11 +31,11 @@ impl/*<A: AccessoryT>*/ IpTransport<FileStorage, FileStorage> {
         config.load(&storage);
 
         // TODO - don't move config.id
-        let secured_device = SecuredDevice::new(config.id, pin, &database)?;
+        let secured_device = SecuredDevice::new(config.name, pin, &database)?;
 
         let ip_transport = IpTransport {
             config: config,
-            context: context,
+            //context: context,
             storage: storage,
             database: database,
             secured_device: secured_device,
@@ -47,10 +47,10 @@ impl/*<A: AccessoryT>*/ IpTransport<FileStorage, FileStorage> {
 
 impl Transport for IpTransport<FileStorage, FileStorage> {
     fn start() -> Result<(), Error> {
-
+        Ok(())
     }
 
     fn stop() -> Result<(), Error> {
-
+        Ok(())
     }
 }

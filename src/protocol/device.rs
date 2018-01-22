@@ -3,8 +3,11 @@ use rand::Rng;
 use crypto::ed25519;
 use std::fmt;
 use std::marker::PhantomData;
+use std::io::Error;
+use uuid::Uuid;
 use serde::ser::{Serialize, Serializer, SerializeTuple};
-use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess, Error};
+use serde::de;
+use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess};
 use serde_json;
 
 use db::database::Database;
@@ -13,6 +16,7 @@ use db::entity::Entity;
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {
+    // TODO - rethink whether to identify devices by name
     pub name: String,
     #[serde(with = "BigArray")]
     pub private_key: [u8; 64],
@@ -31,11 +35,11 @@ impl Device {
 
     pub fn load_or_new(name: String, database: &Database<FileStorage>) -> Result<Device, Error> {
         if let Some(device) = database.get_entity::<Device>(&name).ok() {
-            return Device {
+            return Ok(Device {
                 name: device.name,
                 private_key: device.private_key,
                 public_key: device.public_key,
-            }
+            })
         }
         let device = Device::new_random(name);
         // TODO - don't move device
@@ -98,7 +102,7 @@ macro_rules! big_array {
                             let mut arr = [T::default(); $len];
                             for i in 0..$len {
                                 arr[i] = seq.next_element()?
-                                    .ok_or_else(|| Error::invalid_length(i, &self))?;
+                                    .ok_or_else(|| de::Error::invalid_length(i, &self))?;
                             }
                             Ok(arr)
                         }
