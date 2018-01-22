@@ -8,11 +8,14 @@ use db::storage::Storage;
 use db::database::Database;
 use db::file_storage::FileStorage;
 use pin;
+use protocol::context::Context;
 use protocol::device::Device;
 use protocol::secured_device::SecuredDevice;
+use transport::Transport;
 
 pub struct IpTransport<S: Storage, D: Storage> {
     config: Config,
+    context: Context,
     storage: S,
     database: Database<D>,
     //responder: mdns::Responder,
@@ -32,11 +35,22 @@ impl/*<A: AccessoryT>*/ IpTransport<FileStorage, FileStorage> {
 
         let ip_transport = IpTransport {
             config: config,
+            context: context,
             storage: storage,
             database: database,
             secured_device: secured_device,
         };
 
         Ok(ip_transport)
+    }
+}
+
+impl Transport for IpTransport<FileStorage, FileStorage> {
+    fn start() -> Result<(), Error> {
+
+    }
+
+    fn stop() -> Result<(), Error> {
+
     }
 }

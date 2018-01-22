@@ -20,16 +20,16 @@ pub struct Device {
 }
 
 impl Device {
-    fn new(name: String, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
+    pub fn new(name: String, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
         Device {name, public_key, private_key}
     }
 
-    fn new_random(name: String) -> Device {
+    pub fn new_random(name: String) -> Device {
         let (private_key, public_key) = generate_key_pair();
         Device {name, private_key, public_key}
     }
 
-    fn load_or_new(name: String, database: &Database<FileStorage>) -> Result<Device, Error> {
+    pub fn load_or_new(name: String, database: &Database<FileStorage>) -> Result<Device, Error> {
         if let Some(device) = database.get_entity::<Device>(&name).ok() {
             return Device {
                 name: device.name,

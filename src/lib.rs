@@ -9,6 +9,8 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate byteorder;
 extern crate crypto;
+extern crate iron;
+extern crate router;
 
 pub mod accessory;
 pub mod characteristic;
