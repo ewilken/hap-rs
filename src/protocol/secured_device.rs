@@ -1,5 +1,4 @@
 use std::io::Error;
-use uuid::Uuid;
 
 use db::database::Database;
 use db::file_storage::FileStorage;

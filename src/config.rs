@@ -3,7 +3,6 @@ use std::io::Error;
 use eui48::MacAddress;
 use rand;
 use rand::Rng;
-use serde_json;
 use uuid::Uuid;
 
 use accessory::Category;
@@ -56,17 +55,21 @@ impl Config {
         }
     }
 
-    fn as_txt_records(&self) -> serde_json::Value {
-        json!({
-            "pv": self.protocol_version,
-    		"id": self.device_id.to_hex_string(),
-    		"c#": self.configuration_number,
-    		"s#": self.state_number,
-    		"sf": self.status_flag.as_u8(),
-    		"ff": self.feature_flag.as_u8(),
-    		"md": self.name,
-    		"ci": self.category.as_u8(),
-        })
+    fn default_storage_path(&self) -> String {
+        self.name.into()
+    }
+
+    pub fn txt_records(&self) -> [String; 8] {
+        [
+            format!("md={}", self.name),
+            format!("id={}", self.device_id.to_hex_string()),
+            format!("c#={}", self.configuration_number),
+            format!("s#={}", self.state_number),
+            format!("ci={}", self.category.as_u8()),
+            format!("pv={}", self.protocol_version),
+            format!("sf={}", self.status_flag.as_u8()),
+            format!("ff={}", self.feature_flag.as_u8()),
+        ]
     }
 }
 
@@ -80,9 +83,9 @@ impl Default for Config {
             storage_path: "Accessory".into(),
             port: 32000,
             ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
-            pin: "00102003".into(),
+            pin: "11122333".into(),
             name: "Accessory".into(),
-            device_id: new_random_mac_address(),
+            device_id: random_mac_address(),
             configuration_number: 1,
             state_number: 1,
             // TODO - default category should probably be Switch
@@ -95,7 +98,7 @@ impl Default for Config {
     }
 }
 
-fn new_random_mac_address() -> MacAddress {
+fn random_mac_address() -> MacAddress {
     let mut rng = rand::thread_rng();
     let eui = rng.gen::<[u8; 6]>();
     MacAddress::new(eui)

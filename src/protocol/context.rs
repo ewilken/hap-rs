@@ -10,6 +10,11 @@ pub struct Context {
 }
 
 impl Context {
+    pub fn new() -> Context {
+        let map: HashMap<Vec<u8>, Vec<u8>> = HashMap::new();
+        Context {storage: Mutex::new(map)}
+    }
+
     pub fn get(&self, key: Vec<u8>) -> Option<&Vec<u8>> {
         let storage = self.storage.lock().unwrap();
         storage.get(&key)

@@ -4,7 +4,6 @@ use crypto::ed25519;
 use std::fmt;
 use std::marker::PhantomData;
 use std::io::Error;
-use uuid::Uuid;
 use serde::ser::{Serialize, Serializer, SerializeTuple};
 use serde::de;
 use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess};
@@ -12,7 +11,6 @@ use serde_json;
 
 use db::database::Database;
 use db::file_storage::FileStorage;
-use db::entity::Entity;
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {
@@ -34,7 +32,8 @@ impl Device {
     }
 
     pub fn load_or_new(name: String, database: &Database<FileStorage>) -> Result<Device, Error> {
-        if let Some(device) = database.get_entity::<Device>(&name).ok() {
+        if let Some(device_bytes) = database.get_byte_vec(&name).ok() {
+            let device = Device::from_byte_vec(device_bytes)?;
             return Ok(Device {
                 name: device.name,
                 private_key: device.private_key,
@@ -42,13 +41,11 @@ impl Device {
             })
         }
         let device = Device::new_random(name);
-        // TODO - don't move device
-        database.set_entity::<Device>(&device.name, device)?;
+        let device_bytes = device.as_byte_vec()?;
+        database.set_byte_vec(&device.name, device_bytes)?;
         Ok(device)
     }
-}
 
-impl Entity for Device {
     fn as_byte_vec(&self) -> Result<Vec<u8>, Error> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)

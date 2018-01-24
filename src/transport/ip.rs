@@ -1,5 +1,5 @@
 use std::io::Error;
-use mdns;
+use transport::mdns::Responder;
 
 use accessory::AccessoryT;
 
@@ -15,30 +15,31 @@ use transport::Transport;
 
 pub struct IpTransport<S: Storage, D: Storage> {
     config: Config,
-    //context: Context,
+    context: Context,
     storage: S,
     database: Database<D>,
-    //responder: mdns::Responder,
     secured_device: SecuredDevice,
+    mdns_responder: Responder,
 }
 
 impl IpTransport<FileStorage, FileStorage> {
-    fn new_single_device(mut config: Config, /*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+    fn new_single_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
         let pin = pin::new(&config.pin)?;
 
         config.load(&storage);
 
-        // TODO - don't move config.id
         let secured_device = SecuredDevice::new(config.name, pin, &database)?;
+        let mdns_responder = Responder::new(config.name, config.txt_records());
 
         let ip_transport = IpTransport {
-            config: config,
-            //context: context,
-            storage: storage,
-            database: database,
-            secured_device: secured_device,
+            config,
+            context: Context::new(),
+            storage,
+            database,
+            secured_device,
+            mdns_responder,
         };
 
         Ok(ip_transport)
@@ -46,11 +47,13 @@ impl IpTransport<FileStorage, FileStorage> {
 }
 
 impl Transport for IpTransport<FileStorage, FileStorage> {
-    fn start() -> Result<(), Error> {
+    fn start(&self) -> Result<(), Error> {
+        self.mdns_responder.start();
         Ok(())
     }
 
-    fn stop() -> Result<(), Error> {
+    fn stop(&self) -> Result<(), Error> {
+        self.mdns_responder.stop();
         Ok(())
     }
 }
