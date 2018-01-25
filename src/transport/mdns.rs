@@ -10,25 +10,26 @@ pub struct Responder {
 }
 
 impl Responder {
-    pub fn new(name: String, txt_records: [String; 8]) -> Self {
+    pub fn new(name: &String, txt_records: [String; 8]) -> Self {
         Responder {
-            name,
+            name: name.to_owned(),
             txt_records,
             stop: None,
         }
     }
 
-    pub fn start(&self) {
+    pub fn start(&mut self) {
         let (tx, rx) = mpsc::channel();
-        let name = self.name;
-        let txt_records = self.txt_records;
+        let name = self.name.to_owned();
+        let tr = self.txt_records.to_owned();
         thread::spawn(move || {
             let responder = mdns::Responder::new().unwrap();
             let _svc = responder.register(
                 "_hap._tcp".into(),
                 name,
+                // TODO - maybe randomize port
                 55123,
-                &["c#=1", "ff=1", "id=4c:32:75:98:44:e9", "md=Device", "s#=1", "sf=1", "ci=7"],
+                &[&tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7]],
             );
             loop {
                 thread::sleep(Duration::from_secs(10));
@@ -44,7 +45,7 @@ impl Responder {
     }
 
     pub fn stop(&self) {
-        if let Some(stop) = self.stop {
+        if let Some(stop) = self.stop.to_owned() {
             stop.send(());
         }
     }

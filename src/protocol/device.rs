@@ -22,16 +22,16 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn new(name: String, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
-        Device {name, public_key, private_key}
+    pub fn new(name: &String, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
+        Device {name: name.to_owned(), public_key, private_key}
     }
 
-    pub fn new_random(name: String) -> Device {
+    pub fn new_random(name: &String) -> Device {
         let (private_key, public_key) = generate_key_pair();
-        Device {name, private_key, public_key}
+        Device {name: name.to_owned(), private_key, public_key}
     }
 
-    pub fn load_or_new(name: String, database: &Database<FileStorage>) -> Result<Device, Error> {
+    pub fn load_or_new(name: &String, database: &Database<FileStorage>) -> Result<Device, Error> {
         if let Some(device_bytes) = database.get_byte_vec(&name).ok() {
             let device = Device::from_byte_vec(device_bytes)?;
             return Ok(Device {

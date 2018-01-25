@@ -42,9 +42,9 @@ impl Config {
     }
 
     pub fn save(&self, storage: &Storage) -> Result<(), Error> {
-        storage.set_uuid("uuid", self.id)?;
-        storage.set_u64("version", self.version)?;
-        storage.set_u64("config_hash", self.config_hash)?;
+        storage.set_uuid("uuid", self.id.to_owned())?;
+        storage.set_u64("version", self.version.to_owned())?;
+        storage.set_u64("config_hash", self.config_hash.to_owned())?;
         Ok(())
     }
 
@@ -56,7 +56,7 @@ impl Config {
     }
 
     fn default_storage_path(&self) -> String {
-        self.name.into()
+        self.name.to_owned()
     }
 
     pub fn txt_records(&self) -> [String; 8] {
@@ -80,7 +80,7 @@ impl Default for Config {
             id: Uuid::new_v4(),
             version: 0,
             // TODO - default storage path should be == name automatically
-            storage_path: "Accessory".into(),
+            storage_path: "/tmp/Accessory".into(),
             port: 32000,
             ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             pin: "11122333".into(),

@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::io::Error;
 use std::sync::Mutex;
 use std::net::SocketAddr;
 use iron::request::Request;
+use serde_json;
 
 use protocol::secured_device::SecuredDevice;
 
@@ -15,30 +17,35 @@ impl Context {
         Context {storage: Mutex::new(map)}
     }
 
-    pub fn get(&self, key: Vec<u8>) -> Option<&Vec<u8>> {
-        let storage = self.storage.lock().unwrap();
-        storage.get(&key)
+    pub fn get(&self, key: Vec<u8>) -> Option<Vec<u8>> {
+        // TODO - this looks shitty to me
+        if let Some(value) = self.storage.lock().unwrap().get(&key) {
+            return Some(value.to_owned());
+        }
+        None
     }
 
-    pub fn set(&self, key: Vec<u8>, value: Vec<u8>) {
-        let storage = self.storage.lock().unwrap();
+    pub fn set(&mut self, key: Vec<u8>, value: Vec<u8>) {
+        let mut storage = self.storage.lock().unwrap();
         storage.insert(key, value);
     }
 
-    pub fn delete(&self, key: Vec<u8>) {
-        let storage = self.storage.lock().unwrap();
+    pub fn delete(&mut self, key: Vec<u8>) {
+        let mut storage = self.storage.lock().unwrap();
         storage.remove(&key);
     }
 
-    pub fn get_connection_key(req: &Request) -> SocketAddr {
+    pub fn get_request_address(req: &Request) -> SocketAddr {
         req.remote_addr
     }
 
-    pub fn get_secured_device(&self) -> Option<&Vec<u8>> {
+    pub fn get_secured_device(&self) -> Option<Vec<u8>> {
         self.get("device".into())
     }
 
-    /*pub fn set_secured_device(&self, secured_device: SecuredDevice) {
-        self.set("device".into(), secured_device);
-    }*/
+    pub fn set_secured_device(&mut self, secured_device: &SecuredDevice) -> Result<(), Error> {
+        let device_bytes = serde_json::to_vec(secured_device.to_owned())?;
+        self.set("device".into(), device_bytes);
+        Ok(())
+    }
 }

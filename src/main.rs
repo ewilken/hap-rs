@@ -1,18 +1,24 @@
 extern crate hap;
+use hap::transport::Transport;
+use hap::transport::ip::IpTransport;
+use hap::accessory::{Information, outlet};
+use hap::config::Config;
 
 fn main() {
-    let information = hap::accessory::Information {
-        name: "youcontrol outlet".into(),
+    let information = Information {
+        name: "youcontrol Plug".into(),
         manufacturer: "youcontrol.io".into(),
         serial_number: "12345".into(),
         ..Default::default()
     };
-    let outlet = hap::accessory::outlet::new(information);
+    let outlet = outlet::new(information);
 
-    let config = hap::config::Config {
+    let config = Config {
+        name: "youcontrol Plug".into(),
+        storage_path: "/Users/eliaswilken/hap-test".into(),
         ..Default::default()
     };
-    let ip_transport = hap::transport::ip::IpTransport::new_with_file_storage(config);
+    let mut ip_transport = IpTransport::new_single_device(config).unwrap();
 
     ip_transport.start().unwrap();
 }
