@@ -1,5 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr};
 use std::io::Error;
+use std::env::current_dir;
 use eui48::MacAddress;
 use rand;
 use rand::Rng;
@@ -55,10 +56,6 @@ impl Config {
         }
     }
 
-    fn default_storage_path(&self) -> String {
-        self.name.to_owned()
-    }
-
     pub fn txt_records(&self) -> [String; 8] {
         [
             format!("md={}", self.name),
@@ -79,8 +76,7 @@ impl Default for Config {
         Config {
             id: Uuid::new_v4(),
             version: 0,
-            // TODO - default storage path should be == name automatically
-            storage_path: "/tmp/Accessory".into(),
+            storage_path: format!("{}/data", current_dir().unwrap().to_str().unwrap()),
             port: 32000,
             ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
             pin: "11122333".into(),

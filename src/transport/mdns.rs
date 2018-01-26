@@ -5,14 +5,16 @@ use mdns;
 
 pub struct Responder {
     name: String,
+    port: u16,
     txt_records: [String; 8],
     stop: Option<mpsc::Sender<()>>,
 }
 
 impl Responder {
-    pub fn new(name: &String, txt_records: [String; 8]) -> Self {
+    pub fn new(name: &String, port: &u16, txt_records: [String; 8]) -> Self {
         Responder {
             name: name.to_owned(),
+            port: port.to_owned(),
             txt_records,
             stop: None,
         }
@@ -27,8 +29,7 @@ impl Responder {
             let _svc = responder.register(
                 "_hap._tcp".into(),
                 name,
-                // TODO - maybe randomize port
-                55123,
+                32000,
                 &[&tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7]],
             );
             loop {

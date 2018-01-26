@@ -13,7 +13,7 @@ pub struct FileStorage {
 
 impl FileStorage {
     pub fn new(dir: &str) -> Result<FileStorage, Error> {
-        let path = Path::new(dir).canonicalize()?;
+        let path = Path::new(dir).to_path_buf();
         fs::create_dir_all(&path)?;
 
         let mut perms = fs::metadata(&path)?.permissions();

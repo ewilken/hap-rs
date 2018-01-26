@@ -25,7 +25,7 @@ pub struct IpTransport<S: Storage, D: Storage> {
 }
 
 impl IpTransport<FileStorage, FileStorage> {
-    pub fn new_single_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+    pub fn new_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
         let pin = pin::new(&config.pin)?;
@@ -33,7 +33,7 @@ impl IpTransport<FileStorage, FileStorage> {
         config.load(&storage);
 
         let secured_device = SecuredDevice::new(&config.name, pin, &database)?;
-        let mdns_responder = Responder::new(&config.name, config.txt_records());
+        let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
         let ip_transport = IpTransport {
             config,

@@ -40,10 +40,10 @@ pub enum ContentType {
 }
 
 impl ContentType {
-    pub fn as_str(&self) -> &str {
+    pub fn as_vec(&self) -> Vec<u8> {
         match self {
-            &ContentType::PairingTLV8 => "application/pairing+tlv8",
-            &ContentType::HapJson => "application/hap+json",
+            &ContentType::PairingTLV8 => b"application/pairing+tlv8".to_vec(),
+            &ContentType::HapJson => b"application/hap+json".to_vec(),
         }
     }
 }

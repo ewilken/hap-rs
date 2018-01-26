@@ -1,3 +1,5 @@
+use std::net::{IpAddr, Ipv4Addr};
+
 extern crate hap;
 use hap::transport::Transport;
 use hap::transport::ip::IpTransport;
@@ -14,11 +16,11 @@ fn main() {
     let outlet = outlet::new(information);
 
     let config = Config {
-        name: "youcontrol Plug".into(),
-        storage_path: "/Users/eliaswilken/hap-test".into(),
+        name: "youcontrol_Plug".into(),
+        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 0, 49)),
         ..Default::default()
     };
-    let mut ip_transport = IpTransport::new_single_device(config).unwrap();
+    let mut ip_transport = IpTransport::new_device(config).unwrap();
 
     ip_transport.start().unwrap();
 }
