@@ -11,6 +11,8 @@ extern crate byteorder;
 extern crate crypto;
 extern crate iron;
 extern crate router;
+extern crate srp;
+extern crate sha2;
 
 pub mod accessory;
 pub mod characteristic;

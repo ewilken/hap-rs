@@ -20,3 +20,5 @@ rust-crypto = "0.2.36"
 iron = "0.6.0"
 router = "0.6.0"
 mdns = { git = "https://github.com/plietar/rust-mdns" }
+srp = "0.2.4"
+sha2 = "0.6.0"

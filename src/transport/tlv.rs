@@ -138,12 +138,49 @@ impl ErrorKind {
 pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::new();
     for (k, v) in hm.iter() {
-        vec.push(k.to_owned());
-        let length = v.len() as u8;
-        vec.push(length);
-        for byte in v {
-            vec.push(byte.to_owned());
+        let length = v.len();
+        if length <= 255 {
+            vec.push(k.to_owned());
+            vec.push(length as u8);
+            for byte in v {
+                vec.push(byte.to_owned());
+            }
+        } else {
+            let mut l = length;
+            let mut p = 0;
+            while l > 255 {
+                vec.push(k.to_owned());
+                vec.push(255);
+                for byte in &v[p..(p + 255)] {
+                    vec.push(byte.to_owned());
+                }
+                l -= 255;
+                p += 255;
+            }
+            if l > 0 {
+                vec.push(k.to_owned());
+                vec.push(l as u8);
+                for byte in &v[p..(p + l)] {
+                    vec.push(byte.to_owned());
+                }
+            }
         }
     };
     vec
+}
+
+pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
+    let mut hm = HashMap::new();
+    let mut p: u8 = 0;
+    if tlv[1] < 255 {
+        while (p as usize) < tlv.len() {
+            let t = tlv[p as usize];
+            let l = tlv[(p + 1) as usize];
+            hm.insert(t, tlv[(p + 2) as usize..(p + 2 + l) as usize].into());
+            p = p + 2 + l;
+        }
+    } else {
+
+    }
+    hm
 }
