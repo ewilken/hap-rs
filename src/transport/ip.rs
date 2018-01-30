@@ -1,4 +1,5 @@
 use std::io::Error;
+use std::sync::{Arc, Mutex};
 use transport::mdns::Responder;
 use transport::http;
 use std::net::SocketAddr;
@@ -10,17 +11,15 @@ use db::storage::Storage;
 use db::database::Database;
 use db::file_storage::FileStorage;
 use pin;
-use protocol::context::Context;
+use db::context::Context;
 use protocol::device::Device;
-use protocol::secured_device::SecuredDevice;
 use transport::Transport;
 
 pub struct IpTransport<S: Storage, D: Storage> {
     config: Config,
-    //context: Context,
+    context: Arc<Mutex<Context>>,
     storage: S,
     database: Database<D>,
-    secured_device: SecuredDevice,
     mdns_responder: Responder,
 }
 
@@ -32,15 +31,13 @@ impl IpTransport<FileStorage, FileStorage> {
 
         config.load(&storage);
 
-        let secured_device = SecuredDevice::new(&config.name, pin, &database)?;
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
         let ip_transport = IpTransport {
             config,
-            //context: Context::new(),
+            context: Arc::new(Mutex::new(Context::new())),
             storage,
             database,
-            secured_device,
             mdns_responder,
         };
 
@@ -50,8 +47,9 @@ impl IpTransport<FileStorage, FileStorage> {
 
 impl Transport for IpTransport<FileStorage, FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
+        let context = self.context.clone();
         self.mdns_responder.start();
-        http::server::serve(SocketAddr::new(self.config.ip, self.config.port));
+        http::server::serve(SocketAddr::new(self.config.ip, self.config.port), context);
         Ok(())
     }
 

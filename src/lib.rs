@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate log;
 extern crate eui48;
 extern crate mdns;
 extern crate uuid;
@@ -13,6 +15,7 @@ extern crate iron;
 extern crate router;
 extern crate srp;
 extern crate sha2;
+extern crate pnet;
 
 pub mod accessory;
 pub mod characteristic;
