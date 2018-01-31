@@ -39,18 +39,27 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
     let mut hm = HashMap::new();
     let mut buf: Vec<u8> = Vec::new();
     let mut p = 0;
+    let mut pt = 0;
     while p < tlv.len() {
         let t = tlv[p];
         let l = tlv[p + 1];
         if l < 255 {
+            if t != pt && buf.len() > 0 {
+                hm.insert(t, buf.to_owned());
+                buf.clear();
+            }
             buf.extend_from_slice(&tlv[p + 2..p + 2 + l as usize]);
             hm.insert(t, buf.to_owned());
             buf.clear();
-            p = p + 2 + l as usize;
         } else {
             buf.extend_from_slice(&tlv[p + 2..p + 2 + l as usize]);
-            p = p + 2 + l as usize;
         }
+        pt = t;
+        p = p + 2 + l as usize;
+    }
+    if buf.len() > 0 {
+        hm.insert(pt, buf.to_owned());
+        buf.clear();
     }
     hm
 }
