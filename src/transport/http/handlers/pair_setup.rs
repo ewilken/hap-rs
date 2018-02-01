@@ -53,7 +53,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     ip,
                     salt: salt.to_owned(),
                     verifier: verifier.to_owned(),
-                    b,
+                    b: private_key.as_slice().to_vec(),
                     b_pub: srp_server.get_b_pub(),
                     next_step: 3,
                 };
