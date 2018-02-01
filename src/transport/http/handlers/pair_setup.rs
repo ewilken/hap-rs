@@ -38,7 +38,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                 let b = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
 
                 let private_key = srp_private_key::<Sha512>(b"Pair-Setup", b"111-22-111", &salt);
-                let srp_client = SrpClient::<Sha512>::new(&b, &G_3072);
+                let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
                 let verifier = srp_client.get_password_verifier(&private_key);
 
                 let user = UserRecord {
@@ -47,7 +47,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     verifier: &verifier,
                 };
                 // TODO - return a kTLVError
-                let srp_server = SrpServer::<Sha512>::new(&user, b"bar", &b, &G_3072).unwrap();
+                let srp_server = SrpServer::<Sha512>::new(&user, b"bar", &private_key, &G_3072).unwrap();
 
                 let session = SrpPairingSession {
                     ip,
@@ -83,6 +83,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     let srp_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072).unwrap();
                     let shared_secret = srp_server.get_key();
                     let b_proof = srp_server.verify(a_proof).unwrap();
+                    println!("{:?}", b_proof);
 
                     /*let mut rng = rand::thread_rng();
                     let a = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
@@ -131,11 +132,9 @@ struct SrpPairingSession {
 
 impl SrpPairingSession {
     fn load(ip: IpAddr, context: &Arc<Mutex<Context>>) -> Option<SrpPairingSession> {
-        let key = {
-            match ip {
-                IpAddr::V4(addr) => addr.octets().to_vec(),
-                IpAddr::V6(addr) => addr.octets().to_vec(),
-            }
+        let key = match ip {
+            IpAddr::V4(addr) => addr.octets().to_vec(),
+            IpAddr::V6(addr) => addr.octets().to_vec(),
         };
         let c = context.lock().unwrap();
         if let Some(val) = c.get(key) {
@@ -145,11 +144,9 @@ impl SrpPairingSession {
     }
 
     fn save(&self, context: &Arc<Mutex<Context>>) -> Result<(), Error> {
-        let key = {
-            match self.ip {
-                IpAddr::V4(addr) => addr.octets().to_vec(),
-                IpAddr::V6(addr) => addr.octets().to_vec(),
-            }
+        let key = match self.ip {
+            IpAddr::V4(addr) => addr.octets().to_vec(),
+            IpAddr::V6(addr) => addr.octets().to_vec(),
         };
         let val = serde_json::to_vec(self)?;
         let mut c = context.lock().unwrap();
