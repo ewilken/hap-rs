@@ -36,17 +36,23 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                 let mut rng = rand::thread_rng();
                 let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>();
                 let b = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
+
+                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", b"111-22-111", &salt);
+                let srp_client = SrpClient::<Sha512>::new(&b, &G_3072);
+                let verifier = srp_client.get_password_verifier(&private_key);
+
                 let user = UserRecord {
                     username: b"Pair-Setup",
                     salt: &salt,
-                    verifier: b"111-22-111",
+                    verifier: &verifier,
                 };
                 // TODO - return a kTLVError
-                let srp_server = SrpServer::<Sha512>::new(&user, "foo".as_bytes(), &b, &G_3072).unwrap();
+                let srp_server = SrpServer::<Sha512>::new(&user, b"bar", &b, &G_3072).unwrap();
 
                 let session = SrpPairingSession {
                     ip,
                     salt: salt.to_owned(),
+                    verifier: verifier.to_owned(),
                     b,
                     b_pub: srp_server.get_b_pub(),
                     next_step: 3,
@@ -72,13 +78,13 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     let user = UserRecord {
                         username: b"Pair-Setup",
                         salt: &session.salt,
-                        verifier: b"111-22-111",
+                        verifier: &session.verifier,
                     };
                     let srp_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072).unwrap();
                     let shared_secret = srp_server.get_key();
-                    //let b_proof = srp_server.verify(a_proof).unwrap();
+                    let b_proof = srp_server.verify(a_proof).unwrap();
 
-                    let mut rng = rand::thread_rng();
+                    /*let mut rng = rand::thread_rng();
                     let a = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
                     let client = SrpClient::<Sha512>::new(&a, &G_3072);
                     let a_pub = client.get_a_pub();
@@ -88,7 +94,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     let test_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072).unwrap();
                     let test_b_proof = test_server.verify(&test_a_proof).unwrap();
 
-                    println!("{:?}", test_b_proof);
+                    println!("{:?}", test_b_proof);*/
                 }
 
                 //println!("/pair-setup - Sending M4: SRP Verify Response to {}", ip);
@@ -117,6 +123,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
 struct SrpPairingSession {
     ip: IpAddr,
     salt: Vec<u8>,
+    verifier: Vec<u8>,
     b: Vec<u8>,
     b_pub: Vec<u8>,
     next_step: u8,
