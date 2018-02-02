@@ -6,9 +6,9 @@ use rand;
 use rand::Rng;
 use sha2::{Sha512, Digest};
 use iron::prelude::{Request, Response, IronResult};
-use iron::{status, Headers};
+use iron::status;
 use srp::server::{UserRecord, SrpServer};
-use srp::client::{SrpClient, SrpClientVerifier, srp_private_key};
+use srp::client::{SrpClient, srp_private_key};
 use srp::groups::G_3072;
 use srp::types::SrpGroup;
 use serde_json;
@@ -16,10 +16,11 @@ use num::BigUint;
 use std::ops::BitXor;
 
 use db::context::Context;
+use config::Config;
 use transport::http::ContentType;
 use transport::tlv;
 
-pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronResult<Response> {
+pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mutex<Context>>) -> IronResult<Response> {
     let ip = Context::get_request_address(request).ip();
 
     let mut buf: Vec<u8> = Vec::new();
@@ -27,10 +28,12 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
 
     let decoded = tlv::decode(buf);
     let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
+
     if let Some(v) = decoded.get(&0x06) {
         match v[0] {
             1 => {
                 println!("/pair-setup - Got M1: SRP Start Request from {}", ip);
+
                 let (t, v) = tlv::Type::State(2).as_type_value();
                 answer.insert(t, v);
 
@@ -40,7 +43,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                 let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>(); // s
                 let b = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
 
-                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", b"111-22-111", &salt); // x = H(s | H(I | ":" | P))
+                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", config.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
                 let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
                 let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
 
@@ -73,6 +76,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
             },
             3 => {
                 println!("/pair-setup - Got M3: SRP Verify Request from {}", ip);
+
                 let (t, v) = tlv::Type::State(2).as_type_value();
                 answer.insert(t, v);
                 if let Some(session) = SrpPairingSession::load(ip, context) {
@@ -99,7 +103,13 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                 }
             },
             5 => {
-                println!("/pair-setup - Got M5: SRP Exchange Request from {}", ip)
+                println!("/pair-setup - Got M5: SRP Exchange Request from {}", ip);
+
+                let mut encrypted_data = decoded.get(&0x05).unwrap().to_owned();
+                let len = encrypted_data.len();
+                let auth_tag: Vec<u8> = encrypted_data.drain(len - 16..).collect();
+                // TODO - verify authTag
+
             },
             _ => {
                 println!("/pair-setup - Got invalid state: M{} from {}", v[0], ip);

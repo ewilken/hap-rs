@@ -17,6 +17,7 @@ extern crate srp;
 extern crate sha2;
 extern crate pnet;
 extern crate num;
+extern crate hkdf;
 
 pub mod accessory;
 pub mod characteristic;

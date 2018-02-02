@@ -5,6 +5,7 @@ use eui48::MacAddress;
 use rand;
 use rand::Rng;
 use uuid::Uuid;
+use pnet::datalink;
 
 use accessory::Category;
 
