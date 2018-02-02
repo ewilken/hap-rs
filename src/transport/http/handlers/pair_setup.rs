@@ -1,4 +1,4 @@
-use std::io::{Read, Error};
+use std::io::{Read, Error, ErrorKind};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::net::IpAddr;
@@ -10,7 +10,10 @@ use iron::{status, Headers};
 use srp::server::{UserRecord, SrpServer};
 use srp::client::{SrpClient, SrpClientVerifier, srp_private_key};
 use srp::groups::G_3072;
+use srp::types::SrpGroup;
 use serde_json;
+use num::BigUint;
+use std::ops::BitXor;
 
 use db::context::Context;
 use transport::http::ContentType;
@@ -34,12 +37,12 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                 // TODO - Errors for kTLVError_Unavailable, kTLVError_MaxTries and kTLVError_Busy
 
                 let mut rng = rand::thread_rng();
-                let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>();
+                let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>(); // s
                 let b = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
 
-                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", b"111-22-111", &salt);
+                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", b"111-22-111", &salt); // x = H(s | H(I | ":" | P))
                 let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
-                let verifier = srp_client.get_password_verifier(&private_key);
+                let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
 
                 let user = UserRecord {
                     username: b"Pair-Setup",
@@ -47,13 +50,13 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     verifier: &verifier,
                 };
                 // TODO - return a kTLVError
-                let srp_server = SrpServer::<Sha512>::new(&user, b"bar", &private_key, &G_3072).unwrap();
+                let srp_server = SrpServer::<Sha512>::new(&user, b"foo", &b, &G_3072).unwrap();
 
                 let session = SrpPairingSession {
                     ip,
                     salt: salt.to_owned(),
                     verifier: verifier.to_owned(),
-                    b: private_key.as_slice().to_vec(),
+                    b: b.to_owned(),
                     b_pub: srp_server.get_b_pub(),
                     next_step: 3,
                 };
@@ -75,6 +78,7 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                 if let Some(session) = SrpPairingSession::load(ip, context) {
                     let a_pub = decoded.get(&0x03).unwrap();
                     let a_proof = decoded.get(&0x04).unwrap();
+
                     let user = UserRecord {
                         username: b"Pair-Setup",
                         salt: &session.salt,
@@ -82,23 +86,20 @@ pub fn pair_setup(request: &mut Request, context: &Arc<Mutex<Context>>) -> IronR
                     };
                     let srp_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072).unwrap();
                     let shared_secret = srp_server.get_key();
-                    let b_proof = srp_server.verify(a_proof).unwrap();
-                    println!("{:?}", b_proof);
+                    let b_proof = verify_client_proof::<Sha512>(&session.b_pub, &a_pub, &a_proof, &session.salt, &shared_secret.as_slice().to_vec(), &G_3072).unwrap();
 
-                    /*let mut rng = rand::thread_rng();
-                    let a = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
-                    let client = SrpClient::<Sha512>::new(&a, &G_3072);
-                    let a_pub = client.get_a_pub();
-                    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", b"111-22-111", &session.salt);
-                    let verifier = client.process_reply(&private_key, &session.b_pub).unwrap();
-                    let test_a_proof = verifier.get_proof();
-                    let test_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072).unwrap();
-                    let test_b_proof = test_server.verify(&test_a_proof).unwrap();
+                    let (t, v) = tlv::Type::State(4).as_type_value();
+                    answer.insert(t, v);
+                    let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
+                    answer.insert(t, v);
 
-                    println!("{:?}", test_b_proof);*/
+                    println!("/pair-setup - Sending M4: SRP Verify Response to {}", ip);
+                } else {
+                    // some error
                 }
-
-                //println!("/pair-setup - Sending M4: SRP Verify Response to {}", ip);
+            },
+            5 => {
+                println!("/pair-setup - Got M5: SRP Exchange Request from {}", ip)
             },
             _ => {
                 println!("/pair-setup - Got invalid state: M{} from {}", v[0], ip);
@@ -152,5 +153,42 @@ impl SrpPairingSession {
         let mut c = context.lock().unwrap();
         c.set(key, val);
         Ok(())
+    }
+}
+
+// TODO - fix the actual srp package to do proper verification
+fn verify_client_proof<D: Digest>(b_pub: &Vec<u8>, a_pub: &Vec<u8>, a_proof: &Vec<u8>, salt: &Vec<u8>, key: &Vec<u8>, group: &SrpGroup) -> Result<Vec<u8>, Error> {
+    let mut dhn = D::new();
+    dhn.input(&group.n.to_bytes_be());
+    let hn = BigUint::from_bytes_be(&dhn.result());
+
+    let mut dhg = D::new();
+    dhg.input(&group.g.to_bytes_be());
+    let hg = BigUint::from_bytes_be(&dhg.result());
+
+    let hng = hn.bitxor(hg);
+
+    let mut dhi = D::new();
+    dhi.input(b"Pair-Setup");
+    let hi = dhi.result();
+
+    let mut d = D::new();
+    //M = H(H(N) xor H(g), H(I), s, A, B, K)
+    d.input(&hng.to_bytes_be());
+    d.input(&hi);
+    d.input(salt);
+    d.input(a_pub);
+    d.input(b_pub);
+    d.input(key);
+
+    if a_proof.to_owned() == d.result().as_slice() {
+        // H(A, M, K)
+        let mut d = D::new();
+        d.input(a_pub);
+        d.input(a_proof);
+        d.input(key);
+        Ok(d.result().as_slice().to_vec())
+    } else {
+        Err(Error::new(ErrorKind::Other, "invalid user proof"))
     }
 }

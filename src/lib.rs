@@ -16,6 +16,7 @@ extern crate router;
 extern crate srp;
 extern crate sha2;
 extern crate pnet;
+extern crate num;
 
 pub mod accessory;
 pub mod characteristic;
