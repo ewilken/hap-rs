@@ -23,13 +23,14 @@ impl Responder {
     pub fn start(&mut self) {
         let (tx, rx) = mpsc::channel();
         let name = self.name.to_owned();
+        let port = self.port.to_owned();
         let tr = self.txt_records.to_owned();
         thread::spawn(move || {
             let responder = mdns::Responder::new().unwrap();
             let _svc = responder.register(
                 "_hap._tcp".into(),
                 name,
-                32000,
+                port,
                 &[&tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7]],
             );
             loop {
@@ -47,7 +48,7 @@ impl Responder {
 
     pub fn stop(&self) {
         if let Some(stop) = self.stop.to_owned() {
-            stop.send(());
+            stop.send(()).unwrap();
         }
     }
 }

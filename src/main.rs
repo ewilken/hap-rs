@@ -17,7 +17,7 @@ fn main() {
 
     let config = Config {
         name: "qwert".into(),
-        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 0, 49)),
+        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 42, 69)),
         ..Default::default()
     };
     let mut ip_transport = IpTransport::new_device(config).unwrap();
