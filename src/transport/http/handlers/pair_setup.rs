@@ -13,9 +13,9 @@ use srp::groups::G_3072;
 use srp::types::SrpGroup;
 use serde_json;
 use num::BigUint;
-use std::ops::{BitXor, Mul};
-use crypto::chacha20poly1305::ChaCha20Poly1305;
-use crypto::aead::AeadDecryptor;
+use std::ops::BitXor;
+use ring::{hkdf, hmac, digest};
+use chacha20_poly1305_aead;
 
 use db::context::Context;
 use config::Config;
@@ -63,7 +63,7 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
                     verifier: verifier.to_owned(),
                     b: b.to_owned(),
                     b_pub: srp_server.get_b_pub(),
-                    a_pub: None,
+                    shared_secret: None,
                     next_step: 3,
                 };
 
@@ -100,7 +100,8 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
                     let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
                     answer.insert(t, v);
 
-                    session.a_pub = Some(a_pub.to_owned());
+                    session.shared_secret = Some(shared_secret.as_slice().to_vec());
+                    session.next_step = 5;
                     session.save(context).unwrap();
 
                     println!("/pair-setup - Sending M4: SRP Verify Response to {}", ip);
@@ -116,21 +117,20 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
                 let auth_tag = Vec::from(&data[data.len() - 16..]);
 
                 if let Some(session) = SrpPairingSession::load(ip, context) {
-                    if let Some(a_pub) = session.a_pub {
-                        let session_key = compute_session_key::<Sha512>(&a_pub, &session.b_pub, &session.b, &session.verifier);
+                    if let Some(shared_secret) = session.shared_secret {
+                        let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
+                        let mut encryption_key = vec![0; 32];
+                        hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
 
-                        let mut encryption_key = Sha512::new();
-                        encryption_key.input(&session_key);
-                        encryption_key.input(b"Pair-Setup-Encrypt-Salt");
-                        encryption_key.input(b"Pair-Setup-Encrypt-Info");
+                        let mut decrypted_data = Vec::new();
 
-                        println!("{:?}", &encryption_key.result()[..32]);
+                        let mut nonce = vec![0, 0, 0, 0];
+                        let mut n = b"PS-Msg05".to_vec();
+                        nonce.append(&mut n);
 
-                        let mut chacha_poly = ChaCha20Poly1305::new(&encryption_key.result()[..32], b"PS-Msg05", &[]);
-                        let mut decrypted_data = vec![0; encrypted_data.len()];
-                        let decryption_successful = chacha_poly.decrypt(&encrypted_data, &mut decrypted_data, &auth_tag);
+                        chacha20_poly1305_aead::decrypt(&encryption_key, &nonce, &[], &encrypted_data, &auth_tag, &mut decrypted_data).unwrap();
+
                         println!("{:?}", decrypted_data);
-                        println!("{:?}", decryption_successful);
                     } else {
                         // some error
                     }
@@ -165,7 +165,7 @@ struct SrpPairingSession {
     verifier: Vec<u8>,
     b: Vec<u8>,
     b_pub: Vec<u8>,
-    a_pub: Option<Vec<u8>>,
+    shared_secret: Option<Vec<u8>>,
     next_step: u8,
 }
 
@@ -229,62 +229,4 @@ fn verify_client_proof<D: Digest>(b_pub: &Vec<u8>, a_pub: &Vec<u8>, a_proof: &Ve
     } else {
         Err(Error::new(ErrorKind::Other, "invalid user proof"))
     }
-}
-
-fn compute_session_key<D: Digest>(a_pub: &Vec<u8>, b_pub: &Vec<u8>, b: &Vec<u8>, verifier: &Vec<u8>) -> Vec<u8> {
-    let v = BigUint::from_bytes_be(verifier);
-
-    // u = H(A, B)
-    let mut hu = D::new();
-    hu.input(&pad(a_pub));
-    hu.input(&pad(b_pub));
-    let u = BigUint::from_bytes_be(&hu.result().as_slice().to_vec());
-
-    // S = (Av^u) mod N
-    let A = BigUint::from_bytes_be(a_pub);
-    let mut S = powm(&v, &u, &G_3072.n);
-    S = S.mul(A);
-    S = S % &G_3072.n;
-
-    // TODO - rejections
-
-    let b = BigUint::from_bytes_be(b);
-    S = powm(&S, &b, &G_3072.n);
-
-    let mut K = D::new();
-    K.input(&S.to_bytes_be());
-    K.result().as_slice().to_vec()
-}
-
-fn pad(n: &Vec<u8>) -> Vec<u8> {
-    let mut n = n.to_owned();
-    let n_len = n.len();
-    println!("{:?}", n_len);
-    let len = G_3072.n.to_bytes_be().len();
-    println!("{:?}", len);
-    if n_len < len {
-        let mut padding = Vec::from(&G_3072.n.to_bytes_be()[n_len..len]);
-        n.append(&mut padding);
-    }
-    println!("{:?}", n_len);
-
-    n
-}
-
-fn powm(base: &BigUint, exp: &BigUint, modulus: &BigUint) -> BigUint {
-    let zero = BigUint::new(vec![0]);
-    let one = BigUint::new(vec![1]);
-    let two = BigUint::new(vec![2]);
-    let mut exp = exp.clone();
-    let mut result = one.clone();
-    let mut base = base % modulus;
-
-    while exp > zero {
-        if &exp % &two == one {
-            result = (result * &base) % modulus;
-        }
-        exp = exp >> 1;
-        base = (&base * &base) % modulus;
-    }
-    result
 }

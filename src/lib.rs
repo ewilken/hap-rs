@@ -17,7 +17,8 @@ extern crate srp;
 extern crate sha2;
 extern crate pnet;
 extern crate num;
-extern crate hkdf;
+extern crate ring;
+extern crate chacha20_poly1305_aead;
 
 pub mod accessory;
 pub mod characteristic;
