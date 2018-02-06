@@ -16,6 +16,7 @@ use num::BigUint;
 use std::ops::BitXor;
 use ring::{hkdf, hmac, digest};
 use chacha20_poly1305_aead;
+use crypto::ed25519;
 
 use db::context::Context;
 use config::Config;
@@ -80,8 +81,9 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
             3 => {
                 println!("/pair-setup - Got M3: SRP Verify Request from {}", ip);
 
-                let (t, v) = tlv::Type::State(2).as_type_value();
+                let (t, v) = tlv::Type::State(4).as_type_value();
                 answer.insert(t, v);
+
                 if let Some(mut session) = SrpPairingSession::load(ip, context) {
                     let a_pub = decoded.get(&0x03).unwrap();
                     let a_proof = decoded.get(&0x04).unwrap();
@@ -93,12 +95,19 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
                     };
                     let srp_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072).unwrap();
                     let shared_secret = srp_server.get_key();
-                    let b_proof = verify_client_proof::<Sha512>(&session.b_pub, &a_pub, &a_proof, &session.salt, &shared_secret.as_slice().to_vec(), &G_3072).unwrap();
+                    let b_proof = verify_client_proof::<Sha512>(&session.b_pub, &a_pub, &a_proof, &session.salt, &shared_secret.as_slice().to_vec(), &G_3072);
 
-                    let (t, v) = tlv::Type::State(4).as_type_value();
-                    answer.insert(t, v);
-                    let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
-                    answer.insert(t, v);
+                    match b_proof {
+                        Err(_) => {
+                            let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
+                            answer.insert(t, v);
+                            return Ok(response(answer));
+                        },
+                        Ok(b_proof) => {
+                            let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
+                            answer.insert(t, v);
+                        },
+                    }
 
                     session.shared_secret = Some(shared_secret.as_slice().to_vec());
                     session.next_step = 5;
@@ -112,30 +121,48 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
             5 => {
                 println!("/pair-setup - Got M5: SRP Exchange Request from {}", ip);
 
+                let (t, v) = tlv::Type::State(6).as_type_value();
+                answer.insert(t, v);
+
                 let data = decoded.get(&0x05).unwrap();
                 let encrypted_data = Vec::from(&data[..data.len() - 16]);
                 let auth_tag = Vec::from(&data[data.len() - 16..]);
 
                 if let Some(session) = SrpPairingSession::load(ip, context) {
                     if let Some(shared_secret) = session.shared_secret {
-                        let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
                         let mut encryption_key = vec![0; 32];
+                        let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
                         hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
 
                         let mut decrypted_data = Vec::new();
-
                         let mut nonce = vec![0, 0, 0, 0];
-                        let mut n = b"PS-Msg05".to_vec();
-                        nonce.append(&mut n);
-
+                        nonce.extend(b"PS-Msg05");
                         chacha20_poly1305_aead::decrypt(&encryption_key, &nonce, &[], &encrypted_data, &auth_tag, &mut decrypted_data).unwrap();
 
-                        println!("{:?}", decrypted_data);
+                        let sub_tlv = tlv::decode(decrypted_data);
+                        let device_pairing_id = sub_tlv.get(&0x01).unwrap();
+                        let device_ltpk = sub_tlv.get(&0x03).unwrap();
+                        let device_signature = sub_tlv.get(&0x0A).unwrap();
+
+                        let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
+                        hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut encryption_key);
+
+                        // TODO - kTLVError_MaxPeers
+
+                        let mut device_info: Vec<u8> = Vec::new();
+                        device_info.extend(encryption_key);
+                        device_info.extend(device_pairing_id);
+                        device_info.extend(device_ltpk);
+                        if !ed25519::verify(&device_info, &device_ltpk, &device_signature) {
+                            let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
+                            answer.insert(t, v);
+                            return Ok(response(answer));
+                        }
                     } else {
-                        // some error
+                        // some error or just nothing?
                     }
                 } else {
-                    // some error
+                    // some error or just nothing?
                 }
             },
             _ => {
@@ -150,12 +177,14 @@ pub fn pair_setup(request: &mut Request, config: &Arc<Config>, context: &Arc<Mut
         answer.insert(t, v);
     }
 
-    let body = tlv::encode(answer);
+    Ok(response(answer))
+}
 
+fn response(answer: HashMap<u8, Vec<u8>>) -> Response {
+    let body = tlv::encode(answer);
     let mut response = Response::with((status::Ok, body));
     response.headers.set_raw("Content-Type", vec![ContentType::PairingTLV8.as_vec()]);
-
-    Ok(response)
+    response
 }
 
 #[derive(Serialize, Deserialize)]
