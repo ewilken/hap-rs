@@ -15,31 +15,34 @@ use db::context::Context;
 use protocol::device::Device;
 use transport::Transport;
 
-pub struct IpTransport<S: Storage, D: Storage> {
+pub struct IpTransport<S: Storage, D: Storage + Send> {
     config: Arc<Config>,
     context: Arc<Mutex<Context>>,
     storage: S,
-    database: Database<D>,
+    database: Arc<Mutex<Database<D>>>,
     mdns_responder: Responder,
 }
 
 impl IpTransport<FileStorage, FileStorage> {
-    pub fn new_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+    pub fn new_with_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+        let mut context = Context::new();
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
-        config.pin = pin::new(&config.pin)?;
 
         config.load(&storage);
 
+        let pin = pin::new(&config.pin)?;
+        let device = Device::load_or_new(config.id, pin, &database)?;
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
-
         let ip_transport = IpTransport {
             config: Arc::new(config),
-            context: Arc::new(Mutex::new(Context::new())),
+            context: Arc::new(Mutex::new(context)),
             storage,
-            database,
+            database: Arc::new(Mutex::new(database)),
             mdns_responder,
         };
+
+        device.save(&ip_transport.context, &ip_transport.database)?;
 
         Ok(ip_transport)
     }
@@ -47,10 +50,11 @@ impl IpTransport<FileStorage, FileStorage> {
 
 impl Transport for IpTransport<FileStorage, FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
+        self.mdns_responder.start();
         let config = self.config.clone();
         let context = self.context.clone();
-        self.mdns_responder.start();
-        http::server::serve(SocketAddr::new(self.config.ip, self.config.port), config, context);
+        let database = self.database.clone();
+        http::server::serve::<FileStorage>(SocketAddr::new(self.config.ip, self.config.port), config, context, database);
         Ok(())
     }
 

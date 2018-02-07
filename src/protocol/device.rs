@@ -4,54 +4,83 @@ use crypto::ed25519;
 use std::fmt;
 use std::marker::PhantomData;
 use std::io::Error;
+use std::sync::{Arc, Mutex};
 use serde::ser::{Serialize, Serializer, SerializeTuple};
 use serde::de;
 use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess};
 use serde_json;
+use uuid::Uuid;
 
+use pin::Pin;
 use db::database::Database;
 use db::file_storage::FileStorage;
+use db::context::Context;
+use db::storage::Storage;
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {
-    // TODO - rethink whether to identify devices by name
-    pub name: String,
+    pub id: Uuid,
+    pub pin: Pin,
     #[serde(with = "BigArray")]
     pub private_key: [u8; 64],
     pub public_key: [u8; 32],
 }
 
 impl Device {
-    pub fn new(name: &String, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
-        Device {name: name.to_owned(), public_key, private_key}
+    pub fn new(id: Uuid, pin: Pin, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
+        Device {id: id.to_owned(), pin, public_key, private_key}
     }
 
-    pub fn new_random(name: &String) -> Device {
+    pub fn new_random(id: Uuid, pin: Pin) -> Device {
         let (private_key, public_key) = generate_key_pair();
-        Device {name: name.to_owned(), private_key, public_key}
+        Device {id: id.to_owned(), pin, private_key, public_key}
     }
 
-    pub fn load_or_new(name: &String, database: &Database<FileStorage>) -> Result<Device, Error> {
-        if let Some(device_bytes) = database.get_byte_vec(&name).ok() {
+    pub fn load_or_new(id: Uuid, pin: Pin, database: &Database<FileStorage>) -> Result<Device, Error> {
+        if let Some(device_bytes) = database.get_byte_vec(&id.simple().to_string()).ok() {
             let device = Device::from_byte_vec(device_bytes)?;
             return Ok(Device {
-                name: device.name,
+                id: device.id,
+                pin: device.pin,
                 private_key: device.private_key,
                 public_key: device.public_key,
             })
         }
-        let device = Device::new_random(name);
+        let device = Device::new_random(id, pin);
         let device_bytes = device.as_byte_vec()?;
-        database.set_byte_vec(&device.name, device_bytes)?;
+        database.set_byte_vec(&device.id.simple().to_string(), device_bytes)?;
         Ok(device)
     }
 
-    fn as_byte_vec(&self) -> Result<Vec<u8>, Error> {
+    pub fn load<S: Storage>(context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<S>>>) -> Result<Device, Error> {
+        let mut c = context.lock().unwrap();
+        if let Some(device) = c.get_device().ok() {
+            return Ok(device);
+        }
+        let d = database.lock().unwrap();
+        match d.get_device() {
+            Ok(device) => {
+                c.set_device(&device)?;
+                Ok(device)
+            },
+            Err(err) => Err(err),
+        }
+    }
+
+    pub fn save<S: Storage>(&self, context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
+        let d = database.lock().unwrap();
+        d.set_device(self)?;
+        let mut c = context.lock().unwrap();
+        c.set_device(self)?;
+        Ok(())
+    }
+
+    pub fn as_byte_vec(&self) -> Result<Vec<u8>, Error> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)
     }
 
-    fn from_byte_vec(bytes: Vec<u8>) -> Result<Device, Error> {
+    pub fn from_byte_vec(bytes: Vec<u8>) -> Result<Device, Error> {
         let value = serde_json::from_slice(&bytes)?;
         Ok(value)
     }

@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 use std::net::SocketAddr;
+use uuid::Uuid;
 use iron::request::Request;
-use serde_json;
 
-use protocol::secured_device::SecuredDevice;
+use protocol::device::Device;
+use protocol::pairing::Pairing;
 
 pub struct Context {
     storage: HashMap<Vec<u8>, Vec<u8>>,
@@ -35,13 +36,27 @@ impl Context {
         req.remote_addr
     }
 
-    pub fn get_device(&self) -> Option<Vec<u8>> {
-        self.get("device".into())
+    pub fn get_device(&self) -> Result<Device, Error> {
+        let device_bytes = self.get("device".into()).ok_or(Error::new(ErrorKind::Other, "no device in context"))?;
+        let device = Device::from_byte_vec(device_bytes)?;
+        Ok(device)
     }
 
-    pub fn set_device(&mut self, secured_device: &SecuredDevice) -> Result<(), Error> {
-        let device_bytes = serde_json::to_vec(secured_device.to_owned())?;
+    pub fn set_device(&mut self, device: &Device) -> Result<(), Error> {
+        let device_bytes = device.as_byte_vec()?;
         self.set("device".into(), device_bytes);
+        Ok(())
+    }
+
+    pub fn get_pairing(&self, id: Uuid) -> Result<Pairing, Error> {
+        let pairing_bytes = self.get(id.as_bytes().to_vec()).ok_or(Error::new(ErrorKind::Other, "no pairing in context"))?;
+        let pairing = Pairing::from_byte_vec(pairing_bytes)?;
+        Ok(pairing)
+    }
+
+    pub fn set_pairing(&mut self, pairing: &Pairing) -> Result<(), Error> {
+        let pairing_bytes = pairing.as_byte_vec()?;
+        self.set(pairing.id.as_bytes().to_vec(), pairing_bytes);
         Ok(())
     }
 }
