@@ -1,3 +1,9 @@
+use std::collections::HashMap;
+use iron::status;
+use iron::prelude::Response;
+
+use transport::tlv;
+
 pub mod server;
 pub mod router;
 pub mod handlers;
@@ -46,4 +52,11 @@ impl ContentType {
             &ContentType::HapJson => b"application/hap+json".to_vec(),
         }
     }
+}
+
+pub fn response(answer: HashMap<u8, Vec<u8>>, content_type: ContentType) -> Response {
+    let body = tlv::encode(answer);
+    let mut response = Response::with((status::Ok, body));
+    response.headers.set_raw("Content-Type", vec![content_type.as_vec()]);
+    response
 }

@@ -1,4 +1,6 @@
 use std::net::{IpAddr, Ipv4Addr};
+extern crate eui48;
+use eui48::MacAddress;
 
 extern crate hap;
 use hap::transport::Transport;
@@ -16,8 +18,9 @@ fn main() {
     let outlet = outlet::new(information);
 
     let config = Config {
-        name: "qwert".into(),
+        name: "Testoutlet".into(),
         ip: IpAddr::V4(Ipv4Addr::new(192, 168, 0, 49)),
+        device_id: MacAddress::parse_str("00:00:12:23:12:67").unwrap(),
         ..Default::default()
     };
     let mut ip_transport = IpTransport::new_with_device(config).unwrap();

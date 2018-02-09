@@ -2,11 +2,11 @@ use std::io::{Read, Error, ErrorKind};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::net::IpAddr;
+use std::str;
 use rand;
 use rand::Rng;
 use sha2::{Sha512, Digest};
 use iron::prelude::{Request, Response, IronResult};
-use iron::status;
 use srp::server::{UserRecord, SrpServer};
 use srp::client::{SrpClient, srp_private_key};
 use srp::groups::G_3072;
@@ -23,12 +23,10 @@ use db::context::Context;
 use db::storage::Storage;
 use db::database::Database;
 use config::Config;
-use transport::http::ContentType;
+use transport::http::{response, ContentType};
 use transport::tlv;
 use protocol::device::Device;
 use protocol::pairing::Pairing;
-
-use std::str;
 
 pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>, context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<D>>>) -> IronResult<Response> {
     let ip = Context::get_request_address(request).ip();
@@ -42,20 +40,20 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
     if let Some(v) = decoded.get(&0x06) {
         match v[0] {
             1 => {
-                println!("/pair-setup - Got M1: SRP Start Request from {}", ip);
+                println!("/pair-setup - M1: Got SRP Start Request from {}", ip);
 
                 let (t, v) = tlv::Type::State(2).as_type_value();
                 answer.insert(t, v);
 
                 // TODO - Errors for kTLVError_Unavailable, kTLVError_MaxTries and kTLVError_Busy
 
+                let accessory = Device::load::<D>(context, database).unwrap();
+
                 let mut rng = rand::thread_rng();
                 let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>(); // s
                 let b = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
 
-                let device = Device::load::<D>(context, database).unwrap();
-
-                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", device.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
+                let private_key = srp_private_key::<Sha512>(b"Pair-Setup", accessory.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
                 let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
                 let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
 
@@ -85,10 +83,10 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                 // TODO - get rid of all those unwraps
                 session.save(context).unwrap();
 
-                println!("/pair-setup - Sending M2: SRP Start Response to {}", ip);
+                println!("/pair-setup - M2: Sending SRP Start Response to {}", ip);
             },
             3 => {
-                println!("/pair-setup - Got M3: SRP Verify Request from {}", ip);
+                println!("/pair-setup - M3: Got SRP Verify Request from {}", ip);
 
                 let (t, v) = tlv::Type::State(4).as_type_value();
                 answer.insert(t, v);
@@ -110,7 +108,7 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                         Err(_) => {
                             let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                             answer.insert(t, v);
-                            return Ok(response(answer));
+                            return Ok(response(answer, ContentType::PairingTLV8));
                         },
                         Ok(b_proof) => {
                             let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
@@ -122,13 +120,13 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                     session.next_step = 5;
                     session.save(context).unwrap();
 
-                    println!("/pair-setup - Sending M4: SRP Verify Response to {}", ip);
+                    println!("/pair-setup - M4: Sending SRP Verify Response to {}", ip);
                 } else {
                     // some error
                 }
             },
             5 => {
-                println!("/pair-setup - Got M5: SRP Exchange Request from {}", ip);
+                println!("/pair-setup - M5: Got SRP Exchange Request from {}", ip);
 
                 let (t, v) = tlv::Type::State(6).as_type_value();
                 answer.insert(t, v);
@@ -153,17 +151,18 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                         let device_ltpk = sub_tlv.get(&0x03).unwrap();
                         let device_signature = sub_tlv.get(&0x0A).unwrap();
 
+                        let mut device_x = vec![0; 32];
                         let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
-                        hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut encryption_key);
+                        hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut device_x);
 
                         let mut device_info: Vec<u8> = Vec::new();
-                        device_info.extend(encryption_key.to_owned());
+                        device_info.extend(&device_x);
                         device_info.extend(device_pairing_id);
                         device_info.extend(device_ltpk);
                         if !ed25519::verify(&device_info, &device_ltpk, &device_signature) {
                             let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                             answer.insert(t, v);
-                            return Ok(response(answer));
+                            return Ok(response(answer, ContentType::PairingTLV8));
                         }
 
                         // TODO - kTLVError_MaxPeers
@@ -177,15 +176,19 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                         let pairing = Pairing::new(pairing_uuid, pairing_ltpk);
                         pairing.save(context, database).unwrap();
 
+                        let mut accessory_x = vec![0; 32];
+                        let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
+                        hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Accessory-Sign-Info", &mut accessory_x);
+
                         let accessory = Device::load::<D>(context, database).unwrap();
                         let mut accessory_info: Vec<u8> = Vec::new();
-                        accessory_info.extend(&encryption_key);
+                        accessory_info.extend(&accessory_x);
                         accessory_info.extend(accessory.id.as_bytes());
                         accessory_info.extend(&accessory.public_key);
                         let accessory_signature = ed25519::signature(&accessory_info, &accessory.private_key);
 
                         let mut sub_tlv: HashMap<u8, Vec<u8>> = HashMap::new();
-                        let (t, v) = tlv::Type::Identifier(accessory.id.hyphenated().to_string()).as_type_value();
+                        let (t, v) = tlv::Type::Identifier(accessory.id).as_type_value();
                         sub_tlv.insert(t, v);
                         let (t, v) = tlv::Type::PublicKey(accessory.public_key.to_vec()).as_type_value();
                         sub_tlv.insert(t, v);
@@ -196,12 +199,13 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                         let mut encrypted_data = Vec::new();
                         let mut nonce = vec![0, 0, 0, 0];
                         nonce.extend(b"PS-Msg06");
-                        chacha20_poly1305_aead::encrypt(&encryption_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data).unwrap();
+                        let auth_tag = chacha20_poly1305_aead::encrypt(&encryption_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data).unwrap();
+                        encrypted_data.extend(&auth_tag);
 
                         let (t, v) = tlv::Type::EncryptedData(encrypted_data).as_type_value();
                         answer.insert(t, v);
 
-                        println!("/pair-setup - Sending M6: SRP Exchange Response to {}", ip);
+                        println!("/pair-setup - M6: Sending SRP Exchange Response to {}", ip);
                     } else {
                         // some error or just nothing?
                     }
@@ -210,7 +214,7 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                 }
             },
             _ => {
-                println!("/pair-setup - Got invalid state: M{} from {}", v[0], ip);
+                println!("/pair-setup - M{}: Got invalid state from {}", v[0], ip);
                 let (t, v) = tlv::Type::State(0).as_type_value();
                 answer.insert(t, v);
                 // TODO - return a kTLVError?
@@ -221,14 +225,7 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
         answer.insert(t, v);
     }
 
-    Ok(response(answer))
-}
-
-fn response(answer: HashMap<u8, Vec<u8>>) -> Response {
-    let body = tlv::encode(answer);
-    let mut response = Response::with((status::Ok, body));
-    response.headers.set_raw("Content-Type", vec![ContentType::PairingTLV8.as_vec()]);
-    response
+    Ok(response(answer, ContentType::PairingTLV8))
 }
 
 #[derive(Serialize, Deserialize)]

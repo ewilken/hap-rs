@@ -1,5 +1,4 @@
-use rand;
-use rand::Rng;
+use rand::{self, Rng};
 use crypto::ed25519;
 use std::fmt;
 use std::marker::PhantomData;
@@ -9,7 +8,6 @@ use serde::ser::{Serialize, Serializer, SerializeTuple};
 use serde::de;
 use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess};
 use serde_json;
-use uuid::Uuid;
 
 use pin::Pin;
 use db::database::Database;
@@ -19,7 +17,7 @@ use db::storage::Storage;
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {
-    pub id: Uuid,
+    pub id: String,
     pub pin: Pin,
     #[serde(with = "BigArray")]
     pub private_key: [u8; 64],
@@ -27,28 +25,21 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn new(id: Uuid, pin: Pin, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
+    pub fn new(id: String, pin: Pin, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
         Device {id: id.to_owned(), pin, public_key, private_key}
     }
 
-    pub fn new_random(id: Uuid, pin: Pin) -> Device {
+    pub fn new_random(id: String, pin: Pin) -> Device {
         let (private_key, public_key) = generate_key_pair();
         Device {id: id.to_owned(), pin, private_key, public_key}
     }
 
-    pub fn load_or_new(id: Uuid, pin: Pin, database: &Database<FileStorage>) -> Result<Device, Error> {
-        if let Some(device_bytes) = database.get_byte_vec(&id.simple().to_string()).ok() {
-            let device = Device::from_byte_vec(device_bytes)?;
-            return Ok(Device {
-                id: device.id,
-                pin: device.pin,
-                private_key: device.private_key,
-                public_key: device.public_key,
-            })
+    pub fn load_or_new(id: String, pin: Pin, database: &Database<FileStorage>) -> Result<Device, Error> {
+        if let Some(device) = database.get_device().ok() {
+            return Ok(device)
         }
         let device = Device::new_random(id, pin);
-        let device_bytes = device.as_byte_vec()?;
-        database.set_byte_vec(&device.id.simple().to_string(), device_bytes)?;
+        database.set_device(&device)?;
         Ok(device)
     }
 

@@ -1,4 +1,5 @@
 use std::fs;
+use std::str;
 use std::io::{Error, ErrorKind, Read, Write, BufReader, BufWriter};
 use byteorder::{ByteOrder, BigEndian, ReadBytesExt, WriteBytesExt};
 use std::os::unix::fs::PermissionsExt;
@@ -53,14 +54,14 @@ impl FileStorage {
 impl Storage for FileStorage {
     fn get_reader(&self, key: &str) -> Result<BufReader<fs::File>, Error> {
         let file = self.file_for_read(key)?;
-        let mut reader = BufReader::new(file);
+        let reader = BufReader::new(file);
 
         Ok(reader)
     }
 
     fn get_writer(&self, key: &str) -> Result<BufWriter<fs::File>, Error> {
         let file = self.file_for_write(key)?;
-        let mut writer = BufWriter::new(file);
+        let writer = BufWriter::new(file);
 
         Ok(writer)
     }
@@ -82,15 +83,15 @@ impl Storage for FileStorage {
 
     fn get_u64(&self, key: &str) -> Result<u64, Error> {
         let mut reader = self.get_reader(key)?;
-        let mut value = reader.read_u64::<BigEndian>()?;
+        let value = reader.read_u64::<BigEndian>()?;
 
         Ok(value)
     }
 
     fn set_u64(&self, key: &str, value: u64) -> Result<(), Error> {
-        let mut buf = Vec::new();
+        let mut buf = [0; 8];
         BigEndian::write_u64(&mut buf, value);
-        self.set_byte_vec(key, buf)?;
+        self.set_byte_vec(key, buf.to_vec())?;
 
         Ok(())
     }
@@ -98,18 +99,21 @@ impl Storage for FileStorage {
     fn get_uuid(&self, key: &str) -> Result<Uuid, Error> {
         let mut reader = self.get_reader(key)?;
         let mut buf = Vec::new();
-        reader.read(&mut buf)?;
-        let value = Uuid::from_bytes(&buf);
-        // TODO - that's kinda ugly
-        match value {
-            Ok(value) => Ok(value),
-            _ => Err(Error::new(ErrorKind::Other, "there was a problem parsing the UUID")),
+        reader.read_to_end(&mut buf)?;
+        match str::from_utf8(&buf) {
+            Ok(uuid_str) => {
+                match Uuid::parse_str(uuid_str) {
+                    Ok(value) => Ok(value),
+                    _ => Err(Error::new(ErrorKind::Other, "there was a problem parsing the UUID")),
+                }
+            },
+            _ => Err(Error::new(ErrorKind::Other, "there was a problem reading the UUID")),
         }
     }
 
     fn set_uuid(&self, key: &str, value: Uuid) -> Result<(), Error> {
         let mut writer = self.get_writer(key)?;
-        writer.write(value.as_bytes())?;
+        writer.write(value.hyphenated().to_string().as_bytes())?;
 
         Ok(())
     }

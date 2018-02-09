@@ -1,6 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr};
 use std::io::Error;
 use std::env::current_dir;
+use std::str;
 use eui48::MacAddress;
 use rand;
 use rand::Rng;
@@ -32,8 +33,9 @@ pub struct Config {
 
 impl Config {
     pub fn load(&mut self, storage: &Storage) {
-        if let Some(id) = storage.get_uuid("uuid").ok() {
-            self.id = id;
+        if let Some(device_id) = storage.get_byte_vec("device_id").ok() {
+            // TODO - make this less shitty
+            self.device_id = MacAddress::parse_str(str::from_utf8(&device_id).unwrap()).unwrap();
         }
         if let Some(version) = storage.get_u64("version").ok() {
             self.version = version;
@@ -44,7 +46,7 @@ impl Config {
     }
 
     pub fn save(&self, storage: &Storage) -> Result<(), Error> {
-        storage.set_uuid("uuid", self.id.to_owned())?;
+        storage.set_byte_vec("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
         storage.set_u64("version", self.version.to_owned())?;
         storage.set_u64("config_hash", self.config_hash.to_owned())?;
         Ok(())

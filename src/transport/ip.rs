@@ -25,14 +25,15 @@ pub struct IpTransport<S: Storage, D: Storage + Send> {
 
 impl IpTransport<FileStorage, FileStorage> {
     pub fn new_with_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
-        let mut context = Context::new();
+        let context = Context::new();
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
         config.load(&storage);
+        config.save(&storage)?;
 
         let pin = pin::new(&config.pin)?;
-        let device = Device::load_or_new(config.id, pin, &database)?;
+        let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
         let ip_transport = IpTransport {
             config: Arc::new(config),
@@ -41,7 +42,6 @@ impl IpTransport<FileStorage, FileStorage> {
             database: Arc::new(Mutex::new(database)),
             mdns_responder,
         };
-
         device.save(&ip_transport.context, &ip_transport.database)?;
 
         Ok(ip_transport)
