@@ -72,7 +72,6 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                     b: b.to_owned(),
                     b_pub: srp_server.get_b_pub(),
                     shared_secret: None,
-                    next_step: 3,
                 };
 
                 let (t, v) = tlv::Type::PublicKey(session.b_pub.to_owned()).as_type_value();
@@ -117,7 +116,6 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                     }
 
                     session.shared_secret = Some(shared_secret.as_slice().to_vec());
-                    session.next_step = 5;
                     session.save(context).unwrap();
 
                     println!("/pair-setup - M4: Sending SRP Verify Response to {}", ip);
@@ -131,13 +129,13 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                 let (t, v) = tlv::Type::State(6).as_type_value();
                 answer.insert(t, v);
 
-                let data = decoded.get(&0x05).unwrap();
-                let encrypted_data = Vec::from(&data[..data.len() - 16]);
-                let auth_tag = Vec::from(&data[data.len() - 16..]);
-
                 if let Some(session) = SrpPairingSession::load(ip, context) {
                     if let Some(shared_secret) = session.shared_secret {
-                        let mut encryption_key = vec![0; 32];
+                        let data = decoded.get(&0x05).unwrap();
+                        let encrypted_data = Vec::from(&data[..data.len() - 16]);
+                        let auth_tag = Vec::from(&data[data.len() - 16..]);
+                        
+                        let mut encryption_key = [0; 32];
                         let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
                         hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
 
@@ -151,7 +149,7 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                         let device_ltpk = sub_tlv.get(&0x03).unwrap();
                         let device_signature = sub_tlv.get(&0x0A).unwrap();
 
-                        let mut device_x = vec![0; 32];
+                        let mut device_x = [0; 32];
                         let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
                         hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut device_x);
 
@@ -176,7 +174,7 @@ pub fn pair_setup<D: Storage + Send>(request: &mut Request, config: &Arc<Config>
                         let pairing = Pairing::new(pairing_uuid, pairing_ltpk);
                         pairing.save(context, database).unwrap();
 
-                        let mut accessory_x = vec![0; 32];
+                        let mut accessory_x = [0; 32];
                         let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
                         hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Accessory-Sign-Info", &mut accessory_x);
 
@@ -236,7 +234,6 @@ struct SrpPairingSession {
     b: Vec<u8>,
     b_pub: Vec<u8>,
     shared_secret: Option<Vec<u8>>,
-    next_step: u8,
 }
 
 impl SrpPairingSession {

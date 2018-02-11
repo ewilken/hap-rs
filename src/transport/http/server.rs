@@ -9,6 +9,6 @@ use db::database::Database;
 use config::Config;
 
 pub fn serve<D: 'static + Storage + Send>(socket_addr: SocketAddr, config: Arc<Config>, context: Arc<Mutex<Context>>, database: Arc<Mutex<Database<D>>>) {
-    let mut chain = router::chain(config, context, database);
+    let chain = router::chain(config, context, database);
     Iron::new(chain).http(socket_addr).unwrap();
 }

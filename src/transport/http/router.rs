@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use iron;
 use router;
 
-use transport::http::handlers::{pair_setup, pair_verify, accessories, characteristics, pairings, identify};
+use transport::http::handlers::{pair_setup, pair_verify, /*accessories, characteristics, pairings, identify*/};
 use db::context::Context;
 use db::storage::Storage;
 use db::database::Database;
