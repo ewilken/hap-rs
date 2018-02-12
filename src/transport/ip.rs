@@ -42,7 +42,7 @@ impl IpTransport<FileStorage, FileStorage> {
             database: Arc::new(Mutex::new(database)),
             mdns_responder,
         };
-        device.save(&ip_transport.context, &ip_transport.database)?;
+        device.save(&ip_transport.database)?;
 
         Ok(ip_transport)
     }
@@ -51,10 +51,11 @@ impl IpTransport<FileStorage, FileStorage> {
 impl Transport for IpTransport<FileStorage, FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
         self.mdns_responder.start();
-        let config = self.config.clone();
-        let context = self.context.clone();
-        let database = self.database.clone();
-        http::server::serve::<FileStorage>(SocketAddr::new(self.config.ip, self.config.port), config, context, database);
+        http::server::serve::<FileStorage>(
+            &SocketAddr::new(self.config.ip, self.config.port),
+            self.config.clone(),
+            self.database.clone(),
+        );
         Ok(())
     }
 

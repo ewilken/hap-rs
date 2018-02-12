@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
-use std::net::SocketAddr;
 use uuid::Uuid;
-use iron::request::Request;
 
 use protocol::device::Device;
 use protocol::pairing::Pairing;
@@ -30,10 +28,6 @@ impl Context {
 
     pub fn delete(&mut self, key: Vec<u8>) {
         self.storage.remove(&key);
-    }
-
-    pub fn get_request_address(req: &Request) -> SocketAddr {
-        req.remote_addr
     }
 
     pub fn get_device(&self) -> Result<Device, Error> {

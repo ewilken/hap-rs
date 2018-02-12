@@ -18,26 +18,14 @@ impl Pairing {
         Pairing {id, public_key}
     }
 
-    pub fn load<S: Storage>(id: Uuid, context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<S>>>) -> Result<Pairing, Error> {
-        let mut c = context.lock().unwrap();
-        if let Some(pairing) = c.get_pairing(id).ok() {
-            return Ok(pairing);
-        }
+    pub fn load<S: Storage>(id: Uuid, database: &Arc<Mutex<Database<S>>>) -> Result<Pairing, Error> {
         let d = database.lock().unwrap();
-        match d.get_pairing(id) {
-            Ok(pairing) => {
-                c.set_pairing(&pairing)?;
-                Ok(pairing)
-            },
-            Err(err) => Err(err),
-        }
+        d.get_pairing(id)
     }
 
-    pub fn save<S: Storage>(&self, context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
+    pub fn save<S: Storage>(&self, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
         let d = database.lock().unwrap();
         d.set_pairing(self)?;
-        let mut c = context.lock().unwrap();
-        c.set_pairing(self);
         Ok(())
     }
 
