@@ -12,7 +12,6 @@ use serde_json;
 use pin::Pin;
 use db::database::Database;
 use db::file_storage::FileStorage;
-use db::context::Context;
 use db::storage::Storage;
 
 #[derive(Serialize, Deserialize)]
@@ -43,26 +42,14 @@ impl Device {
         Ok(device)
     }
 
-    pub fn load<S: Storage>(context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<S>>>) -> Result<Device, Error> {
-        let mut c = context.lock().unwrap();
-        if let Some(device) = c.get_device().ok() {
-            return Ok(device);
-        }
+    pub fn load<S: Storage>(database: &Arc<Mutex<Database<S>>>) -> Result<Device, Error> {
         let d = database.lock().unwrap();
-        match d.get_device() {
-            Ok(device) => {
-                c.set_device(&device)?;
-                Ok(device)
-            },
-            Err(err) => Err(err),
-        }
+        d.get_device()
     }
 
-    pub fn save<S: Storage>(&self, context: &Arc<Mutex<Context>>, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
+    pub fn save<S: Storage>(&self, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
         let d = database.lock().unwrap();
         d.set_device(self)?;
-        let mut c = context.lock().unwrap();
-        c.set_device(self)?;
         Ok(())
     }
 

@@ -19,7 +19,7 @@ fn main() {
 
     let config = Config {
         name: "Testoutlet".into(),
-        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 0, 49)),
+        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 42, 69)),
         device_id: MacAddress::parse_str("00:00:12:23:12:67").unwrap(),
         ..Default::default()
     };

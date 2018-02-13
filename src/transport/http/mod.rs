@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-use iron::status;
-use iron::prelude::Response;
+use hyper::server::Response;
+use hyper::header::{self, ContentLength};
 
 use transport::tlv;
 
 pub mod server;
-pub mod router;
 pub mod handlers;
+pub mod encrypted_stream;
 
 pub enum Status {
     Success,
@@ -46,17 +46,19 @@ pub enum ContentType {
 }
 
 impl ContentType {
-    pub fn as_vec(&self) -> Vec<u8> {
+    pub fn for_hyper(&self) -> header::ContentType {
         match self {
-            &ContentType::PairingTLV8 => b"application/pairing+tlv8".to_vec(),
-            &ContentType::HapJson => b"application/hap+json".to_vec(),
+            &ContentType::PairingTLV8 => header::ContentType("application/pairing+tlv8".parse().unwrap()),
+            &ContentType::HapJson => header::ContentType("application/hap+json".parse().unwrap()),
         }
     }
 }
 
 pub fn response(answer: HashMap<u8, Vec<u8>>, content_type: ContentType) -> Response {
     let body = tlv::encode(answer);
-    let mut response = Response::with((status::Ok, body));
-    response.headers.set_raw("Content-Type", vec![content_type.as_vec()]);
-    response
+
+    Response::new()
+        .with_header(ContentLength(body.len() as u64))
+        .with_header(content_type.for_hyper())
+        .with_body(body)
 }
