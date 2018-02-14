@@ -3,8 +3,9 @@ use std::sync::{Arc, Mutex};
 use std::cell::RefCell;
 use hyper::server::{Http, Request, Response, Service};
 use hyper::{self, StatusCode, Method};
-use futures::stream::Stream;
 use futures::{future, Future};
+use futures::stream::Stream;
+use futures::sync::oneshot;
 use route_recognizer::Router;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
@@ -28,10 +29,10 @@ struct Api<S: Storage> {
 }
 
 impl<S: Storage> Api<S> {
-    fn new(config: Arc<Config>, database: Arc<Mutex<Database<S>>>) -> Api<S> {
+    fn new(config: Arc<Config>, database: Arc<Mutex<Database<S>>>, secret_sender: oneshot::Sender<[u8; 32]>) -> Api<S> {
         let mut router = Router::new();
         router.add("/pair-setup", Route::Post(Box::new(RefCell::new(pair_setup::PairSetup::new()))));
-        router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new()))));
+        router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new(secret_sender)))));
         //router.add("/accessories", );
         //router.add("/characteristics", );
         //router.add("/characteristics", );
@@ -83,8 +84,8 @@ pub fn serve<S: 'static + Storage + Send>(socket_addr: &SocketAddr, config: Arc<
     let handle = evt_loop.handle();
 
     let server = listener.incoming().for_each(|(stream, _)| {
-        let (stream, _) = EncryptedStream::new(stream);
-        handle.spawn(http.serve_connection(stream, Api::new(config.clone(), database.clone())).map_err(|_| ()).map(|_| ()));
+        let (stream, sender) = EncryptedStream::new(stream);
+        handle.spawn(http.serve_connection(stream, Api::new(config.clone(), database.clone(), sender)).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();

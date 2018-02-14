@@ -17,7 +17,7 @@ impl Context {
 
     pub fn get(&self, key: Vec<u8>) -> Option<Vec<u8>> {
         if let Some(value) = self.storage.get(&key) {
-            return Some(value.to_owned());
+            return Some(value.clone());
         }
         None
     }

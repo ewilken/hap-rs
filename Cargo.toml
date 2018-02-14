@@ -15,6 +15,7 @@ uuid = { version = "0.5.1", features = ["v4", "serde"] }
 serde = "1.0.27"
 serde_derive = "1.0.27"
 serde_json = "1.0.9"
+bytes = "0.4.6"
 byteorder = "1.2.1"
 rust-crypto = "0.2.36"
 futures = "0.1.17"

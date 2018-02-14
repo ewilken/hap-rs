@@ -90,7 +90,7 @@ impl<S: Storage> Handler<S> for PairSetup {
 
                     let (t, v) = tlv::Type::PublicKey(b_pub).as_type_value();
                     answer.insert(t, v);
-                    let (t, v) = tlv::Type::Salt(salt.to_owned()).as_type_value();
+                    let (t, v) = tlv::Type::Salt(salt.clone()).as_type_value();
                     answer.insert(t, v);
 
                     println!("/pair-setup - M2: Sending SRP Start Response");
@@ -262,7 +262,7 @@ fn verify_client_proof<D: Digest>(b_pub: &Vec<u8>, a_pub: &Vec<u8>, a_proof: &Ve
     d.input(b_pub);
     d.input(key);
 
-    if a_proof.to_owned() == d.result().as_slice() {
+    if a_proof.clone() == d.result().as_slice() {
         // H(A, M, K)
         let mut d = D::new();
         d.input(a_pub);

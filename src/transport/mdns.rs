@@ -13,8 +13,8 @@ pub struct Responder {
 impl Responder {
     pub fn new(name: &String, port: &u16, txt_records: [String; 8]) -> Self {
         Responder {
-            name: name.to_owned(),
-            port: port.to_owned(),
+            name: name.clone(),
+            port: port.clone(),
             txt_records,
             stop: None,
         }
@@ -22,9 +22,9 @@ impl Responder {
 
     pub fn start(&mut self) {
         let (tx, rx) = mpsc::channel();
-        let name = self.name.to_owned();
-        let port = self.port.to_owned();
-        let tr = self.txt_records.to_owned();
+        let name = self.name.clone();
+        let port = self.port.clone();
+        let tr = self.txt_records.clone();
         thread::spawn(move || {
             let responder = mdns::Responder::new().unwrap();
             let _svc = responder.register(
@@ -47,7 +47,7 @@ impl Responder {
     }
 
     pub fn stop(&self) {
-        if let Some(stop) = self.stop.to_owned() {
+        if let Some(stop) = self.stop.clone() {
             stop.send(()).unwrap();
         }
     }

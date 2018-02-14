@@ -25,12 +25,12 @@ pub struct Device {
 
 impl Device {
     pub fn new(id: String, pin: Pin, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
-        Device {id: id.to_owned(), pin, public_key, private_key}
+        Device {id: id.clone(), pin, public_key, private_key}
     }
 
     pub fn new_random(id: String, pin: Pin) -> Device {
         let (private_key, public_key) = generate_key_pair();
-        Device {id: id.to_owned(), pin, private_key, public_key}
+        Device {id: id.clone(), pin, private_key, public_key}
     }
 
     pub fn load_or_new(id: String, pin: Pin, database: &Database<FileStorage>) -> Result<Device, Error> {

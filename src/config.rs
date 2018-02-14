@@ -47,8 +47,8 @@ impl Config {
 
     pub fn save(&self, storage: &Storage) -> Result<(), Error> {
         storage.set_byte_vec("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
-        storage.set_u64("version", self.version.to_owned())?;
-        storage.set_u64("config_hash", self.config_hash.to_owned())?;
+        storage.set_u64("version", self.version.clone())?;
+        storage.set_u64("config_hash", self.config_hash.clone())?;
         Ok(())
     }
 

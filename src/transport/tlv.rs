@@ -6,28 +6,28 @@ pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     for (k, v) in hm.iter() {
         let length = v.len();
         if length <= 255 {
-            vec.push(k.to_owned());
+            vec.push(k.clone());
             vec.push(length as u8);
             for byte in v {
-                vec.push(byte.to_owned());
+                vec.push(byte.clone());
             }
         } else {
             let mut l = length;
             let mut p = 0;
             while l > 255 {
-                vec.push(k.to_owned());
+                vec.push(k.clone());
                 vec.push(255);
                 for byte in &v[p..(p + 255)] {
-                    vec.push(byte.to_owned());
+                    vec.push(byte.clone());
                 }
                 l -= 255;
                 p += 255;
             }
             if l > 0 {
-                vec.push(k.to_owned());
+                vec.push(k.clone());
                 vec.push(l as u8);
                 for byte in &v[p..(p + l)] {
-                    vec.push(byte.to_owned());
+                    vec.push(byte.clone());
                 }
             }
         }
@@ -45,11 +45,11 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
         let l = tlv[p + 1];
         if l < 255 {
             if t != pt && buf.len() > 0 {
-                hm.insert(t, buf.to_owned());
+                hm.insert(t, buf.clone());
                 buf.clear();
             }
             buf.extend_from_slice(&tlv[p + 2..p + 2 + l as usize]);
-            hm.insert(t, buf.to_owned());
+            hm.insert(t, buf.clone());
             buf.clear();
         } else {
             buf.extend_from_slice(&tlv[p + 2..p + 2 + l as usize]);
@@ -58,7 +58,7 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
         p = p + 2 + l as usize;
     }
     if buf.len() > 0 {
-        hm.insert(pt, buf.to_owned());
+        hm.insert(pt, buf.clone());
         buf.clear();
     }
     hm

@@ -44,7 +44,7 @@ impl FileStorage {
     }
 
     fn path_to_file(&self, file: &str) -> PathBuf {
-        let mut file_path = self.dir_path.to_owned();
+        let mut file_path = self.dir_path.clone();
         file_path.push(file);
 
         file_path

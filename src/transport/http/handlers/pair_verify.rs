@@ -1,4 +1,3 @@
-use std::io::{Read, Error};
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use std::str;
@@ -11,6 +10,7 @@ use crypto::{curve25519, ed25519};
 use ring::{hkdf, hmac, digest};
 use chacha20_poly1305_aead;
 use uuid::Uuid;
+use futures::sync::oneshot;
 
 use transport::http::{response, ContentType};
 use transport::http::handlers::Handler;
@@ -21,7 +21,6 @@ use protocol::device::Device;
 use protocol::pairing::Pairing;
 
 struct Session {
-    b: [u8; 32],
     b_pub: [u8; 32],
     a_pub: Vec<u8>,
     shared_secret: [u8; 32],
@@ -29,12 +28,13 @@ struct Session {
 }
 
 pub struct PairVerify {
-    session: Option<Session>
+    session: Option<Session>,
+    secret_sender: Option<oneshot::Sender<[u8; 32]>>,
 }
 
 impl PairVerify {
-    pub fn new() -> PairVerify {
-        PairVerify { session: None }
+    pub fn new(secret_sender: oneshot::Sender<[u8; 32]>) -> PairVerify {
+        PairVerify { session: None, secret_sender: Some(secret_sender) }
     }
 }
 
@@ -76,9 +76,8 @@ impl<S: Storage> Handler<S> for PairVerify {
                         hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Verify-Encrypt-Info", &mut session_key);
 
                         self.session = Some(Session {
-                            b,
                             b_pub,
-                            a_pub: a_pub.to_owned(),
+                            a_pub: a_pub.clone(),
                             shared_secret,
                             session_key,
                         });
@@ -128,6 +127,10 @@ impl<S: Storage> Handler<S> for PairVerify {
                         if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
                             let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                             answer.insert(t, v);
+                        }
+
+                        if let Some(sender) = self.secret_sender.take() {
+                            sender.send(session.shared_secret).unwrap();
                         }
 
                         println!("/pair-verify - M4: Sending Verify Finish Response");
