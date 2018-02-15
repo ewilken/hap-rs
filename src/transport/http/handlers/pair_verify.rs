@@ -83,7 +83,7 @@ impl<S: Storage> Handler<S> for PairVerify {
                         });
 
                         let mut encrypted_data = Vec::new();
-                        let mut nonce = vec![0, 0, 0, 0];
+                        let mut nonce = vec![0; 4];
                         nonce.extend(b"PV-Msg02");
                         let auth_tag = chacha20_poly1305_aead::encrypt(&session_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data).unwrap();
                         encrypted_data.extend(&auth_tag);
@@ -108,7 +108,7 @@ impl<S: Storage> Handler<S> for PairVerify {
                         let auth_tag = Vec::from(&data[data.len() - 16..]);
 
                         let mut decrypted_data = Vec::new();
-                        let mut nonce = vec![0, 0, 0, 0];
+                        let mut nonce = vec![0; 4];
                         nonce.extend(b"PV-Msg03");
                         chacha20_poly1305_aead::decrypt(&session.session_key, &nonce, &[], &encrypted_data, &auth_tag, &mut decrypted_data).unwrap();
 

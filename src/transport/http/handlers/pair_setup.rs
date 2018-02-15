@@ -150,7 +150,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
 
                             let mut decrypted_data = Vec::new();
-                            let mut nonce = vec![0, 0, 0, 0];
+                            let mut nonce = vec![0; 4];
                             nonce.extend(b"PS-Msg05");
                             chacha20_poly1305_aead::decrypt(&encryption_key, &nonce, &[], &encrypted_data, &auth_tag, &mut decrypted_data).unwrap();
 
@@ -205,7 +205,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             let encoded_sub_tlv = tlv::encode(sub_tlv);
 
                             let mut encrypted_data = Vec::new();
-                            let mut nonce = vec![0, 0, 0, 0];
+                            let mut nonce = vec![0; 4];
                             nonce.extend(b"PS-Msg06");
                             let auth_tag = chacha20_poly1305_aead::encrypt(&encryption_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data).unwrap();
                             encrypted_data.extend(&auth_tag);
