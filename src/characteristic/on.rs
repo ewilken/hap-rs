@@ -1,16 +1,17 @@
-use characteristic;
+use characteristic::{Characteristic, Format, Perm};
 
-pub type On = characteristic::Characteristic<bool>;
+pub type On = Characteristic<bool>;
 
 pub fn new() -> On {
     On {
         hap_type: "25".into(),
+        format: Format::String,
         perms: vec![
-            characteristic::Perm::PairedRead,
-            characteristic::Perm::PairedWrite,
-            characteristic::Perm::Events,
+            Perm::PairedRead,
+            Perm::PairedWrite,
+            Perm::Events,
         ],
-        value: false,
+        value: Some(false),
         ..Default::default()
     }
 }

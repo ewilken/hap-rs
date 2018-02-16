@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use hyper::server::Response;
 use hyper::header::{self, ContentLength};
+use serde_json;
 
 use transport::tlv;
 
@@ -40,7 +41,7 @@ impl Status {
     }
 }
 
-pub enum ContentType {
+enum ContentType {
     PairingTLV8,
     HapJson,
 }
@@ -54,9 +55,17 @@ impl ContentType {
     }
 }
 
-pub fn response(answer: HashMap<u8, Vec<u8>>, content_type: ContentType) -> Response {
+pub fn tlv_response(answer: HashMap<u8, Vec<u8>>) -> Response {
     let body = tlv::encode(answer);
+    response(body, ContentType::PairingTLV8)
+}
 
+pub fn json_response(answer: serde_json::Value) -> Response {
+    let body = serde_json::to_vec(&answer).unwrap();
+    response(body, ContentType::HapJson)
+}
+
+fn response(body: Vec<u8>, content_type: ContentType) -> Response {
     Response::new()
         .with_header(ContentLength(body.len() as u64))
         .with_header(content_type.for_hyper())

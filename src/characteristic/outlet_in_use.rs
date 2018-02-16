@@ -1,15 +1,16 @@
-use characteristic;
+use characteristic::{Characteristic, Format, Perm};
 
-pub type OutletInUse = characteristic::Characteristic<bool>;
+pub type OutletInUse = Characteristic<bool>;
 
 pub fn new() -> OutletInUse {
     OutletInUse {
         hap_type: "26".into(),
+        format: Format::String,
         perms: vec![
-            characteristic::Perm::PairedRead,
-            characteristic::Perm::Events,
+            Perm::PairedRead,
+            Perm::Events,
         ],
-        value: false,
+        value: Some(false),
         ..Default::default()
     }
 }

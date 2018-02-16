@@ -1,30 +1,15 @@
-use characteristic;
-use service::ServiceT;
-use hap_type;
+use service::Service;
+use characteristic::{on, outlet_in_use};
 
-#[derive(Default)]
-pub struct Outlet {
-    id: u64,
-    hap_type: hap_type::HapType,
-
-    pub on: characteristic::on::On,
-    pub outlet_in_use: characteristic::outlet_in_use::OutletInUse,
-}
-
-impl ServiceT for Outlet {
-    fn get_characteristics(&self) -> Vec<&characteristic::CharacteristicT> {
-        vec![
-            &self.on,
-            &self.outlet_in_use,
-        ]
-    }
-}
+pub type Outlet = Service;
 
 pub fn new() -> Outlet {
     Outlet {
         hap_type: "47".into(),
-        on: characteristic::on::new(),
-        outlet_in_use: characteristic::outlet_in_use::new(),
+        characteristics: vec![
+            Box::new(on::new()),
+            Box::new(outlet_in_use::new()),
+        ],
         ..Default::default()
     }
 }

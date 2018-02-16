@@ -1,10 +1,32 @@
-use service;
+use serde_json;
+
+use service::Service;
 
 pub mod outlet;
 
-pub trait AccessoryT {
-    fn get_services(&self) -> Vec<&service::ServiceT>;
-    fn set_information(&mut self, information: Information);
+#[derive(Default)]
+pub struct Accessory {
+    pub id: u64,
+    pub services: Vec<Service>,
+}
+
+impl Accessory {
+    /*fn set_information(&mut self, information: Information) {
+        self.services[0].characteristics[0].set_value(information.identify).unwrap();
+        self.services[0].characteristics[1].set_value(information.manufacturer).unwrap();
+        self.services[0].characteristics[2].set_value(information.model).unwrap();
+        self.services[0].characteristics[3].set_value(information.name).unwrap();
+        self.services[0].characteristics[4].set_value(information.serial_number).unwrap();
+        self.services[0].characteristics[5].set_value(information.firmware_revision).unwrap();
+    }*/
+
+    pub fn as_json(&self) -> serde_json::Value {
+        let services: Vec<serde_json::Value> = self.services.iter().map(|s| s.as_json()).collect();
+        json!({
+            "aid": self.id,
+            "services": services,
+        })
+    }
 }
 
 // TODO - maybe infere the types somehow from characteristic::Characteristic

@@ -1,14 +1,14 @@
-use characteristic;
+use characteristic::{Characteristic, Format, Perm};
 
-pub type SerialNumber = characteristic::Characteristic<String>;
+pub type SerialNumber = Characteristic<String>;
 
 pub fn new() -> SerialNumber {
     SerialNumber {
         hap_type: "30".into(),
+        format: Format::String,
         perms: vec![
-            characteristic::Perm::PairedRead,
+            Perm::PairedRead,
         ],
-        value: "".into(),
         ..Default::default()
     }
 }

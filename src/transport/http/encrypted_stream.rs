@@ -55,10 +55,10 @@ impl EncryptedStream {
                 self.already_copied = 0;
                 self.decrypted_ready = false;
             }
-            
+
             return Ok(len);
         }
-        
+
         Err(ErrorKind::WouldBlock.into())
     }
 
@@ -74,14 +74,13 @@ impl EncryptedStream {
             &self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
             self.missing_data_for_decrypted_buf = false;
             self.decrypted_ready = true;
-            
+
             return self.read_decrypted(buf);
         }
 
-        
         Err(ErrorKind::WouldBlock.into())
     }
-    
+
     fn read_stream(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.missing_data_for_encrypted_buf {
             let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..])?;
@@ -143,7 +142,26 @@ impl Read for EncryptedStream {
 
 impl Write for EncryptedStream {
     fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
-        self.stream.write(buf)
+        let mut write_buf = BytesMut::from_buf(buf);
+        let mut written = 0;
+
+        while write_buf.len() > 1024 {
+            let chunk = encrypt_chunk(
+                &self.shared_secret.unwrap(),
+                write_buf[..1024].to_vec(),
+                &mut self.encrypt_count,
+            );
+            written += self.stream.write(&chunk)?;
+            write_buf.advance(1024);
+        }
+
+        let chunk = encrypt_chunk(
+            &self.shared_secret.unwrap(),
+            write_buf.to_vec(),
+            &mut self.encrypt_count,
+        );
+        written += self.stream.write(&chunk)?;
+        Ok(written)
     }
 
     fn flush(&mut self) -> Result<(), io::Error> {
@@ -162,16 +180,35 @@ impl AsyncWrite for EncryptedStream {
 fn decrypt_chunk(shared_secret: &[u8; 32], aad: &[u8], data: Vec<u8>, auth_tag: &[u8], count: &mut u64) -> Vec<u8> {
     let mut decrypted_data = Vec::new();
     let read_key = compute_read_key(shared_secret);
-    
+
     let mut nonce = vec![0; 4];
     let mut suffix = vec![0; 8];
     LittleEndian::write_u64(&mut suffix, count.clone());
     nonce.extend(suffix);
     *count += 1;
-    
+
     // TODO - handle the error properly and drop the connection if decryption fails
     chacha20_poly1305_aead::decrypt(&read_key, &nonce, aad, &data, auth_tag, &mut decrypted_data).unwrap();
     decrypted_data
+}
+
+fn encrypt_chunk(shared_secret: &[u8; 32], data: Vec<u8>, count: &mut u64) -> Vec<u8> {
+    let mut encrypted_data = Vec::with_capacity(data.len() + 16);
+    let write_key = compute_write_key(shared_secret);
+
+    let mut nonce = vec![0; 4];
+    let mut suffix = vec![0; 8];
+    LittleEndian::write_u64(&mut suffix, count.clone());
+    nonce.extend(suffix);
+    *count += 1;
+
+    let mut aad = Vec::with_capacity(2);
+    LittleEndian::write_u16(&mut aad, data.len() as u16);
+
+    // TODO - handle the error properly
+    let auth_tag = chacha20_poly1305_aead::encrypt(&write_key, &nonce, &aad, &data, &mut encrypted_data).unwrap();
+    encrypted_data.extend(&auth_tag);
+    [aad, encrypted_data].concat()
 }
 
 fn compute_read_key(shared_secret: &[u8; 32]) -> [u8; 32] {

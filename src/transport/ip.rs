@@ -4,7 +4,7 @@ use transport::mdns::Responder;
 use transport::http;
 use std::net::SocketAddr;
 
-use accessory::AccessoryT;
+use accessory::Accessory;
 
 use config::Config;
 use db::storage::Storage;
@@ -21,10 +21,11 @@ pub struct IpTransport<S: Storage, D: Storage + Send> {
     storage: S,
     database: Arc<Mutex<Database<D>>>,
     mdns_responder: Responder,
+    accessories: Arc<Vec<Accessory>>,
 }
 
 impl IpTransport<FileStorage, FileStorage> {
-    pub fn new_with_device(mut config: Config/*, accessory: A*/) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+    pub fn new(mut config: Config, accessories: Vec<Accessory>) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
         let context = Context::new();
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
@@ -41,6 +42,7 @@ impl IpTransport<FileStorage, FileStorage> {
             storage,
             database: Arc::new(Mutex::new(database)),
             mdns_responder,
+            accessories: Arc::new(accessories),
         };
         device.save(&ip_transport.database)?;
 
@@ -55,6 +57,7 @@ impl Transport for IpTransport<FileStorage, FileStorage> {
             &SocketAddr::new(self.config.ip, self.config.port),
             self.config.clone(),
             self.database.clone(),
+            self.accessories.clone(),
         );
         Ok(())
     }

@@ -19,10 +19,12 @@ use chacha20_poly1305_aead;
 use crypto::ed25519;
 use uuid::Uuid;
 
+use accessory::Accessory;
+
 use db::storage::Storage;
 use db::database::Database;
 use config::Config;
-use transport::http::{response, ContentType};
+use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
 use protocol::device::Device;
@@ -47,7 +49,7 @@ impl PairSetup {
 }
 
 impl<S: Storage> Handler<S> for PairSetup {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Accessory>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
@@ -118,7 +120,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             Err(_) => {
                                 let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                                 answer.insert(t, v);
-                                return Box::new(future::ok(response(answer, ContentType::PairingTLV8)));
+                                return Box::new(future::ok(tlv_response(answer)));
                             },
                             Ok(b_proof) => {
                                 let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
@@ -170,7 +172,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             if !ed25519::verify(&device_info, &device_ltpk, &device_signature) {
                                 let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                                 answer.insert(t, v);
-                                return Box::new(future::ok(response(answer, ContentType::PairingTLV8)));
+                                return Box::new(future::ok(tlv_response(answer)));
                             }
 
                             // TODO - kTLVError_MaxPeers
@@ -233,7 +235,7 @@ impl<S: Storage> Handler<S> for PairSetup {
             answer.insert(t, v);
         }
 
-        Box::new(future::ok(response(answer, ContentType::PairingTLV8)))
+        Box::new(future::ok(tlv_response(answer)))
     }
 }
 

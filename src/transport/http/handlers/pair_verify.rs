@@ -12,7 +12,9 @@ use chacha20_poly1305_aead;
 use uuid::Uuid;
 use futures::sync::oneshot;
 
-use transport::http::{response, ContentType};
+use accessory::Accessory;
+
+use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
 use db::storage::Storage;
@@ -39,7 +41,7 @@ impl PairVerify {
 }
 
 impl<S: Storage> Handler<S> for PairVerify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Accessory>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
@@ -146,6 +148,6 @@ impl<S: Storage> Handler<S> for PairVerify {
 
         }
 
-        Box::new(future::ok(response(answer, ContentType::PairingTLV8)))
+        Box::new(future::ok(tlv_response(answer)))
     }
 }

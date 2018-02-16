@@ -1,14 +1,14 @@
-use characteristic;
+use characteristic::{Characteristic, Format, Perm};
 
-pub type Model = characteristic::Characteristic<String>;
+pub type Model = Characteristic<String>;
 
 pub fn new() -> Model {
     Model {
         hap_type: "21".into(),
+        format: Format::String,
         perms: vec![
-            characteristic::Perm::PairedRead,
+            Perm::PairedRead,
         ],
-        value: "".into(),
         ..Default::default()
     }
 }

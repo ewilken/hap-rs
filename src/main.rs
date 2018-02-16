@@ -19,11 +19,11 @@ fn main() {
 
     let config = Config {
         name: "Testoutlet".into(),
-        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 0, 49)),
+        ip: IpAddr::V4(Ipv4Addr::new(192, 168, 178, 149)),
         //device_id: MacAddress::parse_str("00:00:12:23:12:67").unwrap(),
         ..Default::default()
     };
-    let mut ip_transport = IpTransport::new_with_device(config).unwrap();
+    let mut ip_transport = IpTransport::new(config, vec![outlet]).unwrap();
 
     ip_transport.start().unwrap();
 }
