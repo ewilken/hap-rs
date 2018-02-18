@@ -32,7 +32,25 @@ impl<S: Storage> Handler<S> for Pairings {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
-        println!("/pairings");
+        if let (Some(v), Some(m)) = (decoded.get(&0x06), decoded.get(&0x00)) {
+            match (v[0], m[0]) {
+                (1, 3) => {
+                    println!("/pairings - M1: Got Add Pairing Request");
+                },
+                (1, 4) => {
+                    println!("/pairings - M1: Got Remove Pairing Request");
+
+                    let (t, v) = tlv::Type::State(2).as_type_value();
+                    answer.insert(t, v);
+
+                    let pairing_id = decoded.get(&0x01).unwrap();
+                },
+                (1, 5) => {
+                    println!("/pairings - M1: Got List Pairings Request");
+                },
+                _ => {},
+            }
+        }
 
         Box::new(future::ok(tlv_response(answer)))
     }

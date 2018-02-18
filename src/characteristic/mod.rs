@@ -69,11 +69,15 @@ impl<T: Default + Serialize> Characteristic<T> {
     }
 }
 
-pub trait CharacteristicT {
+pub trait HapCharacteristic {
+    fn set_id(&mut self, id: u64);
     fn as_json(&self) -> serde_json::Value;
 }
 
-impl<T: Default + Serialize> CharacteristicT for Characteristic<T> {
+impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> {
+    fn set_id(&mut self, id: u64) {
+        self.set_id(id)
+    }
 
     fn as_json(&self) -> serde_json::Value {
         let perms: Vec<&str> = self.perms.iter().map(|p| p.as_str()).collect();

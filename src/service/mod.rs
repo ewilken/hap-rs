@@ -1,6 +1,6 @@
 use serde_json;
 
-use characteristic::CharacteristicT;
+use characteristic::HapCharacteristic;
 use hap_type::HapType;
 
 pub mod accessory_information;
@@ -10,7 +10,7 @@ pub mod outlet;
 pub struct Service {
     pub id: u64,
     pub hap_type: HapType,
-    pub characteristics: Vec<Box<CharacteristicT>>,
+    pub characteristics: Vec<Box<HapCharacteristic>>,
 }
 
 impl Service {
