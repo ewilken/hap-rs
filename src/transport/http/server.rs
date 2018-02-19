@@ -10,7 +10,7 @@ use route_recognizer::Router;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
 
-use accessory::Accessory;
+use accessory::HapAccessory;
 
 use transport::http::handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify};
 use transport::http::encrypted_stream::EncryptedStream;
@@ -27,12 +27,12 @@ enum Route<S: Storage> {
 struct Api<S: Storage> {
     config: Arc<Config>,
     database: Arc<Mutex<Database<S>>>,
-    accessories: Arc<Vec<Accessory>>,
+    accessories: Arc<Vec<Box<HapAccessory>>>,
     router: Arc<Router<Route<S>>>,
 }
 
 impl<S: Storage> Api<S> {
-    fn new(config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: Arc<Vec<Accessory>>, secret_sender: oneshot::Sender<[u8; 32]>) -> Api<S> {
+    fn new(config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: Arc<Vec<Box<HapAccessory>>>, secret_sender: oneshot::Sender<[u8; 32]>) -> Api<S> {
         let mut router = Router::new();
         router.add("/pair-setup", Route::Post(Box::new(RefCell::new(pair_setup::PairSetup::new()))));
         router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new(secret_sender)))));
@@ -81,7 +81,7 @@ impl<S: 'static + Storage> Service for Api<S> {
     }
 }
 
-pub fn serve<S: 'static + Storage + Send>(socket_addr: &SocketAddr, config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: Arc<Vec<Accessory>>) {
+pub fn serve<S: 'static + Storage + Send>(socket_addr: &SocketAddr, config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: Arc<Vec<Box<HapAccessory>>>) {
     let mut evt_loop = Core::new().unwrap();
     let listener = TcpListener::bind(socket_addr, &evt_loop.handle()).unwrap();
     let http: Http<hyper::Chunk> = Http::new();

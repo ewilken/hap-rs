@@ -12,7 +12,7 @@ use chacha20_poly1305_aead;
 use uuid::Uuid;
 use futures::sync::oneshot;
 
-use accessory::Accessory;
+use accessory::HapAccessory;
 
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
@@ -41,7 +41,7 @@ impl PairVerify {
 }
 
 impl<S: Storage> Handler<S> for PairVerify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Accessory>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Box<HapAccessory>>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 

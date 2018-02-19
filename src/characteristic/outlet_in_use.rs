@@ -5,12 +5,12 @@ pub type OutletInUse = Characteristic<bool>;
 pub fn new() -> OutletInUse {
     OutletInUse {
         hap_type: "26".into(),
-        format: Format::String,
+        format: Format::Bool,
         perms: vec![
             Perm::PairedRead,
             Perm::Events,
         ],
-        value: Some(false),
+        value: Some(true),
         ..Default::default()
     }
 }

@@ -3,7 +3,7 @@ use futures::Future;
 use hyper::{Uri, Error};
 use hyper::server::Response;
 
-use accessory::Accessory;
+use accessory::HapAccessory;
 
 use db::storage::Storage;
 use db::database::Database;
@@ -16,5 +16,5 @@ pub mod pair_verify;
 pub mod pairings;
 
 pub trait Handler<S: Storage> {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Accessory>>) -> Box<Future<Item=Response, Error=Error>>;
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Box<HapAccessory>>>) -> Box<Future<Item=Response, Error=Error>>;
 }

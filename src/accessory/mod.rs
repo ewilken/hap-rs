@@ -1,36 +1,31 @@
 use serde_json;
 
-use service::Service;
+use service::HapService;
 
 pub mod outlet;
 
-#[derive(Default)]
-pub struct Accessory {
-    pub id: u64,
-    pub services: Vec<Service>,
+pub trait HapAccessory {
+    fn get_id(&self) -> &u64;
+    fn set_id(&mut self, id: u64);
+    fn get_services(&self) -> Vec<&HapService>;
+    fn get_mut_services(&mut self) -> Vec<&mut HapService>;
+    fn set_information(&mut self, information: Information);
+    fn to_json(&self) -> serde_json::Value;
 }
 
-impl Accessory {
-    /*fn set_information(&mut self, information: Information) {
-        self.services[0].characteristics[0].set_value(information.identify).unwrap();
-        self.services[0].characteristics[1].set_value(information.manufacturer).unwrap();
-        self.services[0].characteristics[2].set_value(information.model).unwrap();
-        self.services[0].characteristics[3].set_value(information.name).unwrap();
-        self.services[0].characteristics[4].set_value(information.serial_number).unwrap();
-        self.services[0].characteristics[5].set_value(information.firmware_revision).unwrap();
-    }*/
-
-    pub fn as_json(&self) -> serde_json::Value {
-        let services: Vec<serde_json::Value> = self.services.iter().map(|s| s.as_json()).collect();
-        json!({
-            "aid": self.id,
-            "services": services,
-        })
+pub fn init_iids(accessory: &mut Box<HapAccessory>) {
+    let mut next_iid = 1;
+    for service in accessory.get_mut_services() {
+        service.set_id(next_iid);
+        next_iid += 1;
+        for characteristic in service.get_mut_characteristics() {
+            characteristic.set_id(next_iid);
+            next_iid += 1;
+        }
     }
 }
 
 // TODO - maybe infere the types somehow from characteristic::Characteristic
-#[derive(Default)]
 pub struct Information {
     pub identify: bool,
     pub manufacturer: String,
@@ -38,6 +33,19 @@ pub struct Information {
     pub name: String,
     pub serial_number: String,
     pub firmware_revision: String,
+}
+
+impl Default for Information {
+    fn default() -> Information {
+        Information {
+            identify: false,
+            manufacturer: "undefined".into(),
+            model: "undefined".into(),
+            name: "undefined".into(),
+            serial_number: "undefined".into(),
+            firmware_revision: "undefined".into(),
+        }
+    }
 }
 
 pub enum Category {

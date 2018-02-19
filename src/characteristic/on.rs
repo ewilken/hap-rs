@@ -5,7 +5,7 @@ pub type On = Characteristic<bool>;
 pub fn new() -> On {
     On {
         hap_type: "25".into(),
-        format: Format::String,
+        format: Format::Bool,
         perms: vec![
             Perm::PairedRead,
             Perm::PairedWrite,

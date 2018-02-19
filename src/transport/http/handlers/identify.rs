@@ -4,7 +4,7 @@ use hyper::server::Response;
 use hyper::{self, Uri};
 use futures::{future, Future};
 
-use accessory::Accessory;
+use accessory::HapAccessory;
 
 use db::storage::Storage;
 use db::database::Database;
@@ -28,7 +28,7 @@ impl Identify {
 }
 
 impl<S: Storage> Handler<S> for Identify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Accessory>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Box<HapAccessory>>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 

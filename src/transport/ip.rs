@@ -4,7 +4,7 @@ use transport::mdns::Responder;
 use transport::http;
 use std::net::SocketAddr;
 
-use accessory::Accessory;
+use accessory::{self, HapAccessory};
 
 use config::Config;
 use db::storage::Storage;
@@ -21,11 +21,11 @@ pub struct IpTransport<S: Storage, D: Storage + Send> {
     storage: S,
     database: Arc<Mutex<Database<D>>>,
     mdns_responder: Responder,
-    accessories: Arc<Vec<Accessory>>,
+    accessories: Arc<Vec<Box<HapAccessory>>>,
 }
 
 impl IpTransport<FileStorage, FileStorage> {
-    pub fn new(mut config: Config, accessories: Vec<Accessory>) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+    pub fn new(mut config: Config, accessories: Vec<Box<HapAccessory>>) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
         let context = Context::new();
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
@@ -36,17 +36,30 @@ impl IpTransport<FileStorage, FileStorage> {
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
+
+        let mut a = accessories;
+        init_aids(&mut a);
+
         let ip_transport = IpTransport {
             config: Arc::new(config),
             context: Arc::new(Mutex::new(context)),
             storage,
             database: Arc::new(Mutex::new(database)),
             mdns_responder,
-            accessories: Arc::new(accessories),
+            accessories: Arc::new(a),
         };
         device.save(&ip_transport.database)?;
 
         Ok(ip_transport)
+    }
+}
+
+fn init_aids(accessories: &mut Vec<Box<HapAccessory>>) {
+    let mut next_aid = 1;
+    for accessory in accessories.iter_mut() {
+        accessory.set_id(next_aid);
+        next_aid += 1;
+        accessory::init_iids(accessory);
     }
 }
 

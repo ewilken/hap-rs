@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use hyper::server::Response;
 use hyper::header::{self, ContentLength};
 use serde_json;
+use std::str;
 
 use transport::tlv;
 
@@ -62,6 +63,8 @@ pub fn tlv_response(answer: HashMap<u8, Vec<u8>>) -> Response {
 
 pub fn json_response(answer: serde_json::Value) -> Response {
     let body = serde_json::to_vec(&answer).unwrap();
+    println!("response: {:?}", str::from_utf8(&body).unwrap());
+
     response(body, ContentType::HapJson)
 }
 

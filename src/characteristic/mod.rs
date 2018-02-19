@@ -1,4 +1,4 @@
-use std::io::{Error/*, ErrorKind*/};
+use std::io::{Error, ErrorKind};
 use serde::Serialize;
 use serde_json;
 
@@ -71,7 +71,7 @@ impl<T: Default + Serialize> Characteristic<T> {
 
 pub trait HapCharacteristic {
     fn set_id(&mut self, id: u64);
-    fn as_json(&self) -> serde_json::Value;
+    fn to_json(&self) -> serde_json::Value;
 }
 
 impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> {
@@ -79,8 +79,9 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> {
         self.set_id(id)
     }
 
-    fn as_json(&self) -> serde_json::Value {
+    fn to_json(&self) -> serde_json::Value {
         let perms: Vec<&str> = self.perms.iter().map(|p| p.as_str()).collect();
+        // TODO - only include format field if characteristic has PairedRead permission
         json!({
             "type": self.hap_type,
             "value": self.value,

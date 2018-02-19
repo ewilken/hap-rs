@@ -19,7 +19,7 @@ use chacha20_poly1305_aead;
 use crypto::ed25519;
 use uuid::Uuid;
 
-use accessory::Accessory;
+use accessory::HapAccessory;
 
 use db::storage::Storage;
 use db::database::Database;
@@ -49,7 +49,7 @@ impl PairSetup {
 }
 
 impl<S: Storage> Handler<S> for PairSetup {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Accessory>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Box<HapAccessory>>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
