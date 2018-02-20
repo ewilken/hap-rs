@@ -1,6 +1,7 @@
 use std::io::{Error, ErrorKind};
-use serde::Serialize;
+use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde_json;
+use erased_serde;
 
 use hap_type::HapType;
 
@@ -20,14 +21,18 @@ pub struct Characteristic<T: Default + Serialize> {
     format: Format,
     perms: Vec<Perm>,
     description: Option<String>,
+    event_notifications: Option<bool>,
 
     value: Option<T>,
     unit: Option<Unit>,
 
-    max_len: Option<u32>,
     max_value: Option<T>,
     min_value: Option<T>,
     step_value: Option<T>,
+    max_len: Option<u16>,
+    max_data_len: Option<u32>,
+    valid_values: Option<Vec<T>>,
+    valid_values_range: Option<[T; 2]>,
 }
 
 impl<T: Default + Serialize> Characteristic<T> {
@@ -69,99 +74,115 @@ impl<T: Default + Serialize> Characteristic<T> {
     }
 }
 
-pub trait HapCharacteristic {
-    fn set_id(&mut self, id: u64);
-    fn to_json(&self) -> serde_json::Value;
+impl<T: Default + Serialize> Serialize for Characteristic<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_struct("Characteristic", 15)?;
+        state.serialize_field("iid", &self.id)?;
+        state.serialize_field("type", &self.hap_type)?;
+        state.serialize_field("format", &self.format)?;
+        state.serialize_field("perms", &self.perms)?;
+        if let Some(ref description) = self.description {
+            state.serialize_field("description", description)?;
+        }
+        if let Some(ref event_notifications) = self.event_notifications {
+            state.serialize_field("ev", event_notifications)?;
+        }
+
+        if self.perms.contains(&Perm::PairedRead) {
+            state.serialize_field("value", &self.value)?;
+        }
+        if let Some(ref unit) = self.unit {
+            state.serialize_field("unit", unit)?;
+        }
+        if let Some(ref max_value) = self.max_value {
+            state.serialize_field("maxValue", max_value)?;
+        }
+        if let Some(ref min_value) = self.min_value {
+            state.serialize_field("minValue", min_value)?;
+        }
+        if let Some(ref step_value) = self.step_value {
+            state.serialize_field("minStep", step_value)?;
+        }
+        if let Some(ref max_len) = self.max_len {
+            state.serialize_field("maxLen", max_len)?;
+        }
+        if let Some(ref max_data_len) = self.max_data_len {
+            state.serialize_field("maxDataLen", max_data_len)?;
+        }
+        if let Some(ref valid_values) = self.valid_values {
+            state.serialize_field("valid-values", valid_values)?;
+        }
+        if let Some(ref valid_values_range) = self.valid_values_range {
+            state.serialize_field("valid-values-range", valid_values_range)?;
+        }
+        state.end()
+    }
 }
+
+pub trait HapCharacteristic: erased_serde::Serialize {
+    fn set_id(&mut self, id: u64);
+}
+
+serialize_trait_object!(HapCharacteristic);
 
 impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> {
     fn set_id(&mut self, id: u64) {
         self.set_id(id)
     }
-
-    fn to_json(&self) -> serde_json::Value {
-        let perms: Vec<&str> = self.perms.iter().map(|p| p.as_str()).collect();
-        // TODO - only include format field if characteristic has PairedRead permission
-        json!({
-            "type": self.hap_type,
-            "value": self.value,
-            "perms": perms,
-            "format": self.format.as_str(),
-            "iid": self.id,
-        })
-    }
 }
 
+#[derive(Serialize, PartialEq)]
 enum Perm {
+    #[serde(rename = "pr")]
     PairedRead,
+    #[serde(rename = "pw")]
     PairedWrite,
+    #[serde(rename = "ev")]
     Events,
+    #[serde(rename = "aa")]
     AdditionalAuthorization,
+    #[serde(rename = "tw")]
     TimedWrite,
+    #[serde(rename = "hd")]
     Hidden,
 }
 
-impl Perm {
-    fn as_str(&self) -> &str {
-        match self {
-            &Perm::PairedRead => "pr",
-            &Perm::PairedWrite => "pw",
-            &Perm::Events => "ev",
-            &Perm::AdditionalAuthorization => "aa",
-            &Perm::TimedWrite => "tw",
-            &Perm::Hidden => "hd",
-        }
-    }
-}
-
+#[derive(Serialize)]
 enum Unit {
+    #[serde(rename = "percentage")]
     Percentage,
+    #[serde(rename = "arcdegrees")]
     ArcDegrees,
+    #[serde(rename = "celsius")]
     Celsius,
+    #[serde(rename = "lux")]
     Lux,
+    #[serde(rename = "seconds")]
     Seconds,
 }
 
-impl Unit {
-    fn as_str(&self) -> &str {
-        match self {
-            &Unit::Percentage => "percentage",
-            &Unit::ArcDegrees => "arcdegrees",
-            &Unit::Celsius => "celsius",
-            &Unit::Lux => "lux",
-            &Unit::Seconds => "seconds",
-        }
-    }
-}
-
+#[derive(Serialize)]
 enum Format {
+    #[serde(rename = "string")]
     String,
+    #[serde(rename = "bool")]
     Bool,
+    #[serde(rename = "float")]
     Float,
+    #[serde(rename = "uint8")]
     UInt8,
+    #[serde(rename = "uint16")]
     UInt16,
+    #[serde(rename = "uint32")]
     UInt32,
+    #[serde(rename = "int32")]
     Int32,
+    #[serde(rename = "uint64")]
     UInt64,
+    #[serde(rename = "data")]
     Data,
+    #[serde(rename = "tlv8")]
     TLV8,
-}
-
-impl Format {
-    fn as_str(&self) -> &str {
-        match self {
-            &Format::String => "string",
-            &Format::Bool => "bool",
-            &Format::Float => "float",
-            &Format::UInt8 => "uint8",
-            &Format::UInt16 => "uint16",
-            &Format::UInt32 => "uint32",
-            &Format::Int32 => "int32",
-            &Format::UInt64 => "uint64",
-            &Format::Data => "data",
-            &Format::TLV8 => "tlv8",
-        }
-    }
 }
 
 impl Default for Format {

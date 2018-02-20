@@ -119,6 +119,14 @@ version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "erased-serde"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "eui48"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -185,6 +193,7 @@ dependencies = [
  "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "chacha20-poly1305-aead 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "erased-serde 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "eui48 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.11.18 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1062,6 +1071,7 @@ dependencies = [
 "checksum dns-parser 0.3.2 (git+https://github.com/plietar/dns-parser)" = "<none>"
 "checksum dtoa 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "09c3753c3db574d215cba4ea76018483895d7bff25a31b49ba45db21c48e50ab"
 "checksum either 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "740178ddf48b1a9e878e6d6509a1442a2d42fd2928aae8e7a6f8a36fb01981b3"
+"checksum erased-serde 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c564e32677839f1c551664c478e079c9b128a1a2d223180bffb2ddfabeded0be"
 "checksum eui48 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c2b8de6745765cd23bdb4d78bd231bbee4368b1508ec02125c43feb2cd37e0d9"
 "checksum fake-simd 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"

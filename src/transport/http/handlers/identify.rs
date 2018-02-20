@@ -12,6 +12,7 @@ use config::Config;
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
+use transport::accessory_list::AccessoryList;
 use protocol::device::Device;
 use protocol::pairing::Pairing;
 
@@ -28,7 +29,7 @@ impl Identify {
 }
 
 impl<S: Storage> Handler<S> for Identify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &Arc<Vec<Box<HapAccessory>>>) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 

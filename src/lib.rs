@@ -23,6 +23,8 @@ extern crate ring;
 extern crate chacha20_poly1305_aead;
 extern crate tokio_core;
 extern crate tokio_io;
+#[macro_use]
+extern crate erased_serde;
 
 pub mod accessory;
 pub mod characteristic;

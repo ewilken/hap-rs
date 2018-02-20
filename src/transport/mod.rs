@@ -5,6 +5,7 @@ pub mod ip;
 pub mod http;
 pub mod mdns;
 pub mod tlv;
+pub mod accessory_list;
 
 pub trait Transport {
     fn start(&mut self) -> Result<(), Error>;

@@ -1,21 +1,27 @@
-use serde_json;
-
-use service::HapService;
+use service::{HapService, Service};
 use characteristic::{HapCharacteristic, on, outlet_in_use};
 use hap_type::HapType;
 
+pub type Outlet = Service<OutletInner>;
+
+impl Default for Outlet {
+    fn default() -> Outlet { new() }
+}
+
 #[derive(Default)]
-pub struct Outlet {
+pub struct OutletInner {
     id: u64,
     hap_type: HapType,
+    hidden: bool,
+    primary: bool,
 
     pub on: on::On,
     pub outlet_in_use: outlet_in_use::OutletInUse,
 }
 
-impl HapService for Outlet {
-    fn get_id(&self) -> &u64 {
-        &self.id
+impl HapService for OutletInner {
+    fn get_id(&self) -> u64 {
+        self.id
     }
 
     fn set_id(&mut self, id: u64) {
@@ -24,6 +30,14 @@ impl HapService for Outlet {
 
     fn get_type(&self) -> &HapType {
         &self.hap_type
+    }
+
+    fn get_hidden(&self) -> bool {
+        self.hidden
+    }
+
+    fn get_primary(&self) -> bool {
+        self.primary
     }
 
     fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
@@ -39,22 +53,13 @@ impl HapService for Outlet {
             &mut self.outlet_in_use,
         ]
     }
-
-    fn to_json(&self) -> serde_json::Value {
-        let characteristics: Vec<serde_json::Value> = self.get_characteristics().iter().map(|c| c.to_json()).collect();
-        json!({
-            "type": self.get_type(),
-            "iid": self.get_id(),
-            "characteristics": characteristics,
-        })
-    }
 }
 
 pub fn new() -> Outlet {
-    Outlet {
+    Outlet::new(OutletInner {
         hap_type: "47".into(),
         on: on::new(),
         outlet_in_use: outlet_in_use::new(),
         ..Default::default()
-    }
+    })
 }

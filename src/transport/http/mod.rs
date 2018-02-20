@@ -61,8 +61,7 @@ pub fn tlv_response(answer: HashMap<u8, Vec<u8>>) -> Response {
     response(body, ContentType::PairingTLV8)
 }
 
-pub fn json_response(answer: serde_json::Value) -> Response {
-    let body = serde_json::to_vec(&answer).unwrap();
+pub fn json_response(body: Vec<u8>) -> Response {
     println!("response: {:?}", str::from_utf8(&body).unwrap());
 
     response(body, ContentType::HapJson)
