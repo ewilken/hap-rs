@@ -7,7 +7,7 @@ use accessory::HapAccessory;
 
 use db::storage::Storage;
 use db::database::Database;
-use transport::accessory_list::AccessoryList;
+use db::accessory_list::AccessoryList;
 
 pub mod accessories;
 pub mod characteristics;

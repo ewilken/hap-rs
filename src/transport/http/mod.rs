@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use hyper::server::Response;
 use hyper::header::{self, ContentLength};
+use hyper::StatusCode;
 use serde_json;
 use std::str;
 
@@ -56,19 +57,24 @@ impl ContentType {
     }
 }
 
-pub fn tlv_response(answer: HashMap<u8, Vec<u8>>) -> Response {
+pub fn tlv_response(answer: HashMap<u8, Vec<u8>>, status: StatusCode) -> Response {
     let body = tlv::encode(answer);
-    response(body, ContentType::PairingTLV8)
+    response(body, status, ContentType::PairingTLV8)
 }
 
-pub fn json_response(body: Vec<u8>) -> Response {
+pub fn json_response(body: Vec<u8>, status: StatusCode) -> Response {
     println!("response: {:?}", str::from_utf8(&body).unwrap());
 
-    response(body, ContentType::HapJson)
+    response(body, status, ContentType::HapJson)
 }
 
-fn response(body: Vec<u8>, content_type: ContentType) -> Response {
+pub fn status_response(status: StatusCode) -> Response {
+    Response::new().with_status(status)
+}
+
+fn response(body: Vec<u8>, status: StatusCode, content_type: ContentType) -> Response {
     Response::new()
+        .with_status(status)
         .with_header(ContentLength(body.len() as u64))
         .with_header(content_type.for_hyper())
         .with_body(body)

@@ -14,7 +14,7 @@ use accessory::HapAccessory;
 
 use transport::http::handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify};
 use transport::http::encrypted_stream::EncryptedStream;
-use transport::accessory_list::AccessoryList;
+use db::accessory_list::AccessoryList;
 use db::storage::Storage;
 use db::database::Database;
 use config::Config;

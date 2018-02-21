@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use hyper::server::Response;
-use hyper::{self, Uri};
+use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
 
 use accessory::HapAccessory;
@@ -12,7 +12,7 @@ use config::Config;
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
-use transport::accessory_list::AccessoryList;
+use db::accessory_list::AccessoryList;
 use protocol::device::Device;
 use protocol::pairing::Pairing;
 
@@ -53,6 +53,6 @@ impl<S: Storage> Handler<S> for Pairings {
             }
         }
 
-        Box::new(future::ok(tlv_response(answer)))
+        Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
     }
 }

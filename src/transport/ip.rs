@@ -14,7 +14,7 @@ use pin;
 use db::context::Context;
 use protocol::device::Device;
 use transport::Transport;
-use transport::accessory_list::{self, AccessoryList, AccessoryListTrait};
+use db::accessory_list::{self, AccessoryList, AccessoryListTrait};
 
 pub struct IpTransport<S: Storage, D: Storage + Send> {
     config: Arc<Config>,

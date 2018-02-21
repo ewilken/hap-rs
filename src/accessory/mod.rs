@@ -2,11 +2,11 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
 use service::HapService;
-use transport::accessory_list::AccessoryListTrait;
+use db::accessory_list::AccessoryListTrait;
 
 pub mod outlet;
 
-trait HapAccessoryService: HapService + erased_serde::Serialize {}
+pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
 
 impl<T: HapService + erased_serde::Serialize> HapAccessoryService for T {}
 

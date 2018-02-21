@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind};
 use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::Deserialize;
 use serde_json;
 use erased_serde;
 
@@ -35,13 +36,25 @@ pub struct Characteristic<T: Default + Serialize> {
     valid_values_range: Option<[T; 2]>,
 }
 
-impl<T: Default + Serialize> Characteristic<T> {
+impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de> {
+    pub fn get_id(&self) -> u64 {
+        self.id
+    }
+
     pub fn set_id(&mut self, id: u64) {
         self.id = id;
     }
 
+    pub fn get_perms(&self) -> &Vec<Perm> {
+        &self.perms
+    }
+
     pub fn set_description(&mut self, description: String) {
         self.description = Some(description);
+    }
+
+    pub fn set_event_notifications(&mut self, event_notifications: bool) {
+        self.event_notifications = Some(event_notifications);
     }
 
     pub fn set_value(&mut self, val: T) -> Result<(), Error> {
@@ -74,7 +87,7 @@ impl<T: Default + Serialize> Characteristic<T> {
     }
 }
 
-impl<T: Default + Serialize> Serialize for Characteristic<T> {
+impl<T: Default + Serialize> Serialize for Characteristic<T> where for<'de> T: Deserialize<'de> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("Characteristic", 15)?;
         state.serialize_field("iid", &self.id)?;
@@ -120,19 +133,40 @@ impl<T: Default + Serialize> Serialize for Characteristic<T> {
 }
 
 pub trait HapCharacteristic: erased_serde::Serialize {
+    fn get_id(&self) -> u64;
     fn set_id(&mut self, id: u64);
+    fn get_perms(&self) -> &Vec<Perm>;
+    fn set_event_notifications(&mut self, event_notifications: bool);
+    fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
 }
 
 serialize_trait_object!(HapCharacteristic);
 
-impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> {
+impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'de> T: Deserialize<'de> {
+    fn get_id(&self) -> u64 {
+        self.get_id()
+    }
+
     fn set_id(&mut self, id: u64) {
         self.set_id(id)
+    }
+
+    fn get_perms(&self) -> &Vec<Perm> {
+        self.get_perms()
+    }
+
+    fn set_event_notifications(&mut self, event_notifications: bool) {
+        self.set_event_notifications(event_notifications);
+    }
+
+    fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error> {
+        let v: T = serde_json::from_value(value)?;
+        self.set_value(v)
     }
 }
 
 #[derive(Serialize, PartialEq)]
-enum Perm {
+pub enum Perm {
     #[serde(rename = "pr")]
     PairedRead,
     #[serde(rename = "pw")]

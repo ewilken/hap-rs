@@ -6,7 +6,7 @@ use rand;
 use rand::Rng;
 use sha2::{Sha512, Digest};
 use hyper::server::Response;
-use hyper::{self, Uri};
+use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
 use srp::server::{UserRecord, SrpServer};
 use srp::client::{SrpClient, srp_private_key};
@@ -27,7 +27,7 @@ use config::Config;
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
-use transport::accessory_list::AccessoryList;
+use db::accessory_list::AccessoryList;
 use protocol::device::Device;
 use protocol::pairing::Pairing;
 
@@ -121,7 +121,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             Err(_) => {
                                 let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                                 answer.insert(t, v);
-                                return Box::new(future::ok(tlv_response(answer)));
+                                return Box::new(future::ok(tlv_response(answer, StatusCode::Ok)));
                             },
                             Ok(b_proof) => {
                                 let (t, v) = tlv::Type::Proof(b_proof).as_type_value();
@@ -173,7 +173,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             if !ed25519::verify(&device_info, &device_ltpk, &device_signature) {
                                 let (t, v) = tlv::Type::Error(tlv::ErrorKind::Authentication).as_type_value();
                                 answer.insert(t, v);
-                                return Box::new(future::ok(tlv_response(answer)));
+                                return Box::new(future::ok(tlv_response(answer, StatusCode::Ok)));
                             }
 
                             // TODO - kTLVError_MaxPeers
@@ -236,7 +236,7 @@ impl<S: Storage> Handler<S> for PairSetup {
             answer.insert(t, v);
         }
 
-        Box::new(future::ok(tlv_response(answer)))
+        Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
     }
 }
 

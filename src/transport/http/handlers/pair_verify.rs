@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::str;
 use hyper;
 use hyper::server::Response;
-use hyper::Uri;
+use hyper::{Uri, StatusCode};
 use futures::{future, Future};
 use rand::{self, Rng};
 use crypto::{curve25519, ed25519};
@@ -17,7 +17,7 @@ use accessory::HapAccessory;
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
-use transport::accessory_list::AccessoryList;
+use db::accessory_list::AccessoryList;
 use db::storage::Storage;
 use db::database::Database;
 use protocol::device::Device;
@@ -149,6 +149,6 @@ impl<S: Storage> Handler<S> for PairVerify {
 
         }
 
-        Box::new(future::ok(tlv_response(answer)))
+        Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
     }
 }
