@@ -4,12 +4,15 @@ use hyper::server::Response;
 use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
 use serde_json;
+use url::form_urlencoded;
 
 use accessory::HapAccessory;
+use characteristic::{Format, Perm, Unit};
 
 use db::storage::Storage;
 use db::database::Database;
 use config::Config;
+use hap_type::HapType;
 use transport::http::{json_response, status_response};
 use transport::http::handlers::Handler;
 use transport::http::Status;
@@ -32,27 +35,80 @@ impl GetCharacteristics {
 
 impl<S: Storage> Handler<S> for GetCharacteristics {
     fn handle(&mut self, uri: Uri, _: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
-        let resp_body = serde_json::to_vec(&json!({"foo": "bar"})).unwrap();
-        println!("/get-characteristics");
-        println!("uri: {:?}", uri);
+        if let Some(query) = uri.query() {
+            let mut resp_body = Body::<ReadResponseObject> {
+                characteristics: Vec::new()
+            };
+            let mut some_err = false;
 
-        Box::new(future::ok(json_response(resp_body, StatusCode::Ok)))
+            // TODO - using a String seems ugly and expensive
+            let mut queries: HashMap<String, String> = HashMap::new();
+            for (key, val) in form_urlencoded::parse(query.as_bytes()) {
+                queries.insert(key.into(), val.into());
+            }
+            let (f_meta, f_perms, f_type, f_ev) = check_flags(&queries);
+            let q_id = queries.get("id").unwrap();
+            let ids = q_id.split(",").collect::<Vec<&str>>();
+            for id in ids {
+                let id_pair = id.split(".").collect::<Vec<&str>>();
+                if id_pair.len() != 2 {
+                    return Box::new(future::ok(status_response(StatusCode::BadRequest)));
+                }
+                let aid = id_pair[0].parse::<u64>().unwrap();
+                let iid = id_pair[1].parse::<u64>().unwrap();
+
+                let mut res_object = accessories.read_characteristic(
+                    aid,
+                    iid,
+                    f_meta,
+                    f_perms,
+                    f_type,
+                    f_ev,
+                );
+                if res_object.status != Some(0) {
+                    some_err = true;
+                    res_object.value = None;
+                }
+                resp_body.characteristics.push(res_object);
+            }
+
+
+            if some_err {
+                let res = serde_json::to_vec(&resp_body).unwrap();
+                return Box::new(future::ok(json_response(res, StatusCode::MultiStatus)));
+            }
+            for ref mut r in &mut resp_body.characteristics {
+                r.status = None;
+            }
+            let res = serde_json::to_vec(&resp_body).unwrap();
+            return Box::new(future::ok(json_response(res, StatusCode::Ok)));
+        }
+        Box::new(future::ok(status_response(StatusCode::BadRequest)))
     }
 }
 
-pub struct UpdateCharacteristics {
-    session: Option<Session>
+fn check_flags(flags: &HashMap<String, String>) -> (bool, bool, bool, bool) {
+    let true_val = "1".to_owned();
+    (
+        flags.get("meta") == Some(&true_val),
+        flags.get("perms") == Some(&true_val),
+        flags.get("type") == Some(&true_val),
+        flags.get("ev") == Some(&true_val),
+    )
 }
+
+pub struct UpdateCharacteristics {}
 
 impl UpdateCharacteristics {
     pub fn new() -> UpdateCharacteristics {
-        UpdateCharacteristics { session: None }
+        UpdateCharacteristics {}
     }
 }
 
 impl<S: Storage> Handler<S> for UpdateCharacteristics {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body).unwrap();
+        println!("write_body: {:?}", &write_body);
         let mut resp_body = Body::<WriteResponseObject> {
             characteristics: Vec::new()
         };
@@ -81,23 +137,51 @@ impl<S: Storage> Handler<S> for UpdateCharacteristics {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Body<T> {
     characteristics: Vec<T>,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize)]
+pub struct ReadResponseObject {
+    pub iid: u64,
+    pub aid: u64,
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub hap_type: Option<HapType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<Format>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub perms: Option<Vec<Perm>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ev: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub unit: Option<Unit>,
+    #[serde(rename = "maxValue", skip_serializing_if = "Option::is_none")]
+    pub max_value: Option<serde_json::Value>,
+    #[serde(rename = "minValue", skip_serializing_if = "Option::is_none")]
+    pub min_value: Option<serde_json::Value>,
+    #[serde(rename = "minStep", skip_serializing_if = "Option::is_none")]
+    pub step_value: Option<serde_json::Value>,
+    #[serde(rename = "maxLen", skip_serializing_if = "Option::is_none")]
+    pub max_len: Option<u16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct WriteObject {
     pub iid: u64,
     pub aid: u64,
-    pub value: Option<serde_json::Value>,
     pub ev: Option<bool>,
+    pub value: Option<serde_json::Value>,
     #[serde(rename = "authData")]
     pub auth_data: Option<String>,
     pub remote: Option<bool>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct WriteResponseObject {
     pub iid: u64,
     pub aid: u64,

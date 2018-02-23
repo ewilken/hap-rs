@@ -25,6 +25,7 @@ extern crate tokio_core;
 extern crate tokio_io;
 #[macro_use]
 extern crate erased_serde;
+extern crate url;
 
 pub mod accessory;
 pub mod characteristic;

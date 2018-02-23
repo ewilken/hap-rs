@@ -7,7 +7,7 @@ use accessory::HapAccessory;
 use characteristic::{HapCharacteristic, Perm};
 
 use transport::http::Status;
-use transport::http::handlers::characteristics::{WriteObject, WriteResponseObject};
+use transport::http::handlers::characteristics::{ReadResponseObject, WriteObject, WriteResponseObject};
 
 #[derive(Clone)]
 pub struct AccessoryList {
@@ -15,6 +15,57 @@ pub struct AccessoryList {
 }
 
 impl AccessoryList {
+    pub fn read_characteristic(&self, aid: u64, iid: u64, meta: bool, perms: bool, hap_type: bool, ev: bool) -> ReadResponseObject {
+        let mut result_object = ReadResponseObject {
+            iid,
+            aid,
+            hap_type: None,
+            format: None,
+            perms: None,
+            ev: None,
+            value: None,
+            unit: None,
+            max_value: None,
+            min_value: None,
+            step_value: None,
+            max_len: None,
+            status: Some(0),
+        };
+
+        let mut a = self.accessories.lock().unwrap();
+        'a: for accessory in a.iter() {
+            if accessory.get_id() == aid {
+                for service in accessory.get_services() {
+                    for characteristic in service.get_characteristics() {
+                        if characteristic.get_id() == iid {
+                            result_object.value = characteristic.get_value();
+                            if meta {
+                                result_object.format = Some(characteristic.get_format().clone());
+                                result_object.unit = characteristic.get_unit().clone();
+                                result_object.max_value = characteristic.get_max_value();
+                                result_object.min_value = characteristic.get_min_value();
+                                result_object.step_value = characteristic.get_step_value();
+                                result_object.max_len = characteristic.get_max_len();
+                            }
+                            if perms {
+                                result_object.perms = Some(characteristic.get_perms().clone());
+                            }
+                            if hap_type {
+                                result_object.hap_type = Some(characteristic.get_type().clone());
+                            }
+                            if ev {
+                                result_object.ev = characteristic.get_event_notifications();
+                            }
+                            break 'a;
+                        }
+                    }
+                }
+            }
+        }
+
+        result_object
+    }
+
     pub fn write_characteristic(&self, write_object: WriteObject) -> WriteResponseObject {
         let mut result_object = WriteResponseObject {
             iid: write_object.iid,

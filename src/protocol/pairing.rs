@@ -4,7 +4,6 @@ use uuid::Uuid;
 use serde_json;
 
 use db::database::Database;
-use db::context::Context;
 use db::storage::Storage;
 
 #[derive(Serialize, Deserialize)]

@@ -45,6 +45,14 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         self.id = id;
     }
 
+    pub fn get_type(&self) -> &HapType {
+        &self.hap_type
+    }
+
+    pub fn get_format(&self) -> &Format {
+        &self.format
+    }
+
     pub fn get_perms(&self) -> &Vec<Perm> {
         &self.perms
     }
@@ -53,8 +61,16 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         self.description = Some(description);
     }
 
+    pub fn get_event_notifications(&self) -> Option<bool> {
+        self.event_notifications
+    }
+
     pub fn set_event_notifications(&mut self, event_notifications: bool) {
         self.event_notifications = Some(event_notifications);
+    }
+
+    pub fn get_value(&self) -> &Option<T> {
+        &self.value
     }
 
     pub fn set_value(&mut self, val: T) -> Result<(), Error> {
@@ -74,16 +90,36 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         Ok(())
     }
 
-    pub fn set_min_value(&mut self, val: T) {
-        self.min_value = Some(val);
+    pub fn get_unit(&self) -> &Option<Unit> {
+        &self.unit
+    }
+
+    pub fn get_max_value(&self) -> &Option<T> {
+        &self.max_value
     }
 
     pub fn set_max_value(&mut self, val: T) {
         self.max_value = Some(val);
     }
 
+    pub fn get_min_value(&self) -> &Option<T> {
+        &self.min_value
+    }
+
+    pub fn set_min_value(&mut self, val: T) {
+        self.min_value = Some(val);
+    }
+
+    pub fn get_step_value(&self) -> &Option<T> {
+        &self.step_value
+    }
+
     pub fn set_step_value(&mut self, val: T) {
         self.step_value = Some(val);
+    }
+
+    pub fn get_max_len(&self) -> Option<u16> {
+        self.max_len
     }
 }
 
@@ -135,9 +171,18 @@ impl<T: Default + Serialize> Serialize for Characteristic<T> where for<'de> T: D
 pub trait HapCharacteristic: erased_serde::Serialize {
     fn get_id(&self) -> u64;
     fn set_id(&mut self, id: u64);
+    fn get_type(&self) -> &HapType;
+    fn get_format(&self) -> &Format;
     fn get_perms(&self) -> &Vec<Perm>;
+    fn get_event_notifications(&self) -> Option<bool>;
     fn set_event_notifications(&mut self, event_notifications: bool);
+    fn get_value(&self) -> Option<serde_json::Value>;
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
+    fn get_unit(&self) -> &Option<Unit>;
+    fn get_max_value(&self) -> Option<serde_json::Value>;
+    fn get_min_value(&self) -> Option<serde_json::Value>;
+    fn get_step_value(&self) -> Option<serde_json::Value>;
+    fn get_max_len(&self) -> Option<u16>;
 }
 
 serialize_trait_object!(HapCharacteristic);
@@ -151,21 +196,69 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
         self.set_id(id)
     }
 
+    fn get_type(&self) -> &HapType {
+        self.get_type()
+    }
+
+    fn get_format(&self) -> &Format {
+        self.get_format()
+    }
+
     fn get_perms(&self) -> &Vec<Perm> {
         self.get_perms()
+    }
+
+    fn get_event_notifications(&self) -> Option<bool> {
+        self.get_event_notifications()
     }
 
     fn set_event_notifications(&mut self, event_notifications: bool) {
         self.set_event_notifications(event_notifications);
     }
 
+    fn get_value(&self) -> Option<serde_json::Value> {
+        if let &Some(ref v) = self.get_value() {
+            return Some(json!(v));
+        }
+        None
+    }
+
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error> {
-        let v: T = serde_json::from_value(value)?;
+        let v = serde_json::from_value(value)?;
         self.set_value(v)
+    }
+
+    fn get_unit(&self) -> &Option<Unit> {
+        self.get_unit()
+    }
+
+    fn get_max_value(&self) -> Option<serde_json::Value> {
+        if let &Some(ref v) = self.get_max_value() {
+            return Some(json!(v));
+        }
+        None
+    }
+
+    fn get_min_value(&self) -> Option<serde_json::Value> {
+        if let &Some(ref v) = self.get_min_value() {
+            return Some(json!(v));
+        }
+        None
+    }
+
+    fn get_step_value(&self) -> Option<serde_json::Value> {
+        if let &Some(ref v) = self.get_step_value() {
+            return Some(json!(v));
+        }
+        None
+    }
+
+    fn get_max_len(&self) -> Option<u16> {
+        self.get_max_len()
     }
 }
 
-#[derive(Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub enum Perm {
     #[serde(rename = "pr")]
     PairedRead,
@@ -181,8 +274,8 @@ pub enum Perm {
     Hidden,
 }
 
-#[derive(Serialize)]
-enum Unit {
+#[derive(Debug, Clone, Serialize)]
+pub enum Unit {
     #[serde(rename = "percentage")]
     Percentage,
     #[serde(rename = "arcdegrees")]
@@ -195,8 +288,8 @@ enum Unit {
     Seconds,
 }
 
-#[derive(Serialize)]
-enum Format {
+#[derive(Debug, Clone, Serialize)]
+pub enum Format {
     #[serde(rename = "string")]
     String,
     #[serde(rename = "bool")]

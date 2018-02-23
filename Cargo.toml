@@ -3,10 +3,10 @@ name = "hap"
 version = "0.0.1"
 authors = ["Elias Wilken <elias@korhal.io>"]
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
-homepage = "https://github.com/ewilken/hap-rs"
-repository = "https://github.com/ewilken/hap-rs"
+homepage = "https://github.com/korhalio/hap-rs"
+repository = "https://github.com/korhalio/hap-rs"
 readme = "README.md"
-license = "MIT"
+license = "GPL-3.0"
 
 [dependencies]
 eui48 = "0.3.0"
@@ -32,3 +32,4 @@ chacha20-poly1305-aead = "0.1.2"
 tokio-core = "0.1.12"
 tokio-io = "0.1.5"
 erased-serde = "0.3.3"
+url = "1.7.0"

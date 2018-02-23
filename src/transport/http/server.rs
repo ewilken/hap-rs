@@ -22,7 +22,10 @@ use config::Config;
 enum Route<S: Storage> {
     Get(Box<RefCell<handlers::Handler<S>>>),
     Post(Box<RefCell<handlers::Handler<S>>>),
-    Put(Box<RefCell<handlers::Handler<S>>>),
+    GetPut {
+        get: Box<RefCell<handlers::Handler<S>>>,
+        put: Box<RefCell<handlers::Handler<S>>>,
+    },
 }
 
 struct Api<S: Storage> {
@@ -38,8 +41,10 @@ impl<S: Storage> Api<S> {
         router.add("/pair-setup", Route::Post(Box::new(RefCell::new(pair_setup::PairSetup::new()))));
         router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new(secret_sender)))));
         router.add("/accessories", Route::Get(Box::new(RefCell::new(accessories::Accessories::new()))));
-        router.add("/characteristics", Route::Get(Box::new(RefCell::new(characteristics::GetCharacteristics::new()))));
-        router.add("/characteristics", Route::Put(Box::new(RefCell::new(characteristics::UpdateCharacteristics::new()))));
+        router.add("/characteristics", Route::GetPut {
+            get: Box::new(RefCell::new(characteristics::GetCharacteristics::new())),
+            put: Box::new(RefCell::new(characteristics::UpdateCharacteristics::new())),
+        });
         router.add("/pairings", Route::Post(Box::new(RefCell::new(pairings::Pairings::new()))));
         router.add("/identify", Route::Post(Box::new(RefCell::new(identify::Identify::new()))));
 
@@ -69,7 +74,9 @@ impl<S: 'static + Storage> Service for Api<S> {
                         .handle(uri, body, &database, &accessories),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
                         .handle(uri, body, &database, &accessories),
-                    (&Route::Put(ref handler), Method::Put) => handler.borrow_mut()
+                    (&Route::GetPut { ref get, ref put }, Method::Get) => get.borrow_mut()
+                        .handle(uri, body, &database, &accessories),
+                    (&Route::GetPut { ref get, ref put }, Method::Put) => put.borrow_mut()
                         .handle(uri, body, &database, &accessories),
                     _ => Box::new(future::ok(
                         Response::new().with_status(StatusCode::BadRequest)

@@ -11,23 +11,20 @@ use db::storage::Storage;
 use db::database::Database;
 use db::file_storage::FileStorage;
 use pin;
-use db::context::Context;
 use protocol::device::Device;
 use transport::Transport;
 use db::accessory_list::{self, AccessoryList, AccessoryListTrait};
 
 pub struct IpTransport<S: Storage, D: Storage + Send> {
     config: Arc<Config>,
-    context: Arc<Mutex<Context>>,
     storage: S,
     database: Arc<Mutex<Database<D>>>,
-    mdns_responder: Responder,
     accessories: AccessoryList,
+    mdns_responder: Responder,
 }
 
 impl IpTransport<FileStorage, FileStorage> {
     pub fn new(mut config: Config, accessories: Vec<Box<AccessoryListTrait>>) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
-        let context = Context::new();
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
@@ -43,11 +40,10 @@ impl IpTransport<FileStorage, FileStorage> {
 
         let ip_transport = IpTransport {
             config: Arc::new(config),
-            context: Arc::new(Mutex::new(context)),
             storage,
             database: Arc::new(Mutex::new(database)),
-            mdns_responder,
             accessories: accessory_list::new(a),
+            mdns_responder,
         };
         device.save(&ip_transport.database)?;
 
