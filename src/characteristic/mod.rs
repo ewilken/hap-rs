@@ -224,7 +224,21 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
     }
 
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error> {
-        let v = serde_json::from_value(value)?;
+        let v;
+        // for some reason the iOS device is setting boolean values
+        // either as a boolean or as an integer
+        if self.format == Format::Bool && value.is_number() {
+            let num_v: u8 = serde_json::from_value(value)?;
+            if num_v == 0 {
+                v = serde_json::from_value(json!(false))?;
+            } else if num_v == 1 {
+                v = serde_json::from_value(json!(true))?;
+            } else {
+                return Err(Error::new(ErrorKind::Other, "invalid value"));
+            }
+        } else {
+            v = serde_json::from_value(value)?;
+        }
         self.set_value(v)
     }
 
@@ -288,7 +302,7 @@ pub enum Unit {
     Seconds,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum Format {
     #[serde(rename = "string")]
     String,
