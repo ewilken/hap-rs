@@ -9,12 +9,13 @@ use db::storage::Storage;
 #[derive(Serialize, Deserialize)]
 pub struct Pairing {
     pub id: Uuid,
+    pub permissions: Permissions,
     pub public_key: [u8; 32],
 }
 
 impl Pairing {
-    pub fn new(id: Uuid, public_key: [u8; 32]) -> Pairing {
-        Pairing {id, public_key}
+    pub fn new(id: Uuid, permissions: Permissions, public_key: [u8; 32]) -> Pairing {
+        Pairing {id, permissions, public_key}
     }
 
     pub fn load<S: Storage>(id: Uuid, database: &Arc<Mutex<Database<S>>>) -> Result<Pairing, Error> {
@@ -36,5 +37,30 @@ impl Pairing {
     pub fn from_byte_vec(bytes: Vec<u8>) -> Result<Pairing, Error> {
         let value = serde_json::from_slice(&bytes)?;
         Ok(value)
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum Permissions {
+    #[serde(rename = "0x00")]
+    User,
+    #[serde(rename = "0x01")]
+    Admin,
+}
+
+impl Permissions {
+    pub fn from_u8(u: u8) -> Result<Permissions, ()> {
+        match u {
+            0x00 => Ok(Permissions::User),
+            0x01 => Ok(Permissions::Admin),
+            _ => Err(())
+        }
+    }
+
+    pub fn as_u8(&self) -> u8 {
+        match self {
+            &Permissions::User => 0x00,
+            &Permissions::Admin => 0x01,
+        }
     }
 }

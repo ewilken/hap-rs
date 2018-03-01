@@ -6,7 +6,6 @@ use futures::{future, Future};
 use serde_json;
 use url::form_urlencoded;
 
-use accessory::HapAccessory;
 use characteristic::{Format, Perm, Unit};
 
 use db::storage::Storage;
@@ -18,18 +17,12 @@ use transport::http::handlers::Handler;
 use transport::http::Status;
 use transport::tlv;
 use db::accessory_list::AccessoryList;
-use protocol::device::Device;
-use protocol::pairing::Pairing;
 
-struct Session {}
-
-pub struct GetCharacteristics {
-    session: Option<Session>
-}
+pub struct GetCharacteristics {}
 
 impl GetCharacteristics {
     pub fn new() -> GetCharacteristics {
-        GetCharacteristics { session: None }
+        GetCharacteristics {}
     }
 }
 
@@ -108,7 +101,6 @@ impl UpdateCharacteristics {
 impl<S: Storage> Handler<S> for UpdateCharacteristics {
     fn handle(&mut self, _: Uri, body: Vec<u8>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body).unwrap();
-        println!("write_body: {:?}", &write_body);
         let mut resp_body = Body::<WriteResponseObject> {
             characteristics: Vec::new()
         };

@@ -34,6 +34,8 @@ pub struct Characteristic<T: Default + Serialize> {
     max_data_len: Option<u32>,
     valid_values: Option<Vec<T>>,
     valid_values_range: Option<[T; 2]>,
+
+    updatable: Option<Box<Updatable<T>>>,
 }
 
 impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de> {
@@ -85,6 +87,9 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
             }
         }*/
 
+        if let Some(ref mut u) = self.updatable {
+            u.on_update(&val);
+        }
         self.value = Some(val);
 
         Ok(())
@@ -120,6 +125,10 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
 
     pub fn get_max_len(&self) -> Option<u16> {
         self.max_len
+    }
+
+    pub fn set_updatable(&mut self, u: Box<Updatable<T>>) {
+        self.updatable = Some(u);
     }
 }
 
@@ -270,6 +279,10 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
     fn get_max_len(&self) -> Option<u16> {
         self.get_max_len()
     }
+}
+
+pub trait Updatable<T: Default + Serialize> {
+    fn on_update(&mut self, val: &T);
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

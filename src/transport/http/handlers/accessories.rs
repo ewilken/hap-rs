@@ -4,8 +4,6 @@ use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
 use serde_json;
 
-use accessory::HapAccessory;
-
 use db::storage::Storage;
 use db::database::Database;
 use transport::http::json_response;

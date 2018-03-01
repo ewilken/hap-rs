@@ -18,7 +18,7 @@ pub trait HapService {
 }
 
 pub struct Service<T: HapService> {
-    inner: T,
+    pub inner: T,
 }
 
 impl<T: HapService> Service<T> {

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use byteorder::{LittleEndian, WriteBytesExt};
 
+use protocol::pairing::Permissions;
+
 pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::new();
     for (k, v) in hm.iter() {
@@ -76,7 +78,7 @@ pub enum Type {
     RetryDelay(usize),
     Certificate(Vec<u8>),
     Signature(Vec<u8>),
-    Permissions(PermissionsKind),
+    Permissions(Permissions),
     FragmentData(Vec<u8>),
     FragmentLast(Vec<u8>),
     Separator,
@@ -102,6 +104,7 @@ impl Type {
             &Type::Separator => 0xFF,
         }
     }
+
     pub fn as_type_value(self) -> (u8, Vec<u8>) {
         match self {
             Type::Method(method_kind) => (0x00, vec![method_kind.as_u8()]),
@@ -120,7 +123,7 @@ impl Type {
             },
             Type::Certificate(certificate) => (0x09, certificate),
             Type::Signature(signature) => (0x0A, signature),
-            Type::Permissions(permissions_kind) => (0x0B, vec![permissions_kind.as_u8()]),
+            Type::Permissions(permissions) => (0x0B, vec![permissions.as_u8()]),
             Type::FragmentData(fragment_data) => (0x0C, fragment_data),
             Type::FragmentLast(fragment_last) => (0x0D, fragment_last),
             Type::Separator => (0xFF, vec![0x00]),
@@ -144,20 +147,6 @@ impl MethodKind {
             &MethodKind::AddPairing => 3,
             &MethodKind::RemovePairing => 4,
             &MethodKind::ListPairings => 5,
-        }
-    }
-}
-
-pub enum PermissionsKind {
-    User,
-    Admin,
-}
-
-impl PermissionsKind {
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            &PermissionsKind::User => 0x00,
-            &PermissionsKind::Admin => 0x01,
         }
     }
 }

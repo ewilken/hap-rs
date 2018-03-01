@@ -20,7 +20,7 @@ pub trait HapAccessory {
 }
 
 pub struct Accessory<T: HapAccessory> {
-    inner: T,
+    pub inner: T,
 }
 
 impl<T: HapAccessory> Accessory<T> {

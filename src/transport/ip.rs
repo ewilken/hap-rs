@@ -4,7 +4,7 @@ use transport::mdns::Responder;
 use transport::http;
 use std::net::SocketAddr;
 
-use accessory::{self, HapAccessory};
+use accessory;
 
 use config::Config;
 use db::storage::Storage;

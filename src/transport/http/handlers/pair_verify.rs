@@ -12,8 +12,6 @@ use chacha20_poly1305_aead;
 use uuid::Uuid;
 use futures::sync::oneshot;
 
-use accessory::HapAccessory;
-
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
 use transport::tlv;
@@ -42,14 +40,14 @@ impl PairVerify {
 }
 
 impl<S: Storage> Handler<S> for PairVerify {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
         if let Some(v) = decoded.get(&0x06) {
             match v[0] {
                 1 => {
-                    println!("/pair-verify - M1: Got Verify Start Request");
+                    debug!("/pair-verify - M1: Got Verify Start Request");
 
                     let (t, v) = tlv::Type::State(2).as_type_value();
                     answer.insert(t, v);
@@ -96,11 +94,11 @@ impl<S: Storage> Handler<S> for PairVerify {
                         let (t, v) = tlv::Type::EncryptedData(encrypted_data).as_type_value();
                         answer.insert(t, v);
 
-                        println!("/pair-verify - M2: Sending Verify Start Response");
+                        debug!("/pair-verify - M2: Sending Verify Start Response");
                     }
                 },
                 3 => {
-                    println!("/pair-verify - M3: Got Verify Finish Request");
+                    debug!("/pair-verify - M3: Got Verify Finish Request");
 
                     let (t, v) = tlv::Type::State(4).as_type_value();
                     answer.insert(t, v);
@@ -136,17 +134,16 @@ impl<S: Storage> Handler<S> for PairVerify {
                             sender.send(session.shared_secret).unwrap();
                         }
 
-                        println!("/pair-verify - M4: Sending Verify Finish Response");
+                        debug!("/pair-verify - M4: Sending Verify Finish Response");
                     }
                 },
                 _ => {
-                    println!("/pair-verify - M{}: Got invalid state", v[0]);
+                    debug!("/pair-verify - M{}: Got invalid state", v[0]);
                     let (t, v) = tlv::Type::State(0).as_type_value();
                     answer.insert(t, v);
                     // TODO - return a kTLVError?
                 },
             }
-
         }
 
         Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))

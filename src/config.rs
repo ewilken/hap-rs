@@ -81,7 +81,7 @@ impl Default for Config {
             version: 0,
             storage_path: format!("{}/data", current_dir().unwrap().to_str().unwrap()),
             port: 32000,
-            ip: IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+            ip: current_ip().expect("could not determine local IP address"),
             pin: "11122333".into(),
             name: "Accessory".into(),
             device_id: random_mac_address(),
@@ -97,7 +97,19 @@ impl Default for Config {
     }
 }
 
-fn current_ip() {}
+fn current_ip() -> Option<IpAddr> {
+    for iface in datalink::interfaces() {
+        for ip_network in iface.ips {
+            if ip_network.is_ipv4() {
+                let ip = ip_network.ip();
+                if !ip.is_loopback() {
+                    return Some(ip);
+                }
+            }
+        }
+    }
+    None
+}
 
 fn random_mac_address() -> MacAddress {
     let mut rng = rand::thread_rng();

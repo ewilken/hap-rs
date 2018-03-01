@@ -1,5 +1,5 @@
 use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{self, HapService, Service, accessory_information, outlet};
+use service::{accessory_information, outlet};
 
 pub type Outlet = Accessory<OutletInner>;
 

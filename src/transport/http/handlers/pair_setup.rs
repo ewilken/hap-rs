@@ -1,4 +1,4 @@
-use std::io::{Read, Error, ErrorKind};
+use std::io::{Error, ErrorKind};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::str;
@@ -19,8 +19,6 @@ use chacha20_poly1305_aead;
 use crypto::ed25519;
 use uuid::Uuid;
 
-use accessory::HapAccessory;
-
 use db::storage::Storage;
 use db::database::Database;
 use config::Config;
@@ -29,7 +27,7 @@ use transport::http::handlers::Handler;
 use transport::tlv;
 use db::accessory_list::AccessoryList;
 use protocol::device::Device;
-use protocol::pairing::Pairing;
+use protocol::pairing::{Pairing, Permissions};
 
 struct Session {
     salt: Vec<u8>,
@@ -50,14 +48,14 @@ impl PairSetup {
 }
 
 impl<S: Storage> Handler<S> for PairSetup {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
         if let Some(v) = decoded.get(&0x06) {
             match v[0] {
                 1 => {
-                    println!("/pair-setup - M1: Got SRP Start Request");
+                    debug!("/pair-setup - M1: Got SRP Start Request");
 
                     let (t, v) = tlv::Type::State(2).as_type_value();
                     answer.insert(t, v);
@@ -96,10 +94,10 @@ impl<S: Storage> Handler<S> for PairSetup {
                     let (t, v) = tlv::Type::Salt(salt.clone()).as_type_value();
                     answer.insert(t, v);
 
-                    println!("/pair-setup - M2: Sending SRP Start Response");
+                    debug!("/pair-setup - M2: Sending SRP Start Response");
                 },
                 3 => {
-                    println!("/pair-setup - M3: Got SRP Verify Request");
+                    debug!("/pair-setup - M3: Got SRP Verify Request");
 
                     let (t, v) = tlv::Type::State(4).as_type_value();
                     answer.insert(t, v);
@@ -131,13 +129,13 @@ impl<S: Storage> Handler<S> for PairSetup {
 
                         session.shared_secret = Some(shared_secret.as_slice().to_vec());
 
-                        println!("/pair-setup - M4: Sending SRP Verify Response");
+                        debug!("/pair-setup - M4: Sending SRP Verify Response");
                     } else {
                         // some error
                     }
                 },
                 5 => {
-                    println!("/pair-setup - M5: Got SRP Exchange Request");
+                    debug!("/pair-setup - M5: Got SRP Exchange Request");
 
                     let (t, v) = tlv::Type::State(6).as_type_value();
                     answer.insert(t, v);
@@ -184,7 +182,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             for i in 0..32 {
                                 pairing_ltpk[i] = device_ltpk[i];
                             }
-                            let pairing = Pairing::new(pairing_uuid, pairing_ltpk);
+                            let pairing = Pairing::new(pairing_uuid, Permissions::Admin, pairing_ltpk);
                             pairing.save(database).unwrap();
 
                             let mut accessory_x = [0; 32];
@@ -216,7 +214,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                             let (t, v) = tlv::Type::EncryptedData(encrypted_data).as_type_value();
                             answer.insert(t, v);
 
-                            println!("/pair-setup - M6: Sending SRP Exchange Response");
+                            debug!("/pair-setup - M6: Sending SRP Exchange Response");
                         } else {
                             // some error or just nothing?
                         }
@@ -225,7 +223,7 @@ impl<S: Storage> Handler<S> for PairSetup {
                     }
                 },
                 _ => {
-                    println!("/pair-setup - M{}: Got invalid state", v[0]);
+                    debug!("/pair-setup - M{}: Got invalid state", v[0]);
                     let (t, v) = tlv::Type::State(0).as_type_value();
                     answer.insert(t, v);
                     // TODO - return a kTLVError?
@@ -257,7 +255,7 @@ fn verify_client_proof<D: Digest>(b_pub: &Vec<u8>, a_pub: &Vec<u8>, a_proof: &Ve
     let hi = dhi.result();
 
     let mut d = D::new();
-    //M = H(H(N) xor H(g), H(I), s, A, B, K)
+    // M = H(H(N) xor H(g), H(I), s, A, B, K)
     d.input(&hng.to_bytes_be());
     d.input(&hi);
     d.input(salt);

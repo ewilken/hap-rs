@@ -11,5 +11,6 @@ pub trait Storage {
     fn set_u64(&self, key: &str, value: u64) -> Result<(), Error>;
     fn get_uuid(&self, key: &str) -> Result<Uuid, Error>;
     fn set_uuid(&self, key: &str, value: Uuid) -> Result<(), Error>;
+    fn keys_with_suffix(&self, suffix: &str) -> Result<Vec<String>, Error>;
     fn delete(&self, key: &str) -> Result<(), Error>;
 }

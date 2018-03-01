@@ -33,7 +33,7 @@ impl<S: Storage> Handler<S> for Identify {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
-        println!("/identify");
+        debug!("/identify");
 
         Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
     }

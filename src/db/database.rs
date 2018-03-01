@@ -52,6 +52,22 @@ impl<S: Storage> Database<S> {
         self.set_byte_vec(&pairing.id.simple().to_string(), pairing_bytes)?;
         Ok(())
     }
+
+    pub fn delete_pairing(&self, id: &Uuid) -> Result<(), Error> {
+        self.storage.delete(&id.simple().to_string())
+    }
+
+    pub fn list_pairings(&self) -> Result<Vec<Pairing>, Error> {
+        let mut pairings = Vec::new();
+        for key in self.storage.keys_with_suffix("entity")? {
+            if key != String::from("device") {
+                let pairing_bytes = self.get_byte_vec(&key)?;
+                let pairing = Pairing::from_byte_vec(pairing_bytes)?;
+                pairings.push(pairing);
+            }
+        }
+        Ok(pairings)
+    }
 }
 
 impl Database<file_storage::FileStorage> {
