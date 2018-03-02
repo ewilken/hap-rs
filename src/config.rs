@@ -1,7 +1,9 @@
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::IpAddr;
 use std::io::Error;
 use std::env::current_dir;
 use std::str;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use eui48::MacAddress;
 use rand;
 use rand::Rng;
@@ -28,7 +30,7 @@ pub struct Config {
     pub protocol_version: String,  // pv
     pub status_flag: StatusFlag,   // sf
     pub feature_flag: FeatureFlag, // ff
-    pub config_hash: u64,
+    pub config_hash: Option<u64>,
 }
 
 impl Config {
@@ -41,22 +43,35 @@ impl Config {
             self.version = version;
         }
         if let Some(config_hash) = storage.get_u64("config_hash").ok() {
-            self.config_hash = config_hash;
+            self.config_hash = Some(config_hash);
         }
     }
 
     pub fn save(&self, storage: &Storage) -> Result<(), Error> {
         storage.set_byte_vec("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
         storage.set_u64("version", self.version.clone())?;
-        storage.set_u64("config_hash", self.config_hash.clone())?;
+        if let Some(config_hash) = self.config_hash {
+            storage.set_u64("config_hash", config_hash)?;
+        }
         Ok(())
     }
 
-    pub fn update_hash(&mut self, config_hash: u64) {
-        if self.config_hash != config_hash {
+    fn calculate_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
+    }
+
+    fn set_hash(&mut self, config_hash: u64) {
+        if self.config_hash != Some(config_hash) {
             self.version += 1;
-            self.config_hash = config_hash;
+            self.config_hash = Some(config_hash);
         }
+    }
+
+    pub fn update_hash(&mut self) {
+        let hash = self.calculate_hash();
+        self.set_hash(hash);
     }
 
     pub fn txt_records(&self) -> [String; 8] {
@@ -65,18 +80,36 @@ impl Config {
             format!("id={}", self.device_id.to_hex_string()),
             format!("c#={}", self.configuration_number),
             format!("s#={}", self.state_number),
-            format!("ci={}", self.category.as_u8()),
+            format!("ci={}", self.category as u8),
             format!("pv={}", self.protocol_version),
-            format!("sf={}", self.status_flag.as_u8()),
-            format!("ff={}", self.feature_flag.as_u8()),
+            format!("sf={}", self.status_flag as u8),
+            format!("ff={}", self.feature_flag as u8),
         ]
+    }
+}
+
+impl Hash for Config {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.storage_path.hash(state);
+        self.port.hash(state);
+        self.ip.hash(state);
+        self.pin.hash(state);
+        self.name.hash(state);
+        self.device_id.to_hex_string().hash(state);
+        self.configuration_number.hash(state);
+        self.state_number.hash(state);
+        (self.category as u8).hash(state);
+        self.protocol_version.hash(state);
+        (self.status_flag as u8).hash(state);
+        (self.feature_flag as u8).hash(state);
     }
 }
 
 // TODO - add default values that actually make sense
 impl Default for Config {
     fn default() -> Config {
-        Config {
+        let mut config = Config {
             id: Uuid::new_v4(),
             version: 0,
             storage_path: format!("{}/data", current_dir().unwrap().to_str().unwrap()),
@@ -92,8 +125,10 @@ impl Default for Config {
             protocol_version: "1.0".into(),
             status_flag: StatusFlag::NotPaired,
             feature_flag: FeatureFlag::Zero,
-            config_hash: 0,
-        }
+            config_hash: None,
+        };
+        config.update_hash();
+        config
     }
 }
 

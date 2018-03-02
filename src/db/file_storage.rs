@@ -1,8 +1,8 @@
 use std::fs;
 use std::str;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::io::{Error, ErrorKind, Read, Write, BufReader, BufWriter};
-use byteorder::{ByteOrder, BigEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{ByteOrder, BigEndian, ReadBytesExt};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;

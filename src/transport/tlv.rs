@@ -66,8 +66,27 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
     hm
 }
 
+#[derive(Copy, Clone)]
 pub enum Type {
-    Method(MethodKind),
+    Method = 0x00,
+    Identifier = 0x01,
+    Salt = 0x02,
+    PublicKey = 0x03,
+    Proof = 0x04,
+    EncryptedData = 0x05,
+    State = 0x06,
+    Error = 0x07,
+    RetryDelay = 0x08,
+    Certificate = 0x09,
+    Signature = 0x0A,
+    Permissions = 0x0B,
+    FragmentData = 0x0C,
+    FragmentLast = 0x0D,
+    Separator = 0xFF,
+}
+
+pub enum Value {
+    Method(Method),
     Identifier(String),
     Salt(Vec<u8>),
     PublicKey(Vec<u8>),
@@ -84,93 +103,49 @@ pub enum Type {
     Separator,
 }
 
-impl Type {
-    pub fn as_u8(&self) -> u8 {
+impl Value {
+    pub fn as_tlv(self) -> (u8, Vec<u8>) {
         match self {
-            &Type::Method(_) => 0x00,
-            &Type::Identifier(_) => 0x01,
-            &Type::Salt(_) => 0x02,
-            &Type::PublicKey(_) => 0x03,
-            &Type::Proof(_) => 0x04,
-            &Type::EncryptedData(_) => 0x05,
-            &Type::State(_) => 0x06,
-            &Type::Error(_) => 0x07,
-            &Type::RetryDelay(_) => 0x08,
-            &Type::Certificate(_) => 0x09,
-            &Type::Signature(_) => 0x0A,
-            &Type::Permissions(_) => 0x0B,
-            &Type::FragmentData(_) => 0x0C,
-            &Type::FragmentLast(_) => 0x0D,
-            &Type::Separator => 0xFF,
-        }
-    }
-
-    pub fn as_type_value(self) -> (u8, Vec<u8>) {
-        match self {
-            Type::Method(method_kind) => (0x00, vec![method_kind.as_u8()]),
-            Type::Identifier(identifier) => (0x01, identifier.into_bytes()),
-            Type::Salt(salt) => (0x02, salt),
-            Type::PublicKey(public_key) => (0x03, public_key),
-            Type::Proof(proof) => (0x04, proof),
-            Type::EncryptedData(data) => (0x05, data),
-            Type::State(state) => (0x06, vec![state]),
-            Type::Error(error_kind) => (0x07, vec![error_kind.as_u8()]),
-            Type::RetryDelay(delay) => {
+            Value::Method(method_kind) => (Type::Method as u8, vec![method_kind as u8]),
+            Value::Identifier(identifier) => (Type::Identifier as u8, identifier.into_bytes()),
+            Value::Salt(salt) => (Type::Salt as u8, salt),
+            Value::PublicKey(public_key) => (Type::PublicKey as u8, public_key),
+            Value::Proof(proof) => (Type::Proof as u8, proof),
+            Value::EncryptedData(data) => (Type::EncryptedData as u8, data),
+            Value::State(state) => (Type::State as u8, vec![state]),
+            Value::Error(error_kind) => (Type::Error as u8, vec![error_kind as u8]),
+            Value::RetryDelay(delay) => {
                 let val = delay as u16;
                 let mut vec: Vec<u8> = Vec::new();
                 vec.write_u16::<LittleEndian>(val).unwrap();
-                (0x08, vec)
+                (Type::RetryDelay as u8, vec)
             },
-            Type::Certificate(certificate) => (0x09, certificate),
-            Type::Signature(signature) => (0x0A, signature),
-            Type::Permissions(permissions) => (0x0B, vec![permissions.as_u8()]),
-            Type::FragmentData(fragment_data) => (0x0C, fragment_data),
-            Type::FragmentLast(fragment_last) => (0x0D, fragment_last),
-            Type::Separator => (0xFF, vec![0x00]),
+            Value::Certificate(certificate) => (Type::Certificate as u8, certificate),
+            Value::Signature(signature) => (Type::Signature as u8, signature),
+            Value::Permissions(permissions) => (Type::Permissions as u8, vec![permissions.as_u8()]),
+            Value::FragmentData(fragment_data) => (Type::FragmentData as u8, fragment_data),
+            Value::FragmentLast(fragment_last) => (Type::FragmentLast as u8, fragment_last),
+            Value::Separator => (Type::Separator as u8, vec![0x00]),
         }
     }
 }
 
-pub enum MethodKind {
-    PairSetup,
-    PairVerify,
-    AddPairing,
-    RemovePairing,
-    ListPairings,
+#[derive(Copy, Clone)]
+pub enum Method {
+    PairSetup = 1,
+    PairVerify = 2,
+    AddPairing = 3,
+    RemovePairing = 4,
+    ListPairings = 5,
 }
 
-impl MethodKind {
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            &MethodKind::PairSetup => 1,
-            &MethodKind::PairVerify => 2,
-            &MethodKind::AddPairing => 3,
-            &MethodKind::RemovePairing => 4,
-            &MethodKind::ListPairings => 5,
-        }
-    }
-}
-
+#[derive(Copy, Clone)]
 pub enum ErrorKind {
-    Unknown,
-    Authentication,
-    Backoff,
-    MaxPeers,
-    MaxTries,
-    Unavailable,
-    Busy,
-}
-
-impl ErrorKind {
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            &ErrorKind::Unknown => 0x01,
-            &ErrorKind::Authentication => 0x02,
-            &ErrorKind::Backoff => 0x03,
-            &ErrorKind::MaxPeers => 0x04,
-            &ErrorKind::MaxTries => 0x05,
-            &ErrorKind::Unavailable => 0x06,
-            &ErrorKind::Busy => 0x07,
-        }
-    }
+    Unknown = 0x01,
+    Authentication = 0x02,
+    Backoff = 0x03,
+    MaxPeers = 0x04,
+    MaxTries = 0x05,
+    Unavailable = 0x06,
+    Busy = 0x07,
 }
