@@ -5,6 +5,7 @@ use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
 use serde_json;
 use url::form_urlencoded;
+use uuid::Uuid;
 
 use characteristic::{Format, Perm, Unit};
 
@@ -27,7 +28,7 @@ impl GetCharacteristics {
 }
 
 impl<S: Storage> Handler<S> for GetCharacteristics {
-    fn handle(&mut self, uri: Uri, _: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
                 characteristics: Vec::new()
@@ -99,7 +100,7 @@ impl UpdateCharacteristics {
 }
 
 impl<S: Storage> Handler<S> for UpdateCharacteristics {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body).unwrap();
         let mut resp_body = Body::<WriteResponseObject> {
             characteristics: Vec::new()

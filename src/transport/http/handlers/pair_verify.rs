@@ -14,6 +14,7 @@ use futures::sync::oneshot;
 
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
+use transport::http::encrypted_stream;
 use transport::tlv;
 use db::accessory_list::AccessoryList;
 use db::storage::Storage;
@@ -30,17 +31,17 @@ struct Session {
 
 pub struct PairVerify {
     session: Option<Session>,
-    secret_sender: Option<oneshot::Sender<[u8; 32]>>,
+    session_sender: Option<oneshot::Sender<encrypted_stream::Session>>,
 }
 
 impl PairVerify {
-    pub fn new(secret_sender: oneshot::Sender<[u8; 32]>) -> PairVerify {
-        PairVerify { session: None, secret_sender: Some(secret_sender) }
+    pub fn new(session_sender: oneshot::Sender<encrypted_stream::Session>) -> PairVerify {
+        PairVerify { session: None, session_sender: Some(session_sender) }
     }
 }
 
 impl<S: Storage> Handler<S> for PairVerify {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
@@ -130,8 +131,12 @@ impl<S: Storage> Handler<S> for PairVerify {
                             answer.insert(t, v);
                         }
 
-                        if let Some(sender) = self.secret_sender.take() {
-                            sender.send(session.shared_secret).unwrap();
+                        if let Some(sender) = self.session_sender.take() {
+                            let encrypted_session = encrypted_stream::Session {
+                                controller_id: pairing_uuid,
+                                shared_secret: session.shared_secret,
+                            };
+                            sender.send(encrypted_session);
                         }
 
                         debug!("/pair-verify - M4: Sending Verify Finish Response");

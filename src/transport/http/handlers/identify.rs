@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use hyper::server::Response;
 use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
+use uuid::Uuid;
 
 use accessory::HapAccessory;
 
@@ -29,7 +30,7 @@ impl Identify {
 }
 
 impl<S: Storage> Handler<S> for Identify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 

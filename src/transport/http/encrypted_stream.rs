@@ -9,10 +9,17 @@ use chacha20_poly1305_aead;
 use bytes::BytesMut;
 use bytes::buf::FromBuf;
 use byteorder::{ByteOrder, LittleEndian};
+use uuid::Uuid;
+
+pub struct Session {
+    pub controller_id: Uuid,
+    pub shared_secret: [u8; 32],
+}
 
 pub struct EncryptedStream {
     stream: TcpStream,
-    secret_receiver: oneshot::Receiver<[u8; 32]>,
+    session_receiver: oneshot::Receiver<Session>,
+    pub controller_id: Option<Uuid>,
     shared_secret: Option<[u8; 32]>,
     decrypt_count: u64,
     encrypt_count: u64,
@@ -27,11 +34,12 @@ pub struct EncryptedStream {
 }
 
 impl EncryptedStream {
-    pub fn new(stream: TcpStream) -> (EncryptedStream, oneshot::Sender<[u8; 32]>) {
+    pub fn new(stream: TcpStream) -> (EncryptedStream, oneshot::Sender<Session>) {
         let (sender, receiver) = oneshot::channel();
         (EncryptedStream {
             stream,
-            secret_receiver: receiver,
+            session_receiver: receiver,
+            controller_id: None,
             shared_secret: None,
             decrypt_count: 0,
             encrypt_count: 0,
@@ -120,9 +128,10 @@ impl EncryptedStream {
 impl Read for EncryptedStream {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.shared_secret.is_none() {
-            match self.secret_receiver.poll() {
-                Ok(Async::Ready(shared_secret)) => {
-                    self.shared_secret = Some(shared_secret);
+            match self.session_receiver.poll() {
+                Ok(Async::Ready(session)) => {
+                    self.controller_id = Some(session.controller_id);
+                    self.shared_secret = Some(session.shared_secret);
                 },
                 _ => {
                     return self.stream.read(buf);

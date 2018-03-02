@@ -9,11 +9,10 @@ use futures::sync::oneshot;
 use route_recognizer::Router;
 use tokio_core::net::TcpListener;
 use tokio_core::reactor::Core;
-
-use accessory::HapAccessory;
+use uuid::Uuid;
 
 use transport::http::handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify};
-use transport::http::encrypted_stream::EncryptedStream;
+use transport::http::encrypted_stream::{EncryptedStream, Session};
 use db::accessory_list::AccessoryList;
 use db::storage::Storage;
 use db::database::Database;
@@ -29,6 +28,7 @@ enum Route<S: Storage> {
 }
 
 struct Api<S: Storage> {
+    controller_id: Arc<Option<Uuid>>,
     config: Arc<Config>,
     database: Arc<Mutex<Database<S>>>,
     accessories: AccessoryList,
@@ -36,10 +36,10 @@ struct Api<S: Storage> {
 }
 
 impl<S: Storage> Api<S> {
-    fn new(config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: AccessoryList, secret_sender: oneshot::Sender<[u8; 32]>) -> Api<S> {
+    fn new(controller_id: Arc<Option<Uuid>>, config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: AccessoryList, session_sender: oneshot::Sender<Session>) -> Api<S> {
         let mut router = Router::new();
         router.add("/pair-setup", Route::Post(Box::new(RefCell::new(pair_setup::PairSetup::new()))));
-        router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new(secret_sender)))));
+        router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new(session_sender)))));
         router.add("/accessories", Route::Get(Box::new(RefCell::new(accessories::Accessories::new()))));
         router.add("/characteristics", Route::GetPut {
             get: Box::new(RefCell::new(characteristics::GetCharacteristics::new())),
@@ -48,7 +48,7 @@ impl<S: Storage> Api<S> {
         router.add("/pairings", Route::Post(Box::new(RefCell::new(pairings::Pairings::new()))));
         router.add("/identify", Route::Post(Box::new(RefCell::new(identify::Identify::new()))));
 
-        Api { config, database, accessories, router: Arc::new(router) }
+        Api { controller_id, config, database, accessories, router: Arc::new(router) }
     }
 }
 
@@ -61,6 +61,7 @@ impl<S: 'static + Storage> Service for Api<S> {
     fn call(&self, req: Request) -> Self::Future {
         let (method, uri, _, _, body) = req.deconstruct();
         let router = self.router.clone();
+        let controller_id = self.controller_id.clone();
         let database = self.database.clone();
         let accessories = self.accessories.clone();
 
@@ -71,13 +72,13 @@ impl<S: 'static + Storage> Service for Api<S> {
             if let Ok(route_match) = router.recognize(uri.path()) {
                 match (route_match.handler, method) {
                     (&Route::Get(ref handler), Method::Get) => handler.borrow_mut()
-                        .handle(uri, body, &database, &accessories),
+                        .handle(uri, body, controller_id, &database, &accessories),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
-                        .handle(uri, body, &database, &accessories),
+                        .handle(uri, body, controller_id, &database, &accessories),
                     (&Route::GetPut { ref get, ref put }, Method::Get) => get.borrow_mut()
-                        .handle(uri, body, &database, &accessories),
+                        .handle(uri, body, controller_id, &database, &accessories),
                     (&Route::GetPut { ref get, ref put }, Method::Put) => put.borrow_mut()
-                        .handle(uri, body, &database, &accessories),
+                        .handle(uri, body, controller_id, &database, &accessories),
                     _ => Box::new(future::ok(
                         Response::new().with_status(StatusCode::BadRequest)
                     )),
@@ -97,7 +98,8 @@ pub fn serve<S: 'static + Storage + Send>(socket_addr: &SocketAddr, config: Arc<
 
     let server = listener.incoming().for_each(|(stream, _)| {
         let (stream, sender) = EncryptedStream::new(stream);
-        handle.spawn(http.serve_connection(stream, Api::new(config.clone(), database.clone(), accessories.clone(), sender)).map_err(|_| ()).map(|_| ()));
+        let controller_id = Arc::new(stream.controller_id);
+        handle.spawn(http.serve_connection(stream, Api::new(controller_id.clone(), config.clone(), database.clone(), accessories.clone(), sender)).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();

@@ -54,7 +54,9 @@ impl<S: Storage> Database<S> {
     }
 
     pub fn delete_pairing(&self, id: &Uuid) -> Result<(), Error> {
-        self.storage.delete(&id.simple().to_string())
+        let mut key = id.simple().to_string();
+        key.push_str(".entity");
+        self.storage.delete(&key)
     }
 
     pub fn list_pairings(&self) -> Result<Vec<Pairing>, Error> {

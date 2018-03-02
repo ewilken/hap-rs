@@ -6,8 +6,6 @@ use hyper::{self, Uri, StatusCode};
 use futures::{future, Future};
 use uuid::Uuid;
 
-use accessory::HapAccessory;
-
 use db::storage::Storage;
 use db::database::Database;
 use config::Config;
@@ -18,20 +16,16 @@ use db::accessory_list::AccessoryList;
 use protocol::device::Device;
 use protocol::pairing::{Pairing, Permissions};
 
-struct Session {}
-
-pub struct Pairings {
-    session: Option<Session>
-}
+pub struct Pairings {}
 
 impl Pairings {
     pub fn new() -> Pairings {
-        Pairings { session: None }
+        Pairings {}
     }
 }
 
 impl<S: Storage> Handler<S> for Pairings {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
@@ -43,13 +37,13 @@ impl<S: Storage> Handler<S> for Pairings {
                     let (t, v) = tlv::Type::State(2).as_type_value();
                     answer.insert(t, v);
 
+                    // TODO - check if controller is admin
+
                     let pairing_id = decoded.get(&0x01).unwrap();
                     let ltpk = decoded.get(&0x03).unwrap();
                     let permissions = Permissions::from_u8(decoded.get(&0x0B).unwrap()[0]).unwrap();
                     let uuid_str = str::from_utf8(pairing_id).unwrap();
                     let pairing_uuid = Uuid::parse_str(uuid_str).unwrap();
-
-                    // TODO - check if controller is admin
 
                     let d = database.lock().unwrap();
                     match d.get_pairing(pairing_uuid) {

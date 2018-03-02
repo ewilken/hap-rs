@@ -48,7 +48,7 @@ impl PairSetup {
 }
 
 impl<S: Storage> Handler<S> for PairSetup {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
 
