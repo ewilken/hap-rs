@@ -1,5 +1,9 @@
 use std::collections::HashMap;
+use std::{fmt, io, str, error};
 use byteorder::{LittleEndian, WriteBytesExt};
+use srp::types::SrpAuthError;
+use chacha20_poly1305_aead::DecryptError;
+use uuid;
 
 use protocol::pairing::Permissions;
 
@@ -66,6 +70,10 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
     hm
 }
 
+pub trait Encodable {
+    fn encode(self) -> Vec<u8>;
+}
+
 #[derive(Copy, Clone)]
 pub enum Type {
     Method = 0x00,
@@ -93,7 +101,7 @@ pub enum Value {
     Proof(Vec<u8>),
     EncryptedData(Vec<u8>),
     State(u8),
-    Error(ErrorKind),
+    Error(Error),
     RetryDelay(usize),
     Certificate(Vec<u8>),
     Signature(Vec<u8>),
@@ -113,7 +121,7 @@ impl Value {
             Value::Proof(proof) => (Type::Proof as u8, proof),
             Value::EncryptedData(data) => (Type::EncryptedData as u8, data),
             Value::State(state) => (Type::State as u8, vec![state]),
-            Value::Error(error_kind) => (Type::Error as u8, vec![error_kind as u8]),
+            Value::Error(error) => (Type::Error as u8, vec![error as u8]),
             Value::RetryDelay(delay) => {
                 let val = delay as u16;
                 let mut vec: Vec<u8> = Vec::new();
@@ -128,6 +136,11 @@ impl Value {
             Value::Separator => (Type::Separator as u8, vec![0x00]),
         }
     }
+
+    pub fn into_map(self, map: &mut HashMap<u8, Vec<u8>>) {
+        let (t, v) = self.as_tlv();
+        map.insert(t, v);
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -139,8 +152,8 @@ pub enum Method {
     ListPairings = 5,
 }
 
-#[derive(Copy, Clone)]
-pub enum ErrorKind {
+#[derive(Copy, Clone, Debug)]
+pub enum Error {
     Unknown = 0x01,
     Authentication = 0x02,
     Backoff = 0x03,
@@ -148,4 +161,94 @@ pub enum ErrorKind {
     MaxTries = 0x05,
     Unavailable = 0x06,
     Busy = 0x07,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Unknown => f.write_str("Unknown"),
+            Error::Authentication => f.write_str("Authentication"),
+            Error::Backoff => f.write_str("Backoff"),
+            Error::MaxPeers => f.write_str("MaxPeers"),
+            Error::MaxTries => f.write_str("MaxTries"),
+            Error::Unavailable => f.write_str("Unavailable"),
+            Error::Busy => f.write_str("Busy"),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::Unknown => "Unknown error",
+            Error::Authentication => "Setup code or signature verification failed",
+            Error::Backoff => "Client must look at the retry delay TLV item and wait that many seconds before retrying",
+            Error::MaxPeers => "Server cannot accept any more pairings",
+            Error::MaxTries => "Server reached its maximum number of authentication attempts",
+            Error::Unavailable => "Server pairing method is unavailable",
+            Error::Busy => "Server is busy and cannot accept a pairing request at this time",
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(_: io::Error) -> Self {
+        Error::Unknown
+    }
+}
+
+impl From<str::Utf8Error> for Error {
+    fn from(_: str::Utf8Error) -> Self {
+        Error::Unknown
+    }
+}
+
+impl From<uuid::ParseError> for Error {
+    fn from(_: uuid::ParseError) -> Self {
+        Error::Unknown
+    }
+}
+
+impl From<SrpAuthError> for Error {
+    fn from(_: SrpAuthError) -> Self {
+        Error::Authentication
+    }
+}
+
+impl From<DecryptError> for Error {
+    fn from(_: DecryptError) -> Self {
+        Error::Authentication
+    }
+}
+
+pub type Container = Vec<Value>;
+
+impl Encodable for Container {
+    fn encode(self) -> Vec<u8> {
+        let mut map = HashMap::new();
+        for value in self {
+            value.into_map(&mut map);
+        }
+        encode(map)
+    }
+}
+
+pub struct ErrorContainer {
+    step: u8,
+    error: Error,
+}
+
+impl ErrorContainer {
+    pub fn new(step: u8, error: Error) -> ErrorContainer {
+        ErrorContainer { step, error }
+    }
+}
+
+impl Encodable for ErrorContainer {
+    fn encode(self) -> Vec<u8> {
+        let mut map = HashMap::new();
+        Value::State(self.step).into_map(&mut map);
+        Value::Error(self.error).into_map(&mut map);
+        encode(map)
+    }
 }

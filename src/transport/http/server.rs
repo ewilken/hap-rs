@@ -35,18 +35,34 @@ struct Api<S: Storage> {
     router: Arc<Router<Route<S>>>,
 }
 
-impl<S: Storage> Api<S> {
-    fn new(controller_id: Arc<Option<Uuid>>, config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: AccessoryList, session_sender: oneshot::Sender<Session>) -> Api<S> {
+impl<S: 'static + Storage> Api<S> {
+    fn new(
+        controller_id: Arc<Option<Uuid>>,
+        config: Arc<Config>,
+        database: Arc<Mutex<Database<S>>>,
+        accessories: AccessoryList,
+        session_sender: oneshot::Sender<Session>,
+    ) -> Api<S> {
         let mut router = Router::new();
-        router.add("/pair-setup", Route::Post(Box::new(RefCell::new(pair_setup::PairSetup::new()))));
-        router.add("/pair-verify", Route::Post(Box::new(RefCell::new(pair_verify::PairVerify::new(session_sender)))));
-        router.add("/accessories", Route::Get(Box::new(RefCell::new(accessories::Accessories::new()))));
+        router.add("/pair-setup", Route::Post(
+            Box::new(RefCell::new(handlers::TlvHandlerType::from(pair_setup::PairSetup::new())))
+        ));
+        router.add("/pair-verify", Route::Post(
+            Box::new(RefCell::new(handlers::TlvHandlerType::from(pair_verify::PairVerify::new(session_sender))))
+        ));
+        router.add("/accessories", Route::Get(
+            Box::new(RefCell::new(accessories::Accessories::new()))
+        ));
         router.add("/characteristics", Route::GetPut {
             get: Box::new(RefCell::new(characteristics::GetCharacteristics::new())),
             put: Box::new(RefCell::new(characteristics::UpdateCharacteristics::new())),
         });
-        router.add("/pairings", Route::Post(Box::new(RefCell::new(pairings::Pairings::new()))));
-        router.add("/identify", Route::Post(Box::new(RefCell::new(identify::Identify::new()))));
+        router.add("/pairings", Route::Post(
+            Box::new(RefCell::new(handlers::TlvHandlerType::from(pairings::Pairings::new())))
+        ));
+        router.add("/identify", Route::Post(
+            Box::new(RefCell::new(identify::Identify::new()))
+        ));
 
         Api { controller_id, config, database, accessories, router: Arc::new(router) }
     }
@@ -90,7 +106,12 @@ impl<S: 'static + Storage> Service for Api<S> {
     }
 }
 
-pub fn serve<S: 'static + Storage + Send>(socket_addr: &SocketAddr, config: Arc<Config>, database: Arc<Mutex<Database<S>>>, accessories: AccessoryList) {
+pub fn serve<S: 'static + Storage + Send>(
+    socket_addr: &SocketAddr,
+    config: Arc<Config>,
+    database: Arc<Mutex<Database<S>>>,
+    accessories: AccessoryList,
+) {
     let mut evt_loop = Core::new().unwrap();
     let listener = TcpListener::bind(socket_addr, &evt_loop.handle()).unwrap();
     let http: Http<hyper::Chunk> = Http::new();
@@ -99,7 +120,13 @@ pub fn serve<S: 'static + Storage + Send>(socket_addr: &SocketAddr, config: Arc<
     let server = listener.incoming().for_each(|(stream, _)| {
         let (stream, sender) = EncryptedStream::new(stream);
         let controller_id = Arc::new(stream.controller_id);
-        handle.spawn(http.serve_connection(stream, Api::new(controller_id.clone(), config.clone(), database.clone(), accessories.clone(), sender)).map_err(|_| ()).map(|_| ()));
+        handle.spawn(http.serve_connection(stream, Api::new(
+            controller_id.clone(),
+            config.clone(),
+            database.clone(),
+            accessories.clone(),
+            sender,
+        )).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();

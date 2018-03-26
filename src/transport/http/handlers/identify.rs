@@ -32,10 +32,10 @@ impl Identify {
 impl<S: Storage> Handler<S> for Identify {
     fn handle(&mut self, uri: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
-        let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
+        let mut body: Vec<u8> = Vec::new();
 
         debug!("/identify");
 
-        Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
+        Box::new(future::ok(tlv_response(body, StatusCode::Ok)))
     }
 }

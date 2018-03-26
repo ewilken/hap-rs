@@ -1,9 +1,6 @@
-use std::collections::HashMap;
 use hyper::server::Response;
 use hyper::header::{self, ContentLength};
 use hyper::StatusCode;
-
-use transport::tlv;
 
 pub mod server;
 pub mod handlers;
@@ -55,8 +52,7 @@ impl ContentType {
     }
 }
 
-pub fn tlv_response(answer: HashMap<u8, Vec<u8>>, status: StatusCode) -> Response {
-    let body = tlv::encode(answer);
+pub fn tlv_response(body: Vec<u8>, status: StatusCode) -> Response {
     response(body, status, ContentType::PairingTLV8)
 }
 
