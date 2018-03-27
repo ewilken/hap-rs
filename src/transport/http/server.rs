@@ -15,34 +15,34 @@ use transport::http::handlers::{self, pair_setup, pair_verify, accessories, char
 use transport::http::encrypted_stream::{EncryptedStream, Session};
 use db::accessory_list::AccessoryList;
 use db::storage::Storage;
-use db::database::Database;
-use config::Config;
+use db::database::DatabasePtr;
+use config::ConfigPtr;
 
-enum Route<S: Storage> {
-    Get(Box<RefCell<handlers::Handler<S>>>),
-    Post(Box<RefCell<handlers::Handler<S>>>),
+enum Route {
+    Get(Box<RefCell<handlers::Handler>>),
+    Post(Box<RefCell<handlers::Handler>>),
     GetPut {
-        get: Box<RefCell<handlers::Handler<S>>>,
-        put: Box<RefCell<handlers::Handler<S>>>,
+        get: Box<RefCell<handlers::Handler>>,
+        put: Box<RefCell<handlers::Handler>>,
     },
 }
 
-struct Api<S: Storage> {
+struct Api {
     controller_id: Arc<Option<Uuid>>,
-    config: Arc<Config>,
-    database: Arc<Mutex<Database<S>>>,
+    config: ConfigPtr,
+    database: DatabasePtr,
     accessories: AccessoryList,
-    router: Arc<Router<Route<S>>>,
+    router: Arc<Router<Route>>,
 }
 
-impl<S: 'static + Storage> Api<S> {
+impl Api {
     fn new(
         controller_id: Arc<Option<Uuid>>,
-        config: Arc<Config>,
-        database: Arc<Mutex<Database<S>>>,
+        config: ConfigPtr,
+        database: DatabasePtr,
         accessories: AccessoryList,
         session_sender: oneshot::Sender<Session>,
-    ) -> Api<S> {
+    ) -> Api {
         let mut router = Router::new();
         router.add("/pair-setup", Route::Post(
             Box::new(RefCell::new(handlers::TlvHandlerType::from(pair_setup::PairSetup::new())))
@@ -68,7 +68,7 @@ impl<S: 'static + Storage> Api<S> {
     }
 }
 
-impl<S: 'static + Storage> Service for Api<S> {
+impl Service for Api {
     type Request = Request;
     type Response = Response;
     type Error = hyper::Error;
@@ -108,8 +108,8 @@ impl<S: 'static + Storage> Service for Api<S> {
 
 pub fn serve<S: 'static + Storage + Send>(
     socket_addr: &SocketAddr,
-    config: Arc<Config>,
-    database: Arc<Mutex<Database<S>>>,
+    config: ConfigPtr,
+    database: DatabasePtr,
     accessories: AccessoryList,
 ) {
     let mut evt_loop = Core::new().unwrap();

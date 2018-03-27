@@ -4,6 +4,7 @@ use std::env::current_dir;
 use std::str;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 use eui48::MacAddress;
 use rand;
 use rand::Rng;
@@ -14,6 +15,8 @@ use accessory::Category;
 
 use db::storage::Storage;
 use transport::bonjour::{StatusFlag, FeatureFlag};
+
+pub type ConfigPtr = Arc<Config>;
 
 pub struct Config {
     pub id: Uuid,

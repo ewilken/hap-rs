@@ -15,7 +15,7 @@ use crypto::ed25519;
 use uuid::Uuid;
 
 use db::storage::Storage;
-use db::database::Database;
+use db::database::DatabasePtr;
 use config::Config;
 use transport::http::handlers::TlvHandler;
 use transport::tlv::{self, Type, Value};
@@ -46,7 +46,7 @@ pub enum Step {
     Exchange { data: Vec<u8> },
 }
 
-impl<S: Storage> TlvHandler<S> for PairSetup {
+impl TlvHandler for PairSetup {
     type ParseResult = Step;
     type Result = tlv::Container;
 
@@ -80,18 +80,18 @@ impl<S: Storage> TlvHandler<S> for PairSetup {
     fn handle(
         &mut self,
         step: Step,
-        database: &Arc<Mutex<Database<S>>>
+        database: &DatabasePtr
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
-            Step::Start => match handle_start::<S>(self, database) {
+            Step::Start => match handle_start(self, database) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            Step::Verify { a_pub, a_proof } => match handle_verify::<S>(self, database, a_pub, a_proof) {
+            Step::Verify { a_pub, a_proof } => match handle_verify(self, database, a_pub, a_proof) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(4, err)),
             },
-            Step::Exchange { data } => match handle_exchange::<S>(self, database, data) {
+            Step::Exchange { data } => match handle_exchange(self, database, data) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(6, err)),
             },
@@ -99,13 +99,13 @@ impl<S: Storage> TlvHandler<S> for PairSetup {
     }
 }
 
-fn handle_start<S: Storage>(
+fn handle_start(
     handler: &mut PairSetup,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
     // TODO - Errors for kTLVError_Unavailable, kTLVError_MaxTries and kTLVError_Busy
 
-    let accessory = Device::load::<S>(database)?;
+    let accessory = Device::load(database)?;
 
     let mut rng = rand::thread_rng();
     let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>(); // s
@@ -134,9 +134,9 @@ fn handle_start<S: Storage>(
     Ok(vec![Value::State(2), Value::PublicKey(b_pub), Value::Salt(salt.clone())])
 }
 
-fn handle_verify<S: Storage>(
+fn handle_verify(
     handler: &mut PairSetup,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
     a_pub: Vec<u8>,
     a_proof: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
@@ -164,9 +164,9 @@ fn handle_verify<S: Storage>(
     }
 }
 
-fn handle_exchange<S: Storage>(
+fn handle_exchange(
     handler: &mut PairSetup,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
     if let Some(ref mut session) = handler.session {
@@ -231,7 +231,7 @@ fn handle_exchange<S: Storage>(
                 &mut accessory_x
             );
 
-            let accessory = Device::load::<S>(database)?;
+            let accessory = Device::load(database)?;
             let mut accessory_info: Vec<u8> = Vec::new();
             accessory_info.extend(&accessory_x);
             accessory_info.extend(accessory.id.as_bytes());

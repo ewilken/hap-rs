@@ -1,4 +1,5 @@
 use std::io::Error;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use db::file_storage;
@@ -6,13 +7,20 @@ use db::storage::Storage;
 use protocol::device::Device;
 use protocol::pairing::Pairing;
 
-pub struct Database<S: Storage> {
-    storage: S,
+pub type DatabasePtr = Arc<Mutex<Database>>;
+
+pub struct Database {
+    storage: Box<Storage>,
 }
 
-impl<S: Storage> Database<S> {
-    pub fn new(storage: S) -> Database<S> {
-        Database {storage: storage}
+impl Database {
+    pub fn new(storage: Box<Storage>) -> Database {
+        Database { storage }
+    }
+
+    pub fn new_with_file_storage(dir: &str) -> Result<Database, Error> {
+        let storage = file_storage::FileStorage::new(dir)?;
+        Ok(Database::new(Box::new(storage)))
     }
 
     pub fn get_byte_vec(&self, name: &str) -> Result<Vec<u8>, Error> {
@@ -69,12 +77,5 @@ impl<S: Storage> Database<S> {
             }
         }
         Ok(pairings)
-    }
-}
-
-impl Database<file_storage::FileStorage> {
-    pub fn new_with_file_storage(dir: &str) -> Result<Database<file_storage::FileStorage>, Error> {
-        let storage = file_storage::FileStorage::new(dir)?;
-        Ok(Database {storage: storage})
     }
 }

@@ -10,7 +10,7 @@ use uuid::Uuid;
 use characteristic::{Format, Perm, Unit};
 
 use db::storage::Storage;
-use db::database::Database;
+use db::database::DatabasePtr;
 use config::Config;
 use hap_type::HapType;
 use transport::http::{json_response, status_response};
@@ -27,8 +27,8 @@ impl GetCharacteristics {
     }
 }
 
-impl<S: Storage> Handler<S> for GetCharacteristics {
-    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+impl Handler for GetCharacteristics {
+    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, database: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
                 characteristics: Vec::new()
@@ -99,8 +99,8 @@ impl UpdateCharacteristics {
     }
 }
 
-impl<S: Storage> Handler<S> for UpdateCharacteristics {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+impl Handler for UpdateCharacteristics {
+    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, _: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body).unwrap();
         let mut resp_body = Body::<WriteResponseObject> {
             characteristics: Vec::new()

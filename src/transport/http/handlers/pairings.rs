@@ -3,7 +3,7 @@ use std::str;
 use uuid::Uuid;
 
 use db::storage::Storage;
-use db::database::Database;
+use db::database::DatabasePtr;
 use config::Config;
 use transport::http::handlers::TlvHandler;
 use transport::tlv::{self, Type, Value};
@@ -23,7 +23,7 @@ pub enum HandlerType {
     List,
 }
 
-impl<S: Storage> TlvHandler<S> for Pairings {
+impl TlvHandler for Pairings {
     type ParseResult = HandlerType;
     type Result = tlv::Container;
 
@@ -72,10 +72,10 @@ impl<S: Storage> TlvHandler<S> for Pairings {
     fn handle(
         &mut self,
         handler: HandlerType,
-        database: &Arc<Mutex<Database<S>>>
+        database: &DatabasePtr
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match handler {
-            HandlerType::Add { pairing_id, ltpk, permissions } => match handle_add::<S>(
+            HandlerType::Add { pairing_id, ltpk, permissions } => match handle_add(
                 self,
                 database,
                 pairing_id,
@@ -85,7 +85,7 @@ impl<S: Storage> TlvHandler<S> for Pairings {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            HandlerType::Remove { pairing_id } => match handle_remove::<S>(
+            HandlerType::Remove { pairing_id } => match handle_remove(
                 self,
                 database,
                 pairing_id
@@ -93,7 +93,7 @@ impl<S: Storage> TlvHandler<S> for Pairings {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            HandlerType::List => match handle_list::<S>(self, database) {
+            HandlerType::List => match handle_list(self, database) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
@@ -101,9 +101,9 @@ impl<S: Storage> TlvHandler<S> for Pairings {
     }
 }
 
-fn handle_add<S: Storage>(
+fn handle_add(
     handler: &mut Pairings,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
     pairing_id: Vec<u8>,
     ltpk: Vec<u8>,
     permissions: Permissions,
@@ -134,9 +134,9 @@ fn handle_add<S: Storage>(
     Ok(vec![Value::State(2)])
 }
 
-fn handle_remove<S: Storage>(
+fn handle_remove(
     handler: &mut Pairings,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
     pairing_id: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
     // TODO - check if controller is admin
@@ -149,9 +149,9 @@ fn handle_remove<S: Storage>(
     Ok(vec![Value::State(2)])
 }
 
-fn handle_list<S: Storage>(
+fn handle_list(
     handler: &mut Pairings,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
     // TODO - check if controller is admin
 

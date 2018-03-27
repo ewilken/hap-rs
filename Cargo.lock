@@ -222,7 +222,6 @@ dependencies = [
  "eui48 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.11.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mdns 0.2.0 (git+https://github.com/plietar/rust-mdns)",
  "num 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
  "pnet 0.20.0 (registry+https://github.com/rust-lang/crates.io-index)",

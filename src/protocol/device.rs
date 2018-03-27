@@ -10,7 +10,7 @@ use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess};
 use serde_json;
 
 use pin::Pin;
-use db::database::Database;
+use db::database::{Database, DatabasePtr};
 use db::file_storage::FileStorage;
 use db::storage::Storage;
 
@@ -33,7 +33,7 @@ impl Device {
         Device {id, pin, private_key, public_key}
     }
 
-    pub fn load_or_new(id: String, pin: Pin, database: &Database<FileStorage>) -> Result<Device, Error> {
+    pub fn load_or_new(id: String, pin: Pin, database: &Database) -> Result<Device, Error> {
         if let Some(device) = database.get_device().ok() {
             return Ok(device)
         }
@@ -42,12 +42,12 @@ impl Device {
         Ok(device)
     }
 
-    pub fn load<S: Storage>(database: &Arc<Mutex<Database<S>>>) -> Result<Device, Error> {
+    pub fn load(database: &DatabasePtr) -> Result<Device, Error> {
         let d = database.lock().unwrap();
         d.get_device()
     }
 
-    pub fn save<S: Storage>(&self, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
+    pub fn save(&self, database: &DatabasePtr) -> Result<(), Error> {
         let d = database.lock().unwrap();
         d.set_device(self)?;
         Ok(())

@@ -8,7 +8,7 @@ use uuid::Uuid;
 use accessory::HapAccessory;
 
 use db::storage::Storage;
-use db::database::Database;
+use db::database::DatabasePtr;
 use config::Config;
 use transport::http::tlv_response;
 use transport::http::handlers::Handler;
@@ -29,12 +29,12 @@ impl Identify {
     }
 }
 
-impl<S: Storage> Handler<S> for Identify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+impl Handler for Identify {
+    fn handle(&mut self, uri: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let decoded = tlv::decode(body);
         let mut body: Vec<u8> = Vec::new();
 
-        debug!("/identify");
+        println!("/identify");
 
         Box::new(future::ok(tlv_response(body, StatusCode::Ok)))
     }

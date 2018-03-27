@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate log;
 extern crate eui48;
 extern crate mdns;
 extern crate uuid;

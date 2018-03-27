@@ -13,7 +13,7 @@ use transport::http::encrypted_stream;
 use transport::tlv::{self, Type, Value};
 use config::Config;
 use db::storage::Storage;
-use db::database::Database;
+use db::database::DatabasePtr;
 use protocol::device::Device;
 use protocol::pairing::Pairing;
 
@@ -40,7 +40,7 @@ pub enum Step {
     Finish { data: Vec<u8> },
 }
 
-impl<S: Storage> TlvHandler<S> for PairVerify {
+impl TlvHandler for PairVerify {
     type ParseResult = Step;
     type Result = tlv::Container;
 
@@ -70,14 +70,14 @@ impl<S: Storage> TlvHandler<S> for PairVerify {
     fn handle(
         &mut self,
         step: Step,
-        database: &Arc<Mutex<Database<S>>>
+        database: &DatabasePtr
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
-            Step::Start { a_pub } => match handle_start::<S>(self, database, a_pub) {
+            Step::Start { a_pub } => match handle_start(self, database, a_pub) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            Step::Finish { data } => match handle_finish::<S>(self, database, data) {
+            Step::Finish { data } => match handle_finish(self, database, data) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(4, err)),
             },
@@ -85,9 +85,9 @@ impl<S: Storage> TlvHandler<S> for PairVerify {
     }
 }
 
-fn handle_start<S: Storage>(
+fn handle_start(
     handler: &mut PairVerify,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
     a_pub: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
     let mut rng = rand::thread_rng();
@@ -95,7 +95,7 @@ fn handle_start<S: Storage>(
     let b_pub = curve25519::curve25519_base(&b);
     let shared_secret = curve25519::curve25519(&b, &a_pub);
 
-    let accessory = Device::load::<S>(database)?;
+    let accessory = Device::load(database)?;
     let mut accessory_info: Vec<u8> = Vec::new();
     accessory_info.extend(&b_pub);
     accessory_info.extend(accessory.id.as_bytes());
@@ -138,9 +138,9 @@ fn handle_start<S: Storage>(
     ])
 }
 
-fn handle_finish<S: Storage>(
+fn handle_finish(
     handler: &mut PairVerify,
-    database: &Arc<Mutex<Database<S>>>,
+    database: &DatabasePtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
     if let Some(ref mut session) = handler.session {
@@ -165,7 +165,7 @@ fn handle_finish<S: Storage>(
 
         let uuid_str = str::from_utf8(device_pairing_id)?;
         let pairing_uuid = Uuid::parse_str(uuid_str)?;
-        let pairing = Pairing::load::<S>(pairing_uuid, database)?;
+        let pairing = Pairing::load(pairing_uuid, database)?;
 
         let mut device_info: Vec<u8> = Vec::new();
         device_info.extend(&session.a_pub);
