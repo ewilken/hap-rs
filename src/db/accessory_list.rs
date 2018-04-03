@@ -1,13 +1,12 @@
-use std::sync::{Arc, Mutex};
-use std::ops::Deref;
+use std::{sync::{Arc, Mutex}, ops::Deref};
+
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
 use accessory::HapAccessory;
-use characteristic::{HapCharacteristic, Perm};
-
-use transport::http::Status;
-use transport::http::handlers::characteristics::{ReadResponseObject, WriteObject, WriteResponseObject};
+use transport::http::{handlers::characteristics::{
+    ReadResponseObject, WriteObject, WriteResponseObject
+}};
 
 #[derive(Clone)]
 pub struct AccessoryList {

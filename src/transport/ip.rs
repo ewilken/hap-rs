@@ -1,19 +1,16 @@
-use std::io::Error;
-use std::sync::{Arc, Mutex};
-use transport::mdns::Responder;
-use transport::http;
-use std::net::SocketAddr;
+use std::{io::Error, sync::{Arc, Mutex}, net::SocketAddr};
 
 use accessory;
-
 use config::{Config, ConfigPtr};
-use db::storage::Storage;
-use db::database::{Database, DatabasePtr};
-use db::file_storage::FileStorage;
+use db::{
+    storage::Storage,
+    database::{Database, DatabasePtr},
+    file_storage::FileStorage,
+    accessory_list::{self, AccessoryList, AccessoryListTrait},
+};
 use pin;
 use protocol::device::Device;
-use transport::Transport;
-use db::accessory_list::{self, AccessoryList, AccessoryListTrait};
+use transport::{http, mdns::Responder, Transport};
 
 pub struct IpTransport<S: Storage> {
     config: ConfigPtr,

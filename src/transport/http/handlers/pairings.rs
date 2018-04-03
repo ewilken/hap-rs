@@ -1,12 +1,10 @@
-use std::sync::{Arc, Mutex};
 use std::str;
+
 use uuid::Uuid;
 
-use db::storage::Storage;
 use db::database::DatabasePtr;
 use config::Config;
-use transport::http::handlers::TlvHandler;
-use transport::tlv::{self, Type, Value};
+use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
 use protocol::pairing::{Pairing, Permissions};
 
 pub struct Pairings {}

@@ -1,14 +1,12 @@
-use std::sync::{Arc, Mutex};
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
+use std::sync::Arc;
+
+use hyper::{self, Uri, StatusCode, server::Response};
 use futures::{future, Future};
 use serde_json;
 use uuid::Uuid;
 
-use db::database::DatabasePtr;
-use transport::http::json_response;
-use transport::http::handlers::Handler;
-use db::accessory_list::AccessoryList;
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use transport::http::{handlers::Handler, json_response};
 
 pub struct Accessories {}
 

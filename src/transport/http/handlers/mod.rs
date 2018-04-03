@@ -1,14 +1,11 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-use hyper::{self, Uri, Error, StatusCode};
-use hyper::server::Response;
+use hyper::{self, Uri, Error, StatusCode, server::Response};
 use futures::{future, Future};
 use uuid::Uuid;
 
-use db::database::DatabasePtr;
-use db::accessory_list::AccessoryList;
-use transport::http::tlv_response;
-use transport::tlv::{self, Encodable};
+use db::{database::DatabasePtr, accessory_list::AccessoryList};
+use transport::{http::tlv_response, tlv::{self, Encodable}};
 
 pub mod accessories;
 pub mod characteristics;

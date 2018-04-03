@@ -1,11 +1,9 @@
-use std::io::Error;
-use std::sync::{Arc, Mutex};
+use std::{io::Error, sync::{Arc, Mutex}};
+
 use uuid::Uuid;
 
-use db::file_storage;
-use db::storage::Storage;
-use protocol::device::Device;
-use protocol::pairing::Pairing;
+use db::{file_storage, storage::Storage};
+use protocol::{device::Device, pairing::Pairing};
 
 pub type DatabasePtr = Arc<Mutex<Database>>;
 

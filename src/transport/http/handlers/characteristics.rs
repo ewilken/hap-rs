@@ -1,23 +1,16 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
+use std::{collections::HashMap, sync::Arc};
+
+use hyper::{self, Uri, StatusCode, server::Response};
 use futures::{future, Future};
 use serde_json;
 use url::form_urlencoded;
 use uuid::Uuid;
 
 use characteristic::{Format, Perm, Unit};
-
-use db::storage::Storage;
-use db::database::DatabasePtr;
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::Config;
 use hap_type::HapType;
-use transport::http::{json_response, status_response};
-use transport::http::handlers::Handler;
-use transport::http::Status;
-use transport::tlv;
-use db::accessory_list::AccessoryList;
+use transport::http::{handlers::Handler, json_response, status_response};
 
 pub struct GetCharacteristics {}
 
@@ -28,7 +21,7 @@ impl GetCharacteristics {
 }
 
 impl Handler for GetCharacteristics {
-    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, database: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, _: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
                 characteristics: Vec::new()

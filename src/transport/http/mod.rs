@@ -1,6 +1,4 @@
-use hyper::server::Response;
-use hyper::header::{self, ContentLength};
-use hyper::StatusCode;
+use hyper::{server::Response, header::{self, ContentLength}, StatusCode};
 
 pub mod server;
 pub mod handlers;

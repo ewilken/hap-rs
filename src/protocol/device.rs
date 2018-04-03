@@ -1,18 +1,15 @@
+use std::{fmt, marker::PhantomData, io::Error};
+
 use rand::{self, Rng};
 use crypto::ed25519;
-use std::fmt;
-use std::marker::PhantomData;
-use std::io::Error;
-use std::sync::{Arc, Mutex};
-use serde::ser::{Serialize, Serializer, SerializeTuple};
-use serde::de;
-use serde::de::{Deserialize, Deserializer, Visitor, SeqAccess};
+use serde::{
+    ser::{Serialize, Serializer, SerializeTuple},
+    de::{self, Deserialize, Deserializer, Visitor, SeqAccess},
+};
 use serde_json;
 
-use pin::Pin;
 use db::database::{Database, DatabasePtr};
-use db::file_storage::FileStorage;
-use db::storage::Storage;
+use pin::Pin;
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {

@@ -1,10 +1,9 @@
 use std::io::Error;
-use std::sync::{Arc, Mutex};
+
 use uuid::Uuid;
 use serde_json;
 
-use db::database::{Database, DatabasePtr};
-use db::storage::Storage;
+use db::database::DatabasePtr;
 
 #[derive(Serialize, Deserialize)]
 pub struct Pairing {

@@ -1,26 +1,23 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use std::str;
+use std::{str, collections::HashMap, ops::BitXor};
+
 use rand::{self, Rng};
 use sha2::{Sha512, Digest};
-use srp::server::{UserRecord, SrpServer};
-use srp::client::{SrpClient, srp_private_key};
-use srp::groups::G_3072;
-use srp::types::SrpGroup;
+use srp::{
+    server::{UserRecord, SrpServer},
+    client::{SrpClient, srp_private_key},
+    groups::G_3072,
+    types::SrpGroup,
+};
 use num::BigUint;
-use std::ops::BitXor;
 use ring::{hkdf, hmac, digest};
 use chacha20_poly1305_aead;
 use crypto::ed25519;
 use uuid::Uuid;
 
-use db::storage::Storage;
 use db::database::DatabasePtr;
 use config::Config;
-use transport::http::handlers::TlvHandler;
-use transport::tlv::{self, Type, Value};
-use protocol::device::Device;
-use protocol::pairing::{Pairing, Permissions};
+use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
+use protocol::{device::Device, pairing::{Pairing, Permissions}};
 
 struct Session {
     salt: Vec<u8>,

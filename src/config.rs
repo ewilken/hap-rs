@@ -1,18 +1,19 @@
-use std::net::IpAddr;
-use std::io::Error;
-use std::env::current_dir;
-use std::str;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::sync::Arc;
+use std::{
+    net::IpAddr,
+    io::Error,
+    env::current_dir,
+    str,
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    sync::Arc,
+};
+
 use eui48::MacAddress;
-use rand;
-use rand::Rng;
+use rand::{self, Rng};
 use uuid::Uuid;
 use pnet::datalink;
 
 use accessory::Category;
-
 use db::storage::Storage;
 use transport::bonjour::{StatusFlag, FeatureFlag};
 

@@ -1,9 +1,7 @@
-use_small_heuristics = false
+unstable_features = true
 combine_control_expr = false
 imports_indent = "Block"
 match_block_trailing_comma = true
 reorder_imported_names = true
 reorder_imports = true
-reorder_imports_in_group = true
 use_field_init_shorthand = true
-match_arm_blocks = false

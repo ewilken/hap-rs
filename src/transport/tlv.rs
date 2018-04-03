@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-use std::{fmt, io, str, error};
+use std::{fmt, io, str, error, collections::HashMap};
+
 use byteorder::{LittleEndian, WriteBytesExt};
 use srp::types::SrpAuthError;
 use chacha20_poly1305_aead::DecryptError;

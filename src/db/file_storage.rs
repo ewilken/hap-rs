@@ -1,10 +1,13 @@
-use std::fs;
-use std::str;
-use std::ffi::OsStr;
-use std::io::{Error, ErrorKind, Read, Write, BufReader, BufWriter};
+use std::{
+    fs,
+    str,
+    ffi::OsStr,
+    io::{Error, ErrorKind, Read, Write, BufReader, BufWriter},
+    os::unix::fs::PermissionsExt,
+    path::{Path, PathBuf},
+};
+
 use byteorder::{ByteOrder, BigEndian, ReadBytesExt};
-use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
 use db::storage::Storage;

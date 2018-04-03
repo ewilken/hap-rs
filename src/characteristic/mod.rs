@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind};
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use serde::Deserialize;
+
+use serde::{ser::{Serialize, Serializer, SerializeStruct}, Deserialize};
 use serde_json;
 use erased_serde;
 

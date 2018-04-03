@@ -1,6 +1,5 @@
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
-use std::str;
+use std::{str, collections::HashMap};
+
 use rand::{self, Rng};
 use crypto::{curve25519, ed25519};
 use ring::{hkdf, hmac, digest};
@@ -8,14 +7,9 @@ use chacha20_poly1305_aead;
 use uuid::Uuid;
 use futures::sync::oneshot;
 
-use transport::http::handlers::TlvHandler;
-use transport::http::encrypted_stream;
-use transport::tlv::{self, Type, Value};
-use config::Config;
-use db::storage::Storage;
+use transport::{http::handlers::TlvHandler, http::encrypted_stream, tlv::{self, Type, Value}};
 use db::database::DatabasePtr;
-use protocol::device::Device;
-use protocol::pairing::Pairing;
+use protocol::{device::Device, pairing::Pairing};
 
 struct Session {
     b_pub: [u8; 32],

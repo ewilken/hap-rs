@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
+use std::sync::Arc;
+
+use hyper::{self, Uri, StatusCode, server::Response};
 use futures::{future, Future};
 use uuid::Uuid;
 
 use accessory::HapAccessory;
-
 use db::storage::Storage;
 use db::database::DatabasePtr;
 use config::Config;

@@ -1,5 +1,5 @@
-use std::io::{Error, BufReader, BufWriter};
-use std::fs::File;
+use std::{fs::File, io::{Error, BufReader, BufWriter}};
+
 use uuid::Uuid;
 
 pub trait Storage {

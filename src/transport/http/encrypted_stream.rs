@@ -1,13 +1,11 @@
-use std::io::{self, Read, Write, ErrorKind};
-use std::cmp::min;
-use futures::{Async, Future, Poll};
-use futures::sync::oneshot;
+use std::{io::{self, Read, Write, ErrorKind}, cmp::min};
+
+use futures::{Async, Future, Poll, sync::oneshot};
 use tokio_core::net::TcpStream;
 use tokio_io::{AsyncRead, AsyncWrite};
 use ring::{hkdf, hmac, digest};
 use chacha20_poly1305_aead;
-use bytes::BytesMut;
-use bytes::buf::FromBuf;
+use bytes::{BytesMut, buf::FromBuf};
 use byteorder::{ByteOrder, LittleEndian};
 use uuid::Uuid;
 

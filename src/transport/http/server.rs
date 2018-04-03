@@ -1,21 +1,16 @@
-use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
-use std::cell::RefCell;
-use hyper::server::{Http, Request, Response, Service};
-use hyper::{self, StatusCode, Method};
-use futures::{future, Future};
-use futures::stream::Stream;
-use futures::sync::oneshot;
+use std::{net::SocketAddr, sync::Arc, cell::RefCell};
+
+use hyper::{self, server::{Http, Request, Response, Service}, StatusCode, Method};
+use futures::{future, Future, stream::Stream, sync::oneshot};
 use route_recognizer::Router;
-use tokio_core::net::TcpListener;
-use tokio_core::reactor::Core;
+use tokio_core::{net::TcpListener, reactor::Core};
 use uuid::Uuid;
 
-use transport::http::handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify};
-use transport::http::encrypted_stream::{EncryptedStream, Session};
-use db::accessory_list::AccessoryList;
-use db::storage::Storage;
-use db::database::DatabasePtr;
+use transport::http::{
+    handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify},
+    encrypted_stream::{EncryptedStream, Session},
+};
+use db::{accessory_list::AccessoryList, storage::Storage, database::DatabasePtr};
 use config::ConfigPtr;
 
 enum Route {
