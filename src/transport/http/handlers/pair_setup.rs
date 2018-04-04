@@ -77,14 +77,14 @@ impl TlvHandler for PairSetup {
     fn handle(
         &mut self,
         step: Step,
-        database: &DatabasePtr
+        database: &DatabasePtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start => match handle_start(self, database) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            Step::Verify { a_pub, a_proof } => match handle_verify(self, database, a_pub, a_proof) {
+            Step::Verify { a_pub, a_proof } => match handle_verify(self, a_pub, a_proof) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(4, err)),
             },
@@ -133,7 +133,6 @@ fn handle_start(
 
 fn handle_verify(
     handler: &mut PairSetup,
-    database: &DatabasePtr,
     a_pub: Vec<u8>,
     a_proof: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {

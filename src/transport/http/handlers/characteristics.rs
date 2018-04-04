@@ -21,7 +21,14 @@ impl GetCharacteristics {
 }
 
 impl Handler for GetCharacteristics {
-    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, _: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(
+        &mut self,
+        uri: Uri,
+        _: Vec<u8>,
+        _: Arc<Option<Uuid>>,
+        _: &DatabasePtr,
+        accessories: &AccessoryList,
+    ) -> Box<Future<Item=Response, Error=hyper::Error>> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
                 characteristics: Vec::new()
@@ -93,7 +100,14 @@ impl UpdateCharacteristics {
 }
 
 impl Handler for UpdateCharacteristics {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, _: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(
+        &mut self,
+        _: Uri,
+        body: Vec<u8>,
+        controller_id: Arc<Option<Uuid>>,
+        _: &DatabasePtr,
+        accessories: &AccessoryList,
+    ) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body).unwrap();
         let mut resp_body = Body::<WriteResponseObject> {
             characteristics: Vec::new()

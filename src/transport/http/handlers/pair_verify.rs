@@ -64,7 +64,7 @@ impl TlvHandler for PairVerify {
     fn handle(
         &mut self,
         step: Step,
-        database: &DatabasePtr
+        database: &DatabasePtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start { a_pub } => match handle_start(self, database, a_pub) {
@@ -174,7 +174,7 @@ fn handle_finish(
                 controller_id: pairing_uuid,
                 shared_secret: session.shared_secret,
             };
-            sender.send(encrypted_session);
+            let _session = sender.send(encrypted_session);
         } else {
             return Err(tlv::Error::Unknown);
         }

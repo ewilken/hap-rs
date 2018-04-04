@@ -70,7 +70,7 @@ impl TlvHandler for Pairings {
     fn handle(
         &mut self,
         handler: HandlerType,
-        database: &DatabasePtr
+        database: &DatabasePtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match handler {
             HandlerType::Add { pairing_id, ltpk, permissions } => match handle_add(

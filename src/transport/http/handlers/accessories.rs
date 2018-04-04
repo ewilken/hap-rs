@@ -17,7 +17,14 @@ impl Accessories {
 }
 
 impl Handler for Accessories {
-    fn handle(&mut self, _: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, _: &DatabasePtr, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    fn handle(
+        &mut self,
+        _: Uri,
+        _: Vec<u8>,
+        _: Arc<Option<Uuid>>,
+        _: &DatabasePtr,
+        accessories: &AccessoryList,
+    ) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let resp_body = serde_json::to_vec(accessories).unwrap();
         Box::new(future::ok(json_response(resp_body, StatusCode::Ok)))
     }

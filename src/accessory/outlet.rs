@@ -1,5 +1,5 @@
 use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{accessory_information, outlet};
+use service::{accessory_information::{self, AccessoryInformation}, outlet};
 
 pub type Outlet = Accessory<OutletInner>;
 
@@ -7,7 +7,7 @@ pub type Outlet = Accessory<OutletInner>;
 pub struct OutletInner {
     id: u64,
 
-    pub accessory_information: accessory_information::AccessoryInformation,
+    pub accessory_information: AccessoryInformation,
     pub outlet: outlet::Outlet,
 }
 
@@ -32,6 +32,10 @@ impl HapAccessory for OutletInner {
             &mut self.accessory_information,
             &mut self.outlet,
         ]
+    }
+
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
+        &mut self.accessory_information
     }
 }
 
