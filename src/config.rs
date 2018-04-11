@@ -34,6 +34,7 @@ pub struct Config {
     pub protocol_version: String,  // pv
     pub status_flag: StatusFlag,   // sf
     pub feature_flag: FeatureFlag, // ff
+    pub max_peers: Option<usize>,
     pub config_hash: Option<u64>,
 }
 
@@ -129,6 +130,7 @@ impl Default for Config {
             protocol_version: "1.0".into(),
             status_flag: StatusFlag::NotPaired,
             feature_flag: FeatureFlag::Zero,
+            max_peers: None,
             config_hash: None,
         };
         config.update_hash();

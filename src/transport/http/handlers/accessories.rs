@@ -5,6 +5,7 @@ use failure::Error;
 use serde_json;
 use uuid::Uuid;
 
+use config::ConfigPtr;
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use transport::http::{handlers::JsonHandler, json_response};
 
@@ -22,6 +23,7 @@ impl JsonHandler for Accessories {
         _: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
     ) -> Result<Response, Error> {

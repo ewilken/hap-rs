@@ -15,7 +15,7 @@ use crypto::ed25519;
 use uuid::Uuid;
 
 use db::database::DatabasePtr;
-use config::Config;
+use config::ConfigPtr;
 use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
 use protocol::{device::Device, pairing::{Pairing, Permissions}};
 
@@ -77,6 +77,7 @@ impl TlvHandler for PairSetup {
     fn handle(
         &mut self,
         step: Step,
+        config: &ConfigPtr,
         database: &DatabasePtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
@@ -88,7 +89,7 @@ impl TlvHandler for PairSetup {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(4, err)),
             },
-            Step::Exchange { data } => match handle_exchange(self, database, data) {
+            Step::Exchange { data } => match handle_exchange(self, config, database, data) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(6, err)),
             },
@@ -162,6 +163,7 @@ fn handle_verify(
 
 fn handle_exchange(
     handler: &mut PairSetup,
+    config: &ConfigPtr,
     database: &DatabasePtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
@@ -214,6 +216,15 @@ fn handle_exchange(
             for i in 0..32 {
                 pairing_ltpk[i] = device_ltpk[i];
             }
+
+            if let Some(max_peers) = config.max_peers {
+                let d = database.lock().unwrap();
+                let count = d.count_pairings()?;
+                if count + 1 > max_peers {
+                    return Err(tlv::Error::MaxPeers);
+                }
+            }
+
             let pairing = Pairing::new(pairing_uuid, Permissions::Admin, pairing_ltpk);
             pairing.save(database)?;
             // TODO - kTLVError_MaxPeers

@@ -76,4 +76,14 @@ impl Database {
         }
         Ok(pairings)
     }
+
+    pub fn count_pairings(&self) -> Result<usize, Error> {
+        let mut count = 0;
+        for key in self.storage.keys_with_suffix("entity")? {
+            if key != String::from("device") {
+                count += 1;
+            }
+        }
+        Ok(count)
+    }
 }

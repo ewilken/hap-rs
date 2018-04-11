@@ -87,6 +87,7 @@ impl Service for Api {
         let (method, uri, _, _, body) = req.deconstruct();
         let router = self.router.clone();
         let controller_id = self.controller_id.clone();
+        let config = self.config.clone();
         let database = self.database.clone();
         let accessories = self.accessories.clone();
 
@@ -97,13 +98,13 @@ impl Service for Api {
             if let Ok(route_match) = router.recognize(uri.path()) {
                 match (route_match.handler, method) {
                     (&Route::Get(ref handler), Method::Get) => handler.borrow_mut()
-                        .handle(uri, body, controller_id, &database, &accessories),
+                        .handle(uri, body, controller_id, &config, &database, &accessories),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
-                        .handle(uri, body, controller_id, &database, &accessories),
+                        .handle(uri, body, controller_id, &config, &database, &accessories),
                     (&Route::GetPut { ref _get, ref _put }, Method::Get) => _get.borrow_mut()
-                        .handle(uri, body, controller_id, &database, &accessories),
+                        .handle(uri, body, controller_id, &config, &database, &accessories),
                     (&Route::GetPut { ref _get, ref _put }, Method::Put) => _put.borrow_mut()
-                        .handle(uri, body, controller_id, &database, &accessories),
+                        .handle(uri, body, controller_id, &config, &database, &accessories),
                     _ => Box::new(future::ok(
                         Response::new().with_status(StatusCode::BadRequest)
                     )),

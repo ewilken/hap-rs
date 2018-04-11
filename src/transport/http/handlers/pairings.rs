@@ -3,7 +3,7 @@ use std::str;
 use uuid::Uuid;
 
 use db::database::DatabasePtr;
-use config::Config;
+use config::ConfigPtr;
 use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
 use protocol::pairing::{Pairing, Permissions};
 
@@ -70,11 +70,12 @@ impl TlvHandler for Pairings {
     fn handle(
         &mut self,
         handler: HandlerType,
+        config: &ConfigPtr,
         database: &DatabasePtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match handler {
             HandlerType::Add { pairing_id, ltpk, permissions } => match handle_add(
-                self,
+                config,
                 database,
                 pairing_id,
                 ltpk,
@@ -83,15 +84,11 @@ impl TlvHandler for Pairings {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            HandlerType::Remove { pairing_id } => match handle_remove(
-                self,
-                database,
-                pairing_id
-            ) {
+            HandlerType::Remove { pairing_id } => match handle_remove(database, pairing_id) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            HandlerType::List => match handle_list(self, database) {
+            HandlerType::List => match handle_list(database) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
@@ -100,7 +97,7 @@ impl TlvHandler for Pairings {
 }
 
 fn handle_add(
-    handler: &mut Pairings,
+    config: &ConfigPtr,
     database: &DatabasePtr,
     pairing_id: Vec<u8>,
     ltpk: Vec<u8>,
@@ -121,7 +118,13 @@ fn handle_add(
             d.set_pairing(&pairing)?;
         },
         Err(_) => {
-            // TODO - either check max_peers or just ignore it
+            if let Some(max_peers) = config.max_peers {
+                let count = d.count_pairings()?;
+                if count + 1 > max_peers {
+                    return Err(tlv::Error::MaxPeers);
+                }
+            }
+
             let mut public_key = [0; 32];
             public_key.clone_from_slice(&ltpk);
             let pairing = Pairing {id: pairing_uuid, permissions, public_key};
@@ -133,7 +136,6 @@ fn handle_add(
 }
 
 fn handle_remove(
-    handler: &mut Pairings,
     database: &DatabasePtr,
     pairing_id: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
@@ -148,7 +150,6 @@ fn handle_remove(
 }
 
 fn handle_list(
-    handler: &mut Pairings,
     database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
     // TODO - check if controller is admin

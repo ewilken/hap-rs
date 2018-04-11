@@ -5,7 +5,7 @@ use failure::Error;
 use serde_json;
 use uuid::Uuid;
 
-use config::Config;
+use config::ConfigPtr;
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use transport::http::{Status, json_response, status_response, handlers::JsonHandler};
 
@@ -23,26 +23,23 @@ impl JsonHandler for Identify {
         _: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
     ) -> Result<Response, Error> {
         let d = database.lock().unwrap();
-        match d.list_pairings() {
-            Ok(pairings) => {
-                if pairings.len() > 0 {
-                    let body = serde_json::to_vec(
-                        &json!({"status": Status::InsufficientPrivileges as i32})
-                    ).unwrap();
-                    return Ok(json_response(body, StatusCode::BadRequest));
-                }
-
-                let mut a = accessory_list.accessories.lock().unwrap();
-                for accessory in a.iter_mut() {
-                    accessory.get_mut_information().inner.identify.set_value(true)?;
-                }
-                Ok(status_response(StatusCode::NoContent))
-            },
-            Err(_) => Ok(status_response(StatusCode::InternalServerError)),
+        let count = d.count_pairings()?;
+        if count > 0 {
+            let body = serde_json::to_vec(
+                &json!({"status": Status::InsufficientPrivileges as i32})
+            ).unwrap();
+            return Ok(json_response(body, StatusCode::BadRequest));
         }
+
+        let mut a = accessory_list.accessories.lock().unwrap();
+        for accessory in a.iter_mut() {
+            accessory.get_mut_information().inner.identify.set_value(true)?;
+        }
+        Ok(status_response(StatusCode::NoContent))
     }
 }

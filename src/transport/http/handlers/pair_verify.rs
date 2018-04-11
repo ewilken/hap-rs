@@ -8,6 +8,7 @@ use uuid::Uuid;
 use futures::sync::oneshot;
 
 use transport::{http::handlers::TlvHandler, http::encrypted_stream, tlv::{self, Type, Value}};
+use config::ConfigPtr;
 use db::database::DatabasePtr;
 use protocol::{device::Device, pairing::Pairing};
 
@@ -64,6 +65,7 @@ impl TlvHandler for PairVerify {
     fn handle(
         &mut self,
         step: Step,
+        _: &ConfigPtr,
         database: &DatabasePtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {

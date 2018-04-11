@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use characteristic::{Format, Perm, Unit};
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
-use config::Config;
+use config::ConfigPtr;
 use hap_type::HapType;
 use transport::http::{handlers::JsonHandler, json_response, status_response};
 
@@ -26,6 +26,7 @@ impl JsonHandler for GetCharacteristics {
         uri: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
     ) -> Result<Response, Error> {
@@ -105,6 +106,7 @@ impl JsonHandler for UpdateCharacteristics {
         _: Uri,
         body: Vec<u8>,
         controller_id: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
     ) -> Result<Response, Error> {
