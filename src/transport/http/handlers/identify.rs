@@ -1,41 +1,45 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
-use futures::{future, Future};
+use std::sync::Arc;
+
+use hyper::{Uri, StatusCode, server::Response};
+use failure::Error;
+use serde_json;
 use uuid::Uuid;
 
-use accessory::HapAccessory;
+use config::ConfigPtr;
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use transport::http::{Status, json_response, status_response, handlers::JsonHandler};
 
-use db::storage::Storage;
-use db::database::Database;
-use config::Config;
-use transport::http::tlv_response;
-use transport::http::handlers::Handler;
-use transport::tlv;
-use db::accessory_list::AccessoryList;
-use protocol::device::Device;
-use protocol::pairing::Pairing;
-
-struct Session {}
-
-pub struct Identify {
-    session: Option<Session>
-}
+pub struct Identify {}
 
 impl Identify {
     pub fn new() -> Identify {
-        Identify { session: None }
+        Identify {}
     }
 }
 
-impl<S: Storage> Handler<S> for Identify {
-    fn handle(&mut self, uri: Uri, body: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
-        let decoded = tlv::decode(body);
-        let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
+impl JsonHandler for Identify {
+    fn handle(
+        &mut self,
+        _: Uri,
+        _: Vec<u8>,
+        _: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
+        database: &DatabasePtr,
+        accessory_list: &AccessoryList,
+    ) -> Result<Response, Error> {
+        let d = database.lock().unwrap();
+        let count = d.count_pairings()?;
+        if count > 0 {
+            let body = serde_json::to_vec(
+                &json!({"status": Status::InsufficientPrivileges as i32})
+            ).unwrap();
+            return Ok(json_response(body, StatusCode::BadRequest));
+        }
 
-        debug!("/identify");
-
-        Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
+        let mut a = accessory_list.accessories.lock().unwrap();
+        for accessory in a.iter_mut() {
+            accessory.get_mut_information().inner.identify.set_value(true)?;
+        }
+        Ok(status_response(StatusCode::NoContent))
     }
 }

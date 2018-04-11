@@ -1,9 +1,11 @@
 extern crate hap;
-use hap::transport::Transport;
-use hap::transport::ip::IpTransport;
-use hap::accessory::{Information, outlet};
-use hap::characteristic::Updatable;
-use hap::config::Config;
+
+use hap::{
+    transport::{Transport, ip::IpTransport},
+    accessory::{Information, outlet},
+    characteristic::Updatable,
+    config::Config
+};
 
 struct VirtualOutlet {}
 

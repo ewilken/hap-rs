@@ -1,6 +1,14 @@
 use accessory::Information;
 use service::{HapService, Service};
-use characteristic::{HapCharacteristic, identify, manufacturer, model, name, serial_number, firmware_revision};
+use characteristic::{
+    HapCharacteristic,
+    identify,
+    manufacturer,
+    model,
+    name,
+    serial_number,
+    firmware_revision,
+};
 use hap_type::HapType;
 
 pub type AccessoryInformation = Service<AccessoryInformationInner>;

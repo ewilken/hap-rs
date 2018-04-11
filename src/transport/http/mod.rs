@@ -1,44 +1,21 @@
-use std::collections::HashMap;
-use hyper::server::Response;
-use hyper::header::{self, ContentLength};
-use hyper::StatusCode;
-
-use transport::tlv;
+use hyper::{server::Response, header::{self, ContentLength}, StatusCode};
 
 pub mod server;
 pub mod handlers;
 pub mod encrypted_stream;
 
 pub enum Status {
-    Success,
-    InsufficientPrivileges,
-    ServiceCommunicationFailure,
-    ResourceBusy,
-    ReadOnlyCharacteristic,
-    WriteOnlyCharacteristic,
-    NotificationNotSupported,
-    OutOfResource,
-    OperationTimedOut,
-    ResourceDoesNotExist,
-    InvalidValueInRequest,
-}
-
-impl Status {
-    pub fn as_i32(&self) -> i32 {
-        match self {
-            &Status::Success => 0,
-            &Status::InsufficientPrivileges => -70401,
-            &Status::ServiceCommunicationFailure => -70402,
-            &Status::ResourceBusy => -70403,
-            &Status::ReadOnlyCharacteristic => -70404,
-            &Status::WriteOnlyCharacteristic => -70405,
-            &Status::NotificationNotSupported => -70406,
-            &Status::OutOfResource => -70407,
-            &Status::OperationTimedOut => -70408,
-            &Status::ResourceDoesNotExist => -70409,
-            &Status::InvalidValueInRequest => -70410,
-        }
-    }
+    Success = 0,
+    InsufficientPrivileges = -70401,
+    ServiceCommunicationFailure = -70402,
+    ResourceBusy = -70403,
+    ReadOnlyCharacteristic = -70404,
+    WriteOnlyCharacteristic = -70405,
+    NotificationNotSupported = -70406,
+    OutOfResource = -70407,
+    OperationTimedOut = -70408,
+    ResourceDoesNotExist = -70409,
+    InvalidValueInRequest = -70410,
 }
 
 enum ContentType {
@@ -55,8 +32,7 @@ impl ContentType {
     }
 }
 
-pub fn tlv_response(answer: HashMap<u8, Vec<u8>>, status: StatusCode) -> Response {
-    let body = tlv::encode(answer);
+pub fn tlv_response(body: Vec<u8>, status: StatusCode) -> Response {
     response(body, status, ContentType::PairingTLV8)
 }
 

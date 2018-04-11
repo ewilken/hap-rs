@@ -1,6 +1,5 @@
-use std::thread;
-use std::sync::mpsc::{self, TryRecvError};
-use std::time::Duration;
+use std::{thread, sync::mpsc::{self, TryRecvError}, time::Duration};
+
 use mdns;
 
 pub struct Responder {

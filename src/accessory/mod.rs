@@ -1,7 +1,7 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
-use service::HapService;
+use service::{HapService, accessory_information::AccessoryInformation};
 use db::accessory_list::AccessoryListTrait;
 
 pub mod outlet;
@@ -17,6 +17,7 @@ pub trait HapAccessory {
     fn set_id(&mut self, id: u64);
     fn get_services(&self) -> Vec<&HapAccessoryService>;
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService>;
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation;
 }
 
 pub struct Accessory<T: HapAccessory> {
@@ -54,6 +55,10 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
         self.inner.get_mut_services()
     }
+
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
+        self.inner.get_mut_information()
+    }
 }
 
 pub fn init_iids(accessory: &mut Box<AccessoryListTrait>) {
@@ -90,50 +95,25 @@ impl Default for Information {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum Category {
-    Other,
-    Bridge,
-    Fan,
-    Garage,
-    Lightbulb,
-    DoorLock,
-    Outlet,
-    Switch,
-    Thermostat,
-    Sensor,
-    SecuritySystem,
-    Door,
-    Window,
-    WindowCovering,
-    ProgrammableSwitch,
-    RangeExtender,
-    IPCamera,
-    VideoDoorBell,
-    AirPurifier,
-}
-
-impl Category {
-    pub fn as_u8(&self) -> u8 {
-        match self {
-            &Category::Other => 1,
-            &Category::Bridge => 2,
-            &Category::Fan => 3,
-            &Category::Garage => 4,
-            &Category::Lightbulb => 5,
-            &Category::DoorLock => 6,
-            &Category::Outlet => 7,
-            &Category::Switch => 8,
-            &Category::Thermostat => 9,
-            &Category::Sensor => 10,
-            &Category::SecuritySystem => 11,
-            &Category::Door => 12,
-            &Category::Window => 13,
-            &Category::WindowCovering => 14,
-            &Category::ProgrammableSwitch => 15,
-            &Category::RangeExtender => 16,
-            &Category::IPCamera => 17,
-            &Category::VideoDoorBell => 18,
-            &Category::AirPurifier => 19,
-        }
-    }
+    Other = 1,
+    Bridge = 2,
+    Fan = 3,
+    Garage = 4,
+    Lightbulb = 5,
+    DoorLock = 6,
+    Outlet = 7,
+    Switch = 8,
+    Thermostat = 9,
+    Sensor = 10,
+    SecuritySystem = 11,
+    Door = 12,
+    Window = 13,
+    WindowCovering = 14,
+    ProgrammableSwitch = 15,
+    RangeExtender = 16,
+    IPCamera = 17,
+    VideoDoorBell = 18,
+    AirPurifier = 19,
 }

@@ -1,18 +1,24 @@
-use std::io::Error;
+use std::{io::Error, sync::{Arc, Mutex}};
+
 use uuid::Uuid;
 
-use db::file_storage;
-use db::storage::Storage;
-use protocol::device::Device;
-use protocol::pairing::Pairing;
+use db::{file_storage, storage::Storage};
+use protocol::{device::Device, pairing::Pairing};
 
-pub struct Database<S: Storage> {
-    storage: S,
+pub type DatabasePtr = Arc<Mutex<Database>>;
+
+pub struct Database {
+    storage: Box<Storage>,
 }
 
-impl<S: Storage> Database<S> {
-    pub fn new(storage: S) -> Database<S> {
-        Database {storage: storage}
+impl Database {
+    pub fn new(storage: Box<Storage>) -> Database {
+        Database { storage }
+    }
+
+    pub fn new_with_file_storage(dir: &str) -> Result<Database, Error> {
+        let storage = file_storage::FileStorage::new(dir)?;
+        Ok(Database::new(Box::new(storage)))
     }
 
     pub fn get_byte_vec(&self, name: &str) -> Result<Vec<u8>, Error> {
@@ -70,11 +76,14 @@ impl<S: Storage> Database<S> {
         }
         Ok(pairings)
     }
-}
 
-impl Database<file_storage::FileStorage> {
-    pub fn new_with_file_storage(dir: &str) -> Result<Database<file_storage::FileStorage>, Error> {
-        let storage = file_storage::FileStorage::new(dir)?;
-        Ok(Database {storage: storage})
+    pub fn count_pairings(&self) -> Result<usize, Error> {
+        let mut count = 0;
+        for key in self.storage.keys_with_suffix("entity")? {
+            if key != String::from("device") {
+                count += 1;
+            }
+        }
+        Ok(count)
     }
 }

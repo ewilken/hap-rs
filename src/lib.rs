@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate log;
 extern crate eui48;
 extern crate mdns;
 extern crate uuid;
@@ -26,6 +24,8 @@ extern crate tokio_io;
 #[macro_use]
 extern crate erased_serde;
 extern crate url;
+#[macro_use]
+extern crate failure;
 
 pub mod accessory;
 pub mod characteristic;

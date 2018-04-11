@@ -1,15 +1,13 @@
-use std::sync::{Arc, Mutex};
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
-use futures::{future, Future};
+use std::sync::Arc;
+
+use hyper::{Uri, StatusCode, server::Response};
+use failure::Error;
 use serde_json;
 use uuid::Uuid;
 
-use db::storage::Storage;
-use db::database::Database;
-use transport::http::json_response;
-use transport::http::handlers::Handler;
-use db::accessory_list::AccessoryList;
+use config::ConfigPtr;
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use transport::http::{handlers::JsonHandler, json_response};
 
 pub struct Accessories {}
 
@@ -19,9 +17,17 @@ impl Accessories {
     }
 }
 
-impl<S: Storage> Handler<S> for Accessories {
-    fn handle(&mut self, _: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
-        let resp_body = serde_json::to_vec(accessories).unwrap();
-        Box::new(future::ok(json_response(resp_body, StatusCode::Ok)))
+impl JsonHandler for Accessories {
+    fn handle(
+        &mut self,
+        _: Uri,
+        _: Vec<u8>,
+        _: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
+        _: &DatabasePtr,
+        accessories: &AccessoryList,
+    ) -> Result<Response, Error> {
+        let resp_body = serde_json::to_vec(accessories)?;
+        Ok(json_response(resp_body, StatusCode::Ok))
     }
 }

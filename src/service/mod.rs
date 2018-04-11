@@ -1,5 +1,4 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
-use erased_serde;
 
 use characteristic::HapCharacteristic;
 use hap_type::HapType;

@@ -1,23 +1,16 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
-use futures::{future, Future};
+use std::{collections::HashMap, sync::Arc};
+
+use hyper::{Uri, StatusCode, server::Response};
+use failure::Error;
 use serde_json;
 use url::form_urlencoded;
 use uuid::Uuid;
 
 use characteristic::{Format, Perm, Unit};
-
-use db::storage::Storage;
-use db::database::Database;
-use config::Config;
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use config::ConfigPtr;
 use hap_type::HapType;
-use transport::http::{json_response, status_response};
-use transport::http::handlers::Handler;
-use transport::http::Status;
-use transport::tlv;
-use db::accessory_list::AccessoryList;
+use transport::http::{handlers::JsonHandler, json_response, status_response};
 
 pub struct GetCharacteristics {}
 
@@ -27,8 +20,16 @@ impl GetCharacteristics {
     }
 }
 
-impl<S: Storage> Handler<S> for GetCharacteristics {
-    fn handle(&mut self, uri: Uri, _: Vec<u8>, _: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+impl JsonHandler for GetCharacteristics {
+    fn handle(
+        &mut self,
+        uri: Uri,
+        _: Vec<u8>,
+        _: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
+        _: &DatabasePtr,
+        accessories: &AccessoryList,
+    ) -> Result<Response, Error> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
                 characteristics: Vec::new()
@@ -46,10 +47,10 @@ impl<S: Storage> Handler<S> for GetCharacteristics {
             for id in ids {
                 let id_pair = id.split(".").collect::<Vec<&str>>();
                 if id_pair.len() != 2 {
-                    return Box::new(future::ok(status_response(StatusCode::BadRequest)));
+                    return Ok(status_response(StatusCode::BadRequest));
                 }
-                let aid = id_pair[0].parse::<u64>().unwrap();
-                let iid = id_pair[1].parse::<u64>().unwrap();
+                let aid = id_pair[0].parse::<u64>()?;
+                let iid = id_pair[1].parse::<u64>()?;
 
                 let mut res_object = accessories.read_characteristic(
                     aid,
@@ -66,18 +67,18 @@ impl<S: Storage> Handler<S> for GetCharacteristics {
                 resp_body.characteristics.push(res_object);
             }
 
-
             if some_err {
-                let res = serde_json::to_vec(&resp_body).unwrap();
-                return Box::new(future::ok(json_response(res, StatusCode::MultiStatus)));
+                let res = serde_json::to_vec(&resp_body)?;
+                return Ok(json_response(res, StatusCode::MultiStatus));
             }
             for ref mut r in &mut resp_body.characteristics {
                 r.status = None;
             }
-            let res = serde_json::to_vec(&resp_body).unwrap();
-            return Box::new(future::ok(json_response(res, StatusCode::Ok)));
+            let res = serde_json::to_vec(&resp_body)?;
+            Ok(json_response(res, StatusCode::Ok))
+        } else {
+            Ok(status_response(StatusCode::BadRequest))
         }
-        Box::new(future::ok(status_response(StatusCode::BadRequest)))
     }
 }
 
@@ -99,9 +100,17 @@ impl UpdateCharacteristics {
     }
 }
 
-impl<S: Storage> Handler<S> for UpdateCharacteristics {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, _: &Arc<Mutex<Database<S>>>, accessories: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
-        let write_body: Body<WriteObject> = serde_json::from_slice(&body).unwrap();
+impl JsonHandler for UpdateCharacteristics {
+    fn handle(
+        &mut self,
+        _: Uri,
+        body: Vec<u8>,
+        controller_id: Arc<Option<Uuid>>,
+        _: &ConfigPtr,
+        _: &DatabasePtr,
+        accessories: &AccessoryList,
+    ) -> Result<Response, Error> {
+        let write_body: Body<WriteObject> = serde_json::from_slice(&body)?;
         let mut resp_body = Body::<WriteResponseObject> {
             characteristics: Vec::new()
         };
@@ -119,13 +128,13 @@ impl<S: Storage> Handler<S> for UpdateCharacteristics {
         }
 
         if all_err {
-            let res = serde_json::to_vec(&resp_body).unwrap();
-            Box::new(future::ok(json_response(res, StatusCode::BadRequest)))
+            let res = serde_json::to_vec(&resp_body)?;
+            Ok(json_response(res, StatusCode::BadRequest))
         } else if some_err {
-            let res = serde_json::to_vec(&resp_body).unwrap();
-            Box::new(future::ok(json_response(res, StatusCode::MultiStatus)))
+            let res = serde_json::to_vec(&resp_body)?;
+            Ok(json_response(res, StatusCode::MultiStatus))
         } else {
-            Box::new(future::ok(status_response(StatusCode::NoContent)))
+            Ok(status_response(StatusCode::NoContent))
         }
     }
 }

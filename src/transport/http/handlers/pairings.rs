@@ -1,19 +1,10 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 use std::str;
-use hyper::server::Response;
-use hyper::{self, Uri, StatusCode};
-use futures::{future, Future};
+
 use uuid::Uuid;
 
-use db::storage::Storage;
-use db::database::Database;
-use config::Config;
-use transport::http::tlv_response;
-use transport::http::handlers::Handler;
-use transport::tlv::{self, ErrorKind};
-use db::accessory_list::AccessoryList;
-use protocol::device::Device;
+use db::database::DatabasePtr;
+use config::ConfigPtr;
+use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
 use protocol::pairing::{Pairing, Permissions};
 
 pub struct Pairings {}
@@ -24,107 +15,156 @@ impl Pairings {
     }
 }
 
-impl<S: Storage> Handler<S> for Pairings {
-    fn handle(&mut self, _: Uri, body: Vec<u8>, controller_id: Arc<Option<Uuid>>, database: &Arc<Mutex<Database<S>>>, _: &AccessoryList) -> Box<Future<Item=Response, Error=hyper::Error>> {
+pub enum HandlerType {
+    Add { pairing_id: Vec<u8>, ltpk: Vec<u8>, permissions: Permissions },
+    Remove { pairing_id: Vec<u8> },
+    List,
+}
+
+impl TlvHandler for Pairings {
+    type ParseResult = HandlerType;
+    type Result = tlv::Container;
+
+    fn parse(&self, body: Vec<u8>) -> Result<HandlerType, tlv::ErrorContainer> {
         let decoded = tlv::decode(body);
-        let mut answer: HashMap<u8, Vec<u8>> = HashMap::new();
-
-        if let (Some(v), Some(m)) = (decoded.get(&0x06), decoded.get(&0x00)) {
-            match (v[0], m[0]) {
-                (1, 3) => {
-                    debug!("/pairings - M1: Got Add Pairing Request");
-
-                    let (t, v) = tlv::Type::State(2).as_type_value();
-                    answer.insert(t, v);
-
-                    // TODO - check if controller is admin
-
-                    let pairing_id = decoded.get(&0x01).unwrap();
-                    let ltpk = decoded.get(&0x03).unwrap();
-                    let permissions = Permissions::from_u8(decoded.get(&0x0B).unwrap()[0]).unwrap();
-                    let uuid_str = str::from_utf8(pairing_id).unwrap();
-                    let pairing_uuid = Uuid::parse_str(uuid_str).unwrap();
-
-                    let d = database.lock().unwrap();
-                    match d.get_pairing(pairing_uuid) {
-                        Ok(mut pairing) => {
-                            if &pairing.public_key.to_vec() != ltpk {
-                                let (t, v) = tlv::Type::Error(ErrorKind::Unknown).as_type_value();
-                                answer.insert(t, v);
-                            }
-                            pairing.permissions = permissions;
-                            d.set_pairing(&pairing).unwrap();
-                        },
-                        Err(_) => {
-                            // TODO - either check max_peers or just ignore it
-                            let mut public_key = [0; 32];
-                            public_key.clone_from_slice(&ltpk);
-                            let pairing = Pairing {id: pairing_uuid, permissions, public_key};
-                            if d.set_pairing(&pairing).is_err() {
-                                let (t, v) = tlv::Type::Error(ErrorKind::Unknown).as_type_value();
-                                answer.insert(t, v);
-                            }
-                        },
-                    }
-
-                    debug!("/pairings - M2: Sending Add Pairing Response");
-                },
-                (1, 4) => {
-                    debug!("/pairings - M1: Got Remove Pairing Request");
-
-                    let (t, v) = tlv::Type::State(2).as_type_value();
-                    answer.insert(t, v);
-
-                    let pairing_id = decoded.get(&0x01).unwrap();
-                    let uuid_str = str::from_utf8(pairing_id).unwrap();
-                    let pairing_uuid = Uuid::parse_str(uuid_str).unwrap();
-                    let d = database.lock().unwrap();
-                    match d.get_pairing(pairing_uuid) {
-                        Ok(pairing) => {
-                            if pairing.permissions != Permissions::Admin {
-                                let (t, v) = tlv::Type::Error(ErrorKind::Authentication).as_type_value();
-                                answer.insert(t, v);
-                                return Box::new(future::ok(tlv_response(answer, StatusCode::Ok)));
-                            }
-                            if d.delete_pairing(&pairing.id).is_err() {
-                                let (t, v) = tlv::Type::Error(ErrorKind::Unknown).as_type_value();
-                                answer.insert(t, v);
-                            }
-                        },
-                        Err(_) => {},
-                    }
-
-                    debug!("/pairings - M2: Sending Remove Pairing Response");
-                },
-                (1, 5) => {
-                    debug!("/pairings - M1: Got List Pairings Request");
-
-                    let (t, v) = tlv::Type::State(2).as_type_value();
-                    answer.insert(t, v);
-
-                    // TODO - check if controller is admin
-
-                    let d = database.lock().unwrap();
-                    let pairings = d.list_pairings().unwrap();
-                    for (i, pairing) in pairings.iter().enumerate() {
-                        let (t, v) = tlv::Type::Identifier(pairing.id.hyphenated().to_string()).as_type_value();
-                        answer.insert(t, v);
-                        let (t, v) = tlv::Type::PublicKey(pairing.public_key.to_vec()).as_type_value();
-                        answer.insert(t, v);
-                        let (t, v) = tlv::Type::Permissions(pairing.permissions.clone()).as_type_value();
-                        answer.insert(t, v);
-                        if i < pairings.len() {
-                            let (t, v) = tlv::Type::Separator.as_type_value();
-                            answer.insert(t, v);
-                        }
-                    }
-
-                    debug!("/pairings - M2: Sending List Pairings Response");
-                },
-                _ => {},
-            }
+        if decoded.get(&(Type::State as u8)) != Some(&vec![1]) {
+            return Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown));
         }
-
-        Box::new(future::ok(tlv_response(answer, StatusCode::Ok)))
+        match decoded.get(&(Type::Method as u8)) {
+            Some(handler) => match handler[0] {
+                // TODO - put those handler numbers into the handler type enum somehow
+                3 => {
+                    let pairing_id = decoded.get(&(Type::Identifier as u8)).ok_or(
+                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                    )?;
+                    let ltpk = decoded.get(&(Type::PublicKey as u8)).ok_or(
+                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                    )?;
+                    let perms = decoded.get(&(Type::Permissions as u8)).ok_or(
+                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                    )?;
+                    let permissions = Permissions::from_u8(perms[0]).map_err(
+                        |_| tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                    )?;
+                    Ok(HandlerType::Add {
+                        pairing_id: pairing_id.clone(),
+                        ltpk: ltpk.clone(),
+                        permissions,
+                    })
+                },
+                4 => {
+                    let pairing_id = decoded.get(&(Type::Identifier as u8)).ok_or(
+                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                    )?;
+                    Ok(HandlerType::Remove { pairing_id: pairing_id.clone() })
+                },
+                5 => {
+                    Ok(HandlerType::List)
+                },
+                _ => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown))
+            },
+            None => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown)),
+        }
     }
+
+    fn handle(
+        &mut self,
+        handler: HandlerType,
+        config: &ConfigPtr,
+        database: &DatabasePtr,
+    ) -> Result<tlv::Container, tlv::ErrorContainer> {
+        match handler {
+            HandlerType::Add { pairing_id, ltpk, permissions } => match handle_add(
+                config,
+                database,
+                pairing_id,
+                ltpk,
+                permissions
+            ) {
+                Ok(res) => Ok(res),
+                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+            },
+            HandlerType::Remove { pairing_id } => match handle_remove(database, pairing_id) {
+                Ok(res) => Ok(res),
+                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+            },
+            HandlerType::List => match handle_list(database) {
+                Ok(res) => Ok(res),
+                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+            },
+        }
+    }
+}
+
+fn handle_add(
+    config: &ConfigPtr,
+    database: &DatabasePtr,
+    pairing_id: Vec<u8>,
+    ltpk: Vec<u8>,
+    permissions: Permissions,
+) -> Result<tlv::Container, tlv::Error> {
+    // TODO - check if controller is admin
+
+    let uuid_str = str::from_utf8(&pairing_id)?;
+    let pairing_uuid = Uuid::parse_str(uuid_str)?;
+
+    let d = database.lock().unwrap();
+    match d.get_pairing(pairing_uuid) {
+        Ok(mut pairing) => {
+            if &pairing.public_key.to_vec() != &ltpk {
+                return Err(tlv::Error::Unknown);
+            }
+            pairing.permissions = permissions;
+            d.set_pairing(&pairing)?;
+        },
+        Err(_) => {
+            if let Some(max_peers) = config.max_peers {
+                let count = d.count_pairings()?;
+                if count + 1 > max_peers {
+                    return Err(tlv::Error::MaxPeers);
+                }
+            }
+
+            let mut public_key = [0; 32];
+            public_key.clone_from_slice(&ltpk);
+            let pairing = Pairing {id: pairing_uuid, permissions, public_key};
+            d.set_pairing(&pairing)?;
+        },
+    }
+
+    Ok(vec![Value::State(2)])
+}
+
+fn handle_remove(
+    database: &DatabasePtr,
+    pairing_id: Vec<u8>,
+) -> Result<tlv::Container, tlv::Error> {
+    // TODO - check if controller is admin
+
+    let uuid_str = str::from_utf8(&pairing_id)?;
+    let pairing_uuid = Uuid::parse_str(uuid_str)?;
+    let d = database.lock().unwrap();
+    d.get_pairing(pairing_uuid).map(|pairing| d.delete_pairing(&pairing.id))?;
+
+    Ok(vec![Value::State(2)])
+}
+
+fn handle_list(
+    database: &DatabasePtr,
+) -> Result<tlv::Container, tlv::Error> {
+    // TODO - check if controller is admin
+
+    let d = database.lock().unwrap();
+    let pairings = d.list_pairings()?;
+    let mut list = vec![Value::State(2)];
+    for (i, pairing) in pairings.iter().enumerate() {
+        list.push(Value::Identifier(pairing.id.hyphenated().to_string()));
+        list.push(Value::PublicKey(pairing.public_key.to_vec()));
+        list.push(Value::Permissions(pairing.permissions.clone()));
+        if i < pairings.len() {
+            list.push(Value::Separator);
+        }
+    }
+
+    Ok(list)
 }

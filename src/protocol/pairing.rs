@@ -1,10 +1,9 @@
 use std::io::Error;
-use std::sync::{Arc, Mutex};
+
 use uuid::Uuid;
 use serde_json;
 
-use db::database::Database;
-use db::storage::Storage;
+use db::database::DatabasePtr;
 
 #[derive(Serialize, Deserialize)]
 pub struct Pairing {
@@ -18,12 +17,12 @@ impl Pairing {
         Pairing {id, permissions, public_key}
     }
 
-    pub fn load<S: Storage>(id: Uuid, database: &Arc<Mutex<Database<S>>>) -> Result<Pairing, Error> {
+    pub fn load(id: Uuid, database: &DatabasePtr) -> Result<Pairing, Error> {
         let d = database.lock().unwrap();
         d.get_pairing(id)
     }
 
-    pub fn save<S: Storage>(&self, database: &Arc<Mutex<Database<S>>>) -> Result<(), Error> {
+    pub fn save(&self, database: &DatabasePtr) -> Result<(), Error> {
         let d = database.lock().unwrap();
         d.set_pairing(self)?;
         Ok(())

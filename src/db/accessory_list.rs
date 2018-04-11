@@ -1,17 +1,16 @@
-use std::sync::{Arc, Mutex};
-use std::ops::Deref;
+use std::{sync::{Arc, Mutex}, ops::Deref};
+
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
 use accessory::HapAccessory;
-use characteristic::{HapCharacteristic, Perm};
-
-use transport::http::Status;
-use transport::http::handlers::characteristics::{ReadResponseObject, WriteObject, WriteResponseObject};
+use transport::http::{handlers::characteristics::{
+    ReadResponseObject, WriteObject, WriteResponseObject
+}};
 
 #[derive(Clone)]
 pub struct AccessoryList {
-    accessories: Arc<Mutex<Vec<Box<AccessoryListTrait>>>>,
+    pub accessories: Arc<Mutex<Vec<Box<AccessoryListTrait>>>>,
 }
 
 impl AccessoryList {
@@ -32,7 +31,7 @@ impl AccessoryList {
             status: Some(0),
         };
 
-        let mut a = self.accessories.lock().unwrap();
+        let a = self.accessories.lock().unwrap();
         'a: for accessory in a.iter() {
             if accessory.get_id() == aid {
                 for service in accessory.get_services() {

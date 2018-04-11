@@ -1,30 +1,27 @@
-use std::io::Error;
-use std::sync::{Arc, Mutex};
-use transport::mdns::Responder;
-use transport::http;
-use std::net::SocketAddr;
+use std::{io::Error, sync::{Arc, Mutex}, net::SocketAddr};
 
 use accessory;
-
-use config::Config;
-use db::storage::Storage;
-use db::database::Database;
-use db::file_storage::FileStorage;
+use config::{Config, ConfigPtr};
+use db::{
+    storage::Storage,
+    database::{Database, DatabasePtr},
+    file_storage::FileStorage,
+    accessory_list::{self, AccessoryList, AccessoryListTrait},
+};
 use pin;
 use protocol::device::Device;
-use transport::Transport;
-use db::accessory_list::{self, AccessoryList, AccessoryListTrait};
+use transport::{http, mdns::Responder, Transport};
 
-pub struct IpTransport<S: Storage, D: Storage + Send> {
-    config: Arc<Config>,
+pub struct IpTransport<S: Storage> {
+    config: ConfigPtr,
     storage: S,
-    database: Arc<Mutex<Database<D>>>,
+    database: DatabasePtr,
     accessories: AccessoryList,
     mdns_responder: Responder,
 }
 
-impl IpTransport<FileStorage, FileStorage> {
-    pub fn new(mut config: Config, accessories: Vec<Box<AccessoryListTrait>>) -> Result<IpTransport<FileStorage, FileStorage>, Error> {
+impl IpTransport<FileStorage> {
+    pub fn new(mut config: Config, accessories: Vec<Box<AccessoryListTrait>>) -> Result<IpTransport<FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
@@ -60,7 +57,7 @@ fn init_aids(accessories: &mut Vec<Box<AccessoryListTrait>>) {
     }
 }
 
-impl Transport for IpTransport<FileStorage, FileStorage> {
+impl Transport for IpTransport<FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
         self.mdns_responder.start();
         http::server::serve::<FileStorage>(
