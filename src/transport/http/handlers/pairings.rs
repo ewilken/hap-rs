@@ -111,7 +111,7 @@ fn handle_add(
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
 
-    let d = database.lock().map_err(|_| tlv::Error::Unknown)?;
+    let d = database.lock().unwrap();
     match d.get_pairing(pairing_uuid) {
         Ok(mut pairing) => {
             if &pairing.public_key.to_vec() != &ltpk {
@@ -141,7 +141,7 @@ fn handle_remove(
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
-    let d = database.lock().map_err(|_| tlv::Error::Unknown)?;
+    let d = database.lock().unwrap();
     d.get_pairing(pairing_uuid).map(|pairing| d.delete_pairing(&pairing.id))?;
 
     Ok(vec![Value::State(2)])
@@ -153,7 +153,7 @@ fn handle_list(
 ) -> Result<tlv::Container, tlv::Error> {
     // TODO - check if controller is admin
 
-    let d = database.lock().map_err(|_| tlv::Error::Unknown)?;
+    let d = database.lock().unwrap();
     let pairings = d.list_pairings()?;
     let mut list = vec![Value::State(2)];
     for (i, pairing) in pairings.iter().enumerate() {

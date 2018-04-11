@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use hyper::{self, Uri, StatusCode, server::Response};
-use futures::{future, Future};
+use hyper::{Uri, StatusCode, server::Response};
+use failure::Error;
 use serde_json;
 use uuid::Uuid;
 
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
-use transport::http::{handlers::Handler, json_response};
+use transport::http::{handlers::JsonHandler, json_response};
 
 pub struct Accessories {}
 
@@ -16,7 +16,7 @@ impl Accessories {
     }
 }
 
-impl Handler for Accessories {
+impl JsonHandler for Accessories {
     fn handle(
         &mut self,
         _: Uri,
@@ -24,8 +24,8 @@ impl Handler for Accessories {
         _: Arc<Option<Uuid>>,
         _: &DatabasePtr,
         accessories: &AccessoryList,
-    ) -> Box<Future<Item=Response, Error=hyper::Error>> {
-        let resp_body = serde_json::to_vec(accessories).unwrap();
-        Box::new(future::ok(json_response(resp_body, StatusCode::Ok)))
+    ) -> Result<Response, Error> {
+        let resp_body = serde_json::to_vec(accessories)?;
+        Ok(json_response(resp_body, StatusCode::Ok))
     }
 }

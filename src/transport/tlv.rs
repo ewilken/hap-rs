@@ -1,4 +1,4 @@
-use std::{fmt, io, str, error, collections::HashMap};
+use std::{io, str, collections::HashMap};
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use srp::types::SrpAuthError;
@@ -152,43 +152,22 @@ pub enum Method {
     ListPairings = 5,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Fail)]
 pub enum Error {
+    #[fail(display = "Unknown error")]
     Unknown = 0x01,
+    #[fail(display = "Setup code or signature verification failed")]
     Authentication = 0x02,
+    #[fail(display = "Client must look at the retry delay TLV item and wait that many seconds before retrying")]
     Backoff = 0x03,
+    #[fail(display = "Server cannot accept any more pairings")]
     MaxPeers = 0x04,
+    #[fail(display = "Server reached its maximum number of authentication attempts")]
     MaxTries = 0x05,
+    #[fail(display = "Server pairing method is unavailable")]
     Unavailable = 0x06,
+    #[fail(display = "Server is busy and cannot accept a pairing request at this time")]
     Busy = 0x07,
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Unknown => f.write_str("Unknown"),
-            Error::Authentication => f.write_str("Authentication"),
-            Error::Backoff => f.write_str("Backoff"),
-            Error::MaxPeers => f.write_str("MaxPeers"),
-            Error::MaxTries => f.write_str("MaxTries"),
-            Error::Unavailable => f.write_str("Unavailable"),
-            Error::Busy => f.write_str("Busy"),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Unknown => "Unknown error",
-            Error::Authentication => "Setup code or signature verification failed",
-            Error::Backoff => "Client must look at the retry delay TLV item and wait that many seconds before retrying",
-            Error::MaxPeers => "Server cannot accept any more pairings",
-            Error::MaxTries => "Server reached its maximum number of authentication attempts",
-            Error::Unavailable => "Server pairing method is unavailable",
-            Error::Busy => "Server is busy and cannot accept a pairing request at this time",
-        }
-    }
 }
 
 impl From<io::Error> for Error {

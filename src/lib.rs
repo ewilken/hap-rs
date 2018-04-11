@@ -24,6 +24,8 @@ extern crate tokio_io;
 #[macro_use]
 extern crate erased_serde;
 extern crate url;
+#[macro_use]
+extern crate failure;
 
 pub mod accessory;
 pub mod characteristic;

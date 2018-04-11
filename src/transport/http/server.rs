@@ -17,8 +17,8 @@ enum Route {
     Get(Box<RefCell<handlers::Handler>>),
     Post(Box<RefCell<handlers::Handler>>),
     GetPut {
-        get: Box<RefCell<handlers::Handler>>,
-        put: Box<RefCell<handlers::Handler>>,
+        _get: Box<RefCell<handlers::Handler>>,
+        _put: Box<RefCell<handlers::Handler>>,
     },
 }
 
@@ -40,23 +40,37 @@ impl Api {
     ) -> Api {
         let mut router = Router::new();
         router.add("/pair-setup", Route::Post(
-            Box::new(RefCell::new(handlers::TlvHandlerType::from(pair_setup::PairSetup::new())))
+            Box::new(RefCell::new(
+                handlers::TlvHandlerType::from(pair_setup::PairSetup::new())
+            ))
         ));
         router.add("/pair-verify", Route::Post(
-            Box::new(RefCell::new(handlers::TlvHandlerType::from(pair_verify::PairVerify::new(session_sender))))
+            Box::new(RefCell::new(
+                handlers::TlvHandlerType::from(pair_verify::PairVerify::new(session_sender))
+            ))
         ));
         router.add("/accessories", Route::Get(
-            Box::new(RefCell::new(accessories::Accessories::new()))
+            Box::new(RefCell::new(
+                handlers::JsonHandlerType::from(accessories::Accessories::new())
+            ))
         ));
         router.add("/characteristics", Route::GetPut {
-            get: Box::new(RefCell::new(characteristics::GetCharacteristics::new())),
-            put: Box::new(RefCell::new(characteristics::UpdateCharacteristics::new())),
+            _get: Box::new(RefCell::new(
+                handlers::JsonHandlerType::from(characteristics::GetCharacteristics::new())
+            )),
+            _put: Box::new(RefCell::new(
+                handlers::JsonHandlerType::from(characteristics::UpdateCharacteristics::new())
+            )),
         });
         router.add("/pairings", Route::Post(
-            Box::new(RefCell::new(handlers::TlvHandlerType::from(pairings::Pairings::new())))
+            Box::new(RefCell::new(
+                handlers::TlvHandlerType::from(pairings::Pairings::new())
+            ))
         ));
         router.add("/identify", Route::Post(
-            Box::new(RefCell::new(identify::Identify::new()))
+            Box::new(RefCell::new(
+                handlers::JsonHandlerType::from(identify::Identify::new())
+            ))
         ));
 
         Api { controller_id, config, database, accessories, router: Arc::new(router) }
@@ -86,9 +100,9 @@ impl Service for Api {
                         .handle(uri, body, controller_id, &database, &accessories),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
                         .handle(uri, body, controller_id, &database, &accessories),
-                    (&Route::GetPut { ref get, ref put }, Method::Get) => get.borrow_mut()
+                    (&Route::GetPut { ref _get, ref _put }, Method::Get) => _get.borrow_mut()
                         .handle(uri, body, controller_id, &database, &accessories),
-                    (&Route::GetPut { ref get, ref put }, Method::Put) => put.borrow_mut()
+                    (&Route::GetPut { ref _get, ref _put }, Method::Put) => _put.borrow_mut()
                         .handle(uri, body, controller_id, &database, &accessories),
                     _ => Box::new(future::ok(
                         Response::new().with_status(StatusCode::BadRequest)
