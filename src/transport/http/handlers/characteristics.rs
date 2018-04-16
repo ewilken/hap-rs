@@ -10,7 +10,12 @@ use characteristic::{Format, Perm, Unit};
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::ConfigPtr;
 use hap_type::HapType;
-use transport::http::{handlers::JsonHandler, json_response, status_response};
+use transport::http::{
+    server::EventSubscriptions,
+    handlers::JsonHandler,
+    json_response,
+    status_response,
+};
 
 pub struct GetCharacteristics {}
 
@@ -26,6 +31,7 @@ impl JsonHandler for GetCharacteristics {
         uri: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
@@ -106,6 +112,7 @@ impl JsonHandler for UpdateCharacteristics {
         _: Uri,
         body: Vec<u8>,
         controller_id: Arc<Option<Uuid>>,
+        event_subscriptions: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
@@ -118,7 +125,7 @@ impl JsonHandler for UpdateCharacteristics {
         let mut all_err = true;
 
         for c in write_body.characteristics {
-            let res_object = accessories.write_characteristic(c);
+            let res_object = accessories.write_characteristic(c, event_subscriptions);
             if res_object.status != 0 {
                 some_err = true;
             } else {
@@ -188,4 +195,11 @@ pub struct WriteResponseObject {
     pub iid: u64,
     pub aid: u64,
     pub status: i32,
+}
+
+#[derive(Debug, Serialize)]
+pub struct EventObject {
+    pub iid: u64,
+    pub aid: u64,
+    pub value: serde_json::Value,
 }

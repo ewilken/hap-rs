@@ -4,7 +4,8 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
 use accessory::HapAccessory;
-use transport::http::{handlers::characteristics::{
+use characteristic::Perm;
+use transport::http::{Status, server::EventSubscriptions, handlers::characteristics::{
     ReadResponseObject, WriteObject, WriteResponseObject
 }};
 
@@ -14,7 +15,15 @@ pub struct AccessoryList {
 }
 
 impl AccessoryList {
-    pub fn read_characteristic(&self, aid: u64, iid: u64, meta: bool, perms: bool, hap_type: bool, ev: bool) -> ReadResponseObject {
+    pub fn read_characteristic(
+        &self,
+        aid: u64,
+        iid: u64,
+        meta: bool,
+        perms: bool,
+        hap_type: bool,
+        ev: bool,
+    ) -> ReadResponseObject {
         let mut result_object = ReadResponseObject {
             iid,
             aid,
@@ -65,7 +74,11 @@ impl AccessoryList {
         result_object
     }
 
-    pub fn write_characteristic(&self, write_object: WriteObject) -> WriteResponseObject {
+    pub fn write_characteristic(
+        &self,
+        write_object: WriteObject,
+        event_subscriptions: &EventSubscriptions,
+    ) -> WriteResponseObject {
         let mut result_object = WriteResponseObject {
             iid: write_object.iid,
             aid: write_object.aid,
@@ -86,7 +99,13 @@ impl AccessoryList {
                                 characteristic.set_value(value).unwrap();
                             }
                             if let Some(ev) = write_object.ev {
-                                characteristic.set_event_notifications(ev);
+                                if characteristic.get_perms().contains(&Perm::Events) {
+                                    characteristic.set_event_notifications(ev);
+                                    let mut es = event_subscriptions.lock().unwrap();
+                                    es.push((write_object.iid, write_object.aid));
+                                } else {
+                                    result_object.status = Status::NotificationNotSupported as i32;
+                                }
                             }
                             break 'a;
                         }

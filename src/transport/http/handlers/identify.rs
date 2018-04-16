@@ -7,7 +7,13 @@ use uuid::Uuid;
 
 use config::ConfigPtr;
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
-use transport::http::{Status, json_response, status_response, handlers::JsonHandler};
+use transport::http::{
+    Status,
+    json_response,
+    status_response,
+    server::EventSubscriptions,
+    handlers::JsonHandler,
+};
 
 pub struct Identify {}
 
@@ -23,6 +29,7 @@ impl JsonHandler for Identify {
         _: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &EventSubscriptions,
         _: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,

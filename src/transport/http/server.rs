@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc, cell::RefCell};
+use std::{net::SocketAddr, sync::{Arc, Mutex}, cell::RefCell};
 
 use hyper::{self, server::{Http, Request, Response, Service}, StatusCode, Method};
 use futures::{future, Future, stream::Stream, sync::oneshot};
@@ -9,6 +9,7 @@ use uuid::Uuid;
 use transport::http::{
     handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify},
     encrypted_stream::{EncryptedStream, Session},
+    status_response,
 };
 use db::{accessory_list::AccessoryList, storage::Storage, database::DatabasePtr};
 use config::ConfigPtr;
@@ -24,6 +25,7 @@ enum Route {
 
 struct Api {
     controller_id: Arc<Option<Uuid>>,
+    event_subscriptions: EventSubscriptions,
     config: ConfigPtr,
     database: DatabasePtr,
     accessories: AccessoryList,
@@ -33,6 +35,7 @@ struct Api {
 impl Api {
     fn new(
         controller_id: Arc<Option<Uuid>>,
+        event_subscriptions: EventSubscriptions,
         config: ConfigPtr,
         database: DatabasePtr,
         accessories: AccessoryList,
@@ -73,7 +76,14 @@ impl Api {
             ))
         ));
 
-        Api { controller_id, config, database, accessories, router: Arc::new(router) }
+        Api {
+            controller_id,
+            event_subscriptions,
+            config,
+            database,
+            accessories,
+            router: Arc::new(router),
+        }
     }
 }
 
@@ -87,6 +97,7 @@ impl Service for Api {
         let (method, uri, _, _, body) = req.deconstruct();
         let router = self.router.clone();
         let controller_id = self.controller_id.clone();
+        let event_subscriptions = self.event_subscriptions.clone();
         let config = self.config.clone();
         let database = self.database.clone();
         let accessories = self.accessories.clone();
@@ -98,23 +109,55 @@ impl Service for Api {
             if let Ok(route_match) = router.recognize(uri.path()) {
                 match (route_match.handler, method) {
                     (&Route::Get(ref handler), Method::Get) => handler.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories
+                        ),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories
+                        ),
                     (&Route::GetPut { ref _get, ref _put }, Method::Get) => _get.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories
+                        ),
                     (&Route::GetPut { ref _get, ref _put }, Method::Put) => _put.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
-                    _ => Box::new(future::ok(
-                        Response::new().with_status(StatusCode::BadRequest)
-                    )),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories
+                        ),
+                    _ => Box::new(future::ok(status_response(StatusCode::BadRequest))),
                 }
             } else {
-                Box::new(future::ok(Response::new().with_status(StatusCode::NotFound)))
+                Box::new(future::ok(status_response(StatusCode::NotFound)))
             }
         }))
     }
 }
+
+pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
 
 pub fn serve<S: 'static + Storage + Send>(
     socket_addr: &SocketAddr,
@@ -130,8 +173,10 @@ pub fn serve<S: 'static + Storage + Send>(
     let server = listener.incoming().for_each(|(stream, _)| {
         let (stream, sender) = EncryptedStream::new(stream);
         let controller_id = Arc::new(stream.controller_id);
+        let event_subscriptions = Arc::new(Mutex::new(vec![]));
         handle.spawn(http.serve_connection(stream, Api::new(
-            controller_id.clone(),
+            controller_id,
+            event_subscriptions,
             config.clone(),
             database.clone(),
             accessories.clone(),

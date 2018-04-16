@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use config::ConfigPtr;
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
-use transport::http::{handlers::JsonHandler, json_response};
+use transport::http::{server::EventSubscriptions, handlers::JsonHandler, json_response};
 
 pub struct Accessories {}
 
@@ -23,6 +23,7 @@ impl JsonHandler for Accessories {
         _: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
