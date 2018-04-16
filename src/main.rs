@@ -3,15 +3,19 @@ extern crate hap;
 use hap::{
     transport::{Transport, ip::IpTransport},
     accessory::{Information, outlet},
-    characteristic::Updatable,
     config::Config
 };
 
-struct VirtualOutlet {}
+fn turn_on() -> Option<bool> {
+    println!("On characteristic read and turned to true.");
+    Some(true)
+}
 
-impl Updatable<bool> for VirtualOutlet {
-    fn on_update(&mut self, val: &bool) {
-        println!("On characteristic set to {}.", val);
+fn print_val(old: &Option<bool>, new: &bool) {
+    if let &Some(old) = old {
+        println!("On characteristic set from {} to {}.", old, new);
+    } else {
+        println!("On characteristic set to {}.", new);
     }
 }
 
@@ -24,8 +28,8 @@ fn main() {
     };
     let mut outlet = outlet::new(information);
 
-    let virtual_outlet = VirtualOutlet {};
-    outlet.inner.outlet.inner.on.set_updatable(Box::new(virtual_outlet));
+    outlet.inner.outlet.inner.on.on_read(Box::new(|| turn_on()));
+    outlet.inner.outlet.inner.on.on_update(Box::new(|old, new| print_val(old, new)));
 
     let config = Config {
         name: "Test".into(),

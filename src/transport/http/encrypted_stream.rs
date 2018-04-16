@@ -54,7 +54,7 @@ impl EncryptedStream {
 
     fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.decrypted_ready {
-            let len = min(buf.len(), (self.packet_len - 16));
+            let len = min(buf.len(), self.packet_len - 16);
             &buf[..len].copy_from_slice(&self.decrypted_buf[..len]);
             self.already_copied = len;
             if self.already_copied == (self.packet_len - 16) {

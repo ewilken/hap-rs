@@ -35,7 +35,8 @@ pub struct Characteristic<T: Default + Serialize> {
     valid_values: Option<Vec<T>>,
     valid_values_range: Option<[T; 2]>,
 
-    updatable: Option<Box<Updatable<T>>>,
+    fn_read: Option<Box<FnMut() -> Option<T>>>,
+    fn_update: Option<Box<FnMut(&Option<T>, &T)>>,
 }
 
 impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de> {
@@ -71,7 +72,11 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         self.event_notifications = Some(event_notifications);
     }
 
-    pub fn get_value(&self) -> &Option<T> {
+    pub fn get_value(&mut self) -> &Option<T> {
+        if let Some(ref mut on_read) = self.fn_read {
+            self.value = on_read();
+        }
+
         &self.value
     }
 
@@ -87,8 +92,8 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
             }
         }*/
 
-        if let Some(ref mut u) = self.updatable {
-            u.on_update(&val);
+        if let Some(ref mut on_update) = self.fn_update {
+            on_update(&self.value, &val);
         }
         self.value = Some(val);
 
@@ -127,8 +132,12 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         self.max_len
     }
 
-    pub fn set_updatable(&mut self, u: Box<Updatable<T>>) {
-        self.updatable = Some(u);
+    pub fn on_read(&mut self, on_read: Box<FnMut() -> Option<T>>) {
+        self.fn_read = Some(on_read);
+    }
+
+    pub fn on_update(&mut self, on_update: Box<FnMut(&Option<T>, &T)>) {
+        self.fn_update = Some(on_update);
     }
 }
 
@@ -185,7 +194,7 @@ pub trait HapCharacteristic: erased_serde::Serialize {
     fn get_perms(&self) -> &Vec<Perm>;
     fn get_event_notifications(&self) -> Option<bool>;
     fn set_event_notifications(&mut self, event_notifications: bool);
-    fn get_value(&self) -> Option<serde_json::Value>;
+    fn get_value(&mut self) -> Option<serde_json::Value>;
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
     fn get_unit(&self) -> &Option<Unit>;
     fn get_max_value(&self) -> Option<serde_json::Value>;
@@ -225,7 +234,7 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
         self.set_event_notifications(event_notifications);
     }
 
-    fn get_value(&self) -> Option<serde_json::Value> {
+    fn get_value(&mut self) -> Option<serde_json::Value> {
         if let &Some(ref v) = self.get_value() {
             return Some(json!(v));
         }
@@ -279,10 +288,6 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
     fn get_max_len(&self) -> Option<u16> {
         self.get_max_len()
     }
-}
-
-pub trait Updatable<T: Default + Serialize> {
-    fn on_update(&mut self, val: &T);
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

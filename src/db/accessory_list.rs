@@ -31,11 +31,11 @@ impl AccessoryList {
             status: Some(0),
         };
 
-        let a = self.accessories.lock().unwrap();
-        'a: for accessory in a.iter() {
+        let mut a = self.accessories.lock().unwrap();
+        'a: for accessory in a.iter_mut() {
             if accessory.get_id() == aid {
-                for service in accessory.get_services() {
-                    for characteristic in service.get_characteristics() {
+                for service in accessory.get_mut_services() {
+                    for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id() == iid {
                             result_object.value = characteristic.get_value();
                             if meta {
