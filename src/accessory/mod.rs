@@ -2,7 +2,6 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
 use service::{HapService, accessory_information::AccessoryInformation};
-use db::accessory_list::AccessoryListTrait;
 
 pub mod outlet;
 
@@ -18,6 +17,7 @@ pub trait HapAccessory {
     fn get_services(&self) -> Vec<&HapAccessoryService>;
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService>;
     fn get_mut_information(&mut self) -> &mut AccessoryInformation;
+    fn init_iids(&mut self);
 }
 
 pub struct Accessory<T: HapAccessory> {
@@ -59,17 +59,9 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
     fn get_mut_information(&mut self) -> &mut AccessoryInformation {
         self.inner.get_mut_information()
     }
-}
 
-pub fn init_iids(accessory: &mut Box<AccessoryListTrait>) {
-    let mut next_iid = 1;
-    for service in accessory.get_mut_services() {
-        service.set_id(next_iid);
-        next_iid += 1;
-        for characteristic in service.get_mut_characteristics() {
-            characteristic.set_id(next_iid);
-            next_iid += 1;
-        }
+    fn init_iids(&mut self) {
+        self.inner.init_iids()
     }
 }
 

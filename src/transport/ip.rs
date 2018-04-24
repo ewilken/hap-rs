@@ -1,12 +1,11 @@
 use std::{io::Error, sync::{Arc, Mutex}, net::SocketAddr};
 
-use accessory;
 use config::{Config, ConfigPtr};
 use db::{
     storage::Storage,
     database::{Database, DatabasePtr},
     file_storage::FileStorage,
-    accessory_list::{self, AccessoryList, AccessoryListTrait},
+    accessory_list::{AccessoryList, AccessoryListTrait},
 };
 use pin;
 use protocol::device::Device;
@@ -21,7 +20,10 @@ pub struct IpTransport<S: Storage> {
 }
 
 impl IpTransport<FileStorage> {
-    pub fn new(mut config: Config, accessories: Vec<Box<AccessoryListTrait>>) -> Result<IpTransport<FileStorage>, Error> {
+    pub fn new(
+        mut config: Config,
+        accessories: Vec<Box<AccessoryListTrait>>,
+    ) -> Result<IpTransport<FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
@@ -32,28 +34,19 @@ impl IpTransport<FileStorage> {
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
-        let mut a = accessories;
-        init_aids(&mut a);
+        let mut accessory_list = AccessoryList::new(accessories);
+        accessory_list.init_aids();
 
         let ip_transport = IpTransport {
             config: Arc::new(config),
             storage,
             database: Arc::new(Mutex::new(database)),
-            accessories: accessory_list::new(a),
+            accessories: accessory_list,
             mdns_responder,
         };
         device.save(&ip_transport.database)?;
 
         Ok(ip_transport)
-    }
-}
-
-fn init_aids(accessories: &mut Vec<Box<AccessoryListTrait>>) {
-    let mut next_aid = 1;
-    for accessory in accessories.iter_mut() {
-        accessory.set_id(next_aid);
-        next_aid += 1;
-        accessory::init_iids(accessory);
     }
 }
 

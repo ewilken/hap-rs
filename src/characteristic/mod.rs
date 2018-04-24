@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind};
+use std::{io::{Error, ErrorKind}, sync::{Arc, Mutex}};
 
 use serde::{ser::{Serialize, Serializer, SerializeStruct}, Deserialize};
 use serde_json;
@@ -35,8 +35,8 @@ pub struct Characteristic<T: Default + Serialize> {
     valid_values: Option<Vec<T>>,
     valid_values_range: Option<[T; 2]>,
 
-    fn_read: Option<Box<FnMut() -> Option<T>>>,
-    fn_update: Option<Box<FnMut(&Option<T>, &T)>>,
+    readable: Option<Arc<Mutex<Box<Readable<T>>>>>,
+    updatable: Option<Arc<Mutex<Box<Updatable<T>>>>>,
 }
 
 impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de> {
@@ -73,8 +73,9 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
     }
 
     pub fn get_value(&mut self) -> &Option<T> {
-        if let Some(ref mut on_read) = self.fn_read {
-            self.value = on_read();
+        if let Some(ref mut readable) = self.readable {
+            let mut r = readable.lock().unwrap();
+            self.value = r.on_read();
         }
 
         &self.value
@@ -92,8 +93,9 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
             }
         }*/
 
-        if let Some(ref mut on_update) = self.fn_update {
-            on_update(&self.value, &val);
+        if let Some(ref mut updatable) = self.updatable {
+            let mut u = updatable.lock().unwrap();
+            u.on_update(&self.value, &val);
         }
         self.value = Some(val);
 
@@ -132,12 +134,12 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         self.max_len
     }
 
-    pub fn on_read(&mut self, on_read: Box<FnMut() -> Option<T>>) {
-        self.fn_read = Some(on_read);
+    pub fn set_readable(&mut self, readable: Arc<Mutex<Box<Readable<T>>>>) {
+        self.readable = Some(readable);
     }
 
-    pub fn on_update(&mut self, on_update: Box<FnMut(&Option<T>, &T)>) {
-        self.fn_update = Some(on_update);
+    pub fn set_updatable(&mut self, updatable: Arc<Mutex<Box<Updatable<T>>>>) {
+        self.updatable = Some(updatable);
     }
 }
 
@@ -243,7 +245,7 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
 
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error> {
         let v;
-        // for some reason the iOS device is setting boolean values
+        // for some reason the controller is setting boolean values
         // either as a boolean or as an integer
         if self.format == Format::Bool && value.is_number() {
             let num_v: u8 = serde_json::from_value(value)?;
@@ -288,6 +290,14 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
     fn get_max_len(&self) -> Option<u16> {
         self.get_max_len()
     }
+}
+
+pub trait Readable<T: Default + Serialize> {
+    fn on_read(&mut self) -> Option<T>;
+}
+
+pub trait Updatable<T: Default + Serialize> {
+    fn on_update(&mut self, old_val: &Option<T>, new_val: &T);
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

@@ -15,6 +15,22 @@ pub struct AccessoryList {
 }
 
 impl AccessoryList {
+    pub fn new(accessories: Vec<Box<AccessoryListTrait>>) -> AccessoryList {
+        AccessoryList {
+            accessories: Arc::new(Mutex::new(accessories))
+        }
+    }
+
+    pub fn init_aids(&mut self) {
+        let mut next_aid = 1;
+        let mut a = self.accessories.lock().unwrap();
+        for accessory in a.iter_mut() {
+            accessory.set_id(next_aid);
+            next_aid += 1;
+            accessory.init_iids();
+        }
+    }
+
     pub fn read_characteristic(
         &self,
         aid: u64,
@@ -41,7 +57,7 @@ impl AccessoryList {
         };
 
         let mut a = self.accessories.lock().unwrap();
-        'a: for accessory in a.iter_mut() {
+        'l: for accessory in a.iter_mut() {
             if accessory.get_id() == aid {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
@@ -64,7 +80,7 @@ impl AccessoryList {
                             if ev {
                                 result_object.ev = characteristic.get_event_notifications();
                             }
-                            break 'a;
+                            break 'l;
                         }
                     }
                 }
@@ -86,7 +102,7 @@ impl AccessoryList {
         };
 
         let mut a = self.accessories.lock().unwrap();
-        'a: for accessory in a.iter_mut() {
+        'l: for accessory in a.iter_mut() {
             if accessory.get_id() == write_object.aid {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
@@ -107,7 +123,7 @@ impl AccessoryList {
                                     result_object.status = Status::NotificationNotSupported as i32;
                                 }
                             }
-                            break 'a;
+                            break 'l;
                         }
                     }
                 }
@@ -118,12 +134,6 @@ impl AccessoryList {
     }
 }
 
-pub trait AccessoryListTrait: HapAccessory + erased_serde::Serialize {}
-
-impl<T: HapAccessory + erased_serde::Serialize> AccessoryListTrait for T {}
-
-serialize_trait_object!(AccessoryListTrait);
-
 impl Serialize for AccessoryList {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("AccessoryList", 1)?;
@@ -133,8 +143,8 @@ impl Serialize for AccessoryList {
     }
 }
 
-pub fn new(accessories: Vec<Box<AccessoryListTrait>>) -> AccessoryList {
-    AccessoryList {
-        accessories: Arc::new(Mutex::new(accessories))
-    }
-}
+pub trait AccessoryListTrait: HapAccessory + erased_serde::Serialize {}
+
+impl<T: HapAccessory + erased_serde::Serialize> AccessoryListTrait for T {}
+
+serialize_trait_object!(AccessoryListTrait);
