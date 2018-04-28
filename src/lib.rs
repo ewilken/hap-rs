@@ -37,3 +37,4 @@ pub mod hap_type;
 pub mod transport;
 pub mod pin;
 pub mod protocol;
+pub mod event;
