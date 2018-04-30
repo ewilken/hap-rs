@@ -6,26 +6,24 @@ pub enum Event {
     CharacteristicValueChanged { aid: u64, iid: u64 }
 }
 
-pub struct Emitter<'e> {
-    listeners: Vec<Arc<Mutex<Box<&'e mut Listener>>>>,
+pub struct Emitter {
+    listeners: Vec<Box<Fn(&Event)>>,
 }
 
-impl<'e> Emitter<'e> {
-    pub fn new() -> Emitter<'e> {
+impl Emitter {
+    pub fn new() -> Emitter {
         Emitter { listeners: vec![] }
     }
 
-    pub fn add_listener(&mut self, listener: Arc<Mutex<Box<&'e mut Listener>>>) {
+    pub fn add_listener(&mut self, listener: Box<Fn(&Event)>) {
         self.listeners.push(listener);
     }
 
-    pub fn emit(&mut self, event: Event) {
-        for listener in self.listeners.iter_mut() {
-            listener.lock().unwrap().handle(&event);
+    pub fn emit(&self, event: Event) {
+        for listener in self.listeners.iter() {
+            listener(&event);
         }
     }
 }
 
-pub trait Listener {
-    fn handle(&mut self, event: &Event);
-}
+pub type EmitterPtr = Arc<Mutex<Emitter>>;

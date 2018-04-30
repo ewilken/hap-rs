@@ -16,6 +16,7 @@ use transport::http::{
     json_response,
     status_response,
 };
+use event::EmitterPtr;
 
 pub struct GetCharacteristics {}
 
@@ -35,6 +36,7 @@ impl JsonHandler for GetCharacteristics {
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
+        _: &EmitterPtr,
     ) -> Result<Response, Error> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
@@ -116,6 +118,7 @@ impl JsonHandler for UpdateCharacteristics {
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
+        event_emitter: &EmitterPtr,
     ) -> Result<Response, Error> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body)?;
         let mut resp_body = Body::<WriteResponseObject> {
@@ -125,7 +128,11 @@ impl JsonHandler for UpdateCharacteristics {
         let mut all_err = true;
 
         for c in write_body.characteristics {
-            let res_object = accessories.write_characteristic(c, event_subscriptions);
+            let res_object = accessories.write_characteristic(
+                c,
+                event_subscriptions,
+                event_emitter,
+            );
             if res_object.status != 0 {
                 some_err = true;
             } else {

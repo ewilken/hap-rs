@@ -8,6 +8,7 @@ use characteristic::Perm;
 use transport::http::{Status, server::EventSubscriptions, handlers::characteristics::{
     ReadResponseObject, WriteObject, WriteResponseObject
 }};
+use event::{Event, EmitterPtr};
 
 #[derive(Clone)]
 pub struct AccessoryList {
@@ -94,12 +95,14 @@ impl AccessoryList {
         &self,
         write_object: WriteObject,
         event_subscriptions: &EventSubscriptions,
+        event_emitter: &EmitterPtr,
     ) -> WriteResponseObject {
         let mut result_object = WriteResponseObject {
-            iid: write_object.iid,
             aid: write_object.aid,
+            iid: write_object.iid,
             status: 0,
         };
+        let mut send_event = false;
 
         let mut a = self.accessories.lock().unwrap();
         'l: for accessory in a.iter_mut() {
@@ -113,15 +116,24 @@ impl AccessoryList {
                             if let Some(value) = write_object.value {
                                 // TODO - handle error
                                 characteristic.set_value(value).unwrap();
+                                send_event = true;
                             }
                             if let Some(ev) = write_object.ev {
                                 if characteristic.get_perms().contains(&Perm::Events) {
                                     characteristic.set_event_notifications(ev);
                                     let mut es = event_subscriptions.lock().unwrap();
-                                    es.push((write_object.iid, write_object.aid));
+                                    es.push((write_object.aid, write_object.iid));
+                                    send_event = true;
                                 } else {
                                     result_object.status = Status::NotificationNotSupported as i32;
                                 }
+                            }
+                            if send_event {
+                                println!("Triggering event for aid: {} iid: {}", write_object.aid, write_object.iid);
+                                event_emitter.lock().unwrap().emit(Event::CharacteristicValueChanged {
+                                    aid: write_object.aid,
+                                    iid: write_object.iid,
+                                });
                             }
                             break 'l;
                         }

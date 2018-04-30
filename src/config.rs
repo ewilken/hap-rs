@@ -5,7 +5,7 @@ use std::{
     str,
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use eui48::MacAddress;
@@ -17,7 +17,7 @@ use accessory::Category;
 use db::storage::Storage;
 use transport::bonjour::{StatusFlag, FeatureFlag};
 
-pub type ConfigPtr = Arc<Config>;
+pub type ConfigPtr = Arc<Mutex<Config>>;
 
 pub struct Config {
     pub id: Uuid,

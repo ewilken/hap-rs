@@ -11,6 +11,7 @@ use transport::{
     http::{tlv_response, status_response, server::EventSubscriptions},
     tlv::{self, Encodable},
 };
+use event::EmitterPtr;
 
 pub mod accessories;
 pub mod characteristics;
@@ -29,6 +30,7 @@ pub trait Handler {
         config: &ConfigPtr,
         database: &DatabasePtr,
         accessories: &AccessoryList,
+        event_emitter: &EmitterPtr,
     ) -> Box<Future<Item=Response, Error=hyper::Error>>;
 }
 
@@ -41,6 +43,7 @@ pub trait TlvHandler {
         step: Self::ParseResult,
         config: &ConfigPtr,
         database: &DatabasePtr,
+        event_emitter: &EmitterPtr,
     ) -> Result<Self::Result, tlv::ErrorContainer>;
 }
 
@@ -62,10 +65,11 @@ impl<T: TlvHandler> Handler for TlvHandlerType<T> {
         config: &ConfigPtr,
         database: &DatabasePtr,
         _: &AccessoryList,
+        event_emitter: &EmitterPtr,
     ) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let response = match self.0.parse(body) {
             Err(e) => e.encode(),
-            Ok(step) => match self.0.handle(step, config, database) {
+            Ok(step) => match self.0.handle(step, config, database, event_emitter) {
                 Err(e) => e.encode(),
                 Ok(res) => res.encode(),
             }
@@ -84,6 +88,7 @@ pub trait JsonHandler {
         config: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
+        event_emitter: &EmitterPtr,
     ) -> Result<Response, Error>;
 }
 
@@ -105,6 +110,7 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
         config: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
+        event_emitter: &EmitterPtr,
     ) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let response = match self.0.handle(
             uri,
@@ -114,6 +120,7 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
             config,
             database,
             accessory_list,
+            event_emitter,
         ) {
             Ok(res) => res,
             Err(e) => match e.cause() {

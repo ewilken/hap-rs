@@ -11,6 +11,7 @@ use transport::{http::handlers::TlvHandler, http::encrypted_stream, tlv::{self, 
 use config::ConfigPtr;
 use db::database::DatabasePtr;
 use protocol::{device::Device, pairing::Pairing};
+use event::EmitterPtr;
 
 struct Session {
     b_pub: [u8; 32],
@@ -67,6 +68,7 @@ impl TlvHandler for PairVerify {
         step: Step,
         _: &ConfigPtr,
         database: &DatabasePtr,
+        _: &EmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start { a_pub } => match handle_start(self, database, a_pub) {

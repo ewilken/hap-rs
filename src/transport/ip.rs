@@ -9,14 +9,15 @@ use db::{
 };
 use pin;
 use protocol::device::Device;
-use transport::{http, mdns::Responder, Transport};
-use event::{Event, Emitter, Listener};
+use transport::{http, mdns::Responder, bonjour::StatusFlag, Transport};
+use event::{Event, Emitter, EmitterPtr};
 
 pub struct IpTransport<S: Storage> {
     config: ConfigPtr,
     storage: S,
     database: DatabasePtr,
     accessories: AccessoryList,
+    event_emitter: EmitterPtr,
     mdns_responder: Responder,
 }
 
@@ -39,10 +40,11 @@ impl IpTransport<FileStorage> {
         accessory_list.init_aids();
 
         let ip_transport = IpTransport {
-            config: Arc::new(config),
+            config: Arc::new(Mutex::new(config)),
             storage,
             database: Arc::new(Mutex::new(database)),
             accessories: accessory_list,
+            event_emitter: Arc::new(Mutex::new(Emitter::new())),
             mdns_responder,
         };
         device.save(&ip_transport.database)?;
@@ -53,25 +55,40 @@ impl IpTransport<FileStorage> {
 
 impl Transport for IpTransport<FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
-        let (ip, port, config, database, accessories) = (
-            self.config.ip,
-            self.config.port,
+        self.mdns_responder.start();
+
+        let (ip, port) = {
+            let c = self.config.lock().unwrap();
+            (c.ip, c.port)
+        };
+
+        let config = self.config.clone();
+        let database = self.database.clone();
+        self.event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
+            match event {
+                &Event::DevicePaired => {
+                    config.lock().unwrap().status_flag = StatusFlag::Zero;
+                    // TODO - update MDNS txt records
+                },
+                &Event::DeviceUnpaired => {
+                    match database.lock().unwrap().count_pairings() {
+                        Ok(count) => if count == 0 {
+                            config.lock().unwrap().status_flag = StatusFlag::NotPaired;
+                            // TODO - update MDNS txt records
+                        },
+                        _ => {},
+                    }
+                },
+                _ => {},
+            }
+        }));
+
+        http::server::serve(
+            &SocketAddr::new(ip, port),
             self.config.clone(),
             self.database.clone(),
             self.accessories.clone(),
-        );
-
-        self.mdns_responder.start();
-
-        let mut event_emitter = Emitter::new();
-        event_emitter.add_listener(Arc::new(Mutex::new(Box::new(self as &mut Listener))));
-
-        http::server::serve::<FileStorage>(
-            &SocketAddr::new(ip, port),
-            config,
-            database,
-            accessories,
-            // event_emitter,
+            self.event_emitter.clone(),
         );
         Ok(())
     }
@@ -79,19 +96,5 @@ impl Transport for IpTransport<FileStorage> {
     fn stop(&self) -> Result<(), Error> {
         self.mdns_responder.stop();
         Ok(())
-    }
-}
-
-impl Listener for IpTransport<FileStorage> {
-    fn handle(&mut self, event: &Event) {
-        match event {
-            &Event::DevicePaired => {
-
-            },
-            &Event::DeviceUnpaired => {
-
-            },
-            _ => {},
-        }
     }
 }

@@ -1,5 +1,5 @@
 extern crate eui48;
-extern crate mdns;
+extern crate libmdns;
 extern crate uuid;
 extern crate rand;
 extern crate serde;

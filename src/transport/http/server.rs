@@ -11,8 +11,9 @@ use transport::http::{
     encrypted_stream::{EncryptedStream, Session},
     status_response,
 };
-use db::{accessory_list::AccessoryList, storage::Storage, database::DatabasePtr};
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::ConfigPtr;
+use event::{Event, EmitterPtr};
 
 enum Route {
     Get(Box<RefCell<handlers::Handler>>),
@@ -29,6 +30,7 @@ struct Api {
     config: ConfigPtr,
     database: DatabasePtr,
     accessories: AccessoryList,
+    event_emitter: EmitterPtr,
     router: Arc<Router<Route>>,
 }
 
@@ -39,6 +41,7 @@ impl Api {
         config: ConfigPtr,
         database: DatabasePtr,
         accessories: AccessoryList,
+        event_emitter: EmitterPtr,
         session_sender: oneshot::Sender<Session>,
     ) -> Api {
         let mut router = Router::new();
@@ -82,6 +85,7 @@ impl Api {
             config,
             database,
             accessories,
+            event_emitter,
             router: Arc::new(router),
         }
     }
@@ -101,6 +105,7 @@ impl Service for Api {
         let config = self.config.clone();
         let database = self.database.clone();
         let accessories = self.accessories.clone();
+        let event_emitter = self.event_emitter.clone();
 
         Box::new(body.fold(vec![], |mut v, c| {
             v.extend(c.to_vec());
@@ -116,7 +121,8 @@ impl Service for Api {
                             &event_subscriptions,
                             &config,
                             &database,
-                            &accessories
+                            &accessories,
+                            &event_emitter,
                         ),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
                         .handle(
@@ -126,7 +132,8 @@ impl Service for Api {
                             &event_subscriptions,
                             &config,
                             &database,
-                            &accessories
+                            &accessories,
+                            &event_emitter,
                         ),
                     (&Route::GetPut { ref _get, ref _put }, Method::Get) => _get.borrow_mut()
                         .handle(
@@ -136,7 +143,8 @@ impl Service for Api {
                             &event_subscriptions,
                             &config,
                             &database,
-                            &accessories
+                            &accessories,
+                            &event_emitter,
                         ),
                     (&Route::GetPut { ref _get, ref _put }, Method::Put) => _put.borrow_mut()
                         .handle(
@@ -146,7 +154,8 @@ impl Service for Api {
                             &event_subscriptions,
                             &config,
                             &database,
-                            &accessories
+                            &accessories,
+                            &event_emitter,
                         ),
                     _ => Box::new(future::ok(status_response(StatusCode::BadRequest))),
                 }
@@ -159,11 +168,12 @@ impl Service for Api {
 
 pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
 
-pub fn serve<S: 'static + Storage + Send>(
+pub fn serve(
     socket_addr: &SocketAddr,
     config: ConfigPtr,
     database: DatabasePtr,
     accessories: AccessoryList,
+    event_emitter: EmitterPtr,
 ) {
     let mut evt_loop = Core::new().unwrap();
     let listener = TcpListener::bind(socket_addr, &evt_loop.handle()).unwrap();
@@ -174,14 +184,33 @@ pub fn serve<S: 'static + Storage + Send>(
         let (stream, sender) = EncryptedStream::new(stream);
         let controller_id = Arc::new(stream.controller_id);
         let event_subscriptions = Arc::new(Mutex::new(vec![]));
-        handle.spawn(http.serve_connection(stream, Api::new(
+        let api = Api::new(
             controller_id,
-            event_subscriptions,
+            event_subscriptions.clone(),
             config.clone(),
             database.clone(),
             accessories.clone(),
+            event_emitter.clone(),
             sender,
-        )).map_err(|_| ()).map(|_| ()));
+        );
+
+        let event_subscriptions = event_subscriptions.clone();
+        event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
+            match event {
+                &Event::CharacteristicValueChanged { aid, iid } => {
+                    let es = event_subscriptions.lock().unwrap();
+                    for &(s_aid, s_iid) in es.iter() {
+                        if s_aid == aid && s_iid == iid {
+                            // TODO - find out why this fires too often
+                            println!("Event triggered for aid: {} iid: {}", aid, iid);
+                        }
+                    }
+                },
+                _ => {},
+            }
+        }));
+
+        handle.spawn(http.serve_connection(stream, api).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();

@@ -14,6 +14,7 @@ use transport::http::{
     server::EventSubscriptions,
     handlers::JsonHandler,
 };
+use event::EmitterPtr;
 
 pub struct Identify {}
 
@@ -33,6 +34,7 @@ impl JsonHandler for Identify {
         _: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
+        _: &EmitterPtr,
     ) -> Result<Response, Error> {
         let d = database.lock().unwrap();
         let count = d.count_pairings()?;
