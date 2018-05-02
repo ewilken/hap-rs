@@ -5,6 +5,7 @@ use serde_json;
 use erased_serde;
 
 use hap_type::HapType;
+use event::{Event, EmitterPtr};
 
 pub mod firmware_revision;
 pub mod identify;
@@ -18,13 +19,14 @@ pub mod serial_number;
 #[derive(Default)]
 pub struct Characteristic<T: Default + Serialize> {
     id: u64,
+    accessory_id: u64,
     hap_type: HapType,
     format: Format,
     perms: Vec<Perm>,
     description: Option<String>,
     event_notifications: Option<bool>,
 
-    value: Option<T>,
+    value: T,
     unit: Option<Unit>,
 
     max_value: Option<T>,
@@ -37,6 +39,8 @@ pub struct Characteristic<T: Default + Serialize> {
 
     readable: Option<Arc<Mutex<Box<Readable<T>>>>>,
     updatable: Option<Arc<Mutex<Box<Updatable<T>>>>>,
+
+    event_emitter: Option<EmitterPtr>,
 }
 
 impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de> {
@@ -46,6 +50,10 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
 
     pub fn set_id(&mut self, id: u64) {
         self.id = id;
+    }
+
+    pub fn set_accessory_id(&mut self, accessory_id: u64) {
+        self.accessory_id = accessory_id;
     }
 
     pub fn get_type(&self) -> &HapType {
@@ -60,25 +68,29 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         &self.perms
     }
 
-    pub fn set_description(&mut self, description: String) {
-        self.description = Some(description);
+    pub fn set_description(&mut self, description: Option<String>) {
+        self.description = description;
     }
 
     pub fn get_event_notifications(&self) -> Option<bool> {
         self.event_notifications
     }
 
-    pub fn set_event_notifications(&mut self, event_notifications: bool) {
-        self.event_notifications = Some(event_notifications);
+    pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
+        self.event_notifications = event_notifications;
     }
 
-    pub fn get_value(&mut self) -> &Option<T> {
+    pub fn get_value(&mut self) -> Result<&T, Error> {
+        let mut val = None;
         if let Some(ref mut readable) = self.readable {
             let mut r = readable.lock().unwrap();
-            self.value = r.on_read();
+            val = Some(r.on_read());
+        }
+        if let Some(v) = val {
+            self.set_value(v)?;
         }
 
-        &self.value
+        Ok(&self.value)
     }
 
     pub fn set_value(&mut self, val: T) -> Result<(), Error> {
@@ -97,7 +109,18 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
             let mut u = updatable.lock().unwrap();
             u.on_update(&self.value, &val);
         }
-        self.value = Some(val);
+
+        if self.event_notifications == Some(true) {
+            if let Some(ref event_emitter) = self.event_emitter {
+                event_emitter.lock().unwrap().emit(Event::CharacteristicValueChanged {
+                    aid: self.accessory_id,
+                    iid: self.id,
+                    value: json!(&self.value),
+                });
+            }
+        }
+
+        self.value = val;
 
         Ok(())
     }
@@ -110,36 +133,40 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         &self.max_value
     }
 
-    pub fn set_max_value(&mut self, val: T) {
-        self.max_value = Some(val);
+    pub fn set_max_value(&mut self, val: Option<T>) {
+        self.max_value = val;
     }
 
     pub fn get_min_value(&self) -> &Option<T> {
         &self.min_value
     }
 
-    pub fn set_min_value(&mut self, val: T) {
-        self.min_value = Some(val);
+    pub fn set_min_value(&mut self, val: Option<T>) {
+        self.min_value = val;
     }
 
     pub fn get_step_value(&self) -> &Option<T> {
         &self.step_value
     }
 
-    pub fn set_step_value(&mut self, val: T) {
-        self.step_value = Some(val);
+    pub fn set_step_value(&mut self, val: Option<T>) {
+        self.step_value = val;
     }
 
     pub fn get_max_len(&self) -> Option<u16> {
         self.max_len
     }
 
-    pub fn set_readable(&mut self, readable: Arc<Mutex<Box<Readable<T>>>>) {
-        self.readable = Some(readable);
+    pub fn set_readable(&mut self, readable: Option<Arc<Mutex<Box<Readable<T>>>>>) {
+        self.readable = readable;
     }
 
-    pub fn set_updatable(&mut self, updatable: Arc<Mutex<Box<Updatable<T>>>>) {
-        self.updatable = Some(updatable);
+    pub fn set_updatable(&mut self, updatable: Option<Arc<Mutex<Box<Updatable<T>>>>>) {
+        self.updatable = updatable;
+    }
+
+    pub fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) {
+        self.event_emitter = event_emitter;
     }
 }
 
@@ -191,18 +218,20 @@ impl<T: Default + Serialize> Serialize for Characteristic<T> where for<'de> T: D
 pub trait HapCharacteristic: erased_serde::Serialize {
     fn get_id(&self) -> u64;
     fn set_id(&mut self, id: u64);
+    fn set_accessory_id(&mut self, accessory_id: u64);
     fn get_type(&self) -> &HapType;
     fn get_format(&self) -> &Format;
     fn get_perms(&self) -> &Vec<Perm>;
     fn get_event_notifications(&self) -> Option<bool>;
-    fn set_event_notifications(&mut self, event_notifications: bool);
-    fn get_value(&mut self) -> Option<serde_json::Value>;
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>);
+    fn get_value(&mut self) -> Result<serde_json::Value, Error>;
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
     fn get_unit(&self) -> &Option<Unit>;
     fn get_max_value(&self) -> Option<serde_json::Value>;
     fn get_min_value(&self) -> Option<serde_json::Value>;
     fn get_step_value(&self) -> Option<serde_json::Value>;
     fn get_max_len(&self) -> Option<u16>;
+    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>);
 }
 
 serialize_trait_object!(HapCharacteristic);
@@ -214,6 +243,10 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
 
     fn set_id(&mut self, id: u64) {
         self.set_id(id)
+    }
+
+    fn set_accessory_id(&mut self, accessory_id: u64) {
+        self.set_accessory_id(accessory_id)
     }
 
     fn get_type(&self) -> &HapType {
@@ -232,15 +265,12 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
         self.get_event_notifications()
     }
 
-    fn set_event_notifications(&mut self, event_notifications: bool) {
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
         self.set_event_notifications(event_notifications);
     }
 
-    fn get_value(&mut self) -> Option<serde_json::Value> {
-        if let &Some(ref v) = self.get_value() {
-            return Some(json!(v));
-        }
-        None
+    fn get_value(&mut self) -> Result<serde_json::Value, Error> {
+        Ok(json!(self.get_value()?))
     }
 
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error> {
@@ -267,37 +297,41 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
     }
 
     fn get_max_value(&self) -> Option<serde_json::Value> {
-        if let &Some(ref v) = self.get_max_value() {
-            return Some(json!(v));
+        match self.get_max_value() {
+            &Some(ref v) => Some(json!(v)),
+            &None => None,
         }
-        None
     }
 
     fn get_min_value(&self) -> Option<serde_json::Value> {
-        if let &Some(ref v) = self.get_min_value() {
-            return Some(json!(v));
+        match self.get_min_value() {
+            &Some(ref v) => Some(json!(v)),
+            &None => None,
         }
-        None
     }
 
     fn get_step_value(&self) -> Option<serde_json::Value> {
-        if let &Some(ref v) = self.get_step_value() {
-            return Some(json!(v));
+        match self.get_step_value() {
+            &Some(ref v) => Some(json!(v)),
+            &None => None,
         }
-        None
     }
 
     fn get_max_len(&self) -> Option<u16> {
         self.get_max_len()
     }
+
+    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) {
+        self.set_event_emitter(event_emitter);
+    }
 }
 
 pub trait Readable<T: Default + Serialize> {
-    fn on_read(&mut self) -> Option<T>;
+    fn on_read(&mut self) -> T;
 }
 
 pub trait Updatable<T: Default + Serialize> {
-    fn on_update(&mut self, old_val: &Option<T>, new_val: &T);
+    fn on_update(&mut self, old_val: &T, new_val: &T);
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

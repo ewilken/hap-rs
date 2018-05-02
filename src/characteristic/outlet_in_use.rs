@@ -10,7 +10,7 @@ pub fn new() -> OutletInUse {
             Perm::PairedRead,
             Perm::Events,
         ],
-        value: Some(true),
+        value: true,
         ..Default::default()
     }
 }

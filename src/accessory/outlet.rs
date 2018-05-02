@@ -1,5 +1,6 @@
 use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
 use service::{accessory_information::{self, AccessoryInformation}, outlet};
+use event::EmitterPtr;
 
 pub type Outlet = Accessory<OutletInner>;
 
@@ -38,13 +39,15 @@ impl HapAccessory for OutletInner {
         &mut self.accessory_information
     }
 
-    fn init_iids(&mut self) {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
             next_iid += 1;
             for characteristic in service.get_mut_characteristics() {
                 characteristic.set_id(next_iid);
+                characteristic.set_accessory_id(accessory_id);
+                characteristic.set_event_emitter(Some(event_emitter.clone()));
                 next_iid += 1;
             }
         }

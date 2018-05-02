@@ -197,12 +197,11 @@ pub fn serve(
         let event_subscriptions = event_subscriptions.clone();
         event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
             match event {
-                &Event::CharacteristicValueChanged { aid, iid } => {
+                &Event::CharacteristicValueChanged { aid, iid, ref value } => {
                     let es = event_subscriptions.lock().unwrap();
                     for &(s_aid, s_iid) in es.iter() {
                         if s_aid == aid && s_iid == iid {
-                            // TODO - find out why this fires too often
-                            println!("Event triggered for aid: {} iid: {}", aid, iid);
+                            println!("Event triggered for aid: {} iid: {} value: {}", aid, iid, value);
                         }
                     }
                 },

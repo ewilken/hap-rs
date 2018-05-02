@@ -34,17 +34,18 @@ impl IpTransport<FileStorage> {
 
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
+        let event_emitter = Arc::new(Mutex::new(Emitter::new()));
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
         let mut accessory_list = AccessoryList::new(accessories);
-        accessory_list.init_aids();
+        accessory_list.init_aids(event_emitter.clone());
 
         let ip_transport = IpTransport {
             config: Arc::new(Mutex::new(config)),
             storage,
             database: Arc::new(Mutex::new(database)),
             accessories: accessory_list,
-            event_emitter: Arc::new(Mutex::new(Emitter::new())),
+            event_emitter,
             mdns_responder,
         };
         device.save(&ip_transport.database)?;
@@ -67,8 +68,13 @@ impl Transport for IpTransport<FileStorage> {
         self.event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
             match event {
                 &Event::DevicePaired => {
-                    config.lock().unwrap().status_flag = StatusFlag::Zero;
-                    // TODO - update MDNS txt records
+                    match database.lock().unwrap().count_pairings() {
+                        Ok(count) => if count > 0 {
+                            config.lock().unwrap().status_flag = StatusFlag::Zero;
+                            // TODO - update MDNS txt records
+                        },
+                        _ => {},
+                    }
                 },
                 &Event::DeviceUnpaired => {
                     match database.lock().unwrap().count_pairings() {

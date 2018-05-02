@@ -2,6 +2,7 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
 use service::{HapService, accessory_information::AccessoryInformation};
+use event::EmitterPtr;
 
 pub mod outlet;
 
@@ -17,7 +18,7 @@ pub trait HapAccessory {
     fn get_services(&self) -> Vec<&HapAccessoryService>;
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService>;
     fn get_mut_information(&mut self) -> &mut AccessoryInformation;
-    fn init_iids(&mut self);
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr);
 }
 
 pub struct Accessory<T: HapAccessory> {
@@ -60,8 +61,8 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
         self.inner.get_mut_information()
     }
 
-    fn init_iids(&mut self) {
-        self.inner.init_iids()
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
+        self.inner.init_iids(accessory_id, event_emitter)
     }
 }
 

@@ -11,7 +11,7 @@ pub fn new() -> On {
             Perm::PairedWrite,
             Perm::Events,
         ],
-        value: Some(false),
+        value: false,
         ..Default::default()
     }
 }

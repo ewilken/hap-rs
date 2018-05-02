@@ -124,6 +124,7 @@ fn handle_add(
             }
             pairing.permissions = permissions;
             d.set_pairing(&pairing)?;
+            drop(d);
 
             event_emitter.lock().unwrap().emit(Event::DevicePaired);
         },
@@ -143,6 +144,7 @@ fn handle_add(
             public_key.clone_from_slice(&ltpk);
             let pairing = Pairing {id: pairing_uuid, permissions, public_key};
             d.set_pairing(&pairing)?;
+            drop(d);
 
             event_emitter.lock().unwrap().emit(Event::DevicePaired);
         },

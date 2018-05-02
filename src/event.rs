@@ -1,9 +1,11 @@
 use std::sync::{Arc, Mutex};
 
+use serde_json::Value;
+
 pub enum Event {
     DevicePaired,
     DeviceUnpaired,
-    CharacteristicValueChanged { aid: u64, iid: u64 }
+    CharacteristicValueChanged { aid: u64, iid: u64, value: Value }
 }
 
 pub struct Emitter {

@@ -8,7 +8,7 @@ use characteristic::Perm;
 use transport::http::{Status, server::EventSubscriptions, handlers::characteristics::{
     ReadResponseObject, WriteObject, WriteResponseObject
 }};
-use event::{Event, EmitterPtr};
+use event::EmitterPtr;
 
 #[derive(Clone)]
 pub struct AccessoryList {
@@ -17,18 +17,16 @@ pub struct AccessoryList {
 
 impl AccessoryList {
     pub fn new(accessories: Vec<Box<AccessoryListTrait>>) -> AccessoryList {
-        AccessoryList {
-            accessories: Arc::new(Mutex::new(accessories))
-        }
+        AccessoryList { accessories: Arc::new(Mutex::new(accessories)) }
     }
 
-    pub fn init_aids(&mut self) {
+    pub fn init_aids(&mut self, event_emitter: EmitterPtr) {
         let mut next_aid = 1;
         let mut a = self.accessories.lock().unwrap();
         for accessory in a.iter_mut() {
             accessory.set_id(next_aid);
+            accessory.init_iids(next_aid, event_emitter.clone());
             next_aid += 1;
-            accessory.init_iids();
         }
     }
 
@@ -63,23 +61,30 @@ impl AccessoryList {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id() == iid {
-                            result_object.value = characteristic.get_value();
-                            if meta {
-                                result_object.format = Some(characteristic.get_format().clone());
-                                result_object.unit = characteristic.get_unit().clone();
-                                result_object.max_value = characteristic.get_max_value();
-                                result_object.min_value = characteristic.get_min_value();
-                                result_object.step_value = characteristic.get_step_value();
-                                result_object.max_len = characteristic.get_max_len();
-                            }
-                            if perms {
-                                result_object.perms = Some(characteristic.get_perms().clone());
-                            }
-                            if hap_type {
-                                result_object.hap_type = Some(characteristic.get_type().clone());
-                            }
-                            if ev {
-                                result_object.ev = characteristic.get_event_notifications();
+                            match characteristic.get_value() {
+                                Ok(value) => {
+                                    result_object.value = Some(value);
+                                    if meta {
+                                        result_object.format = Some(characteristic.get_format().clone());
+                                        result_object.unit = characteristic.get_unit().clone();
+                                        result_object.max_value = characteristic.get_max_value();
+                                        result_object.min_value = characteristic.get_min_value();
+                                        result_object.step_value = characteristic.get_step_value();
+                                        result_object.max_len = characteristic.get_max_len();
+                                    }
+                                    if perms {
+                                        result_object.perms = Some(characteristic.get_perms().clone());
+                                    }
+                                    if hap_type {
+                                        result_object.hap_type = Some(characteristic.get_type().clone());
+                                    }
+                                    if ev {
+                                        result_object.ev = characteristic.get_event_notifications();
+                                    }
+                                },
+                                Err(_) => {
+                                    result_object.status = Some(Status::ServiceCommunicationFailure as i32);
+                                },
                             }
                             break 'l;
                         }
@@ -102,7 +107,6 @@ impl AccessoryList {
             iid: write_object.iid,
             status: 0,
         };
-        let mut send_event = false;
 
         let mut a = self.accessories.lock().unwrap();
         'l: for accessory in a.iter_mut() {
@@ -116,24 +120,21 @@ impl AccessoryList {
                             if let Some(value) = write_object.value {
                                 // TODO - handle error
                                 characteristic.set_value(value).unwrap();
-                                send_event = true;
                             }
                             if let Some(ev) = write_object.ev {
                                 if characteristic.get_perms().contains(&Perm::Events) {
-                                    characteristic.set_event_notifications(ev);
+                                    characteristic.set_event_notifications(Some(ev));
+                                    let subscription = (write_object.aid, write_object.iid);
                                     let mut es = event_subscriptions.lock().unwrap();
-                                    es.push((write_object.aid, write_object.iid));
-                                    send_event = true;
+                                    let pos = es.iter().position(|&s| s == subscription);
+                                    match (ev, pos) {
+                                        (true, None) => { es.push(subscription); },
+                                        (false, Some(p)) => { es.remove(p); },
+                                        _ => {},
+                                    }
                                 } else {
                                     result_object.status = Status::NotificationNotSupported as i32;
                                 }
-                            }
-                            if send_event {
-                                println!("Triggering event for aid: {} iid: {}", write_object.aid, write_object.iid);
-                                event_emitter.lock().unwrap().emit(Event::CharacteristicValueChanged {
-                                    aid: write_object.aid,
-                                    iid: write_object.iid,
-                                });
                             }
                             break 'l;
                         }

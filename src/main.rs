@@ -14,20 +14,16 @@ pub struct On {
 }
 
 impl Readable<bool> for On {
-    fn on_read(&mut self) -> Option<bool> {
+    fn on_read(&mut self) -> bool {
         self.val = !self.val;
         println!("On characteristic read and turned to {}.", &self.val);
-        Some(self.val)
+        self.val
     }
 }
 
 impl Updatable<bool> for On {
-    fn on_update(&mut self, old_val: &Option<bool>, new_val: &bool) {
-        if let &Some(old_val) = old_val {
-            println!("On characteristic set from {} to {}.", old_val, new_val);
-        } else {
-            println!("On characteristic set to {}.", new_val);
-        }
+    fn on_update(&mut self, old_val: &bool, new_val: &bool) {
+        println!("On characteristic set from {} to {}.", old_val, new_val);
     }
 }
 
@@ -44,8 +40,8 @@ fn main() {
     // let on = Arc::new(Mutex::new(Box::new(On { val: false })));
     // outlet.inner.outlet.inner.on.set_readable(on.clone());
     // outlet.inner.outlet.inner.on.set_updatable(on.clone());
-    outlet.inner.outlet.inner.on.set_readable(Arc::new(Mutex::new(Box::new(On { val: false }))));
-    outlet.inner.outlet.inner.on.set_updatable(Arc::new(Mutex::new(Box::new(On { val: false }))));
+    outlet.inner.outlet.inner.on.set_readable(Some(Arc::new(Mutex::new(Box::new(On { val: false })))));
+    outlet.inner.outlet.inner.on.set_updatable(Some(Arc::new(Mutex::new(Box::new(On { val: false })))));
 
     let config = Config {
         name: "Test".into(),
