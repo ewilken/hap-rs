@@ -4,7 +4,10 @@ use erased_serde;
 use service::{HapService, accessory_information::AccessoryInformation};
 use event::EmitterPtr;
 
+pub mod category;
 pub mod outlet;
+
+pub use accessory::category::Category;
 
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
 
@@ -86,27 +89,4 @@ impl Default for Information {
             firmware_revision: "undefined".into(),
         }
     }
-}
-
-#[derive(Copy, Clone)]
-pub enum Category {
-    Other = 1,
-    Bridge = 2,
-    Fan = 3,
-    Garage = 4,
-    Lightbulb = 5,
-    DoorLock = 6,
-    Outlet = 7,
-    Switch = 8,
-    Thermostat = 9,
-    Sensor = 10,
-    SecuritySystem = 11,
-    Door = 12,
-    Window = 13,
-    WindowCovering = 14,
-    ProgrammableSwitch = 15,
-    RangeExtender = 16,
-    IPCamera = 17,
-    VideoDoorBell = 18,
-    AirPurifier = 19,
 }
