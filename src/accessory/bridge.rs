@@ -1,18 +1,17 @@
 use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{accessory_information::{self, AccessoryInformation}, outlet};
+use service::{HapService, accessory_information::AccessoryInformation};
 use event::EmitterPtr;
 
-pub type Outlet = Accessory<OutletInner>;
+pub type Bridge = Accessory<BridgeInner>;
 
 #[derive(Default)]
-pub struct OutletInner {
+pub struct BridgeInner {
     id: u64,
 
     pub accessory_information: AccessoryInformation,
-    pub outlet: outlet::Outlet,
 }
 
-impl HapAccessory for OutletInner {
+impl HapAccessory for BridgeInner {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -24,14 +23,12 @@ impl HapAccessory for OutletInner {
     fn get_services(&self) -> Vec<&HapAccessoryService> {
         vec![
             &self.accessory_information,
-            &self.outlet,
         ]
     }
 
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
         vec![
             &mut self.accessory_information,
-            &mut self.outlet,
         ]
     }
 
@@ -54,10 +51,9 @@ impl HapAccessory for OutletInner {
     }
 }
 
-pub fn new(information: Information) -> Outlet {
-    Outlet::new(OutletInner {
+pub fn new(information: Information) -> Bridge {
+    Bridge::new(BridgeInner {
         accessory_information: information.to_service(),
-        outlet: outlet::new(),
         ..Default::default()
     })
 }

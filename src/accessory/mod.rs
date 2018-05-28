@@ -5,10 +5,12 @@ use service::{HapService, accessory_information::{self, AccessoryInformation}};
 use characteristic::{hardware_revision, accessory_flags};
 use event::EmitterPtr;
 
-pub mod outlet;
-
 mod category;
 pub use accessory::category::Category;
+
+pub mod bridge;
+mod includes;
+pub use accessory::includes::*;
 
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
 

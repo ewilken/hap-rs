@@ -4,7 +4,7 @@ extern crate serde;
 #[macro_use] extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 
-use std::{fs::File, io::Write, collections::HashMap};
+use std::{fs::{self, File}, io::Write, collections::HashMap};
 
 use handlebars::{Handlebars, Helper, RenderContext, RenderError, Renderable};
 
@@ -223,6 +223,13 @@ fn characteristic_file_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderCo
     Ok(())
 }
 
+fn snake_case_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value().as_str().unwrap();
+    let name = param.replace(" ", "_").replace(".", "_").to_lowercase();
+    try!(rc.writer.write(name.as_bytes()));
+    Ok(())
+}
+
 static CATEGORIES: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 #[derive(Copy, Clone)]
 pub enum Category {
@@ -292,7 +299,7 @@ pub struct {{trim service.Name}}Inner {
     hap_type: HapType,
     hidden: bool,
     primary: bool,
-    
+
 {{#each service.RequiredCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
@@ -330,6 +337,10 @@ impl HapService for {{trim service.Name}}Inner {
         self.primary
     }
 
+    fn set_primary(&mut self, primary: bool) {
+        self.primary = primary;
+    }
+
     fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
         let mut characteristics: Vec<&HapCharacteristic> = vec![
 {{#each service.RequiredCharacteristics as |r|}}\
@@ -351,7 +362,7 @@ impl HapService for {{trim service.Name}}Inner {
 {{/each}}\
         \t\tcharacteristics
     }
-    
+
     fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
         let mut characteristics: Vec<&mut HapCharacteristic> = vec![
 {{#each service.RequiredCharacteristics as |r|}}\
@@ -394,6 +405,78 @@ static SERVICE_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 {{#each services as |s|}}\npub mod {{s}};{{/each}}
 ";
 
+static ACCESSORY: &'static str = "// THIS FILE IS AUTO-GENERATED\n
+use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
+use service::{HapService, accessory_information::AccessoryInformation, {{snake_case service.Name}}};
+use event::EmitterPtr;
+
+pub type {{trim service.Name}} = Accessory<{{trim service.Name}}Inner>;
+
+#[derive(Default)]
+pub struct {{trim service.Name}}Inner {
+    id: u64,
+
+    pub accessory_information: AccessoryInformation,
+    pub {{snake_case service.Name}}: {{snake_case service.Name}}::{{trim service.Name}},
+}
+
+impl HapAccessory for {{trim service.Name}}Inner {
+    fn get_id(&self) -> u64 {
+        self.id
+    }
+
+    fn set_id(&mut self, id: u64) {
+        self.id = id;
+    }
+
+    fn get_services(&self) -> Vec<&HapAccessoryService> {
+        vec![
+            &self.accessory_information,
+            &self.{{snake_case service.Name}},
+        ]
+    }
+
+    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
+        vec![
+            &mut self.accessory_information,
+            &mut self.{{snake_case service.Name}},
+        ]
+    }
+
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
+        &mut self.accessory_information
+    }
+
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
+        let mut next_iid = 1;
+        for service in self.get_mut_services() {
+            service.set_id(next_iid);
+            next_iid += 1;
+            for characteristic in service.get_mut_characteristics() {
+                characteristic.set_id(next_iid);
+                characteristic.set_accessory_id(accessory_id);
+                characteristic.set_event_emitter(Some(event_emitter.clone()));
+                next_iid += 1;
+            }
+        }
+    }
+}
+
+pub fn new(information: Information) -> {{trim service.Name}} {
+    let mut {{snake_case service.Name}} = {{snake_case service.Name}}::new();
+    {{snake_case service.Name}}.set_primary(true);
+    {{trim service.Name}}::new({{trim service.Name}}Inner {
+        accessory_information: information.to_service(),
+        {{snake_case service.Name}}: {{snake_case service.Name}},
+        ..Default::default()
+    })
+}
+";
+
+static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
+{{#each accessories as |a|}}\npub mod {{a}};{{/each}}
+";
+
 fn main() {
     let metadata_file = File::open("default.metadata.json").unwrap();
     let metadata: Metadata = serde_json::from_reader(metadata_file).unwrap();
@@ -411,11 +494,14 @@ fn main() {
     handlebars.register_helper("float", Box::new(float_helper));
     handlebars.register_helper("characteristic_name", Box::new(characteristic_name_helper));
     handlebars.register_helper("characteristic_file_name", Box::new(characteristic_file_name_helper));
+    handlebars.register_helper("snake_case", Box::new(snake_case_helper));
     handlebars.register_template_string("categories", CATEGORIES).unwrap();
     handlebars.register_template_string("characteristic", CHARACTERISTIC).unwrap();
     handlebars.register_template_string("characteristic_mod", CHARACTERISTIC_MOD).unwrap();
     handlebars.register_template_string("service", SERVICE).unwrap();
     handlebars.register_template_string("service_mod", SERVICE_MOD).unwrap();
+    handlebars.register_template_string("accessory", ACCESSORY).unwrap();
+    handlebars.register_template_string("accessory_mod", ACCESSORY_MOD).unwrap();
 
     let categories = handlebars.render("categories", &metadata).unwrap();
     let categories_path = "src/accessory/category.rs".to_owned();
@@ -423,6 +509,7 @@ fn main() {
     categories_file.write_all(categories.as_bytes()).unwrap();
 
     let characteristics_base_path = "src/characteristic/includes/";
+    fs::create_dir_all(&characteristics_base_path).unwrap();
     let mut characteristsic_names = vec![];
     for c in &metadata.characteristics {
         let characteristic = handlebars.render("characteristic", &json!({"characteristic": c})).unwrap();
@@ -439,7 +526,11 @@ fn main() {
     characteristic_mod_file.write_all(characteristic_mod.as_bytes()).unwrap();
 
     let services_base_path = "src/service/includes/";
+    let accessory_base_path = "src/accessory/includes/";
+    fs::create_dir_all(&services_base_path).unwrap();
+    fs::create_dir_all(&accessory_base_path).unwrap();
     let mut service_names = vec![];
+    let mut accessory_names = vec![];
     for s in &metadata.services {
         let service = handlebars.render("service", &json!({"service": s, "characteristics": &metadata.characteristics})).unwrap();
         let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
@@ -448,9 +539,22 @@ fn main() {
         service_path.push_str(".rs");
         let mut service_file = File::create(&service_path).unwrap();
         service_file.write_all(service.as_bytes()).unwrap();
-        service_names.push(service_file_name);
+        service_names.push(service_file_name.clone());
+
+        if s.name != "Accessory Information" {
+            let accessory = handlebars.render("accessory", &json!({"service": s, "characteristics": &metadata.characteristics})).unwrap();
+            let mut accessory_path = String::from(accessory_base_path);
+            accessory_path.push_str(&service_file_name);
+            accessory_path.push_str(".rs");
+            let mut accessory_file = File::create(&accessory_path).unwrap();
+            accessory_file.write_all(accessory.as_bytes()).unwrap();
+            accessory_names.push(service_file_name);
+        }
     }
     let service_mod = handlebars.render("service_mod", &json!({"services": service_names})).unwrap();
     let mut service_mod_file = File::create(&format!("{}mod.rs", services_base_path)).unwrap();
     service_mod_file.write_all(service_mod.as_bytes()).unwrap();
+    let accessory_mod = handlebars.render("accessory_mod", &json!({"accessories": accessory_names})).unwrap();
+    let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
+    accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
 }

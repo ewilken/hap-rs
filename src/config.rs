@@ -125,8 +125,7 @@ impl Default for Config {
             device_id: random_mac_address(),
             configuration_number: 1,
             state_number: 1,
-            // TODO - default category should probably be Switch
-            category: Category::Outlet,
+            category: Category::Bridge,
             protocol_version: "1.0".into(),
             status_flag: StatusFlag::NotPaired,
             feature_flag: FeatureFlag::Zero,

@@ -4,7 +4,7 @@ extern crate hap;
 
 use hap::{
     transport::{Transport, ip::IpTransport},
-    accessory::{Information, outlet},
+    accessory::{Information, bridge, outlet, garage_door_opener},
     characteristic::{Readable, Updatable},
     config::Config,
 };
@@ -28,13 +28,29 @@ impl Updatable<bool> for On {
 }
 
 fn main() {
-    let information = Information {
-        name: "Test".into(),
+    let bridge_i = Information {
+        name: "Korhal Bridge".into(),
         manufacturer: "Korhal".into(),
         serial_number: "12345".into(),
         ..Default::default()
     };
-    let mut outlet = outlet::new(information);
+    let bridge = bridge::new(bridge_i);
+
+    let outlet_i = Information {
+        name: "Korhal Outlet".into(),
+        manufacturer: "Korhal".into(),
+        serial_number: "23456".into(),
+        ..Default::default()
+    };
+    let mut outlet = outlet::new(outlet_i);
+
+    let garage_door_opener_i = Information {
+        name: "Korhal Garage".into(),
+        manufacturer: "Korhal".into(),
+        serial_number: "34567".into(),
+        ..Default::default()
+    };
+    let garage_door_opener = garage_door_opener::new(garage_door_opener_i);
 
     // TODO - fix this
     // let on = Arc::new(Mutex::new(Box::new(On { val: false })));
@@ -44,11 +60,15 @@ fn main() {
     outlet.inner.outlet.inner.on.set_updatable(Some(Arc::new(Mutex::new(Box::new(On { val: false })))));
 
     let config = Config {
-        name: "Test".into(),
+        name: "Korhal".into(),
         ..Default::default()
     };
-    // TODO - take a reference to the outlet
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(outlet)]).unwrap();
+    // TODO - take references to the accessories
+    let mut ip_transport = IpTransport::new(config, vec![
+        Box::new(bridge),
+        Box::new(outlet),
+        Box::new(garage_door_opener)
+    ]).unwrap();
 
     ip_transport.start().unwrap();
 }
