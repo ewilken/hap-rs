@@ -6,7 +6,7 @@ extern crate serde;
 
 use std::{fs::File, io::Write, collections::HashMap};
 
-use handlebars::{Handlebars, Helper, RenderContext, RenderError};
+use handlebars::{Handlebars, Helper, RenderContext, RenderError, Renderable};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Metadata {
@@ -70,11 +70,30 @@ struct Service {
     pub optional_characteristics: Vec<String>,
 }
 
+fn if_eq_helper(h: &Helper, r: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+    let first = h.param(0).unwrap().value();
+    let second = h.param(1).unwrap().value();
+    let tmpl = if first == second { h.template() } else { h.inverse() };
+    match tmpl {
+        Some(ref t) => t.render(r, rc),
+        None => Ok(()),
+    }
+}
+
 fn trim_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         let trim = s.replace(" ", "").replace(".", "_");
         try!(rc.writer.write(&trim.into_bytes()));
+    }
+    Ok(())
+}
+
+fn file_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value();
+    if let Some(s) = param.as_str() {
+        let name = s.replace(" ", "_").replace(".", "_").to_lowercase();
+        try!(rc.writer.write(&name.into_bytes()));
     }
     Ok(())
 }
@@ -180,6 +199,30 @@ fn shorten_uuid(id: &str) -> String {
     id.split("-").collect::<Vec<&str>>()[0].trim_left_matches('0').to_owned()
 }
 
+fn characteristic_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+    let id = h.param(0).unwrap().value().as_str().unwrap();
+    let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
+    for c in characteristics {
+        if &c.id == id {
+            let name = c.name.replace(" ", "").replace(".", "_");
+            try!(rc.writer.write(name.as_bytes()));
+        }
+    }
+    Ok(())
+}
+
+fn characteristic_file_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+    let id = h.param(0).unwrap().value().as_str().unwrap();
+    let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
+    for c in characteristics {
+        if &c.id == id {
+            let name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
+            try!(rc.writer.write(name.as_bytes()));
+        }
+    }
+    Ok(())
+}
+
 static CATEGORIES: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 #[derive(Copy, Clone)]
 pub enum Category {
@@ -216,12 +259,149 @@ static CHARACTERISTIC_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 {{#each characteristics as |c|}}\npub mod {{c}};{{/each}}
 ";
 
+static SERVICE: &'static str = "// THIS FILE IS AUTO-GENERATED\n
+use service::{HapService, Service};
+use characteristic::{
+    HapCharacteristic,
+{{#each service.RequiredCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t{{characteristic_file_name r ../../this.characteristics}},
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+{{#each service.OptionalCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t{{characteristic_file_name r ../../this.characteristics}},
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+};
+use hap_type::HapType;
+
+pub type {{trim service.Name}} = Service<{{trim service.Name}}Inner>;
+
+impl Default for {{trim service.Name}} {
+    fn default() -> {{trim service.Name}} { new() }
+}
+
+#[derive(Default)]
+pub struct {{trim service.Name}}Inner {
+    id: u64,
+    hap_type: HapType,
+    hidden: bool,
+    primary: bool,
+    
+{{#each service.RequiredCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\tpub {{characteristic_file_name r ../../this.characteristics}}: {{characteristic_file_name r ../../this.characteristics}}::{{characteristic_name r ../../this.characteristics}},
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+\n{{#each service.OptionalCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\tpub {{characteristic_file_name r ../../this.characteristics}}: Option<{{characteristic_file_name r ../../this.characteristics}}::{{characteristic_name r ../../this.characteristics}}>,
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+}
+
+impl HapService for {{trim service.Name}}Inner {
+    fn get_id(&self) -> u64 {
+        self.id
+    }
+
+    fn set_id(&mut self, id: u64) {
+        self.id = id;
+    }
+
+    fn get_type(&self) -> &HapType {
+        &self.hap_type
+    }
+
+    fn get_hidden(&self) -> bool {
+        self.hidden
+    }
+
+    fn get_primary(&self) -> bool {
+        self.primary
+    }
+
+    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
+        let mut characteristics: Vec<&HapCharacteristic> = vec![
+{{#each service.RequiredCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t\t\t&self.{{characteristic_file_name r ../../this.characteristics}},
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+        \t\t];
+{{#each service.OptionalCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t\tif let Some(c) = &self.{{characteristic_file_name r ../../this.characteristics}} {
+\t\t    characteristics.push(c);
+\t\t}
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+        \t\tcharacteristics
+    }
+    
+    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
+        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+{{#each service.RequiredCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t\t\t&mut self.{{characteristic_file_name r ../../this.characteristics}},
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+        \t\t];
+{{#each service.OptionalCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t\tif let Some(c) = &mut self.{{characteristic_file_name r ../../this.characteristics}} {
+\t\t    characteristics.push(c);
+\t\t}
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+        \t\tcharacteristics
+    }
+}
+
+pub fn new() -> {{trim service.Name}} {
+    {{trim service.Name}}::new({{trim service.Name}}Inner {
+        hap_type: \"{{uuid service.UUID}}\".into(),
+{{#each service.RequiredCharacteristics as |r|}}\
+{{#each ../this.characteristics as |c|}}\
+{{#if_eq r c.UUID}}\
+\t\t{{characteristic_file_name r ../../this.characteristics}}: {{characteristic_file_name r ../../this.characteristics}}::new(),
+{{/if_eq}}\
+{{/each}}\
+{{/each}}\
+        \t\t..Default::default()
+    })
+}
+";
+
+static SERVICE_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
+{{#each services as |s|}}\npub mod {{s}};{{/each}}
+";
+
 fn main() {
     let metadata_file = File::open("default.metadata.json").unwrap();
     let metadata: Metadata = serde_json::from_reader(metadata_file).unwrap();
 
     let mut handlebars = Handlebars::new();
+    handlebars.register_helper("if_eq", Box::new(if_eq_helper));
     handlebars.register_helper("trim", Box::new(trim_helper));
+    handlebars.register_helper("file_name", Box::new(file_name_helper));
     handlebars.register_helper("format", Box::new(format_helper));
     handlebars.register_helper("type", Box::new(type_helper));
     handlebars.register_helper("unit", Box::new(unit_helper));
@@ -229,9 +409,13 @@ fn main() {
     handlebars.register_helper("valid_values", Box::new(valid_values_helper));
     handlebars.register_helper("perms", Box::new(perms_helper));
     handlebars.register_helper("float", Box::new(float_helper));
+    handlebars.register_helper("characteristic_name", Box::new(characteristic_name_helper));
+    handlebars.register_helper("characteristic_file_name", Box::new(characteristic_file_name_helper));
     handlebars.register_template_string("categories", CATEGORIES).unwrap();
     handlebars.register_template_string("characteristic", CHARACTERISTIC).unwrap();
     handlebars.register_template_string("characteristic_mod", CHARACTERISTIC_MOD).unwrap();
+    handlebars.register_template_string("service", SERVICE).unwrap();
+    handlebars.register_template_string("service_mod", SERVICE_MOD).unwrap();
 
     let categories = handlebars.render("categories", &metadata).unwrap();
     let categories_path = "src/accessory/category.rs".to_owned();
@@ -240,7 +424,7 @@ fn main() {
 
     let characteristics_base_path = "src/characteristic/includes/";
     let mut characteristsic_names = vec![];
-    for c in metadata.characteristics {
+    for c in &metadata.characteristics {
         let characteristic = handlebars.render("characteristic", &json!({"characteristic": c})).unwrap();
         let characteristic_file_name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
         let mut characteristic_path = String::from(characteristics_base_path);
@@ -253,4 +437,20 @@ fn main() {
     let characteristic_mod = handlebars.render("characteristic_mod", &json!({"characteristics": characteristsic_names})).unwrap();
     let mut characteristic_mod_file = File::create(&format!("{}mod.rs", characteristics_base_path)).unwrap();
     characteristic_mod_file.write_all(characteristic_mod.as_bytes()).unwrap();
+
+    let services_base_path = "src/service/includes/";
+    let mut service_names = vec![];
+    for s in &metadata.services {
+        let service = handlebars.render("service", &json!({"service": s, "characteristics": &metadata.characteristics})).unwrap();
+        let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
+        let mut service_path = String::from(services_base_path);
+        service_path.push_str(&service_file_name);
+        service_path.push_str(".rs");
+        let mut service_file = File::create(&service_path).unwrap();
+        service_file.write_all(service.as_bytes()).unwrap();
+        service_names.push(service_file_name);
+    }
+    let service_mod = handlebars.render("service_mod", &json!({"services": service_names})).unwrap();
+    let mut service_mod_file = File::create(&format!("{}mod.rs", services_base_path)).unwrap();
+    service_mod_file.write_all(service_mod.as_bytes()).unwrap();
 }

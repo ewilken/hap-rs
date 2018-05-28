@@ -3,8 +3,8 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use characteristic::HapCharacteristic;
 use hap_type::HapType;
 
-pub mod accessory_information;
-pub mod outlet;
+mod includes;
+pub use service::includes::*;
 
 pub trait HapService {
     fn get_id(&self) -> u64;

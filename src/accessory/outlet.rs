@@ -56,7 +56,7 @@ impl HapAccessory for OutletInner {
 
 pub fn new(information: Information) -> Outlet {
     Outlet::new(OutletInner {
-        accessory_information: accessory_information::new(Some(information)),
+        accessory_information: information.to_service(),
         outlet: outlet::new(),
         ..Default::default()
     })
