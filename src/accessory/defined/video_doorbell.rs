@@ -1,17 +1,26 @@
 use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{HapService, accessory_information::AccessoryInformation};
+use service::{
+    HapService,
+    accessory_information::AccessoryInformation,
+    camera_rtp_stream_management,
+    speaker,
+    microphone,
+};
 use event::EmitterPtr;
 
-pub type Bridge = Accessory<BridgeInner>;
+pub type VideoDoorbell = Accessory<VideoDoorbellInner>;
 
 #[derive(Default)]
-pub struct BridgeInner {
+pub struct VideoDoorbellInner {
     id: u64,
 
     pub accessory_information: AccessoryInformation,
+    pub camera_rtp_stream_management: camera_rtp_stream_management::CameraRTPStreamManagement,
+    pub speaker: speaker::Speaker,
+    pub microphone: microphone::Microphone,
 }
 
-impl HapAccessory for BridgeInner {
+impl HapAccessory for VideoDoorbellInner {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -23,12 +32,18 @@ impl HapAccessory for BridgeInner {
     fn get_services(&self) -> Vec<&HapAccessoryService> {
         vec![
             &self.accessory_information,
+            &self.camera_rtp_stream_management,
+            &self.speaker,
+            &self.microphone,
         ]
     }
 
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
         vec![
             &mut self.accessory_information,
+            &mut self.camera_rtp_stream_management,
+            &mut self.speaker,
+            &mut self.microphone,
         ]
     }
 
@@ -51,9 +66,14 @@ impl HapAccessory for BridgeInner {
     }
 }
 
-pub fn new(information: Information) -> Bridge {
-    Bridge::new(BridgeInner {
+pub fn new(information: Information) -> VideoDoorbell {
+    let mut camera_rtp_stream_management = camera_rtp_stream_management::new();
+    camera_rtp_stream_management.set_primary(true);
+    VideoDoorbell::new(VideoDoorbellInner {
         accessory_information: information.to_service(),
+        camera_rtp_stream_management: camera_rtp_stream_management,
+        speaker: speaker::new(),
+        microphone: microphone::new(),
         ..Default::default()
     })
 }

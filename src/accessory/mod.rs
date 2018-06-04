@@ -8,7 +8,9 @@ use event::EmitterPtr;
 mod category;
 pub use accessory::category::Category;
 
-pub mod bridge;
+mod defined;
+pub use accessory::defined::*;
+
 mod includes;
 pub use accessory::includes::*;
 

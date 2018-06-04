@@ -11,6 +11,7 @@ pub trait HapService {
     fn set_id(&mut self, id: u64);
     fn get_type(&self) -> &HapType;
     fn get_hidden(&self) -> bool;
+    fn set_hidden(&mut self, hidden: bool);
     fn get_primary(&self) -> bool;
     fn set_primary(&mut self, primary: bool);
     fn get_characteristics(&self) -> Vec<&HapCharacteristic>;
@@ -55,6 +56,10 @@ impl<T: HapService> HapService for Service<T> {
 
     fn get_hidden(&self) -> bool {
         self.inner.get_hidden()
+    }
+
+    fn set_hidden(&mut self, hidden: bool) {
+        self.inner.set_hidden(hidden)
     }
 
     fn get_primary(&self) -> bool {

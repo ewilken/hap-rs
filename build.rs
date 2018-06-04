@@ -333,6 +333,10 @@ impl HapService for {{trim service.Name}}Inner {
         self.hidden
     }
 
+    fn set_hidden(&mut self, hidden: bool) {
+        self.hidden = hidden;
+    }
+
     fn get_primary(&self) -> bool {
         self.primary
     }
@@ -541,7 +545,19 @@ fn main() {
         service_file.write_all(service.as_bytes()).unwrap();
         service_names.push(service_file_name.clone());
 
-        if s.name != "Accessory Information" {
+        if s.name != "Accessory Information" &&
+            s.name != "Battery Service" &&
+            s.name != "Camera RTP Stream Management" &&
+            s.name != "Doorbell" &&
+            s.name != "Faucet" &&
+            s.name != "Filter Maintenance" &&
+            s.name != "Irrigation System" &&
+            s.name != "Lock Management" &&
+            s.name != "Lock Mechanism" &&
+            s.name != "Microphone" &&
+            s.name != "Service Label" &&
+            s.name != "Slat" &&
+            s.name != "Speaker" {
             let accessory = handlebars.render("accessory", &json!({"service": s, "characteristics": &metadata.characteristics})).unwrap();
             let mut accessory_path = String::from(accessory_base_path);
             accessory_path.push_str(&service_file_name);
