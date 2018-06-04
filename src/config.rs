@@ -111,7 +111,6 @@ impl Hash for Config {
     }
 }
 
-// TODO - add default values that actually make sense
 impl Default for Config {
     fn default() -> Config {
         let mut config = Config {
@@ -125,8 +124,7 @@ impl Default for Config {
             device_id: random_mac_address(),
             configuration_number: 1,
             state_number: 1,
-            // TODO - default category should probably be Switch
-            category: Category::Outlet,
+            category: Category::Unknown,
             protocol_version: "1.0".into(),
             status_flag: StatusFlag::NotPaired,
             feature_flag: FeatureFlag::Zero,

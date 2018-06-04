@@ -197,6 +197,7 @@ pub fn serve(
         let event_subscriptions = event_subscriptions.clone();
         event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
             match event {
+                // FIXME - the value of the previous event is printed
                 &Event::CharacteristicValueChanged { aid, iid, ref value } => {
                     let es = event_subscriptions.lock().unwrap();
                     for &(s_aid, s_iid) in es.iter() {

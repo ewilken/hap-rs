@@ -7,14 +7,8 @@ use erased_serde;
 use hap_type::HapType;
 use event::{Event, EmitterPtr};
 
-pub mod firmware_revision;
-pub mod identify;
-pub mod manufacturer;
-pub mod model;
-pub mod name;
-pub mod on;
-pub mod outlet_in_use;
-pub mod serial_number;
+mod includes;
+pub use characteristic::includes::*;
 
 #[derive(Default)]
 pub struct Characteristic<T: Default + Serialize> {
@@ -364,7 +358,7 @@ pub enum Unit {
     Seconds,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Format {
     #[serde(rename = "string")]
     String,
@@ -378,14 +372,14 @@ pub enum Format {
     UInt16,
     #[serde(rename = "uint32")]
     UInt32,
-    #[serde(rename = "int32")]
-    Int32,
     #[serde(rename = "uint64")]
     UInt64,
+    #[serde(rename = "int32")]
+    Int32,
+    #[serde(rename = "tlv8")]
+    Tlv8,
     #[serde(rename = "data")]
     Data,
-    #[serde(rename = "tlv8")]
-    TLV8,
 }
 
 impl Default for Format {

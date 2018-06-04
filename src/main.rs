@@ -4,7 +4,7 @@ extern crate hap;
 
 use hap::{
     transport::{Transport, ip::IpTransport},
-    accessory::{Information, outlet},
+    accessory::{Category, Information, outlet},
     characteristic::{Readable, Updatable},
     config::Config,
 };
@@ -28,13 +28,7 @@ impl Updatable<bool> for On {
 }
 
 fn main() {
-    let information = Information {
-        name: "Test".into(),
-        manufacturer: "Korhal".into(),
-        serial_number: "12345".into(),
-        ..Default::default()
-    };
-    let mut outlet = outlet::new(information);
+    let mut outlet = outlet::new(Information { name: "Korhal Outlet".into(), ..Default::default() });
 
     // TODO - fix this
     // let on = Arc::new(Mutex::new(Box::new(On { val: false })));
@@ -44,10 +38,11 @@ fn main() {
     outlet.inner.outlet.inner.on.set_updatable(Some(Arc::new(Mutex::new(Box::new(On { val: false })))));
 
     let config = Config {
-        name: "Test".into(),
+        name: "Korhal Outlet".into(),
+        category: Category::Outlet,
         ..Default::default()
     };
-    // TODO - take a reference to the outlet
+    // TODO - take references to the accessories
     let mut ip_transport = IpTransport::new(config, vec![Box::new(outlet)]).unwrap();
 
     ip_transport.start().unwrap();
