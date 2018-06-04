@@ -109,7 +109,7 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
                 event_emitter.lock().unwrap().emit(Event::CharacteristicValueChanged {
                     aid: self.accessory_id,
                     iid: self.id,
-                    value: json!(&self.value),
+                    value: json!(&val),
                 });
             }
         }
