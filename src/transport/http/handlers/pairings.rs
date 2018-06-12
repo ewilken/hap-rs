@@ -111,6 +111,8 @@ fn handle_add(
     ltpk: Vec<u8>,
     permissions: Permissions,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pairings - M1: Got Add Pairing Request");
+
     // TODO - check if controller is admin
 
     let uuid_str = str::from_utf8(&pairing_id)?;
@@ -150,6 +152,8 @@ fn handle_add(
         },
     }
 
+    println!("/pairings - M2: Sending Add Pairing Response");
+
     Ok(vec![Value::State(2)])
 }
 
@@ -158,6 +162,8 @@ fn handle_remove(
     event_emitter: &EmitterPtr,
     pairing_id: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pairings - M1: Got Remove Pairing Request");
+
     // TODO - check if controller is admin
 
     let uuid_str = str::from_utf8(&pairing_id)?;
@@ -168,12 +174,16 @@ fn handle_remove(
 
     event_emitter.lock().unwrap().emit(Event::DeviceUnpaired);
 
+    println!("/pairings - M2: Sending Remove Pairing Response");
+
     Ok(vec![Value::State(2)])
 }
 
 fn handle_list(
     database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pairings - M1: Got List Pairings Request");
+
     // TODO - check if controller is admin
 
     let d = database.lock().unwrap();
@@ -187,6 +197,8 @@ fn handle_list(
             list.push(Value::Separator);
         }
     }
+
+    println!("/pairings - M2: Sending List Pairings Response");
 
     Ok(list)
 }

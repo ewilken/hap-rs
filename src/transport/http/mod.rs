@@ -2,7 +2,6 @@ use hyper::{server::Response, header::{self, ContentLength}, StatusCode};
 
 pub mod server;
 pub mod handlers;
-pub mod encrypted_stream;
 
 pub enum Status {
     Success = 0,

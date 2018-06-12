@@ -6,10 +6,17 @@ use route_recognizer::Router;
 use tokio_core::{net::TcpListener, reactor::Core};
 use uuid::Uuid;
 
-use transport::http::{
-    handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify},
-    encrypted_stream::{EncryptedStream, Session},
-    status_response,
+use transport::{
+    http::{handlers::{
+        self,
+        pair_setup,
+        pair_verify,
+        accessories,
+        characteristics::{self, EventObject},
+        pairings,
+        identify
+    }, status_response},
+    tcp::{HapTcpStream, EncryptedStream, Session},
 };
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::ConfigPtr;
@@ -181,8 +188,10 @@ pub fn serve(
     let handle = evt_loop.handle();
 
     let server = listener.incoming().for_each(|(stream, _)| {
-        let (stream, sender) = EncryptedStream::new(stream);
-        let controller_id = Arc::new(stream.controller_id);
+        // let (stream, session_sender) = EncryptedStream::new(stream);
+        let (stream, stream_incoming, stream_outgoing) = HapTcpStream::new(stream);
+        let (encrypted_stream, session_sender) = EncryptedStream::new(stream_incoming, stream_outgoing);
+        let controller_id = Arc::new(encrypted_stream.controller_id);
         let event_subscriptions = Arc::new(Mutex::new(vec![]));
         let api = Api::new(
             controller_id,
@@ -191,7 +200,7 @@ pub fn serve(
             database.clone(),
             accessories.clone(),
             event_emitter.clone(),
-            sender,
+            session_sender,
         );
 
         let event_subscriptions = event_subscriptions.clone();
@@ -201,7 +210,12 @@ pub fn serve(
                     let es = event_subscriptions.lock().unwrap();
                     for &(s_aid, s_iid) in es.iter() {
                         if s_aid == aid && s_iid == iid {
-                            println!("Event triggered for aid: {} iid: {} value: {}", aid, iid, value);
+                            // notification_sender.try_send(EventObject {
+                            //     aid,
+                            //     iid,
+                            //     value: value.clone(),
+                            // }).unwrap();
+                            // println!("Event triggered for aid: {} iid: {} value: {}", aid, iid, value);
                         }
                     }
                 },
@@ -209,7 +223,8 @@ pub fn serve(
             }
         }));
 
-        handle.spawn(http.serve_connection(stream, api).map_err(|_| ()).map(|_| ()));
+        handle.spawn(stream.map_err(|_| ()).map(|_| ()));
+        handle.spawn(http.serve_connection(encrypted_stream, api).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();
