@@ -18,6 +18,7 @@ use db::database::DatabasePtr;
 use config::ConfigPtr;
 use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
 use protocol::{device::Device, pairing::{Pairing, Permissions}};
+use event::{Event, EmitterPtr};
 
 struct Session {
     salt: Vec<u8>,
@@ -79,6 +80,7 @@ impl TlvHandler for PairSetup {
         step: Step,
         config: &ConfigPtr,
         database: &DatabasePtr,
+        event_emitter: &EmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start => match handle_start(self, database) {
@@ -89,7 +91,7 @@ impl TlvHandler for PairSetup {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(4, err)),
             },
-            Step::Exchange { data } => match handle_exchange(self, config, database, data) {
+            Step::Exchange { data } => match handle_exchange(self, config, database, event_emitter, data) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(6, err)),
             },
@@ -101,6 +103,8 @@ fn handle_start(
     handler: &mut PairSetup,
     database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pair-setup - M1: Got SRP Start Request");
+
     // TODO - Errors for kTLVError_Unavailable, kTLVError_MaxTries and kTLVError_Busy
 
     let accessory = Device::load(database)?;
@@ -129,6 +133,8 @@ fn handle_start(
         shared_secret: None,
     });
 
+    println!("/pair-setup - M2: Sending SRP Start Response");
+
     Ok(vec![Value::State(2), Value::PublicKey(b_pub), Value::Salt(salt.clone())])
 }
 
@@ -137,6 +143,8 @@ fn handle_verify(
     a_pub: Vec<u8>,
     a_proof: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pair-setup - M3: Got SRP Verify Request");
+
     if let Some(ref mut session) = handler.session {
         let user = UserRecord {
             username: b"Pair-Setup",
@@ -155,6 +163,8 @@ fn handle_verify(
             &G_3072,
         )?;
 
+        println!("/pair-setup - M4: Sending SRP Verify Response");
+
         Ok(vec![Value::State(4), Value::Proof(b_proof)])
     } else {
         Err(tlv::Error::Unknown)
@@ -165,8 +175,11 @@ fn handle_exchange(
     handler: &mut PairSetup,
     config: &ConfigPtr,
     database: &DatabasePtr,
+    event_emitter: &EmitterPtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pair-setup - M5: Got SRP Exchange Request");
+
     if let Some(ref mut session) = handler.session {
         if let Some(ref mut shared_secret) = session.shared_secret {
             let encrypted_data = Vec::from(&data[..data.len() - 16]);
@@ -217,7 +230,11 @@ fn handle_exchange(
                 pairing_ltpk[i] = device_ltpk[i];
             }
 
-            if let Some(max_peers) = config.max_peers {
+            let max_peers = {
+                let c = config.lock().unwrap();
+                c.max_peers
+            };
+            if let Some(max_peers) = max_peers {
                 let d = database.lock().unwrap();
                 let count = d.count_pairings()?;
                 if count + 1 > max_peers {
@@ -262,6 +279,10 @@ fn handle_exchange(
                 &mut encrypted_data,
             )?;
             encrypted_data.extend(&auth_tag);
+
+            event_emitter.lock().unwrap().emit(Event::DevicePaired);
+
+            println!("/pair-setup - M6: Sending SRP Exchange Response");
 
             Ok(vec![Value::State(6), Value::EncryptedData(encrypted_data)])
         } else {

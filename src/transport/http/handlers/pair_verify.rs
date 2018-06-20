@@ -7,10 +7,11 @@ use chacha20_poly1305_aead;
 use uuid::Uuid;
 use futures::sync::oneshot;
 
-use transport::{http::handlers::TlvHandler, http::encrypted_stream, tlv::{self, Type, Value}};
+use transport::{http::handlers::TlvHandler, tcp, tlv::{self, Type, Value}};
 use config::ConfigPtr;
 use db::database::DatabasePtr;
 use protocol::{device::Device, pairing::Pairing};
+use event::EmitterPtr;
 
 struct Session {
     b_pub: [u8; 32],
@@ -21,11 +22,11 @@ struct Session {
 
 pub struct PairVerify {
     session: Option<Session>,
-    session_sender: Option<oneshot::Sender<encrypted_stream::Session>>,
+    session_sender: Option<oneshot::Sender<tcp::Session>>,
 }
 
 impl PairVerify {
-    pub fn new(session_sender: oneshot::Sender<encrypted_stream::Session>) -> PairVerify {
+    pub fn new(session_sender: oneshot::Sender<tcp::Session>) -> PairVerify {
         PairVerify { session: None, session_sender: Some(session_sender) }
     }
 }
@@ -67,6 +68,7 @@ impl TlvHandler for PairVerify {
         step: Step,
         _: &ConfigPtr,
         database: &DatabasePtr,
+        _: &EmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start { a_pub } => match handle_start(self, database, a_pub) {
@@ -86,6 +88,8 @@ fn handle_start(
     database: &DatabasePtr,
     a_pub: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pair-verify - M1: Got Verify Start Request");
+
     let mut rng = rand::thread_rng();
     let b = rng.gen::<[u8; 32]>();
     let b_pub = curve25519::curve25519_base(&b);
@@ -127,6 +131,8 @@ fn handle_start(
     )?;
     encrypted_data.extend(&auth_tag);
 
+    println!("/pair-verify - M2: Sending Verify Start Response");
+
     Ok(vec![
         Value::State(2),
         Value::PublicKey(b_pub.to_vec()),
@@ -139,6 +145,8 @@ fn handle_finish(
     database: &DatabasePtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pair-verify - M3: Got Verify Finish Request");
+
     if let Some(ref mut session) = handler.session {
         let encrypted_data = Vec::from(&data[..data.len() - 16]);
         let auth_tag = Vec::from(&data[data.len() - 16..]);
@@ -172,7 +180,7 @@ fn handle_finish(
         }
 
         if let Some(sender) = handler.session_sender.take() {
-            let encrypted_session = encrypted_stream::Session {
+            let encrypted_session = tcp::Session {
                 controller_id: pairing_uuid,
                 shared_secret: session.shared_secret,
             };
@@ -180,6 +188,8 @@ fn handle_finish(
         } else {
             return Err(tlv::Error::Unknown);
         }
+
+        println!("/pair-verify - M4: Sending Verify Finish Response");
 
         Ok(vec![Value::State(4)])
     } else {

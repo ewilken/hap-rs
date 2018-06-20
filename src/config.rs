@@ -5,7 +5,7 @@ use std::{
     str,
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use eui48::MacAddress;
@@ -17,7 +17,7 @@ use accessory::Category;
 use db::storage::Storage;
 use transport::bonjour::{StatusFlag, FeatureFlag};
 
-pub type ConfigPtr = Arc<Config>;
+pub type ConfigPtr = Arc<Mutex<Config>>;
 
 pub struct Config {
     pub id: Uuid,
@@ -111,7 +111,6 @@ impl Hash for Config {
     }
 }
 
-// TODO - add default values that actually make sense
 impl Default for Config {
     fn default() -> Config {
         let mut config = Config {
@@ -125,8 +124,7 @@ impl Default for Config {
             device_id: random_mac_address(),
             configuration_number: 1,
             state_number: 1,
-            // TODO - default category should probably be Switch
-            category: Category::Outlet,
+            category: Category::Unknown,
             protocol_version: "1.0".into(),
             status_flag: StatusFlag::NotPaired,
             feature_flag: FeatureFlag::Zero,

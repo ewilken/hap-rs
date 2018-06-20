@@ -6,6 +6,7 @@ use db::database::DatabasePtr;
 use config::ConfigPtr;
 use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
 use protocol::pairing::{Pairing, Permissions};
+use event::{Event, EmitterPtr};
 
 pub struct Pairings {}
 
@@ -72,19 +73,25 @@ impl TlvHandler for Pairings {
         handler: HandlerType,
         config: &ConfigPtr,
         database: &DatabasePtr,
+        event_emitter: &EmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match handler {
             HandlerType::Add { pairing_id, ltpk, permissions } => match handle_add(
                 config,
                 database,
+                event_emitter,
                 pairing_id,
                 ltpk,
-                permissions
+                permissions,
             ) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
-            HandlerType::Remove { pairing_id } => match handle_remove(database, pairing_id) {
+            HandlerType::Remove { pairing_id } => match handle_remove(
+                database,
+                event_emitter,
+                pairing_id,
+            ) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(2, err)),
             },
@@ -99,10 +106,13 @@ impl TlvHandler for Pairings {
 fn handle_add(
     config: &ConfigPtr,
     database: &DatabasePtr,
+    event_emitter: &EmitterPtr,
     pairing_id: Vec<u8>,
     ltpk: Vec<u8>,
     permissions: Permissions,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pairings - M1: Got Add Pairing Request");
+
     // TODO - check if controller is admin
 
     let uuid_str = str::from_utf8(&pairing_id)?;
@@ -116,9 +126,16 @@ fn handle_add(
             }
             pairing.permissions = permissions;
             d.set_pairing(&pairing)?;
+            drop(d);
+
+            event_emitter.lock().unwrap().emit(Event::DevicePaired);
         },
         Err(_) => {
-            if let Some(max_peers) = config.max_peers {
+            let max_peers = {
+                let c = config.lock().unwrap();
+                c.max_peers
+            };
+            if let Some(max_peers) = max_peers {
                 let count = d.count_pairings()?;
                 if count + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
@@ -129,22 +146,35 @@ fn handle_add(
             public_key.clone_from_slice(&ltpk);
             let pairing = Pairing {id: pairing_uuid, permissions, public_key};
             d.set_pairing(&pairing)?;
+            drop(d);
+
+            event_emitter.lock().unwrap().emit(Event::DevicePaired);
         },
     }
+
+    println!("/pairings - M2: Sending Add Pairing Response");
 
     Ok(vec![Value::State(2)])
 }
 
 fn handle_remove(
     database: &DatabasePtr,
+    event_emitter: &EmitterPtr,
     pairing_id: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pairings - M1: Got Remove Pairing Request");
+
     // TODO - check if controller is admin
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
     let d = database.lock().unwrap();
     d.get_pairing(pairing_uuid).map(|pairing| d.delete_pairing(&pairing.id))?;
+    drop(d);
+
+    event_emitter.lock().unwrap().emit(Event::DeviceUnpaired);
+
+    println!("/pairings - M2: Sending Remove Pairing Response");
 
     Ok(vec![Value::State(2)])
 }
@@ -152,6 +182,8 @@ fn handle_remove(
 fn handle_list(
     database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
+    println!("/pairings - M1: Got List Pairings Request");
+
     // TODO - check if controller is admin
 
     let d = database.lock().unwrap();
@@ -165,6 +197,8 @@ fn handle_list(
             list.push(Value::Separator);
         }
     }
+
+    println!("/pairings - M2: Sending List Pairings Response");
 
     Ok(list)
 }

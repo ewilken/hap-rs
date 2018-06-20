@@ -1,5 +1,5 @@
 extern crate eui48;
-extern crate mdns;
+extern crate libmdns;
 extern crate uuid;
 extern crate rand;
 extern crate serde;
@@ -10,6 +10,7 @@ extern crate serde_derive;
 extern crate bytes;
 extern crate byteorder;
 extern crate crypto;
+#[macro_use]
 extern crate futures;
 extern crate hyper;
 extern crate route_recognizer;
@@ -19,6 +20,7 @@ extern crate pnet;
 extern crate num;
 extern crate ring;
 extern crate chacha20_poly1305_aead;
+#[macro_use]
 extern crate tokio_core;
 extern crate tokio_io;
 #[macro_use]
@@ -37,3 +39,4 @@ pub mod hap_type;
 pub mod transport;
 pub mod pin;
 pub mod protocol;
+pub mod event;

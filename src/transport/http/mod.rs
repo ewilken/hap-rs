@@ -2,7 +2,6 @@ use hyper::{server::Response, header::{self, ContentLength}, StatusCode};
 
 pub mod server;
 pub mod handlers;
-pub mod encrypted_stream;
 
 pub enum Status {
     Success = 0,
@@ -24,10 +23,10 @@ enum ContentType {
 }
 
 impl ContentType {
-    pub fn for_hyper(&self) -> header::ContentType {
+    pub fn for_hyper(self) -> header::ContentType {
         match self {
-            &ContentType::PairingTLV8 => header::ContentType("application/pairing+tlv8".parse().unwrap()),
-            &ContentType::HapJson => header::ContentType("application/hap+json".parse().unwrap()),
+            ContentType::PairingTLV8 => header::ContentType("application/pairing+tlv8".parse().unwrap()),
+            ContentType::HapJson => header::ContentType("application/hap+json".parse().unwrap()),
         }
     }
 }

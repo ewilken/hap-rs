@@ -7,7 +7,14 @@ use uuid::Uuid;
 
 use config::ConfigPtr;
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
-use transport::http::{Status, json_response, status_response, handlers::JsonHandler};
+use transport::http::{
+    Status,
+    json_response,
+    status_response,
+    server::EventSubscriptions,
+    handlers::JsonHandler,
+};
+use event::EmitterPtr;
 
 pub struct Identify {}
 
@@ -23,9 +30,11 @@ impl JsonHandler for Identify {
         _: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &EventSubscriptions,
         _: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
+        _: &EmitterPtr,
     ) -> Result<Response, Error> {
         let d = database.lock().unwrap();
         let count = d.count_pairings()?;

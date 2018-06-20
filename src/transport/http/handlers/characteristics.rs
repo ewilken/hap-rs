@@ -10,7 +10,13 @@ use characteristic::{Format, Perm, Unit};
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::ConfigPtr;
 use hap_type::HapType;
-use transport::http::{handlers::JsonHandler, json_response, status_response};
+use transport::http::{
+    server::EventSubscriptions,
+    handlers::JsonHandler,
+    json_response,
+    status_response,
+};
+use event::EmitterPtr;
 
 pub struct GetCharacteristics {}
 
@@ -26,9 +32,11 @@ impl JsonHandler for GetCharacteristics {
         uri: Uri,
         _: Vec<u8>,
         _: Arc<Option<Uuid>>,
+        _: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
+        _: &EmitterPtr,
     ) -> Result<Response, Error> {
         if let Some(query) = uri.query() {
             let mut resp_body = Body::<ReadResponseObject> {
@@ -106,9 +114,11 @@ impl JsonHandler for UpdateCharacteristics {
         _: Uri,
         body: Vec<u8>,
         controller_id: Arc<Option<Uuid>>,
+        event_subscriptions: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
+        event_emitter: &EmitterPtr,
     ) -> Result<Response, Error> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body)?;
         let mut resp_body = Body::<WriteResponseObject> {
@@ -118,7 +128,11 @@ impl JsonHandler for UpdateCharacteristics {
         let mut all_err = true;
 
         for c in write_body.characteristics {
-            let res_object = accessories.write_characteristic(c);
+            let res_object = accessories.write_characteristic(
+                c,
+                event_subscriptions,
+                event_emitter,
+            );
             if res_object.status != 0 {
                 some_err = true;
             } else {
@@ -140,7 +154,7 @@ impl JsonHandler for UpdateCharacteristics {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Body<T> {
+pub struct Body<T> {
     characteristics: Vec<T>,
 }
 
@@ -188,4 +202,21 @@ pub struct WriteResponseObject {
     pub iid: u64,
     pub aid: u64,
     pub status: i32,
+}
+
+#[derive(Debug, Serialize)]
+pub struct EventObject {
+    pub iid: u64,
+    pub aid: u64,
+    pub value: serde_json::Value,
+}
+
+pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, serde_json::Error> {
+    let body = serde_json::to_string(&Body { characteristics: event_objects })?;
+    let response = format!(
+        "EVENT/1.0 200 OK\nContent-Type: application/hap+json\nContent-Length: {}\n\n{}",
+        body.len(),
+        body,
+    );
+    Ok(response.as_bytes().to_vec())
 }

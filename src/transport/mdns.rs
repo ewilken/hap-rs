@@ -1,6 +1,6 @@
 use std::{thread, sync::mpsc::{self, TryRecvError}, time::Duration};
 
-use mdns;
+use libmdns;
 
 pub struct Responder {
     name: String,
@@ -25,7 +25,7 @@ impl Responder {
         let port = self.port.clone();
         let tr = self.txt_records.clone();
         thread::spawn(move || {
-            let responder = mdns::Responder::new().unwrap();
+            let responder = libmdns::Responder::new().unwrap();
             let _svc = responder.register(
                 "_hap._tcp".into(),
                 name,

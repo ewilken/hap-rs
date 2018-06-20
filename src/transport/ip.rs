@@ -1,27 +1,31 @@
 use std::{io::Error, sync::{Arc, Mutex}, net::SocketAddr};
 
-use accessory;
 use config::{Config, ConfigPtr};
 use db::{
     storage::Storage,
     database::{Database, DatabasePtr},
     file_storage::FileStorage,
-    accessory_list::{self, AccessoryList, AccessoryListTrait},
+    accessory_list::{AccessoryList, AccessoryListTrait},
 };
 use pin;
 use protocol::device::Device;
-use transport::{http, mdns::Responder, Transport};
+use transport::{http, mdns::Responder, bonjour::StatusFlag, Transport};
+use event::{Event, Emitter, EmitterPtr};
 
 pub struct IpTransport<S: Storage> {
     config: ConfigPtr,
     storage: S,
     database: DatabasePtr,
     accessories: AccessoryList,
+    event_emitter: EmitterPtr,
     mdns_responder: Responder,
 }
 
 impl IpTransport<FileStorage> {
-    pub fn new(mut config: Config, accessories: Vec<Box<AccessoryListTrait>>) -> Result<IpTransport<FileStorage>, Error> {
+    pub fn new(
+        mut config: Config,
+        accessories: Vec<Box<AccessoryListTrait>>,
+    ) -> Result<IpTransport<FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
@@ -30,16 +34,18 @@ impl IpTransport<FileStorage> {
 
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
+        let event_emitter = Arc::new(Mutex::new(Emitter::new()));
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
-        let mut a = accessories;
-        init_aids(&mut a);
+        let mut accessory_list = AccessoryList::new(accessories);
+        accessory_list.init_aids(event_emitter.clone());
 
         let ip_transport = IpTransport {
-            config: Arc::new(config),
+            config: Arc::new(Mutex::new(config)),
             storage,
             database: Arc::new(Mutex::new(database)),
-            accessories: accessory_list::new(a),
+            accessories: accessory_list,
+            event_emitter,
             mdns_responder,
         };
         device.save(&ip_transport.database)?;
@@ -48,23 +54,47 @@ impl IpTransport<FileStorage> {
     }
 }
 
-fn init_aids(accessories: &mut Vec<Box<AccessoryListTrait>>) {
-    let mut next_aid = 1;
-    for accessory in accessories.iter_mut() {
-        accessory.set_id(next_aid);
-        next_aid += 1;
-        accessory::init_iids(accessory);
-    }
-}
-
 impl Transport for IpTransport<FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
         self.mdns_responder.start();
-        http::server::serve::<FileStorage>(
-            &SocketAddr::new(self.config.ip, self.config.port),
+
+        let (ip, port) = {
+            let c = self.config.lock().unwrap();
+            (c.ip, c.port)
+        };
+
+        let config = self.config.clone();
+        let database = self.database.clone();
+        self.event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
+            match event {
+                &Event::DevicePaired => {
+                    match database.lock().unwrap().count_pairings() {
+                        Ok(count) => if count > 0 {
+                            config.lock().unwrap().status_flag = StatusFlag::Zero;
+                            // TODO - update MDNS txt records
+                        },
+                        _ => {},
+                    }
+                },
+                &Event::DeviceUnpaired => {
+                    match database.lock().unwrap().count_pairings() {
+                        Ok(count) => if count == 0 {
+                            config.lock().unwrap().status_flag = StatusFlag::NotPaired;
+                            // TODO - update MDNS txt records
+                        },
+                        _ => {},
+                    }
+                },
+                _ => {},
+            }
+        }));
+
+        http::server::serve(
+            &SocketAddr::new(ip, port),
             self.config.clone(),
             self.database.clone(),
             self.accessories.clone(),
+            self.event_emitter.clone(),
         );
         Ok(())
     }

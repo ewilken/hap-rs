@@ -1,7 +1,7 @@
 #[derive(Copy, Clone)]
 pub enum FeatureFlag {
     Zero = 0,
-    MFICompliant = 1,
+    MfiCompliant = 1,
 }
 
 #[derive(Copy, Clone)]

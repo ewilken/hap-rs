@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc, cell::RefCell};
+use std::{net::SocketAddr, sync::{Arc, Mutex}, cell::RefCell};
 
 use hyper::{self, server::{Http, Request, Response, Service}, StatusCode, Method};
 use futures::{future, Future, stream::Stream, sync::oneshot};
@@ -6,12 +6,21 @@ use route_recognizer::Router;
 use tokio_core::{net::TcpListener, reactor::Core};
 use uuid::Uuid;
 
-use transport::http::{
-    handlers::{self, pair_setup, pair_verify, accessories, characteristics, pairings, identify},
-    encrypted_stream::{EncryptedStream, Session},
+use transport::{
+    http::{handlers::{
+        self,
+        pair_setup,
+        pair_verify,
+        accessories,
+        characteristics::{self, EventObject, event_response},
+        pairings,
+        identify
+    }, status_response},
+    tcp::{EncryptedStream, StreamWrapper, Session},
 };
-use db::{accessory_list::AccessoryList, storage::Storage, database::DatabasePtr};
+use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::ConfigPtr;
+use event::{Event, EmitterPtr};
 
 enum Route {
     Get(Box<RefCell<handlers::Handler>>),
@@ -24,18 +33,22 @@ enum Route {
 
 struct Api {
     controller_id: Arc<Option<Uuid>>,
+    event_subscriptions: EventSubscriptions,
     config: ConfigPtr,
     database: DatabasePtr,
     accessories: AccessoryList,
+    event_emitter: EmitterPtr,
     router: Arc<Router<Route>>,
 }
 
 impl Api {
     fn new(
         controller_id: Arc<Option<Uuid>>,
+        event_subscriptions: EventSubscriptions,
         config: ConfigPtr,
         database: DatabasePtr,
         accessories: AccessoryList,
+        event_emitter: EmitterPtr,
         session_sender: oneshot::Sender<Session>,
     ) -> Api {
         let mut router = Router::new();
@@ -73,7 +86,15 @@ impl Api {
             ))
         ));
 
-        Api { controller_id, config, database, accessories, router: Arc::new(router) }
+        Api {
+            controller_id,
+            event_subscriptions,
+            config,
+            database,
+            accessories,
+            event_emitter,
+            router: Arc::new(router),
+        }
     }
 }
 
@@ -87,9 +108,11 @@ impl Service for Api {
         let (method, uri, _, _, body) = req.deconstruct();
         let router = self.router.clone();
         let controller_id = self.controller_id.clone();
+        let event_subscriptions = self.event_subscriptions.clone();
         let config = self.config.clone();
         let database = self.database.clone();
         let accessories = self.accessories.clone();
+        let event_emitter = self.event_emitter.clone();
 
         Box::new(body.fold(vec![], |mut v, c| {
             v.extend(c.to_vec());
@@ -98,29 +121,66 @@ impl Service for Api {
             if let Ok(route_match) = router.recognize(uri.path()) {
                 match (route_match.handler, method) {
                     (&Route::Get(ref handler), Method::Get) => handler.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories,
+                            &event_emitter,
+                        ),
                     (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories,
+                            &event_emitter,
+                        ),
                     (&Route::GetPut { ref _get, ref _put }, Method::Get) => _get.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories,
+                            &event_emitter,
+                        ),
                     (&Route::GetPut { ref _get, ref _put }, Method::Put) => _put.borrow_mut()
-                        .handle(uri, body, controller_id, &config, &database, &accessories),
-                    _ => Box::new(future::ok(
-                        Response::new().with_status(StatusCode::BadRequest)
-                    )),
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            &event_subscriptions,
+                            &config,
+                            &database,
+                            &accessories,
+                            &event_emitter,
+                        ),
+                    _ => Box::new(future::ok(status_response(StatusCode::BadRequest))),
                 }
             } else {
-                Box::new(future::ok(Response::new().with_status(StatusCode::NotFound)))
+                Box::new(future::ok(status_response(StatusCode::NotFound)))
             }
         }))
     }
 }
 
-pub fn serve<S: 'static + Storage + Send>(
+pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
+
+pub fn serve(
     socket_addr: &SocketAddr,
     config: ConfigPtr,
     database: DatabasePtr,
     accessories: AccessoryList,
+    event_emitter: EmitterPtr,
 ) {
     let mut evt_loop = Core::new().unwrap();
     let listener = TcpListener::bind(socket_addr, &evt_loop.handle()).unwrap();
@@ -128,15 +188,39 @@ pub fn serve<S: 'static + Storage + Send>(
     let handle = evt_loop.handle();
 
     let server = listener.incoming().for_each(|(stream, _)| {
-        let (stream, sender) = EncryptedStream::new(stream);
-        let controller_id = Arc::new(stream.controller_id);
-        handle.spawn(http.serve_connection(stream, Api::new(
-            controller_id.clone(),
+        let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
+        let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
+        let controller_id = Arc::new(encrypted_stream.controller_id);
+        let event_subscriptions = Arc::new(Mutex::new(vec![]));
+        let api = Api::new(
+            controller_id,
+            event_subscriptions.clone(),
             config.clone(),
             database.clone(),
             accessories.clone(),
-            sender,
-        )).map_err(|_| ()).map(|_| ()));
+            event_emitter.clone(),
+            session_sender,
+        );
+
+        let event_subscriptions = event_subscriptions.clone();
+        event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
+            match event {
+                &Event::CharacteristicValueChanged { aid, iid, ref value } => {
+                    let es = event_subscriptions.lock().unwrap();
+                    for &(s_aid, s_iid) in es.iter() {
+                        if s_aid == aid && s_iid == iid {
+                            let event = EventObject { aid, iid, value: value.clone() };
+                            let event_res = event_response(vec![event]).unwrap();
+                            stream_outgoing.unbounded_send(event_res).map_err(|_| ());
+                        }
+                    }
+                },
+                _ => {},
+            }
+        }));
+
+        handle.spawn(encrypted_stream.map_err(|_| ()).map(|_| ()));
+        handle.spawn(http.serve_connection(stream_wrapper, api).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();

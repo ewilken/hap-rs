@@ -3,15 +3,17 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 use characteristic::HapCharacteristic;
 use hap_type::HapType;
 
-pub mod accessory_information;
-pub mod outlet;
+mod includes;
+pub use service::includes::*;
 
 pub trait HapService {
     fn get_id(&self) -> u64;
     fn set_id(&mut self, id: u64);
     fn get_type(&self) -> &HapType;
     fn get_hidden(&self) -> bool;
+    fn set_hidden(&mut self, hidden: bool);
     fn get_primary(&self) -> bool;
+    fn set_primary(&mut self, primary: bool);
     fn get_characteristics(&self) -> Vec<&HapCharacteristic>;
     fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic>;
 }
@@ -56,8 +58,16 @@ impl<T: HapService> HapService for Service<T> {
         self.inner.get_hidden()
     }
 
+    fn set_hidden(&mut self, hidden: bool) {
+        self.inner.set_hidden(hidden)
+    }
+
     fn get_primary(&self) -> bool {
         self.inner.get_primary()
+    }
+
+    fn set_primary(&mut self, primary: bool) {
+        self.inner.set_primary(primary)
     }
 
     fn get_characteristics(&self) -> Vec<&HapCharacteristic> {

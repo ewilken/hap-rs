@@ -1,10 +1,18 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
 
-use service::{HapService, accessory_information::AccessoryInformation};
-use db::accessory_list::AccessoryListTrait;
+use service::{HapService, accessory_information::{self, AccessoryInformation}};
+use characteristic::{hardware_revision, accessory_flags};
+use event::EmitterPtr;
 
-pub mod outlet;
+mod category;
+pub use accessory::category::Category;
+
+mod defined;
+pub use accessory::defined::*;
+
+mod includes;
+pub use accessory::includes::*;
 
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
 
@@ -18,6 +26,7 @@ pub trait HapAccessory {
     fn get_services(&self) -> Vec<&HapAccessoryService>;
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService>;
     fn get_mut_information(&mut self) -> &mut AccessoryInformation;
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr);
 }
 
 pub struct Accessory<T: HapAccessory> {
@@ -59,17 +68,9 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
     fn get_mut_information(&mut self) -> &mut AccessoryInformation {
         self.inner.get_mut_information()
     }
-}
 
-pub fn init_iids(accessory: &mut Box<AccessoryListTrait>) {
-    let mut next_iid = 1;
-    for service in accessory.get_mut_services() {
-        service.set_id(next_iid);
-        next_iid += 1;
-        for characteristic in service.get_mut_characteristics() {
-            characteristic.set_id(next_iid);
-            next_iid += 1;
-        }
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
+        self.inner.init_iids(accessory_id, event_emitter)
     }
 }
 
@@ -80,6 +81,31 @@ pub struct Information {
     pub name: String,
     pub serial_number: String,
     pub firmware_revision: String,
+    pub hardware_revision: Option<String>,
+	pub accessory_flags: Option<u32>,
+}
+
+impl Information {
+    pub fn to_service(self) -> AccessoryInformation {
+        let mut i = accessory_information::new();
+        i.inner.identify.set_value(self.identify).unwrap();
+        i.inner.manufacturer.set_value(self.manufacturer).unwrap();
+        i.inner.model.set_value(self.model).unwrap();
+        i.inner.name.set_value(self.name).unwrap();
+        i.inner.serial_number.set_value(self.serial_number).unwrap();
+        i.inner.firmware_revision.set_value(self.firmware_revision).unwrap();
+        if let Some(v) = self.hardware_revision {
+            let mut hr = hardware_revision::new();
+            hr.set_value(v).unwrap();
+            i.inner.hardware_revision = Some(hr);
+        }
+        if let Some(v) = self.accessory_flags {
+            let mut af = accessory_flags::new();
+            af.set_value(v).unwrap();
+            i.inner.accessory_flags = Some(af);
+        }
+        i
+    }
 }
 
 impl Default for Information {
@@ -91,29 +117,8 @@ impl Default for Information {
             name: "undefined".into(),
             serial_number: "undefined".into(),
             firmware_revision: "undefined".into(),
+            hardware_revision: None,
+            accessory_flags: None,
         }
     }
-}
-
-#[derive(Copy, Clone)]
-pub enum Category {
-    Other = 1,
-    Bridge = 2,
-    Fan = 3,
-    Garage = 4,
-    Lightbulb = 5,
-    DoorLock = 6,
-    Outlet = 7,
-    Switch = 8,
-    Thermostat = 9,
-    Sensor = 10,
-    SecuritySystem = 11,
-    Door = 12,
-    Window = 13,
-    WindowCovering = 14,
-    ProgrammableSwitch = 15,
-    RangeExtender = 16,
-    IPCamera = 17,
-    VideoDoorBell = 18,
-    AirPurifier = 19,
 }
