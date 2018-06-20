@@ -16,56 +16,63 @@ use bytes::{BytesMut, buf::FromBuf};
 use byteorder::{ByteOrder, LittleEndian};
 use uuid::Uuid;
 
-pub struct HapTcpStream {
-    stream: TcpStream,
-    data: [u8; 1536],
-    incoming_sender: UnboundedSender<Vec<u8>>,
-    outgoing_receiver: UnboundedReceiver<Vec<u8>>,
+pub struct StreamWrapper {
+    incoming_receiver: UnboundedReceiver<Vec<u8>>,
+    outgoing_sender: UnboundedSender<Vec<u8>>,
+    incoming_buf: BytesMut,
 }
 
-impl HapTcpStream {
-    pub fn new(stream: TcpStream) -> (
-        HapTcpStream,
-        UnboundedReceiver<Vec<u8>>,
-        UnboundedSender<Vec<u8>>,
-    ) {
-        let (incoming_sender, incoming_receiver) = mpsc::unbounded();
-        let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
-
-        (
-            HapTcpStream { stream, data: [0; 1536], incoming_sender, outgoing_receiver },
-            incoming_receiver,
-            outgoing_sender,
-        )
+impl StreamWrapper {
+    pub fn new(
+        incoming_receiver: UnboundedReceiver<Vec<u8>>,
+        outgoing_sender: UnboundedSender<Vec<u8>>,
+    ) -> StreamWrapper {
+        StreamWrapper { incoming_receiver, outgoing_sender, incoming_buf: BytesMut::new() }
     }
 
-    fn poll_incoming(&mut self) -> Poll<(), Error> {
-        loop {
-            let r_len = try_nb!(self.stream.read(&mut self.data));
-            if r_len == 0 { return Ok(Ready(())); }
-            self.incoming_sender.unbounded_send(self.data[..r_len].to_vec())
-                .map_err(|_| Error::new(ErrorKind::Other, "couldn't send incoming data"))?;
-        }
-    }
-
-    fn poll_outgoing(&mut self) -> Poll<(), ()> {
-        loop {
-            match try_ready!(self.outgoing_receiver.poll()) {
-                None => { return Ok(Ready(())); },
-                Some(data) => { self.stream.write(&data).map_err(|_| ())?; },
-            }
+    fn poll_receiver(&mut self) -> Result<usize, Error> {
+        match self.incoming_receiver.poll() {
+            Ok(NotReady) => Err(ErrorKind::WouldBlock.into()),
+            Ok(Ready(Some(incoming))) => {
+                &self.incoming_buf.extend_from_slice(&incoming);
+                Ok(incoming.len())
+            },
+            Ok(Ready(None)) => Ok(0),
+            Err(_) => Err(ErrorKind::Other.into()),
         }
     }
 }
 
-impl Future for HapTcpStream {
-    type Item = ();
-    type Error = Error;
+impl Read for StreamWrapper {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+        self.poll_receiver()?;
+        let r_len = min(buf.len(), self.incoming_buf.len());
+        &buf[..r_len].copy_from_slice(&self.incoming_buf[..r_len]);
+        self.incoming_buf.advance(r_len);
+        return Ok(r_len);
+    }
+}
 
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        self.poll_outgoing()
-            .map_err(|_| Error::new(ErrorKind::Other, "couldn't receive outgoing data"))?;
-        self.poll_incoming()
+impl Write for StreamWrapper {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
+        self.outgoing_sender.unbounded_send(buf.to_vec())
+            .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> Result<(), Error> {
+        self.outgoing_sender.poll_complete()
+            .map(|_| ())
+            .map_err(|_| Error::new(ErrorKind::Other, "couldn't flush"))
+    }
+}
+
+impl AsyncRead for StreamWrapper {}
+
+impl AsyncWrite for StreamWrapper {
+    fn shutdown(&mut self) -> Poll<(), Error> {
+        // TODO - maybe do something useful here
+        Ok(Ready(()))
     }
 }
 
@@ -75,14 +82,14 @@ pub struct Session {
 }
 
 pub struct EncryptedStream {
-    incoming_receiver: UnboundedReceiver<Vec<u8>>,
-    outgoing_sender: UnboundedSender<Vec<u8>>,
+    stream: TcpStream,
+    incoming_sender: UnboundedSender<Vec<u8>>,
+    outgoing_receiver: UnboundedReceiver<Vec<u8>>,
     session_receiver: oneshot::Receiver<Session>,
     pub controller_id: Option<Uuid>,
     shared_secret: Option<[u8; 32]>,
     decrypt_count: u64,
     encrypt_count: u64,
-    incoming_buf: BytesMut,
     encrypted_buf: BytesMut,
     decrypted_buf: BytesMut,
     packet_len: usize,
@@ -94,23 +101,24 @@ pub struct EncryptedStream {
 }
 
 impl EncryptedStream {
-    pub fn new(
-        incoming_receiver: UnboundedReceiver<Vec<u8>>,
-        outgoing_sender: UnboundedSender<Vec<u8>>,
-    ) -> (
+    pub fn new(stream: TcpStream) -> (
         EncryptedStream,
+        UnboundedReceiver<Vec<u8>>,
+        UnboundedSender<Vec<u8>>,
         oneshot::Sender<Session>,
     ) {
-        let (session_sender, session_receiver) = oneshot::channel();
+        let (sender, receiver) = oneshot::channel();
+        let (incoming_sender, incoming_receiver) = mpsc::unbounded();
+        let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
         (EncryptedStream {
-            incoming_receiver,
-            outgoing_sender,
-            session_receiver,
+            stream,
+            incoming_sender,
+            outgoing_receiver,
+            session_receiver: receiver,
             controller_id: None,
             shared_secret: None,
             decrypt_count: 0,
             encrypt_count: 0,
-            incoming_buf: BytesMut::new(),
             encrypted_buf: BytesMut::from_buf(vec![0; 1042]),
             decrypted_buf: BytesMut::from_buf(vec![0; 1024]),
             packet_len: 0,
@@ -119,7 +127,7 @@ impl EncryptedStream {
             decrypted_ready: false,
             missing_data_for_decrypted_buf: false,
             missing_data_for_encrypted_buf: false,
-        }, session_sender)
+        }, incoming_receiver, outgoing_sender, sender)
     }
 
     fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
@@ -159,11 +167,7 @@ impl EncryptedStream {
 
     fn read_stream(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
         if self.missing_data_for_encrypted_buf {
-            self.poll_receiver()?;
-            let r_len = min(self.packet_len, self.incoming_buf.len());
-            &self.encrypted_buf[self.already_read..(self.already_read + r_len)]
-                .copy_from_slice(&self.incoming_buf[..r_len]);
-            self.incoming_buf.advance(r_len);
+            let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..])?;
 
             if self.already_read + r_len == self.packet_len {
                 self.already_read = 0;
@@ -173,22 +177,14 @@ impl EncryptedStream {
             }
             return Err(ErrorKind::WouldBlock.into())
         } else {
-            self.poll_receiver()?;
-            let r_len = min(2 - self.already_read, self.incoming_buf.len());
-            &self.encrypted_buf[self.already_read..(self.already_read + r_len)]
-                .copy_from_slice(&self.incoming_buf[..r_len]);
-            self.incoming_buf.advance(r_len);
+            let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..2])?;
             self.already_read += r_len;
 
             if self.already_read == 2 {
                 self.packet_len = LittleEndian::read_u16(&self.encrypted_buf) as usize + 16;
 
                 self.missing_data_for_encrypted_buf = true;
-                let r_len = min(self.packet_len, self.incoming_buf.len());
-                &self.encrypted_buf[self.already_read..(self.already_read + r_len)]
-                    .copy_from_slice(&self.incoming_buf[..r_len]);
-                self.incoming_buf.advance(r_len);
-
+                let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..])?;
                 if r_len == self.packet_len {
                     self.already_read = 0;
                     self.missing_data_for_encrypted_buf = false;
@@ -204,16 +200,34 @@ impl EncryptedStream {
         }
     }
 
-    fn poll_receiver(&mut self) -> Result<usize, Error> {
-        match self.incoming_receiver.poll() {
-            Ok(NotReady) => Err(ErrorKind::WouldBlock.into()),
-            Ok(Ready(Some(incoming))) => {
-                &self.incoming_buf.extend_from_slice(&incoming);
-                Ok(incoming.len())
-            },
-            Ok(Ready(None)) => Ok(0),
-            Err(_) => Err(ErrorKind::Other.into()),
+    fn poll_incoming(&mut self) -> Poll<(), Error> {
+        let mut data = [0; 1536];
+        loop {
+            let r_len = try_nb!(self.read(&mut data));
+            if r_len == 0 { return Ok(Ready(())); }
+            self.incoming_sender.unbounded_send(data[..r_len].to_vec())
+                .map_err(|_| Error::new(ErrorKind::Other, "couldn't send incoming data"))?;
         }
+    }
+
+    fn poll_outgoing(&mut self) -> Poll<(), ()> {
+        loop {
+            match try_ready!(self.outgoing_receiver.poll()) {
+                None => { return Ok(Ready(())); },
+                Some(data) => { self.write(&data).map_err(|_| ())?; },
+            }
+        }
+    }
+}
+
+impl Future for EncryptedStream {
+    type Item = ();
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        self.poll_outgoing()
+            .map_err(|_| Error::new(ErrorKind::Other, "couldn't receive outgoing data"))?;
+        self.poll_incoming()
     }
 }
 
@@ -226,11 +240,7 @@ impl Read for EncryptedStream {
                     self.shared_secret = Some(session.shared_secret);
                 },
                 _ => {
-                    self.poll_receiver()?;
-                    let r_len = min(buf.len(), self.incoming_buf.len());
-                    &buf[..r_len].copy_from_slice(&self.incoming_buf[..r_len]);
-                    self.incoming_buf.advance(r_len);
-                    return Ok(r_len);
+                    return self.stream.read(buf);
                 },
             }
         }
@@ -256,12 +266,9 @@ impl Write for EncryptedStream {
                     write_buf[..1024].to_vec(),
                     &mut self.encrypt_count,
                 );
-                self.outgoing_sender.unbounded_send(aad.to_vec())
-                    .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
-                self.outgoing_sender.unbounded_send(chunk)
-                    .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
-                self.outgoing_sender.unbounded_send(auth_tag.to_vec())
-                    .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
+                self.stream.write(&aad)?;
+                self.stream.write(&chunk)?;
+                self.stream.write(&auth_tag)?;
                 write_buf.advance(1024);
             }
 
@@ -270,24 +277,17 @@ impl Write for EncryptedStream {
                 write_buf.to_vec(),
                 &mut self.encrypt_count,
             );
-            self.outgoing_sender.unbounded_send(aad.to_vec())
-                .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
-            self.outgoing_sender.unbounded_send(chunk)
-                .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
-            self.outgoing_sender.unbounded_send(auth_tag.to_vec())
-                .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
+            self.stream.write(&aad)?;
+            self.stream.write(&chunk)?;
+            self.stream.write(&auth_tag)?;
             Ok(buf.len())
         } else {
-            self.outgoing_sender.unbounded_send(buf.to_vec())
-                .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
-            Ok(buf.len())
+            self.stream.write(buf)
         }
     }
 
     fn flush(&mut self) -> Result<(), Error> {
-        self.outgoing_sender.poll_complete()
-            .map(|_| ())
-            .map_err(|_| Error::new(ErrorKind::Other, "couldn't flush"))
+        self.stream.flush()
     }
 }
 
@@ -295,8 +295,7 @@ impl AsyncRead for EncryptedStream {}
 
 impl AsyncWrite for EncryptedStream {
     fn shutdown(&mut self) -> Poll<(), Error> {
-        // TODO - maybe do something useful here
-        Ok(Ready(()))
+        AsyncWrite::shutdown(&mut self.stream)
     }
 }
 

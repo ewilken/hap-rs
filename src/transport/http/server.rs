@@ -12,11 +12,11 @@ use transport::{
         pair_setup,
         pair_verify,
         accessories,
-        characteristics::{self, EventObject},
+        characteristics::{self, EventObject, event_response},
         pairings,
         identify
     }, status_response},
-    tcp::{HapTcpStream, EncryptedStream, Session},
+    tcp::{EncryptedStream, StreamWrapper, Session},
 };
 use db::{accessory_list::AccessoryList, database::DatabasePtr};
 use config::ConfigPtr;
@@ -188,9 +188,8 @@ pub fn serve(
     let handle = evt_loop.handle();
 
     let server = listener.incoming().for_each(|(stream, _)| {
-        // let (stream, session_sender) = EncryptedStream::new(stream);
-        let (stream, stream_incoming, stream_outgoing) = HapTcpStream::new(stream);
-        let (encrypted_stream, session_sender) = EncryptedStream::new(stream_incoming, stream_outgoing);
+        let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
+        let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
         let controller_id = Arc::new(encrypted_stream.controller_id);
         let event_subscriptions = Arc::new(Mutex::new(vec![]));
         let api = Api::new(
@@ -210,12 +209,9 @@ pub fn serve(
                     let es = event_subscriptions.lock().unwrap();
                     for &(s_aid, s_iid) in es.iter() {
                         if s_aid == aid && s_iid == iid {
-                            // notification_sender.try_send(EventObject {
-                            //     aid,
-                            //     iid,
-                            //     value: value.clone(),
-                            // }).unwrap();
-                            // println!("Event triggered for aid: {} iid: {} value: {}", aid, iid, value);
+                            let event = EventObject { aid, iid, value: value.clone() };
+                            let event_res = event_response(vec![event]).unwrap();
+                            stream_outgoing.unbounded_send(event_res).map_err(|_| ());
                         }
                     }
                 },
@@ -223,8 +219,8 @@ pub fn serve(
             }
         }));
 
-        handle.spawn(stream.map_err(|_| ()).map(|_| ()));
-        handle.spawn(http.serve_connection(encrypted_stream, api).map_err(|_| ()).map(|_| ()));
+        handle.spawn(encrypted_stream.map_err(|_| ()).map(|_| ()));
+        handle.spawn(http.serve_connection(stream_wrapper, api).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
     evt_loop.run(server).unwrap();

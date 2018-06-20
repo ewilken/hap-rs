@@ -154,7 +154,7 @@ impl JsonHandler for UpdateCharacteristics {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Body<T> {
+pub struct Body<T> {
     characteristics: Vec<T>,
 }
 
@@ -209,4 +209,14 @@ pub struct EventObject {
     pub iid: u64,
     pub aid: u64,
     pub value: serde_json::Value,
+}
+
+pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, serde_json::Error> {
+    let body = serde_json::to_string(&Body { characteristics: event_objects })?;
+    let response = format!(
+        "EVENT/1.0 200 OK\nContent-Type: application/hap+json\nContent-Length: {}\n\n{}",
+        body.len(),
+        body,
+    );
+    Ok(response.as_bytes().to_vec())
 }
