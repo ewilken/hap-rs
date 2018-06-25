@@ -78,7 +78,7 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         let mut val = None;
         if let Some(ref mut readable) = self.readable {
             let mut r = readable.lock().unwrap();
-            val = Some(r.on_read());
+            val = Some(r.on_read(self.hap_type));
         }
         if let Some(v) = val {
             self.set_value(v)?;
@@ -101,7 +101,7 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
 
         if let Some(ref mut updatable) = self.updatable {
             let mut u = updatable.lock().unwrap();
-            u.on_update(&self.value, &val);
+            u.on_update(self.hap_type, &self.value, &val);
         }
 
         if self.event_notifications == Some(true) {
@@ -321,11 +321,11 @@ impl<T: Default + Serialize> HapCharacteristic for Characteristic<T> where for<'
 }
 
 pub trait Readable<T: Default + Serialize> {
-    fn on_read(&mut self) -> T;
+    fn on_read(&mut self, hap_type: HapType) -> T;
 }
 
 pub trait Updatable<T: Default + Serialize> {
-    fn on_update(&mut self, old_val: &T, new_val: &T);
+    fn on_update(&mut self, hap_type: HapType, old_val: &T, new_val: &T);
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

@@ -239,14 +239,53 @@ pub enum Category {
 }
 ";
 
+static HAP_TYPE: &'static str = "// THIS FILE IS AUTO-GENERATED\n
+use serde::ser::{Serialize, Serializer};
+
+#[derive(Copy, Clone, Debug)]
+pub enum HapType {
+    Unknown,
+{{#each Characteristics as |c|}}\
+\t{{trim c.Name}},
+{{/each}}\
+{{#each Services as |s|}}\
+\t{{trim s.Name}},
+{{/each}}\
+}
+
+impl HapType {
+    pub fn to_string(&self) -> String {
+        match self {
+            &HapType::Unknown => \"unknown\".into(),
+{{#each Characteristics as |c|}}\
+\t\t\t&HapType::{{trim c.Name}} => \"{{uuid c.UUID}}\".into(),
+{{/each}}\
+{{#each Services as |s|}}\
+\t\t\t&HapType::{{trim s.Name}} => \"{{uuid s.UUID}}\".into(),
+{{/each}}\
+\t\t}
+    }
+}
+
+impl Default for HapType {
+    fn default() -> HapType { HapType::Unknown }
+}
+
+impl Serialize for HapType {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+";
+
 static CHARACTERISTIC: &'static str = "// THIS FILE IS AUTO-GENERATED\n
-use characteristic::{Characteristic, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
+use characteristic::{HapType, Characteristic, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
 
 pub type {{trim characteristic.Name}} = Characteristic<{{type characteristic.Format}}>;
 
 pub fn new() -> {{trim characteristic.Name}} {
     {{trim characteristic.Name}} {
-        hap_type: \"{{uuid characteristic.UUID}}\".into(),
+        hap_type: HapType::{{trim characteristic.Name}},
         format: {{format characteristic.Format}},
         perms: vec![{{perms characteristic.Properties}}
         ],\
@@ -325,8 +364,8 @@ impl HapService for {{trim service.Name}}Inner {
         self.id = id;
     }
 
-    fn get_type(&self) -> &HapType {
-        &self.hap_type
+    fn get_type(&self) -> HapType {
+        self.hap_type
     }
 
     fn get_hidden(&self) -> bool {
@@ -392,7 +431,7 @@ impl HapService for {{trim service.Name}}Inner {
 
 pub fn new() -> {{trim service.Name}} {
     {{trim service.Name}}::new({{trim service.Name}}Inner {
-        hap_type: \"{{uuid service.UUID}}\".into(),
+        hap_type: HapType::{{trim service.Name}},
 {{#each service.RequiredCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
@@ -500,6 +539,7 @@ fn main() {
     handlebars.register_helper("characteristic_file_name", Box::new(characteristic_file_name_helper));
     handlebars.register_helper("snake_case", Box::new(snake_case_helper));
     handlebars.register_template_string("categories", CATEGORIES).unwrap();
+    handlebars.register_template_string("hap_type", HAP_TYPE).unwrap();
     handlebars.register_template_string("characteristic", CHARACTERISTIC).unwrap();
     handlebars.register_template_string("characteristic_mod", CHARACTERISTIC_MOD).unwrap();
     handlebars.register_template_string("service", SERVICE).unwrap();
@@ -511,6 +551,11 @@ fn main() {
     let categories_path = "src/accessory/category.rs".to_owned();
     let mut categories_file = File::create(&categories_path).unwrap();
     categories_file.write_all(categories.as_bytes()).unwrap();
+
+    let hap_type = handlebars.render("hap_type", &metadata).unwrap();
+    let hap_type_path = "src/hap_type.rs".to_owned();
+    let mut hap_type_file = File::create(&hap_type_path).unwrap();
+    hap_type_file.write_all(hap_type.as_bytes()).unwrap();
 
     let characteristics_base_path = "src/characteristic/includes/";
     fs::create_dir_all(&characteristics_base_path).unwrap();

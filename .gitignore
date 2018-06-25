@@ -4,3 +4,4 @@ data
 
 src/**/includes/*
 src/accessory/category.rs
+src/hap_type.rs

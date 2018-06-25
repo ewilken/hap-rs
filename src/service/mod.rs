@@ -9,7 +9,7 @@ pub use service::includes::*;
 pub trait HapService {
     fn get_id(&self) -> u64;
     fn set_id(&mut self, id: u64);
-    fn get_type(&self) -> &HapType;
+    fn get_type(&self) -> HapType;
     fn get_hidden(&self) -> bool;
     fn set_hidden(&mut self, hidden: bool);
     fn get_primary(&self) -> bool;
@@ -32,7 +32,7 @@ impl<T: HapService> Serialize for Service<T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;
-        state.serialize_field("type", self.get_type())?;
+        state.serialize_field("type", &self.get_type())?;
         state.serialize_field("hidden", &self.get_hidden())?;
         state.serialize_field("primary", &self.get_primary())?;
         state.serialize_field("characteristics", &self.get_characteristics())?;
@@ -50,7 +50,7 @@ impl<T: HapService> HapService for Service<T> {
         self.inner.set_id(id)
     }
 
-    fn get_type(&self) -> &HapType {
+    fn get_type(&self) -> HapType {
         self.inner.get_type()
     }
 

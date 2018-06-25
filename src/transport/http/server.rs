@@ -211,7 +211,7 @@ pub fn serve(
                         if s_aid == aid && s_iid == iid {
                             let event = EventObject { aid, iid, value: value.clone() };
                             let event_res = event_response(vec![event]).unwrap();
-                            stream_outgoing.unbounded_send(event_res).map_err(|_| ());
+                            stream_outgoing.unbounded_send(event_res).map_err(|_| ()).unwrap();
                         }
                     }
                 },
