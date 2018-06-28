@@ -230,12 +230,8 @@ fn handle_exchange(
                 pairing_ltpk[i] = device_ltpk[i];
             }
 
-            let max_peers = {
-                let c = config.lock().unwrap();
-                c.max_peers
-            };
-            if let Some(max_peers) = max_peers {
-                let d = database.lock().unwrap();
+            if let Some(max_peers) = config.borrow().max_peers {
+                let d = database.borrow();
                 let count = d.count_pairings()?;
                 if count + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
@@ -280,7 +276,7 @@ fn handle_exchange(
             )?;
             encrypted_data.extend(&auth_tag);
 
-            event_emitter.lock().unwrap().emit(Event::DevicePaired);
+            event_emitter.borrow().emit(Event::DevicePaired);
 
             println!("/pair-setup - M6: Sending SRP Exchange Response");
 

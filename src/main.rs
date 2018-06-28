@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{rc::Rc, cell::RefCell};
 
 extern crate hap;
 
@@ -10,27 +10,49 @@ use hap::{
     hap_type::HapType,
 };
 
-pub struct VirtualOutlet {
+pub struct VirtualOutletInner {
     on: bool,
+}
+
+#[derive(Clone)]
+pub struct VirtualOutlet {
+    inner: Rc<RefCell<VirtualOutletInner>>
+}
+
+impl VirtualOutlet {
+    pub fn new(inner: VirtualOutletInner) -> VirtualOutlet {
+        VirtualOutlet { inner: Rc::new(RefCell::new(inner)) }
+    }
 }
 
 impl Readable<bool> for VirtualOutlet {
     fn on_read(&mut self, _: HapType) -> bool {
         println!("Outlet: On read.");
-        self.on
+        self.inner.borrow().on
     }
 }
 
 impl Updatable<bool> for VirtualOutlet {
     fn on_update(&mut self, _: HapType, old_val: &bool, new_val: &bool) {
         println!("Outlet: On updated from {} to {}.", old_val, new_val);
-        if new_val != old_val { self.on = new_val.clone(); }
+        if new_val != old_val { self.inner.borrow_mut().on = new_val.clone(); }
     }
 }
 
-pub struct VirtualDoor {
+pub struct VirtualDoorInner {
     current_position: u8,
     target_position: u8,
+}
+
+#[derive(Clone)]
+pub struct VirtualDoor {
+    inner: Rc<RefCell<VirtualDoorInner>>
+}
+
+impl VirtualDoor {
+    pub fn new(inner: VirtualDoorInner) -> VirtualDoor {
+        VirtualDoor { inner: Rc::new(RefCell::new(inner)) }
+    }
 }
 
 impl Readable<u8> for VirtualDoor {
@@ -38,11 +60,11 @@ impl Readable<u8> for VirtualDoor {
         match hap_type {
             HapType::CurrentPosition => {
                 println!("Door: Current position read.");
-                self.current_position
+                self.inner.borrow().current_position
             },
             HapType::TargetPosition => {
                 println!("Door: Target position read.");
-                self.target_position
+                self.inner.borrow().target_position
             },
             // TODO - return optional?
             _ => 0,
@@ -55,11 +77,17 @@ impl Updatable<u8> for VirtualDoor {
         match hap_type {
             HapType::CurrentPosition => {
                 println!("Door: Current position updated from {} to {}.", old_val, new_val);
-                if new_val != old_val { self.current_position = new_val.clone(); }
+                if new_val != old_val {
+                    self.inner.borrow_mut().current_position = new_val.clone();
+                }
             },
             HapType::TargetPosition => {
                 println!("Door: Target position updated from {} to {}.", old_val, new_val);
-                if new_val != old_val { self.target_position = new_val.clone(); }
+                if new_val != old_val {
+                    let mut inner = self.inner.borrow_mut();
+                    inner.target_position = new_val.clone();
+                    inner.current_position = new_val.clone();
+                }
             },
             _ => {},
         }
@@ -70,20 +98,17 @@ fn main() {
     let bridge = bridge::new(Information { name: "Bridge".into(), ..Default::default() });
     let mut outlet = outlet::new(Information { name: "Outlet".into(), ..Default::default() });
 
-    // TODO - fix this
-    let virtual_outlet = VirtualOutlet { on: false };
-    let virtual_outlet_ptr = Arc::new(Mutex::new(Box::new(virtual_outlet)));
-    outlet.inner.outlet.inner.on.set_readable(Some(virtual_outlet_ptr.clone()));
-    outlet.inner.outlet.inner.on.set_updatable(Some(virtual_outlet_ptr.clone()));
+    let virtual_outlet = VirtualOutlet::new(VirtualOutletInner { on: false });
+    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone());
+    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet);
 
     let mut door = door::new(Information { name: "Door".into(), ..Default::default() });
 
-    let virtual_door = VirtualDoor { current_position: 0, target_position: 0 };
-    let virtual_door_ptr = Arc::new(Mutex::new(Box::new(virtual_door)));
-    door.inner.door.inner.current_position.set_readable(Some(virtual_door_ptr.clone()));
-    door.inner.door.inner.current_position.set_updatable(Some(virtual_door_ptr.clone()));
-    door.inner.door.inner.target_position.set_readable(Some(virtual_door_ptr.clone()));
-    door.inner.door.inner.target_position.set_updatable(Some(virtual_door_ptr.clone()));
+    let virtual_door = VirtualDoor::new(VirtualDoorInner { current_position: 0, target_position: 0 });
+    door.inner.door.inner.current_position.set_readable(virtual_door.clone());
+    door.inner.door.inner.current_position.set_updatable(virtual_door.clone());
+    door.inner.door.inner.target_position.set_readable(virtual_door.clone());
+    door.inner.door.inner.target_position.set_updatable(virtual_door);
 
     let security_system = security_system::new(Information { name: "Security System".into(), ..Default::default() });
     let valve = valve::new(Information { name: "Valve".into(), ..Default::default() });

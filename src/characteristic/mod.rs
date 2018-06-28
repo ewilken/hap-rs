@@ -1,4 +1,4 @@
-use std::{io::{Error, ErrorKind}, sync::{Arc, Mutex}};
+use std::io::{Error, ErrorKind};
 
 use serde::{ser::{Serialize, Serializer, SerializeStruct}, Deserialize};
 use serde_json;
@@ -31,8 +31,8 @@ pub struct Characteristic<T: Default + Serialize> {
     valid_values: Option<Vec<T>>,
     valid_values_range: Option<[T; 2]>,
 
-    readable: Option<Arc<Mutex<Box<Readable<T>>>>>,
-    updatable: Option<Arc<Mutex<Box<Updatable<T>>>>>,
+    readable: Option<Box<Readable<T>>>,
+    updatable: Option<Box<Updatable<T>>>,
 
     event_emitter: Option<EmitterPtr>,
 }
@@ -77,8 +77,7 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
     pub fn get_value(&mut self) -> Result<&T, Error> {
         let mut val = None;
         if let Some(ref mut readable) = self.readable {
-            let mut r = readable.lock().unwrap();
-            val = Some(r.on_read(self.hap_type));
+            val = Some(readable.on_read(self.hap_type));
         }
         if let Some(v) = val {
             self.set_value(v)?;
@@ -100,13 +99,12 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         }*/
 
         if let Some(ref mut updatable) = self.updatable {
-            let mut u = updatable.lock().unwrap();
-            u.on_update(self.hap_type, &self.value, &val);
+            updatable.on_update(self.hap_type, &self.value, &val);
         }
 
         if self.event_notifications == Some(true) {
             if let Some(ref event_emitter) = self.event_emitter {
-                event_emitter.lock().unwrap().emit(Event::CharacteristicValueChanged {
+                event_emitter.borrow().emit(Event::CharacteristicValueChanged {
                     aid: self.accessory_id,
                     iid: self.id,
                     value: json!(&val),
@@ -151,12 +149,12 @@ impl<T: Default + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de
         self.max_len
     }
 
-    pub fn set_readable(&mut self, readable: Option<Arc<Mutex<Box<Readable<T>>>>>) {
-        self.readable = readable;
+    pub fn set_readable(&mut self, readable: impl Readable<T> + 'static) {
+        self.readable = Some(Box::new(readable));
     }
 
-    pub fn set_updatable(&mut self, updatable: Option<Arc<Mutex<Box<Updatable<T>>>>>) {
-        self.updatable = updatable;
+    pub fn set_updatable(&mut self, updatable: impl Updatable<T> + 'static) {
+        self.updatable = Some(Box::new(updatable));
     }
 
     pub fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) {

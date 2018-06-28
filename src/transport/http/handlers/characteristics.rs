@@ -118,7 +118,7 @@ impl JsonHandler for UpdateCharacteristics {
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
-        event_emitter: &EmitterPtr,
+        _: &EmitterPtr,
     ) -> Result<Response, Error> {
         let write_body: Body<WriteObject> = serde_json::from_slice(&body)?;
         let mut resp_body = Body::<WriteResponseObject> {
@@ -128,11 +128,7 @@ impl JsonHandler for UpdateCharacteristics {
         let mut all_err = true;
 
         for c in write_body.characteristics {
-            let res_object = accessories.write_characteristic(
-                c,
-                event_subscriptions,
-                event_emitter,
-            );
+            let res_object = accessories.write_characteristic(c, event_subscriptions);
             if res_object.status != 0 {
                 some_err = true;
             } else {

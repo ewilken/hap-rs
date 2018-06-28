@@ -40,13 +40,11 @@ impl Device {
     }
 
     pub fn load(database: &DatabasePtr) -> Result<Device, Error> {
-        let d = database.lock().unwrap();
-        d.get_device()
+        database.borrow().get_device()
     }
 
     pub fn save(&self, database: &DatabasePtr) -> Result<(), Error> {
-        let d = database.lock().unwrap();
-        d.set_device(self)?;
+        database.borrow_mut().set_device(self)?;
         Ok(())
     }
 

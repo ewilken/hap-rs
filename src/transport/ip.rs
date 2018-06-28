@@ -1,4 +1,4 @@
-use std::{io::Error, sync::{Arc, Mutex}, net::SocketAddr};
+use std::{io::Error, rc::Rc, cell::RefCell, net::SocketAddr};
 
 use config::{Config, ConfigPtr};
 use db::{
@@ -34,16 +34,16 @@ impl IpTransport<FileStorage> {
 
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
-        let event_emitter = Arc::new(Mutex::new(Emitter::new()));
+        let event_emitter = Rc::new(RefCell::new(Emitter::new()));
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
         let mut accessory_list = AccessoryList::new(accessories);
         accessory_list.init_aids(event_emitter.clone());
 
         let ip_transport = IpTransport {
-            config: Arc::new(Mutex::new(config)),
+            config: Rc::new(RefCell::new(config)),
             storage,
-            database: Arc::new(Mutex::new(database)),
+            database: Rc::new(RefCell::new(database)),
             accessories: accessory_list,
             event_emitter,
             mdns_responder,
@@ -59,27 +59,27 @@ impl Transport for IpTransport<FileStorage> {
         self.mdns_responder.start();
 
         let (ip, port) = {
-            let c = self.config.lock().unwrap();
+            let c = self.config.borrow();
             (c.ip, c.port)
         };
 
         let config = self.config.clone();
         let database = self.database.clone();
-        self.event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
+        self.event_emitter.borrow_mut().add_listener(Box::new(move |event| {
             match event {
                 &Event::DevicePaired => {
-                    match database.lock().unwrap().count_pairings() {
+                    match database.borrow().count_pairings() {
                         Ok(count) => if count > 0 {
-                            config.lock().unwrap().status_flag = StatusFlag::Zero;
+                            config.borrow_mut().status_flag = StatusFlag::Zero;
                             // TODO - update MDNS txt records
                         },
                         _ => {},
                     }
                 },
                 &Event::DeviceUnpaired => {
-                    match database.lock().unwrap().count_pairings() {
+                    match database.borrow().count_pairings() {
                         Ok(count) => if count == 0 {
-                            config.lock().unwrap().status_flag = StatusFlag::NotPaired;
+                            config.borrow_mut().status_flag = StatusFlag::NotPaired;
                             // TODO - update MDNS txt records
                         },
                         _ => {},

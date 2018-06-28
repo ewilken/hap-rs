@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex}, ops::Deref};
+use std::{rc::Rc, cell::RefCell, ops::Deref};
 
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
@@ -12,18 +12,17 @@ use event::EmitterPtr;
 
 #[derive(Clone)]
 pub struct AccessoryList {
-    pub accessories: Arc<Mutex<Vec<Box<AccessoryListTrait>>>>,
+    pub accessories: Rc<RefCell<Vec<Box<AccessoryListTrait>>>>,
 }
 
 impl AccessoryList {
     pub fn new(accessories: Vec<Box<AccessoryListTrait>>) -> AccessoryList {
-        AccessoryList { accessories: Arc::new(Mutex::new(accessories)) }
+        AccessoryList { accessories: Rc::new(RefCell::new(accessories)) }
     }
 
     pub fn init_aids(&mut self, event_emitter: EmitterPtr) {
         let mut next_aid = 1;
-        let mut a = self.accessories.lock().unwrap();
-        for accessory in a.iter_mut() {
+        for accessory in self.accessories.borrow_mut().iter_mut() {
             accessory.set_id(next_aid);
             accessory.init_iids(next_aid, event_emitter.clone());
             next_aid += 1;
@@ -55,8 +54,7 @@ impl AccessoryList {
             status: Some(0),
         };
 
-        let mut a = self.accessories.lock().unwrap();
-        'l: for accessory in a.iter_mut() {
+        'l: for accessory in self.accessories.borrow_mut().iter_mut() {
             if accessory.get_id() == aid {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
@@ -100,7 +98,6 @@ impl AccessoryList {
         &self,
         write_object: WriteObject,
         event_subscriptions: &EventSubscriptions,
-        event_emitter: &EmitterPtr,
     ) -> WriteResponseObject {
         let mut result_object = WriteResponseObject {
             aid: write_object.aid,
@@ -108,7 +105,7 @@ impl AccessoryList {
             status: 0,
         };
 
-        let mut a = self.accessories.lock().unwrap();
+        let mut a = self.accessories.borrow_mut();
         'l: for accessory in a.iter_mut() {
             if accessory.get_id() == write_object.aid {
                 for service in accessory.get_mut_services() {
@@ -125,7 +122,7 @@ impl AccessoryList {
                                 if characteristic.get_perms().contains(&Perm::Events) {
                                     characteristic.set_event_notifications(Some(ev));
                                     let subscription = (write_object.aid, write_object.iid);
-                                    let mut es = event_subscriptions.lock().unwrap();
+                                    let mut es = event_subscriptions.borrow_mut();
                                     let pos = es.iter().position(|&s| s == subscription);
                                     match (ev, pos) {
                                         (true, None) => { es.push(subscription); },

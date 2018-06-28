@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{rc::Rc, cell::RefCell};
 
 use serde_json::Value;
 
@@ -28,4 +28,4 @@ impl Emitter {
     }
 }
 
-pub type EmitterPtr = Arc<Mutex<Emitter>>;
+pub type EmitterPtr = Rc<RefCell<Emitter>>;

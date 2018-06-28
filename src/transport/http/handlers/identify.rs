@@ -36,8 +36,7 @@ impl JsonHandler for Identify {
         accessory_list: &AccessoryList,
         _: &EmitterPtr,
     ) -> Result<Response, Error> {
-        let d = database.lock().unwrap();
-        let count = d.count_pairings()?;
+        let count = database.borrow().count_pairings()?;
         if count > 0 {
             let body = serde_json::to_vec(
                 &json!({"status": Status::InsufficientPrivileges as i32})
@@ -45,8 +44,7 @@ impl JsonHandler for Identify {
             return Ok(json_response(body, StatusCode::BadRequest));
         }
 
-        let mut a = accessory_list.accessories.lock().unwrap();
-        for accessory in a.iter_mut() {
+        for accessory in accessory_list.accessories.borrow_mut().iter_mut() {
             accessory.get_mut_information().inner.identify.set_value(true)?;
         }
         Ok(status_response(StatusCode::NoContent))

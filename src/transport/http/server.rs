@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::{Arc, Mutex}, cell::RefCell};
+use std::{net::SocketAddr, sync::Arc, rc::Rc, cell::RefCell};
 
 use hyper::{self, server::{Http, Request, Response, Service}, StatusCode, Method};
 use futures::{future, Future, stream::Stream, sync::oneshot};
@@ -173,7 +173,7 @@ impl Service for Api {
     }
 }
 
-pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
+pub type EventSubscriptions = Rc<RefCell<Vec<(u64, u64)>>>;
 
 pub fn serve(
     socket_addr: &SocketAddr,
@@ -191,7 +191,7 @@ pub fn serve(
         let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
         let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
         let controller_id = Arc::new(encrypted_stream.controller_id);
-        let event_subscriptions = Arc::new(Mutex::new(vec![]));
+        let event_subscriptions = Rc::new(RefCell::new(vec![]));
         let api = Api::new(
             controller_id,
             event_subscriptions.clone(),
@@ -203,11 +203,10 @@ pub fn serve(
         );
 
         let event_subscriptions = event_subscriptions.clone();
-        event_emitter.lock().unwrap().add_listener(Box::new(move |event| {
+        event_emitter.borrow_mut().add_listener(Box::new(move |event| {
             match event {
                 &Event::CharacteristicValueChanged { aid, iid, ref value } => {
-                    let es = event_subscriptions.lock().unwrap();
-                    for &(s_aid, s_iid) in es.iter() {
+                    for &(s_aid, s_iid) in event_subscriptions.borrow().iter() {
                         if s_aid == aid && s_iid == iid {
                             let event = EventObject { aid, iid, value: value.clone() };
                             let event_res = event_response(vec![event]).unwrap();

@@ -18,13 +18,11 @@ impl Pairing {
     }
 
     pub fn load(id: Uuid, database: &DatabasePtr) -> Result<Pairing, Error> {
-        let d = database.lock().unwrap();
-        d.get_pairing(id)
+        database.borrow().get_pairing(id)
     }
 
     pub fn save(&self, database: &DatabasePtr) -> Result<(), Error> {
-        let d = database.lock().unwrap();
-        d.set_pairing(self)?;
+        database.borrow_mut().set_pairing(self)?;
         Ok(())
     }
 

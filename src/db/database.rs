@@ -1,11 +1,11 @@
-use std::{io::Error, sync::{Arc, Mutex}};
+use std::{io::Error, rc::Rc, cell::RefCell};
 
 use uuid::Uuid;
 
 use db::{file_storage, storage::Storage};
 use protocol::{device::Device, pairing::Pairing};
 
-pub type DatabasePtr = Arc<Mutex<Database>>;
+pub type DatabasePtr = Rc<RefCell<Database>>;
 
 pub struct Database {
     storage: Box<Storage>,

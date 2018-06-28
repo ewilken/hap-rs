@@ -118,7 +118,7 @@ fn handle_add(
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
 
-    let d = database.lock().unwrap();
+    let d = database.borrow_mut();
     match d.get_pairing(pairing_uuid) {
         Ok(mut pairing) => {
             if &pairing.public_key.to_vec() != &ltpk {
@@ -128,13 +128,10 @@ fn handle_add(
             d.set_pairing(&pairing)?;
             drop(d);
 
-            event_emitter.lock().unwrap().emit(Event::DevicePaired);
+            event_emitter.borrow().emit(Event::DevicePaired);
         },
         Err(_) => {
-            let max_peers = {
-                let c = config.lock().unwrap();
-                c.max_peers
-            };
+            let max_peers = config.borrow().max_peers;
             if let Some(max_peers) = max_peers {
                 let count = d.count_pairings()?;
                 if count + 1 > max_peers {
@@ -148,7 +145,7 @@ fn handle_add(
             d.set_pairing(&pairing)?;
             drop(d);
 
-            event_emitter.lock().unwrap().emit(Event::DevicePaired);
+            event_emitter.borrow().emit(Event::DevicePaired);
         },
     }
 
@@ -168,11 +165,11 @@ fn handle_remove(
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
-    let d = database.lock().unwrap();
+    let d = database.borrow_mut();
     d.get_pairing(pairing_uuid).map(|pairing| d.delete_pairing(&pairing.id))?;
     drop(d);
 
-    event_emitter.lock().unwrap().emit(Event::DeviceUnpaired);
+    event_emitter.borrow().emit(Event::DeviceUnpaired);
 
     println!("/pairings - M2: Sending Remove Pairing Response");
 
@@ -186,8 +183,7 @@ fn handle_list(
 
     // TODO - check if controller is admin
 
-    let d = database.lock().unwrap();
-    let pairings = d.list_pairings()?;
+    let pairings = database.borrow().list_pairings()?;
     let mut list = vec![Value::State(2)];
     for (i, pairing) in pairings.iter().enumerate() {
         list.push(Value::Identifier(pairing.id.hyphenated().to_string()));
