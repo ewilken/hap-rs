@@ -279,12 +279,12 @@ impl Serialize for HapType {
 ";
 
 static CHARACTERISTIC: &'static str = "// THIS FILE IS AUTO-GENERATED\n
-use characteristic::{HapType, Characteristic, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
+use characteristic::{HapType, Characteristic, Inner, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
 
 pub type {{trim characteristic.Name}} = Characteristic<{{type characteristic.Format}}>;
 
 pub fn new() -> {{trim characteristic.Name}} {
-    {{trim characteristic.Name}} {
+    Characteristic::new(Inner::<{{type characteristic.Format}}> {
         hap_type: HapType::{{trim characteristic.Name}},
         format: {{format characteristic.Format}},
         perms: vec![{{perms characteristic.Properties}}
@@ -297,7 +297,7 @@ pub fn new() -> {{trim characteristic.Name}} {
         {{#if characteristic.Constraints.MaximumDataLength}}\n\t\tmax_data_len: Some({{characteristic.Constraints.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
         {{#if characteristic.Constraints.ValidValues}}\n\t\tvalid_values: Some({{valid_values characteristic.Constraints.ValidValues}}),{{/if}}
         ..Default::default()
-    }
+    })
 }
 ";
 

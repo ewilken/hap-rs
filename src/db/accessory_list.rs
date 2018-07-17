@@ -63,18 +63,18 @@ impl AccessoryList {
                                 Ok(value) => {
                                     result_object.value = Some(value);
                                     if meta {
-                                        result_object.format = Some(characteristic.get_format().clone());
-                                        result_object.unit = characteristic.get_unit().clone();
+                                        result_object.format = Some(characteristic.get_format());
+                                        result_object.unit = characteristic.get_unit();
                                         result_object.max_value = characteristic.get_max_value();
                                         result_object.min_value = characteristic.get_min_value();
                                         result_object.step_value = characteristic.get_step_value();
                                         result_object.max_len = characteristic.get_max_len();
                                     }
                                     if perms {
-                                        result_object.perms = Some(characteristic.get_perms().clone());
+                                        result_object.perms = Some(characteristic.get_perms());
                                     }
                                     if hap_type {
-                                        result_object.hap_type = Some(characteristic.get_type().clone());
+                                        result_object.hap_type = Some(characteristic.get_type());
                                     }
                                     if ev {
                                         result_object.ev = characteristic.get_event_notifications();

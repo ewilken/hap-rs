@@ -5,7 +5,7 @@ extern crate hap;
 use hap::{
     transport::{Transport, ip::IpTransport},
     accessory::{Category, Information, bridge, outlet, door, security_system, valve},
-    characteristic::{Readable, Updatable},
+    characteristic::{Characteristic, Readable, Updatable},
     config::Config,
     hap_type::HapType,
 };
@@ -26,14 +26,14 @@ impl VirtualOutlet {
 }
 
 impl Readable<bool> for VirtualOutlet {
-    fn on_read(&mut self, _: HapType) -> bool {
+    fn on_read(&mut self, _: HapType) -> Option<bool> {
         println!("Outlet: On read.");
-        self.inner.borrow().on
+        Some(self.inner.borrow().on)
     }
 }
 
 impl Updatable<bool> for VirtualOutlet {
-    fn on_update(&mut self, _: HapType, old_val: &bool, new_val: &bool) {
+    fn on_update(&mut self, old_val: &bool, new_val: &bool, _: HapType) {
         println!("Outlet: On updated from {} to {}.", old_val, new_val);
         if new_val != old_val { self.inner.borrow_mut().on = new_val.clone(); }
     }
@@ -46,34 +46,34 @@ pub struct VirtualDoorInner {
 
 #[derive(Clone)]
 pub struct VirtualDoor {
-    inner: Rc<RefCell<VirtualDoorInner>>
+    inner: Rc<RefCell<VirtualDoorInner>>,
+    current_position: Characteristic<u8>,
 }
 
 impl VirtualDoor {
-    pub fn new(inner: VirtualDoorInner) -> VirtualDoor {
-        VirtualDoor { inner: Rc::new(RefCell::new(inner)) }
+    pub fn new(inner: VirtualDoorInner, current_position: Characteristic<u8>) -> VirtualDoor {
+        VirtualDoor { inner: Rc::new(RefCell::new(inner)), current_position }
     }
 }
 
 impl Readable<u8> for VirtualDoor {
-    fn on_read(&mut self, hap_type: HapType) -> u8 {
+    fn on_read(&mut self, hap_type: HapType) -> Option<u8> {
         match hap_type {
             HapType::CurrentPosition => {
                 println!("Door: Current position read.");
-                self.inner.borrow().current_position
+                Some(self.inner.borrow().current_position)
             },
             HapType::TargetPosition => {
                 println!("Door: Target position read.");
-                self.inner.borrow().target_position
+                Some(self.inner.borrow().target_position)
             },
-            // TODO - return optional?
-            _ => 0,
+            _ => None,
         }
     }
 }
 
 impl Updatable<u8> for VirtualDoor {
-    fn on_update(&mut self, hap_type: HapType, old_val: &u8, new_val: &u8) {
+    fn on_update(&mut self, old_val: &u8, new_val: &u8, hap_type: HapType) {
         match hap_type {
             HapType::CurrentPosition => {
                 println!("Door: Current position updated from {} to {}.", old_val, new_val);
@@ -84,9 +84,12 @@ impl Updatable<u8> for VirtualDoor {
             HapType::TargetPosition => {
                 println!("Door: Target position updated from {} to {}.", old_val, new_val);
                 if new_val != old_val {
-                    let mut inner = self.inner.borrow_mut();
-                    inner.target_position = new_val.clone();
-                    inner.current_position = new_val.clone();
+                    {
+                        let mut inner = self.inner.borrow_mut();
+                        inner.target_position = new_val.clone();
+                        inner.current_position = new_val.clone();
+                    }
+                    self.current_position.set_value(*new_val).expect("couldn't set value");
                 }
             },
             _ => {},
@@ -104,7 +107,10 @@ fn main() {
 
     let mut door = door::new(Information { name: "Door".into(), ..Default::default() });
 
-    let virtual_door = VirtualDoor::new(VirtualDoorInner { current_position: 0, target_position: 0 });
+    let virtual_door = VirtualDoor::new(
+        VirtualDoorInner { current_position: 0, target_position: 0 },
+        door.inner.door.inner.current_position.clone(),
+    );
     door.inner.door.inner.current_position.set_readable(virtual_door.clone());
     door.inner.door.inner.current_position.set_updatable(virtual_door.clone());
     door.inner.door.inner.target_position.set_readable(virtual_door.clone());

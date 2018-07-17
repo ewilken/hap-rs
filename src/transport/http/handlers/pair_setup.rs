@@ -231,8 +231,7 @@ fn handle_exchange(
             }
 
             if let Some(max_peers) = config.borrow().max_peers {
-                let d = database.borrow();
-                let count = d.count_pairings()?;
+                let count = database.borrow().count_pairings()?;
                 if count + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
