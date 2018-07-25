@@ -62,7 +62,8 @@ impl AccessoryList {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id()? == iid {
-                            if characteristic.get_perms()?.contains(&Perm::PairedRead) {
+                            let characteristic_perms = characteristic.get_perms()?;
+                            if characteristic_perms.contains(&Perm::PairedRead) {
                                 result_object.value = Some(characteristic.get_value()?);
                                 if meta {
                                     result_object.format = Some(characteristic.get_format()?);
@@ -73,7 +74,7 @@ impl AccessoryList {
                                     result_object.max_len = characteristic.get_max_len()?;
                                 }
                                 if perms {
-                                    result_object.perms = Some(characteristic.get_perms()?);
+                                    result_object.perms = Some(characteristic_perms);
                                 }
                                 if hap_type {
                                     result_object.hap_type = Some(characteristic.get_type()?);
@@ -111,27 +112,28 @@ impl AccessoryList {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id()? == write_object.iid {
-                            if characteristic.get_perms()?.contains(&Perm::PairedWrite) {
-                                if let Some(value) = write_object.value {
-                                    characteristic.set_value(value)?;
-                                }
-                                if let Some(ev) = write_object.ev {
-                                    if characteristic.get_perms()?.contains(&Perm::Events) {
-                                        characteristic.set_event_notifications(Some(ev))?;
-                                        let subscription = (write_object.aid, write_object.iid);
-                                        let mut es = event_subscriptions.borrow_mut();
-                                        let pos = es.iter().position(|&s| s == subscription);
-                                        match (ev, pos) {
-                                            (true, None) => { es.push(subscription); },
-                                            (false, Some(p)) => { es.remove(p); },
-                                            _ => {},
-                                        }
-                                    } else {
-                                        result_object.status = Status::NotificationNotSupported as i32;
+                            let characteristic_perms = characteristic.get_perms()?;
+                            if let Some(ev) = write_object.ev {
+                                if characteristic_perms.contains(&Perm::Events) {
+                                    characteristic.set_event_notifications(Some(ev))?;
+                                    let subscription = (write_object.aid, write_object.iid);
+                                    let mut es = event_subscriptions.try_borrow_mut()?;
+                                    let pos = es.iter().position(|&s| s == subscription);
+                                    match (ev, pos) {
+                                        (true, None) => { es.push(subscription); },
+                                        (false, Some(p)) => { es.remove(p); },
+                                        _ => {},
                                     }
+                                } else {
+                                    result_object.status = Status::NotificationNotSupported as i32;
                                 }
-                            } else {
-                                result_object.status = Status::ReadOnlyCharacteristic as i32;
+                            }
+                            if let Some(value) = write_object.value {
+                                if characteristic_perms.contains(&Perm::PairedWrite) {
+                                    characteristic.set_value(value)?;
+                                } else {
+                                    result_object.status = Status::ReadOnlyCharacteristic as i32;
+                                }
                             }
                             break 'l;
                         }

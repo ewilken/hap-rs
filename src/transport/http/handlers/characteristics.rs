@@ -61,7 +61,7 @@ impl JsonHandler for GetCharacteristics {
                 let aid = id_pair[0].parse::<u64>()?;
                 let iid = id_pair[1].parse::<u64>()?;
 
-                let mut res_object = match accessories.read_characteristic(
+                let res_object = match accessories.read_characteristic(
                     aid,
                     iid,
                     f_meta,
