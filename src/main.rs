@@ -3,11 +3,11 @@ use std::{rc::Rc, cell::RefCell};
 extern crate hap;
 
 use hap::{
-    transport::{Transport, ip::IpTransport},
+    transport::{Transport, IpTransport},
     accessory::{Category, Information, bridge, outlet, door, security_system, valve},
     characteristic::{Characteristic, Readable, Updatable},
-    config::Config,
-    hap_type::HapType,
+    Config,
+    HapType,
 };
 
 pub struct VirtualOutletInner {
@@ -98,26 +98,37 @@ impl Updatable<u8> for VirtualDoor {
 }
 
 fn main() {
-    let bridge = bridge::new(Information { name: "Bridge".into(), ..Default::default() });
-    let mut outlet = outlet::new(Information { name: "Outlet".into(), ..Default::default() });
+    let bridge = bridge::new(Information { name: "Bridge".into(), ..Default::default() })
+        .expect("couldn't create bridge");
+    let mut outlet = outlet::new(Information { name: "Outlet".into(), ..Default::default() })
+        .expect("couldn't create outlet");
 
     let virtual_outlet = VirtualOutlet::new(VirtualOutletInner { on: false });
-    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone());
-    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet);
+    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone())
+        .expect("couldn't set readable");
+    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet)
+        .expect("couldn't set updatable");
 
-    let mut door = door::new(Information { name: "Door".into(), ..Default::default() });
+    let mut door = door::new(Information { name: "Door".into(), ..Default::default() })
+        .expect("couldn't create door");
 
     let virtual_door = VirtualDoor::new(
         VirtualDoorInner { current_position: 0, target_position: 0 },
         door.inner.door.inner.current_position.clone(),
     );
-    door.inner.door.inner.current_position.set_readable(virtual_door.clone());
-    door.inner.door.inner.current_position.set_updatable(virtual_door.clone());
-    door.inner.door.inner.target_position.set_readable(virtual_door.clone());
-    door.inner.door.inner.target_position.set_updatable(virtual_door);
+    door.inner.door.inner.current_position.set_readable(virtual_door.clone())
+        .expect("couldn't set readable");
+    door.inner.door.inner.current_position.set_updatable(virtual_door.clone())
+        .expect("couldn't set updatable");
+    door.inner.door.inner.target_position.set_readable(virtual_door.clone())
+        .expect("couldn't set readable");
+    door.inner.door.inner.target_position.set_updatable(virtual_door)
+        .expect("couldn't set updatable");
 
-    let security_system = security_system::new(Information { name: "Security System".into(), ..Default::default() });
-    let valve = valve::new(Information { name: "Valve".into(), ..Default::default() });
+    let security_system = security_system::new(Information { name: "Security System".into(), ..Default::default() })
+        .expect("couldn't create security system");
+    let valve = valve::new(Information { name: "Valve".into(), ..Default::default() })
+        .expect("couldn't create valve");
 
     let config = Config {
         name: "Korhal".into(),
@@ -130,7 +141,7 @@ fn main() {
         Box::new(door),
         Box::new(security_system),
         Box::new(valve),
-    ]).unwrap();
+    ]).expect("couldn't create IP transport");
 
-    ip_transport.start().unwrap();
+    ip_transport.start().expect("couldn't start IP transport");
 }

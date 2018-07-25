@@ -10,6 +10,8 @@ use transport::http::{Status, server::EventSubscriptions, handlers::characterist
 }};
 use event::EmitterPtr;
 
+use Error;
+
 #[derive(Clone)]
 pub struct AccessoryList {
     pub accessories: Rc<RefCell<Vec<Box<AccessoryListTrait>>>>,
@@ -20,13 +22,14 @@ impl AccessoryList {
         AccessoryList { accessories: Rc::new(RefCell::new(accessories)) }
     }
 
-    pub fn init_aids(&mut self, event_emitter: EmitterPtr) {
+    pub fn init_aids(&mut self, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_aid = 1;
         for accessory in self.accessories.borrow_mut().iter_mut() {
             accessory.set_id(next_aid);
-            accessory.init_iids(next_aid, event_emitter.clone());
+            accessory.init_iids(next_aid, event_emitter.clone())?;
             next_aid += 1;
         }
+        Ok(())
     }
 
     pub fn read_characteristic(
@@ -37,7 +40,7 @@ impl AccessoryList {
         perms: bool,
         hap_type: bool,
         ev: bool,
-    ) -> ReadResponseObject {
+    ) -> Result<ReadResponseObject, Error> {
         let mut result_object = ReadResponseObject {
             iid,
             aid,
@@ -54,35 +57,32 @@ impl AccessoryList {
             status: Some(0),
         };
 
-        'l: for accessory in self.accessories.borrow_mut().iter_mut() {
+        'l: for accessory in self.accessories.try_borrow_mut()?.iter_mut() {
             if accessory.get_id() == aid {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
-                        if characteristic.get_id() == iid {
-                            match characteristic.get_value() {
-                                Ok(value) => {
-                                    result_object.value = Some(value);
-                                    if meta {
-                                        result_object.format = Some(characteristic.get_format());
-                                        result_object.unit = characteristic.get_unit();
-                                        result_object.max_value = characteristic.get_max_value();
-                                        result_object.min_value = characteristic.get_min_value();
-                                        result_object.step_value = characteristic.get_step_value();
-                                        result_object.max_len = characteristic.get_max_len();
-                                    }
-                                    if perms {
-                                        result_object.perms = Some(characteristic.get_perms());
-                                    }
-                                    if hap_type {
-                                        result_object.hap_type = Some(characteristic.get_type());
-                                    }
-                                    if ev {
-                                        result_object.ev = characteristic.get_event_notifications();
-                                    }
-                                },
-                                Err(_) => {
-                                    result_object.status = Some(Status::ServiceCommunicationFailure as i32);
-                                },
+                        if characteristic.get_id()? == iid {
+                            if characteristic.get_perms()?.contains(&Perm::PairedRead) {
+                                result_object.value = Some(characteristic.get_value()?);
+                                if meta {
+                                    result_object.format = Some(characteristic.get_format()?);
+                                    result_object.unit = characteristic.get_unit()?;
+                                    result_object.max_value = characteristic.get_max_value()?;
+                                    result_object.min_value = characteristic.get_min_value()?;
+                                    result_object.step_value = characteristic.get_step_value()?;
+                                    result_object.max_len = characteristic.get_max_len()?;
+                                }
+                                if perms {
+                                    result_object.perms = Some(characteristic.get_perms()?);
+                                }
+                                if hap_type {
+                                    result_object.hap_type = Some(characteristic.get_type()?);
+                                }
+                                if ev {
+                                    result_object.ev = characteristic.get_event_notifications()?;
+                                }
+                            } else {
+                                result_object.status = Some(Status::WriteOnlyCharacteristic as i32);
                             }
                             break 'l;
                         }
@@ -91,47 +91,47 @@ impl AccessoryList {
             }
         }
 
-        result_object
+        Ok(result_object)
     }
 
     pub fn write_characteristic(
         &self,
         write_object: WriteObject,
         event_subscriptions: &EventSubscriptions,
-    ) -> WriteResponseObject {
+    ) -> Result<WriteResponseObject, Error> {
         let mut result_object = WriteResponseObject {
             aid: write_object.aid,
             iid: write_object.iid,
             status: 0,
         };
 
-        let mut a = self.accessories.borrow_mut();
+        let mut a = self.accessories.try_borrow_mut()?;
         'l: for accessory in a.iter_mut() {
             if accessory.get_id() == write_object.aid {
                 for service in accessory.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
-                        if characteristic.get_id() == write_object.iid {
-                            // TODO - permission checking
-                            // let perms = characteristic.get_perms();
-                            // if perms.contains(&Perm::PairedWrite) {}
-                            if let Some(value) = write_object.value {
-                                // TODO - handle error
-                                characteristic.set_value(value).unwrap();
-                            }
-                            if let Some(ev) = write_object.ev {
-                                if characteristic.get_perms().contains(&Perm::Events) {
-                                    characteristic.set_event_notifications(Some(ev));
-                                    let subscription = (write_object.aid, write_object.iid);
-                                    let mut es = event_subscriptions.borrow_mut();
-                                    let pos = es.iter().position(|&s| s == subscription);
-                                    match (ev, pos) {
-                                        (true, None) => { es.push(subscription); },
-                                        (false, Some(p)) => { es.remove(p); },
-                                        _ => {},
-                                    }
-                                } else {
-                                    result_object.status = Status::NotificationNotSupported as i32;
+                        if characteristic.get_id()? == write_object.iid {
+                            if characteristic.get_perms()?.contains(&Perm::PairedWrite) {
+                                if let Some(value) = write_object.value {
+                                    characteristic.set_value(value)?;
                                 }
+                                if let Some(ev) = write_object.ev {
+                                    if characteristic.get_perms()?.contains(&Perm::Events) {
+                                        characteristic.set_event_notifications(Some(ev))?;
+                                        let subscription = (write_object.aid, write_object.iid);
+                                        let mut es = event_subscriptions.borrow_mut();
+                                        let pos = es.iter().position(|&s| s == subscription);
+                                        match (ev, pos) {
+                                            (true, None) => { es.push(subscription); },
+                                            (false, Some(p)) => { es.remove(p); },
+                                            _ => {},
+                                        }
+                                    } else {
+                                        result_object.status = Status::NotificationNotSupported as i32;
+                                    }
+                                }
+                            } else {
+                                result_object.status = Status::ReadOnlyCharacteristic as i32;
                             }
                             break 'l;
                         }
@@ -140,7 +140,7 @@ impl AccessoryList {
             }
         }
 
-        result_object
+        Ok(result_object)
     }
 }
 

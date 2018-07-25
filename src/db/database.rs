@@ -1,9 +1,11 @@
-use std::{io::Error, rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell};
 
 use uuid::Uuid;
 
 use db::{file_storage, storage::Storage};
-use protocol::{device::Device, pairing::Pairing};
+use protocol::{Device, Pairing};
+
+use Error;
 
 pub type DatabasePtr = Rc<RefCell<Database>>;
 

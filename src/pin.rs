@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind};
+use Error;
 
 pub type Pin = String;
 
@@ -19,15 +19,15 @@ pub fn new(input: &String) -> Result<Pin, Error> {
     ];
     for invalid_pin in invalid_pins.iter() {
         if input == invalid_pin {
-            return Err(Error::new(ErrorKind::Other, "invalid pin"));
+            return Err(Error::new_io("invalid pin - too easy"));
         }
     }
     if input.chars().count() != 8 {
-        return Err(Error::new(ErrorKind::Other, "pin must be 8 characters long"));
+        return Err(Error::new_io("pin must be 8 characters long"));
     }
     for digit in input.chars() {
         if digit < '0' || digit > '9' {
-            return Err(Error::new(ErrorKind::Other, "pin must only contain numbers"));
+            return Err(Error::new_io("pin must only contain numbers"));
         }
     }
 

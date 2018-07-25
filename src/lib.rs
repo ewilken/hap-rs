@@ -33,10 +33,16 @@ pub mod accessory;
 pub mod characteristic;
 pub mod service;
 
-pub mod config;
 pub mod db;
-pub mod hap_type;
 pub mod transport;
 pub mod pin;
 pub mod protocol;
 pub mod event;
+
+mod config;
+mod error;
+mod hap_type;
+
+pub use config::Config;
+pub use error::Error;
+pub use hap_type::HapType;

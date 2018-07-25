@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use hyper::{self, Uri, StatusCode, server::Response};
 use failure::Error;
@@ -6,11 +6,9 @@ use futures::{future, Future};
 use uuid::Uuid;
 
 use config::ConfigPtr;
-use db::{database::DatabasePtr, accessory_list::AccessoryList};
-use transport::{
-    http::{tlv_response, status_response, server::EventSubscriptions},
-    tlv::{self, Encodable},
-};
+use db::{DatabasePtr, AccessoryList};
+use transport::http::{tlv_response, status_response, server::EventSubscriptions};
+use protocol::tlv::{self, Encodable};
 use event::EmitterPtr;
 
 pub mod accessories;
@@ -25,7 +23,7 @@ pub trait Handler {
         &mut self,
         uri: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: Rc<Option<Uuid>>,
         event_subscriptions: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -60,7 +58,7 @@ impl<T: TlvHandler> Handler for TlvHandlerType<T> {
         &mut self,
         _: Uri,
         body: Vec<u8>,
-        _: Arc<Option<Uuid>>,
+        _: Rc<Option<Uuid>>,
         _: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -83,7 +81,7 @@ pub trait JsonHandler {
         &mut self,
         uri: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: Rc<Option<Uuid>>,
         event_subscriptions: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -105,7 +103,7 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
         &mut self,
         uri: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: Rc<Option<Uuid>>,
         event_subscriptions: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,

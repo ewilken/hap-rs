@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use hyper::{Uri, StatusCode, server::Response};
 use failure::Error;
@@ -6,7 +6,7 @@ use serde_json;
 use uuid::Uuid;
 
 use config::ConfigPtr;
-use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use db::{AccessoryList, DatabasePtr};
 use transport::http::{
     Status,
     json_response,
@@ -29,7 +29,7 @@ impl JsonHandler for Identify {
         &mut self,
         _: Uri,
         _: Vec<u8>,
-        _: Arc<Option<Uuid>>,
+        _: Rc<Option<Uuid>>,
         _: &EventSubscriptions,
         _: &ConfigPtr,
         database: &DatabasePtr,
@@ -40,11 +40,11 @@ impl JsonHandler for Identify {
         if count > 0 {
             let body = serde_json::to_vec(
                 &json!({"status": Status::InsufficientPrivileges as i32})
-            ).unwrap();
+            )?;
             return Ok(json_response(body, StatusCode::BadRequest));
         }
 
-        for accessory in accessory_list.accessories.borrow_mut().iter_mut() {
+        for accessory in accessory_list.accessories.try_borrow_mut()?.iter_mut() {
             accessory.get_mut_information().inner.identify.set_value(true)?;
         }
         Ok(status_response(StatusCode::NoContent))

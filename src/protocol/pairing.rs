@@ -1,9 +1,9 @@
-use std::io::Error;
-
 use uuid::Uuid;
 use serde_json;
 
-use db::database::DatabasePtr;
+use db::DatabasePtr;
+
+use Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct Pairing {
@@ -46,11 +46,11 @@ pub enum Permissions {
 }
 
 impl Permissions {
-    pub fn from_u8(u: u8) -> Result<Permissions, ()> {
+    pub fn from_u8(u: u8) -> Result<Permissions, Error> {
         match u {
             0x00 => Ok(Permissions::User),
             0x01 => Ok(Permissions::Admin),
-            _ => Err(())
+            _ => Err(Error::new_io("invalid permission Byte"))
         }
     }
 

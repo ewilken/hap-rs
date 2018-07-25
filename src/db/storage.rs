@@ -1,6 +1,8 @@
-use std::{fs::File, io::{Error, BufReader, BufWriter}};
+use std::{fs::File, io::{BufReader, BufWriter}};
 
 use uuid::Uuid;
+
+use Error;
 
 pub trait Storage {
     fn get_reader(&self, key: &str) -> Result<BufReader<File>, Error>;

@@ -1,11 +1,13 @@
-use std::{rc::Rc, cell::RefCell, io::{Error, ErrorKind}};
+use std::{rc::Rc, cell::RefCell};
 
 use serde::{ser::{Serialize, Serializer, SerializeStruct}, Deserialize};
 use serde_json;
 use erased_serde;
 
-use hap_type::HapType;
+use HapType;
 use event::{Event, EmitterPtr};
+
+use Error;
 
 mod includes;
 pub use characteristic::includes::*;
@@ -47,46 +49,50 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
         Characteristic { inner: Rc::new(RefCell::new(inner)) }
     }
 
-    pub fn get_id(&self) -> u64 {
-        self.inner.borrow().id
+    pub fn get_id(&self) -> Result<u64, Error> {
+        Ok(self.inner.try_borrow()?.id)
     }
 
-    pub fn set_id(&mut self, id: u64) {
-        self.inner.borrow_mut().id = id;
+    pub fn set_id(&mut self, id: u64) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.id = id;
+        Ok(())
     }
 
-    pub fn set_accessory_id(&mut self, accessory_id: u64) {
-        self.inner.borrow_mut().accessory_id = accessory_id;
+    pub fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.accessory_id = accessory_id;
+        Ok(())
     }
 
-    pub fn get_type(&self) -> HapType {
-        self.inner.borrow().hap_type
+    pub fn get_type(&self) -> Result<HapType, Error> {
+        Ok(self.inner.try_borrow()?.hap_type)
     }
 
-    pub fn get_format(&self) -> Format {
-        self.inner.borrow().format
+    pub fn get_format(&self) -> Result<Format, Error> {
+        Ok(self.inner.try_borrow()?.format)
     }
 
-    pub fn get_perms(&self) -> Vec<Perm> {
-        self.inner.borrow().perms.clone()
+    pub fn get_perms(&self) -> Result<Vec<Perm>, Error> {
+        Ok(self.inner.try_borrow()?.perms.clone())
     }
 
-    pub fn set_description(&mut self, description: Option<String>) {
-        self.inner.borrow_mut().description = description;
+    pub fn set_description(&mut self, description: Option<String>) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.description = description;
+        Ok(())
     }
 
-    pub fn get_event_notifications(&self) -> Option<bool> {
-        self.inner.borrow().event_notifications
+    pub fn get_event_notifications(&self) -> Result<Option<bool>, Error> {
+        Ok(self.inner.try_borrow()?.event_notifications)
     }
 
-    pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
-        self.inner.borrow_mut().event_notifications = event_notifications;
+    pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.event_notifications = event_notifications;
+        Ok(())
     }
 
     pub fn get_value(&mut self) -> Result<T, Error> {
         let mut val = None;
         {
-            let mut inner = self.inner.borrow_mut();
+            let mut inner = self.inner.try_borrow_mut()?;
             let hap_type = inner.hap_type;
             if let Some(ref mut readable) = inner.readable {
                 val = readable.on_read(hap_type);
@@ -96,23 +102,24 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
             self.set_value(v)?;
         }
 
-        Ok(self.inner.borrow().value.clone())
+        Ok(self.inner.try_borrow()?.value.clone())
     }
 
     pub fn set_value(&mut self, val: T) -> Result<(), Error> {
-        /*if let Some(ref max) = self.inner.borrow().max_value {
-            if &val > max {
-                return Err(Error::new(ErrorKind::Other, "value above max_value"));
-            }
-        }
-        if let Some(ref min) = self.inner.borrow().min_value {
-            if &val < min {
-                return Err(Error::new(ErrorKind::Other, "value below min_value"));
-            }
-        }*/
+        // TODO - check for min/max on types implementing PartialOrd
+        // if let Some(ref max) = self.inner.try_borrow()?.max_value {
+        //     if &val > max {
+        //         return Err(Error::new_io("value above max_value"));
+        //     }
+        // }
+        // if let Some(ref min) = self.inner.try_borrow()?.min_value {
+        //     if &val < min {
+        //         return Err(Error::new_io("value below min_value"));
+        //     }
+        // }
 
         {
-            let mut inner = self.inner.borrow_mut();
+            let mut inner = self.inner.try_borrow_mut()?;
             let old_val = inner.value.clone();
             let hap_type = inner.hap_type;
             if let Some(ref mut updatable) = inner.updatable {
@@ -121,10 +128,10 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
         }
 
         {
-            let inner = self.inner.borrow();
+            let inner = self.inner.try_borrow()?;
             if inner.event_notifications == Some(true) {
                 if let Some(ref event_emitter) = inner.event_emitter {
-                    event_emitter.borrow().emit(Event::CharacteristicValueChanged {
+                    event_emitter.try_borrow()?.emit(Event::CharacteristicValueChanged {
                         aid: inner.accessory_id,
                         iid: inner.id,
                         value: json!(&val),
@@ -133,53 +140,59 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
             }
         }
 
-        self.inner.borrow_mut().value = val;
+        self.inner.try_borrow_mut()?.value = val;
 
         Ok(())
     }
 
-    pub fn get_unit(&self) -> Option<Unit> {
-        self.inner.borrow().unit
+    pub fn get_unit(&self) -> Result<Option<Unit>, Error> {
+        Ok(self.inner.try_borrow()?.unit)
     }
 
-    pub fn get_max_value(&self) -> Option<T> {
-        self.inner.borrow().max_value.clone()
+    pub fn get_max_value(&self) -> Result<Option<T>, Error> {
+        Ok(self.inner.try_borrow()?.max_value.clone())
     }
 
-    pub fn set_max_value(&mut self, val: Option<T>) {
-        self.inner.borrow_mut().max_value = val;
+    pub fn set_max_value(&mut self, val: Option<T>) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.max_value = val;
+        Ok(())
     }
 
-    pub fn get_min_value(&self) -> Option<T> {
-        self.inner.borrow().min_value.clone()
+    pub fn get_min_value(&self) -> Result<Option<T>, Error> {
+        Ok(self.inner.try_borrow()?.min_value.clone())
     }
 
-    pub fn set_min_value(&mut self, val: Option<T>) {
-        self.inner.borrow_mut().min_value = val;
+    pub fn set_min_value(&mut self, val: Option<T>) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.min_value = val;
+        Ok(())
     }
 
-    pub fn get_step_value(&self) -> Option<T> {
-        self.inner.borrow().step_value.clone()
+    pub fn get_step_value(&self) -> Result<Option<T>, Error> {
+        Ok(self.inner.try_borrow()?.step_value.clone())
     }
 
-    pub fn set_step_value(&mut self, val: Option<T>) {
-        self.inner.borrow_mut().step_value = val;
+    pub fn set_step_value(&mut self, val: Option<T>) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.step_value = val;
+        Ok(())
     }
 
-    pub fn get_max_len(&self) -> Option<u16> {
-        self.inner.borrow().max_len
+    pub fn get_max_len(&self) -> Result<Option<u16>, Error> {
+        Ok(self.inner.try_borrow()?.max_len)
     }
 
-    pub fn set_readable(&mut self, readable: impl Readable<T> + 'static) {
-        self.inner.borrow_mut().readable = Some(Box::new(readable));
+    pub fn set_readable(&mut self, readable: impl Readable<T> + 'static) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.readable = Some(Box::new(readable));
+        Ok(())
     }
 
-    pub fn set_updatable(&mut self, updatable: impl Updatable<T> + 'static) {
-        self.inner.borrow_mut().updatable = Some(Box::new(updatable));
+    pub fn set_updatable(&mut self, updatable: impl Updatable<T> + 'static) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.updatable = Some(Box::new(updatable));
+        Ok(())
     }
 
-    pub fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) {
-        self.inner.borrow_mut().event_emitter = event_emitter;
+    pub fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error> {
+        self.inner.try_borrow_mut()?.event_emitter = event_emitter;
+        Ok(())
     }
 }
 
@@ -230,57 +243,57 @@ impl<T: Default + Clone + Serialize> Serialize for Characteristic<T> {
 }
 
 pub trait HapCharacteristic: erased_serde::Serialize {
-    fn get_id(&self) -> u64;
-    fn set_id(&mut self, id: u64);
-    fn set_accessory_id(&mut self, accessory_id: u64);
-    fn get_type(&self) -> HapType;
-    fn get_format(&self) -> Format;
-    fn get_perms(&self) -> Vec<Perm>;
-    fn get_event_notifications(&self) -> Option<bool>;
-    fn set_event_notifications(&mut self, event_notifications: Option<bool>);
+    fn get_id(&self) -> Result<u64, Error>;
+    fn set_id(&mut self, id: u64) -> Result<(), Error>;
+    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error>;
+    fn get_type(&self) -> Result<HapType, Error>;
+    fn get_format(&self) -> Result<Format, Error>;
+    fn get_perms(&self) -> Result<Vec<Perm>, Error>;
+    fn get_event_notifications(&self) -> Result<Option<bool>, Error>;
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error>;
     fn get_value(&mut self) -> Result<serde_json::Value, Error>;
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
-    fn get_unit(&self) -> Option<Unit>;
-    fn get_max_value(&self) -> Option<serde_json::Value>;
-    fn get_min_value(&self) -> Option<serde_json::Value>;
-    fn get_step_value(&self) -> Option<serde_json::Value>;
-    fn get_max_len(&self) -> Option<u16>;
-    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>);
+    fn get_unit(&self) -> Result<Option<Unit>, Error>;
+    fn get_max_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    fn get_min_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    fn get_step_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    fn get_max_len(&self) -> Result<Option<u16>, Error>;
+    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error>;
 }
 
 serialize_trait_object!(HapCharacteristic);
 
 impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T> where for<'de> T: Deserialize<'de> {
-    fn get_id(&self) -> u64 {
+    fn get_id(&self) -> Result<u64, Error> {
         self.get_id()
     }
 
-    fn set_id(&mut self, id: u64) {
+    fn set_id(&mut self, id: u64) -> Result<(), Error> {
         self.set_id(id)
     }
 
-    fn set_accessory_id(&mut self, accessory_id: u64) {
+    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error> {
         self.set_accessory_id(accessory_id)
     }
 
-    fn get_type(&self) -> HapType {
+    fn get_type(&self) -> Result<HapType, Error> {
         self.get_type()
     }
 
-    fn get_format(&self) -> Format {
+    fn get_format(&self) -> Result<Format, Error> {
         self.get_format()
     }
 
-    fn get_perms(&self) -> Vec<Perm> {
+    fn get_perms(&self) -> Result<Vec<Perm>, Error> {
         self.get_perms()
     }
 
-    fn get_event_notifications(&self) -> Option<bool> {
+    fn get_event_notifications(&self) -> Result<Option<bool>, Error> {
         self.get_event_notifications()
     }
 
-    fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
-        self.set_event_notifications(event_notifications);
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error> {
+        self.set_event_notifications(event_notifications)
     }
 
     fn get_value(&mut self) -> Result<serde_json::Value, Error> {
@@ -298,7 +311,7 @@ impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T> whe
             } else if num_v == 1 {
                 v = serde_json::from_value(json!(true))?;
             } else {
-                return Err(Error::new(ErrorKind::Other, "invalid value"));
+                return Err(Error::new_io("invalid value for bool characteristic"));
             }
         } else {
             v = serde_json::from_value(value)?;
@@ -306,37 +319,37 @@ impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T> whe
         self.set_value(v)
     }
 
-    fn get_unit(&self) -> Option<Unit> {
+    fn get_unit(&self) -> Result<Option<Unit>, Error> {
         self.get_unit()
     }
 
-    fn get_max_value(&self) -> Option<serde_json::Value> {
-        match self.get_max_value() {
+    fn get_max_value(&self) -> Result<Option<serde_json::Value>, Error> {
+        Ok(match self.get_max_value()? {
             Some(v) => Some(json!(v)),
             None => None,
-        }
+        })
     }
 
-    fn get_min_value(&self) -> Option<serde_json::Value> {
-        match self.get_min_value() {
+    fn get_min_value(&self) -> Result<Option<serde_json::Value>, Error> {
+        Ok(match self.get_min_value()? {
             Some(v) => Some(json!(v)),
             None => None,
-        }
+        })
     }
 
-    fn get_step_value(&self) -> Option<serde_json::Value> {
-        match self.get_step_value() {
+    fn get_step_value(&self) -> Result<Option<serde_json::Value>, Error> {
+        Ok(match self.get_step_value()? {
             Some(v) => Some(json!(v)),
             None => None,
-        }
+        })
     }
 
-    fn get_max_len(&self) -> Option<u16> {
+    fn get_max_len(&self) -> Result<Option<u16>, Error> {
         self.get_max_len()
     }
 
-    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) {
-        self.set_event_emitter(event_emitter);
+    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error> {
+        self.set_event_emitter(event_emitter)
     }
 }
 

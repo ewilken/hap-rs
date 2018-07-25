@@ -1,16 +1,13 @@
-use std::{io::Error, rc::Rc, cell::RefCell, net::SocketAddr};
+use std::{rc::Rc, cell::RefCell, net::SocketAddr};
 
 use config::{Config, ConfigPtr};
-use db::{
-    storage::Storage,
-    database::{Database, DatabasePtr},
-    file_storage::FileStorage,
-    accessory_list::{AccessoryList, AccessoryListTrait},
-};
+use db::{Storage, Database, DatabasePtr, FileStorage, AccessoryList, AccessoryListTrait};
 use pin;
-use protocol::device::Device;
+use protocol::Device;
 use transport::{http, mdns::Responder, bonjour::StatusFlag, Transport};
 use event::{Event, Emitter, EmitterPtr};
+
+use Error;
 
 pub struct IpTransport<S: Storage> {
     config: ConfigPtr,
@@ -38,7 +35,7 @@ impl IpTransport<FileStorage> {
         let mdns_responder = Responder::new(&config.name, &config.port, config.txt_records());
 
         let mut accessory_list = AccessoryList::new(accessories);
-        accessory_list.init_aids(event_emitter.clone());
+        accessory_list.init_aids(event_emitter.clone())?;
 
         let ip_transport = IpTransport {
             config: Rc::new(RefCell::new(config)),
@@ -65,7 +62,7 @@ impl Transport for IpTransport<FileStorage> {
 
         let config = self.config.clone();
         let database = self.database.clone();
-        self.event_emitter.borrow_mut().add_listener(Box::new(move |event| {
+        self.event_emitter.try_borrow_mut()?.add_listener(Box::new(move |event| {
             match event {
                 &Event::DevicePaired => {
                     match database.borrow().count_pairings() {
@@ -95,7 +92,7 @@ impl Transport for IpTransport<FileStorage> {
             self.database.clone(),
             self.accessories.clone(),
             self.event_emitter.clone(),
-        );
+        )?;
         Ok(())
     }
 

@@ -8,6 +8,8 @@ use service::{
 };
 use event::EmitterPtr;
 
+use Error;
+
 pub type VideoDoorbell = Accessory<VideoDoorbellInner>;
 
 #[derive(Default)]
@@ -51,29 +53,30 @@ impl HapAccessory for VideoDoorbellInner {
         &mut self.accessory_information
     }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
             next_iid += 1;
             for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid);
-                characteristic.set_accessory_id(accessory_id);
-                characteristic.set_event_emitter(Some(event_emitter.clone()));
+                characteristic.set_id(next_iid)?;
+                characteristic.set_accessory_id(accessory_id)?;
+                characteristic.set_event_emitter(Some(event_emitter.clone()))?;
                 next_iid += 1;
             }
         }
+        Ok(())
     }
 }
 
-pub fn new(information: Information) -> VideoDoorbell {
+pub fn new(information: Information) -> Result<VideoDoorbell, Error> {
     let mut camera_rtp_stream_management = camera_rtp_stream_management::new();
     camera_rtp_stream_management.set_primary(true);
-    VideoDoorbell::new(VideoDoorbellInner {
-        accessory_information: information.to_service(),
+    Ok(VideoDoorbell::new(VideoDoorbellInner {
+        accessory_information: information.to_service()?,
         camera_rtp_stream_management: camera_rtp_stream_management,
         speaker: speaker::new(),
         microphone: microphone::new(),
         ..Default::default()
-    })
+    }))
 }

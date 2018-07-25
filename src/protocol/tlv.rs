@@ -1,11 +1,13 @@
-use std::{io, str, collections::HashMap};
+use std::{io, str, cell, collections::HashMap};
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use srp::types::SrpAuthError;
-use chacha20_poly1305_aead::DecryptError;
+use chacha20_poly1305_aead;
 use uuid;
 
 use protocol::pairing::Permissions;
+
+use error;
 
 pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::new();
@@ -170,8 +172,20 @@ pub enum Error {
     Busy = 0x07,
 }
 
+impl From<error::Error> for Error {
+    fn from(_: error::Error) -> Self {
+        Error::Unknown
+    }
+}
+
 impl From<io::Error> for Error {
     fn from(_: io::Error) -> Self {
+        Error::Unknown
+    }
+}
+
+impl From<cell::BorrowError> for Error {
+    fn from(_: cell::BorrowError) -> Error {
         Error::Unknown
     }
 }
@@ -194,8 +208,8 @@ impl From<SrpAuthError> for Error {
     }
 }
 
-impl From<DecryptError> for Error {
-    fn from(_: DecryptError) -> Self {
+impl From<chacha20_poly1305_aead::DecryptError> for Error {
+    fn from(_: chacha20_poly1305_aead::DecryptError) -> Self {
         Error::Authentication
     }
 }

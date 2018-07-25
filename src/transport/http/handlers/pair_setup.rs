@@ -14,10 +14,10 @@ use chacha20_poly1305_aead;
 use crypto::ed25519;
 use uuid::Uuid;
 
-use db::database::DatabasePtr;
+use db::DatabasePtr;
 use config::ConfigPtr;
-use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
-use protocol::{device::Device, pairing::{Pairing, Permissions}};
+use transport::http::handlers::TlvHandler;
+use protocol::{Device, Pairing, Permissions, tlv::{self, Type, Value}};
 use event::{Event, EmitterPtr};
 
 struct Session {
@@ -38,6 +38,16 @@ impl PairSetup {
     }
 }
 
+enum StepNumber {
+    Unknown = 0,
+    StartReq = 1,
+    StartRes = 2,
+    VerifyReq = 3,
+    VerifyRes = 4,
+    ExchangeReq = 5,
+    ExchangeRes = 6,
+}
+
 pub enum Step {
     Start,
     Verify { a_pub: Vec<u8>, a_proof: Vec<u8> },
@@ -52,26 +62,25 @@ impl TlvHandler for PairSetup {
         let decoded = tlv::decode(body);
         match decoded.get(&(Type::State as u8)) {
             Some(method) => match method[0] {
-                // TODO - put those step numbers into the step enum somehow
-                1 => Ok(Step::Start),
-                3 => {
+                x if x == StepNumber::StartReq as u8 => Ok(Step::Start),
+                x if x == StepNumber::VerifyReq as u8 => {
                     let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(
-                        tlv::ErrorContainer::new(4, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, tlv::Error::Unknown)
                     )?;
                     let a_proof = decoded.get(&(Type::Proof as u8)).ok_or(
-                        tlv::ErrorContainer::new(4, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, tlv::Error::Unknown)
                     )?;
                     Ok(Step::Verify { a_pub: a_pub.clone(), a_proof: a_proof.clone() })
                 },
-                5 => {
+                x if x == StepNumber::ExchangeReq as u8 => {
                     let data = decoded.get(&(Type::EncryptedData as u8)).ok_or(
-                        tlv::ErrorContainer::new(6, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::ExchangeRes as u8, tlv::Error::Unknown)
                     )?;
                     Ok(Step::Exchange { data: data.clone() })
                 },
-                _ => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown)),
+                _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
             },
-            None => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown)),
+            None => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
         }
     }
 
@@ -85,15 +94,15 @@ impl TlvHandler for PairSetup {
         match step {
             Step::Start => match handle_start(self, database) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err)),
             },
             Step::Verify { a_pub, a_proof } => match handle_verify(self, a_pub, a_proof) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(4, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, err)),
             },
             Step::Exchange { data } => match handle_exchange(self, config, database, event_emitter, data) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(6, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::ExchangeRes as u8, err)),
             },
         }
     }
@@ -135,7 +144,7 @@ fn handle_start(
 
     println!("/pair-setup - M2: Sending SRP Start Response");
 
-    Ok(vec![Value::State(2), Value::PublicKey(b_pub), Value::Salt(salt.clone())])
+    Ok(vec![Value::State(StepNumber::StartRes as u8), Value::PublicKey(b_pub), Value::Salt(salt.clone())])
 }
 
 fn handle_verify(
@@ -165,7 +174,7 @@ fn handle_verify(
 
         println!("/pair-setup - M4: Sending SRP Verify Response");
 
-        Ok(vec![Value::State(4), Value::Proof(b_proof)])
+        Ok(vec![Value::State(StepNumber::VerifyRes as u8), Value::Proof(b_proof)])
     } else {
         Err(tlv::Error::Unknown)
     }
@@ -275,11 +284,11 @@ fn handle_exchange(
             )?;
             encrypted_data.extend(&auth_tag);
 
-            event_emitter.borrow().emit(Event::DevicePaired);
+            event_emitter.try_borrow()?.emit(Event::DevicePaired);
 
             println!("/pair-setup - M6: Sending SRP Exchange Response");
 
-            Ok(vec![Value::State(6), Value::EncryptedData(encrypted_data)])
+            Ok(vec![Value::State(StepNumber::ExchangeRes as u8), Value::EncryptedData(encrypted_data)])
         } else {
             Err(tlv::Error::Unknown)
         }

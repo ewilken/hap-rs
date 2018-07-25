@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, rc::Rc};
 
 use hyper::{Uri, StatusCode, server::Response};
 use failure::Error;
@@ -7,10 +7,11 @@ use url::form_urlencoded;
 use uuid::Uuid;
 
 use characteristic::{Format, Perm, Unit};
-use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use db::{AccessoryList, DatabasePtr};
 use config::ConfigPtr;
-use hap_type::HapType;
+use HapType;
 use transport::http::{
+    Status,
     server::EventSubscriptions,
     handlers::JsonHandler,
     json_response,
@@ -31,7 +32,7 @@ impl JsonHandler for GetCharacteristics {
         &mut self,
         uri: Uri,
         _: Vec<u8>,
-        _: Arc<Option<Uuid>>,
+        _: Rc<Option<Uuid>>,
         _: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
@@ -44,7 +45,7 @@ impl JsonHandler for GetCharacteristics {
             };
             let mut some_err = false;
 
-            // TODO - using a String seems ugly and expensive
+            // TODO - using a String seems ugly
             let mut queries: HashMap<String, String> = HashMap::new();
             for (key, val) in form_urlencoded::parse(query.as_bytes()) {
                 queries.insert(key.into(), val.into());
@@ -60,18 +61,32 @@ impl JsonHandler for GetCharacteristics {
                 let aid = id_pair[0].parse::<u64>()?;
                 let iid = id_pair[1].parse::<u64>()?;
 
-                let mut res_object = accessories.read_characteristic(
+                let mut res_object = match accessories.read_characteristic(
                     aid,
                     iid,
                     f_meta,
                     f_perms,
                     f_type,
                     f_ev,
-                );
-                if res_object.status != Some(0) {
-                    some_err = true;
-                    res_object.value = None;
-                }
+                ) {
+                    Ok(mut res_object) => {
+                        if res_object.status != Some(0) {
+                            some_err = true;
+                            res_object.value = None;
+                        }
+                        res_object
+                    },
+                    Err(_) => {
+                        some_err = true;
+                        ReadResponseObject {
+                            iid,
+                            aid,
+                            status: Some(Status::ServiceCommunicationFailure as i32),
+                            ..Default::default()
+                        }
+                    },
+                };
+
                 resp_body.characteristics.push(res_object);
             }
 
@@ -113,7 +128,7 @@ impl JsonHandler for UpdateCharacteristics {
         &mut self,
         _: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: Rc<Option<Uuid>>,
         event_subscriptions: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
@@ -128,12 +143,27 @@ impl JsonHandler for UpdateCharacteristics {
         let mut all_err = true;
 
         for c in write_body.characteristics {
-            let res_object = accessories.write_characteristic(c, event_subscriptions);
-            if res_object.status != 0 {
-                some_err = true;
-            } else {
-                all_err = false;
-            }
+            let iid = c.iid;
+            let aid = c.aid;
+            let res_object = match accessories.write_characteristic(c, event_subscriptions) {
+                Ok(res_object) => {
+                    if res_object.status != 0 {
+                        some_err = true;
+                    } else {
+                        all_err = false;
+                    }
+                    res_object
+                },
+                Err(_) => {
+                    some_err = true;
+                    WriteResponseObject {
+                        iid: iid,
+                        aid: aid,
+                        status: Status::ServiceCommunicationFailure as i32,
+                    }
+                },
+            };
+
             resp_body.characteristics.push(res_object);
         }
 
@@ -154,7 +184,7 @@ pub struct Body<T> {
     characteristics: Vec<T>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct ReadResponseObject {
     pub iid: u64,
     pub aid: u64,

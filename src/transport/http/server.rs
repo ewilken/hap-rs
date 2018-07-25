@@ -18,9 +18,11 @@ use transport::{
     }, status_response},
     tcp::{EncryptedStream, StreamWrapper, Session},
 };
-use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use db::{AccessoryList, DatabasePtr};
 use config::ConfigPtr;
 use event::{Event, EmitterPtr};
+
+use Error;
 
 enum Route {
     Get(Box<RefCell<handlers::Handler>>),
@@ -32,7 +34,7 @@ enum Route {
 }
 
 struct Api {
-    controller_id: Arc<Option<Uuid>>,
+    controller_id: Rc<Option<Uuid>>,
     event_subscriptions: EventSubscriptions,
     config: ConfigPtr,
     database: DatabasePtr,
@@ -43,7 +45,7 @@ struct Api {
 
 impl Api {
     fn new(
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: Rc<Option<Uuid>>,
         event_subscriptions: EventSubscriptions,
         config: ConfigPtr,
         database: DatabasePtr,
@@ -181,16 +183,16 @@ pub fn serve(
     database: DatabasePtr,
     accessories: AccessoryList,
     event_emitter: EmitterPtr,
-) {
-    let mut evt_loop = Core::new().unwrap();
-    let listener = TcpListener::bind(socket_addr, &evt_loop.handle()).unwrap();
+) -> Result<(), Error> {
+    let mut evt_loop = Core::new()?;
+    let listener = TcpListener::bind(socket_addr, &evt_loop.handle())?;
     let http: Http<hyper::Chunk> = Http::new();
     let handle = evt_loop.handle();
 
     let server = listener.incoming().for_each(|(stream, _)| {
         let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
         let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
-        let controller_id = Arc::new(encrypted_stream.controller_id);
+        let controller_id = Rc::new(encrypted_stream.controller_id);
         let event_subscriptions = Rc::new(RefCell::new(vec![]));
         let api = Api::new(
             controller_id,
@@ -203,14 +205,20 @@ pub fn serve(
         );
 
         let event_subscriptions = event_subscriptions.clone();
-        event_emitter.borrow_mut().add_listener(Box::new(move |event| {
+        event_emitter.try_borrow_mut()
+            .expect("couldn't add listener for characteristic value change events")
+            .add_listener(Box::new(move |event| {
             match event {
                 &Event::CharacteristicValueChanged { aid, iid, ref value } => {
-                    for &(s_aid, s_iid) in event_subscriptions.borrow().iter() {
+                    for &(s_aid, s_iid) in event_subscriptions.try_borrow()
+                        .expect("couldn't read event subscriptions")
+                        .iter() {
                         if s_aid == aid && s_iid == iid {
                             let event = EventObject { aid, iid, value: value.clone() };
-                            let event_res = event_response(vec![event]).unwrap();
-                            stream_outgoing.unbounded_send(event_res).map_err(|_| ()).unwrap();
+                            let event_res = event_response(vec![event])
+                                .expect("couldn't create event response");
+                            stream_outgoing.unbounded_send(event_res).map_err(|_| ())
+                                .expect("couldn't send event response");
                         }
                     }
                 },
@@ -222,5 +230,7 @@ pub fn serve(
         handle.spawn(http.serve_connection(stream_wrapper, api).map_err(|_| ()).map(|_| ()));
         Ok(())
     });
-    evt_loop.run(server).unwrap();
+
+    evt_loop.run(server)?;
+    Ok(())
 }

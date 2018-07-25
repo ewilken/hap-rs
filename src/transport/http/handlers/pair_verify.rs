@@ -7,10 +7,10 @@ use chacha20_poly1305_aead;
 use uuid::Uuid;
 use futures::sync::oneshot;
 
-use transport::{http::handlers::TlvHandler, tcp, tlv::{self, Type, Value}};
+use transport::{http::handlers::TlvHandler, tcp};
 use config::ConfigPtr;
-use db::database::DatabasePtr;
-use protocol::{device::Device, pairing::Pairing};
+use db::DatabasePtr;
+use protocol::{Device, Pairing, tlv::{self, Type, Value}};
 use event::EmitterPtr;
 
 struct Session {
@@ -31,6 +31,14 @@ impl PairVerify {
     }
 }
 
+enum StepNumber {
+    Unknown = 0,
+    StartReq = 1,
+    StartRes = 2,
+    FinishReq = 3,
+    FinishRes = 4,
+}
+
 pub enum Step {
     Start { a_pub: Vec<u8> },
     Finish { data: Vec<u8> },
@@ -44,22 +52,21 @@ impl TlvHandler for PairVerify {
         let decoded = tlv::decode(body);
         match decoded.get(&(Type::State as u8)) {
             Some(method) => match method[0] {
-                // TODO - put those step numbers into the step enum somehow
-                1 => {
+                x if x == StepNumber::StartReq as u8 => {
                     let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(
-                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::StartRes as u8, tlv::Error::Unknown)
                     )?;
                     Ok(Step::Start { a_pub: a_pub.clone() })
                 },
-                3 => {
+                x if x == StepNumber::FinishReq as u8 => {
                     let data = decoded.get(&(Type::EncryptedData as u8)).ok_or(
-                        tlv::ErrorContainer::new(4, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::FinishRes as u8, tlv::Error::Unknown)
                     )?;
                     Ok(Step::Finish { data: data.clone() })
                 },
-                _ => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown)),
+                _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
             },
-            None => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown)),
+            None => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
         }
     }
 
@@ -73,11 +80,11 @@ impl TlvHandler for PairVerify {
         match step {
             Step::Start { a_pub } => match handle_start(self, database, a_pub) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err)),
             },
             Step::Finish { data } => match handle_finish(self, database, data) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(4, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::FinishRes as u8, err)),
             },
         }
     }
@@ -134,7 +141,7 @@ fn handle_start(
     println!("/pair-verify - M2: Sending Verify Start Response");
 
     Ok(vec![
-        Value::State(2),
+        Value::State(StepNumber::StartRes as u8),
         Value::PublicKey(b_pub.to_vec()),
         Value::EncryptedData(encrypted_data),
     ])
@@ -191,7 +198,7 @@ fn handle_finish(
 
         println!("/pair-verify - M4: Sending Verify Finish Response");
 
-        Ok(vec![Value::State(4)])
+        Ok(vec![Value::State(StepNumber::FinishRes as u8)])
     } else {
         Err(tlv::Error::Unknown)
     }

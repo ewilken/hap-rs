@@ -1,4 +1,4 @@
-use std::{io::{Read, Write, Error, ErrorKind}, cmp::min};
+use std::{io::{self, Read, Write, ErrorKind}, cmp::min};
 
 use futures::{
     Async::{self, Ready, NotReady},
@@ -16,6 +16,8 @@ use bytes::{BytesMut, buf::FromBuf};
 use byteorder::{ByteOrder, LittleEndian};
 use uuid::Uuid;
 
+use Error;
+
 pub struct StreamWrapper {
     incoming_receiver: UnboundedReceiver<Vec<u8>>,
     outgoing_sender: UnboundedSender<Vec<u8>>,
@@ -30,7 +32,7 @@ impl StreamWrapper {
         StreamWrapper { incoming_receiver, outgoing_sender, incoming_buf: BytesMut::new() }
     }
 
-    fn poll_receiver(&mut self) -> Result<usize, Error> {
+    fn poll_receiver(&mut self) -> Result<usize, io::Error> {
         match self.incoming_receiver.poll() {
             Ok(NotReady) => Err(ErrorKind::WouldBlock.into()),
             Ok(Ready(Some(incoming))) => {
@@ -38,13 +40,13 @@ impl StreamWrapper {
                 Ok(incoming.len())
             },
             Ok(Ready(None)) => Ok(0),
-            Err(_) => Err(ErrorKind::Other.into()),
+            Err(_) => Err(Error::new_io("couldn't poll receiver").into()),
         }
     }
 }
 
 impl Read for StreamWrapper {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         self.poll_receiver()?;
         let r_len = min(buf.len(), self.incoming_buf.len());
         &buf[..r_len].copy_from_slice(&self.incoming_buf[..r_len]);
@@ -54,23 +56,23 @@ impl Read for StreamWrapper {
 }
 
 impl Write for StreamWrapper {
-    fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
         self.outgoing_sender.unbounded_send(buf.to_vec())
-            .map_err(|_| Error::new(ErrorKind::Other, "couldn't write"))?;
+            .map_err(|_| Error::new_io("couldn't write"))?;
         Ok(buf.len())
     }
 
-    fn flush(&mut self) -> Result<(), Error> {
+    fn flush(&mut self) -> Result<(), io::Error> {
         self.outgoing_sender.poll_complete()
             .map(|_| ())
-            .map_err(|_| Error::new(ErrorKind::Other, "couldn't flush"))
+            .map_err(|_| Error::new_io("couldn't flush").into())
     }
 }
 
 impl AsyncRead for StreamWrapper {}
 
 impl AsyncWrite for StreamWrapper {
-    fn shutdown(&mut self) -> Poll<(), Error> {
+    fn shutdown(&mut self) -> Poll<(), io::Error> {
         // TODO - maybe do something useful here
         Ok(Ready(()))
     }
@@ -130,7 +132,7 @@ impl EncryptedStream {
         }, incoming_receiver, outgoing_sender, sender)
     }
 
-    fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+    fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.decrypted_ready {
             let len = min(buf.len(), self.packet_len - 16);
             &buf[..len].copy_from_slice(&self.decrypted_buf[..len]);
@@ -146,7 +148,7 @@ impl EncryptedStream {
         Err(ErrorKind::WouldBlock.into())
     }
 
-    fn read_encrypted(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+    fn read_encrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.missing_data_for_decrypted_buf {
             let decrypted = decrypt_chunk(
                 &self.shared_secret.unwrap(),
@@ -154,7 +156,7 @@ impl EncryptedStream {
                 self.encrypted_buf[2..(self.packet_len - 14)].to_vec(),
                 &self.encrypted_buf[(self.packet_len - 14)..(self.packet_len + 2)],
                 &mut self.decrypt_count,
-            );
+            )?;
             &self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
             self.missing_data_for_decrypted_buf = false;
             self.decrypted_ready = true;
@@ -165,7 +167,7 @@ impl EncryptedStream {
         Err(ErrorKind::WouldBlock.into())
     }
 
-    fn read_stream(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+    fn read_stream(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.missing_data_for_encrypted_buf {
             let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..])?;
 
@@ -200,13 +202,13 @@ impl EncryptedStream {
         }
     }
 
-    fn poll_incoming(&mut self) -> Poll<(), Error> {
+    fn poll_incoming(&mut self) -> Poll<(), io::Error> {
         let mut data = [0; 1536];
         loop {
             let r_len = try_nb!(self.read(&mut data));
             if r_len == 0 { return Ok(Ready(())); }
             self.incoming_sender.unbounded_send(data[..r_len].to_vec())
-                .map_err(|_| Error::new(ErrorKind::Other, "couldn't send incoming data"))?;
+                .map_err(|_| Error::new_io("couldn't send incoming data"))?;
         }
     }
 
@@ -222,17 +224,17 @@ impl EncryptedStream {
 
 impl Future for EncryptedStream {
     type Item = ();
-    type Error = Error;
+    type Error = io::Error;
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         self.poll_outgoing()
-            .map_err(|_| Error::new(ErrorKind::Other, "couldn't receive outgoing data"))?;
+            .map_err(|_| Error::new_io("couldn't receive outgoing data"))?;
         self.poll_incoming()
     }
 }
 
 impl Read for EncryptedStream {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, Error> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.shared_secret.is_none() {
             match self.session_receiver.poll() {
                 Ok(Async::Ready(session)) => {
@@ -256,7 +258,7 @@ impl Read for EncryptedStream {
 }
 
 impl Write for EncryptedStream {
-    fn write(&mut self, buf: &[u8]) -> Result<usize, Error> {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
         if let Some(shared_secret) = self.shared_secret {
             let mut write_buf = BytesMut::from_buf(buf);
 
@@ -265,7 +267,7 @@ impl Write for EncryptedStream {
                     &shared_secret,
                     write_buf[..1024].to_vec(),
                     &mut self.encrypt_count,
-                );
+                )?;
                 self.stream.write(&aad)?;
                 self.stream.write(&chunk)?;
                 self.stream.write(&auth_tag)?;
@@ -276,7 +278,7 @@ impl Write for EncryptedStream {
                 &shared_secret,
                 write_buf.to_vec(),
                 &mut self.encrypt_count,
-            );
+            )?;
             self.stream.write(&aad)?;
             self.stream.write(&chunk)?;
             self.stream.write(&auth_tag)?;
@@ -286,7 +288,7 @@ impl Write for EncryptedStream {
         }
     }
 
-    fn flush(&mut self) -> Result<(), Error> {
+    fn flush(&mut self) -> Result<(), io::Error> {
         self.stream.flush()
     }
 }
@@ -294,7 +296,7 @@ impl Write for EncryptedStream {
 impl AsyncRead for EncryptedStream {}
 
 impl AsyncWrite for EncryptedStream {
-    fn shutdown(&mut self) -> Poll<(), Error> {
+    fn shutdown(&mut self) -> Poll<(), io::Error> {
         AsyncWrite::shutdown(&mut self.stream)
     }
 }
@@ -305,7 +307,7 @@ fn decrypt_chunk(
     data: Vec<u8>,
     auth_tag: &[u8],
     count: &mut u64,
-) -> Vec<u8> {
+) -> Result<Vec<u8>, Error> {
     let mut decrypted_data = Vec::new();
     let read_key = compute_read_key(shared_secret);
 
@@ -323,16 +325,16 @@ fn decrypt_chunk(
         &data,
         auth_tag,
         &mut decrypted_data,
-    ).unwrap();
+    )?;
 
-    decrypted_data
+    Ok(decrypted_data)
 }
 
 fn encrypt_chunk(
     shared_secret: &[u8; 32],
     data: Vec<u8>,
     count: &mut u64,
-) -> ([u8; 2], Vec<u8>, [u8; 16]) {
+) -> Result<([u8; 2], Vec<u8>, [u8; 16]), Error> {
     let mut encrypted_data = Vec::new();
     let write_key = compute_write_key(shared_secret);
 
@@ -352,9 +354,9 @@ fn encrypt_chunk(
         &aad,
         &data,
         &mut encrypted_data,
-    ).unwrap();
+    )?;
 
-    (aad, encrypted_data, auth_tag)
+    Ok((aad, encrypted_data, auth_tag))
 }
 
 fn compute_read_key(shared_secret: &[u8; 32]) -> [u8; 32] {

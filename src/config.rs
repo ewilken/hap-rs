@@ -1,6 +1,5 @@
 use std::{
     net::IpAddr,
-    io::Error,
     env::current_dir,
     str,
     collections::hash_map::DefaultHasher,
@@ -15,8 +14,10 @@ use uuid::Uuid;
 use pnet::datalink;
 
 use accessory::Category;
-use db::storage::Storage;
+use db::Storage;
 use transport::bonjour::{StatusFlag, FeatureFlag};
+
+use Error;
 
 pub type ConfigPtr = Rc<RefCell<Config>>;
 

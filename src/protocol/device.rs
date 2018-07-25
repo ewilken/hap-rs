@@ -1,4 +1,4 @@
-use std::{fmt, marker::PhantomData, io::Error};
+use std::{fmt, marker::PhantomData};
 
 use rand::{self, Rng};
 use crypto::ed25519;
@@ -8,8 +8,10 @@ use serde::{
 };
 use serde_json;
 
-use db::database::{Database, DatabasePtr};
+use db::{Database, DatabasePtr};
 use pin::Pin;
+
+use Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct Device {

@@ -2,7 +2,7 @@ use std::{
     fs,
     str,
     ffi::OsStr,
-    io::{Error, ErrorKind, Read, Write, BufReader, BufWriter},
+    io::{Read, Write, BufReader, BufWriter},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
@@ -11,6 +11,8 @@ use byteorder::{ByteOrder, BigEndian, ReadBytesExt};
 use uuid::Uuid;
 
 use db::storage::Storage;
+
+use Error;
 
 pub struct FileStorage {
     dir_path: PathBuf,
@@ -98,10 +100,10 @@ impl Storage for FileStorage {
             Ok(uuid_str) => {
                 match Uuid::parse_str(uuid_str) {
                     Ok(value) => Ok(value),
-                    _ => Err(Error::new(ErrorKind::Other, "there was a problem parsing the UUID")),
+                    _ => Err(Error::new_io("couldn't parse UUID")),
                 }
             },
-            _ => Err(Error::new(ErrorKind::Other, "there was a problem reading the UUID")),
+            _ => Err(Error::new_io("couldn't read UUID")),
         }
     }
 
@@ -119,10 +121,10 @@ impl Storage for FileStorage {
             let path = entry.path();
             if path.extension() == extension {
                 let key = path.file_stem()
-                    .ok_or(Error::new(ErrorKind::Other, "invalid file name"))?
+                    .ok_or(Error::new_io("invalid file name"))?
                     .to_os_string()
                     .into_string()
-                    .or(Err(Error::new(ErrorKind::Other, "invalid file name")))?;
+                    .or(Err(Error::new_io("invalid file name")))?;
                 keys.push(key);
             }
         }

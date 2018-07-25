@@ -5,6 +5,8 @@ use service::{HapService, accessory_information::{self, AccessoryInformation}};
 use characteristic::{hardware_revision, accessory_flags};
 use event::EmitterPtr;
 
+use Error;
+
 mod category;
 pub use accessory::category::Category;
 
@@ -26,7 +28,7 @@ pub trait HapAccessory {
     fn get_services(&self) -> Vec<&HapAccessoryService>;
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService>;
     fn get_mut_information(&mut self) -> &mut AccessoryInformation;
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr);
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error>;
 }
 
 pub struct Accessory<T: HapAccessory> {
@@ -69,7 +71,7 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
         self.inner.get_mut_information()
     }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         self.inner.init_iids(accessory_id, event_emitter)
     }
 }
@@ -86,25 +88,25 @@ pub struct Information {
 }
 
 impl Information {
-    pub fn to_service(self) -> AccessoryInformation {
+    pub fn to_service(self) -> Result<AccessoryInformation, Error> {
         let mut i = accessory_information::new();
-        i.inner.identify.set_value(self.identify).unwrap();
-        i.inner.manufacturer.set_value(self.manufacturer).unwrap();
-        i.inner.model.set_value(self.model).unwrap();
-        i.inner.name.set_value(self.name).unwrap();
-        i.inner.serial_number.set_value(self.serial_number).unwrap();
-        i.inner.firmware_revision.set_value(self.firmware_revision).unwrap();
+        i.inner.identify.set_value(self.identify)?;
+        i.inner.manufacturer.set_value(self.manufacturer)?;
+        i.inner.model.set_value(self.model)?;
+        i.inner.name.set_value(self.name)?;
+        i.inner.serial_number.set_value(self.serial_number)?;
+        i.inner.firmware_revision.set_value(self.firmware_revision)?;
         if let Some(v) = self.hardware_revision {
             let mut hr = hardware_revision::new();
-            hr.set_value(v).unwrap();
+            hr.set_value(v)?;
             i.inner.hardware_revision = Some(hr);
         }
         if let Some(v) = self.accessory_flags {
             let mut af = accessory_flags::new();
-            af.set_value(v).unwrap();
+            af.set_value(v)?;
             i.inner.accessory_flags = Some(af);
         }
-        i
+        Ok(i)
     }
 }
 

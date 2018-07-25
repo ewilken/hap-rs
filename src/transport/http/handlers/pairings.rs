@@ -2,10 +2,10 @@ use std::str;
 
 use uuid::Uuid;
 
-use db::database::DatabasePtr;
+use db::DatabasePtr;
 use config::ConfigPtr;
-use transport::{http::handlers::TlvHandler, tlv::{self, Type, Value}};
-use protocol::pairing::{Pairing, Permissions};
+use transport::http::handlers::TlvHandler;
+use protocol::{Pairing, Permissions, tlv::{self, Type, Value}};
 use event::{Event, EmitterPtr};
 
 pub struct Pairings {}
@@ -14,6 +14,17 @@ impl Pairings {
     pub fn new() -> Pairings {
         Pairings {}
     }
+}
+
+enum StepNumber {
+    Unknown = 0,
+    Res = 2,
+}
+
+enum HandlerNumber {
+    Add = 3,
+    Remove = 4,
+    List = 5,
 }
 
 pub enum HandlerType {
@@ -33,19 +44,18 @@ impl TlvHandler for Pairings {
         }
         match decoded.get(&(Type::Method as u8)) {
             Some(handler) => match handler[0] {
-                // TODO - put those handler numbers into the handler type enum somehow
-                3 => {
+                x if x == HandlerNumber::Add as u8 => {
                     let pairing_id = decoded.get(&(Type::Identifier as u8)).ok_or(
-                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown)
                     )?;
                     let ltpk = decoded.get(&(Type::PublicKey as u8)).ok_or(
-                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown)
                     )?;
                     let perms = decoded.get(&(Type::Permissions as u8)).ok_or(
-                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown)
                     )?;
                     let permissions = Permissions::from_u8(perms[0]).map_err(
-                        |_| tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                        |_| tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown)
                     )?;
                     Ok(HandlerType::Add {
                         pairing_id: pairing_id.clone(),
@@ -53,18 +63,18 @@ impl TlvHandler for Pairings {
                         permissions,
                     })
                 },
-                4 => {
+                x if x == HandlerNumber::Remove as u8 => {
                     let pairing_id = decoded.get(&(Type::Identifier as u8)).ok_or(
-                        tlv::ErrorContainer::new(2, tlv::Error::Unknown)
+                        tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown)
                     )?;
                     Ok(HandlerType::Remove { pairing_id: pairing_id.clone() })
                 },
-                5 => {
+                x if x == HandlerNumber::List as u8 => {
                     Ok(HandlerType::List)
                 },
-                _ => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown))
+                _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown))
             },
-            None => Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown)),
+            None => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
         }
     }
 
@@ -85,7 +95,7 @@ impl TlvHandler for Pairings {
                 permissions,
             ) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::Res as u8, err)),
             },
             HandlerType::Remove { pairing_id } => match handle_remove(
                 database,
@@ -93,11 +103,11 @@ impl TlvHandler for Pairings {
                 pairing_id,
             ) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::Res as u8, err)),
             },
             HandlerType::List => match handle_list(database) {
                 Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(2, err)),
+                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::Res as u8, err)),
             },
         }
     }
@@ -128,7 +138,7 @@ fn handle_add(
             d.set_pairing(&pairing)?;
             drop(d);
 
-            event_emitter.borrow().emit(Event::DevicePaired);
+            event_emitter.try_borrow()?.emit(Event::DevicePaired);
         },
         Err(_) => {
             let max_peers = config.borrow().max_peers;
@@ -145,13 +155,13 @@ fn handle_add(
             d.set_pairing(&pairing)?;
             drop(d);
 
-            event_emitter.borrow().emit(Event::DevicePaired);
+            event_emitter.try_borrow()?.emit(Event::DevicePaired);
         },
     }
 
     println!("/pairings - M2: Sending Add Pairing Response");
 
-    Ok(vec![Value::State(2)])
+    Ok(vec![Value::State(StepNumber::Res as u8)])
 }
 
 fn handle_remove(
@@ -173,7 +183,7 @@ fn handle_remove(
 
     println!("/pairings - M2: Sending Remove Pairing Response");
 
-    Ok(vec![Value::State(2)])
+    Ok(vec![Value::State(StepNumber::Res as u8)])
 }
 
 fn handle_list(
@@ -184,7 +194,7 @@ fn handle_list(
     // TODO - check if controller is admin
 
     let pairings = database.borrow().list_pairings()?;
-    let mut list = vec![Value::State(2)];
+    let mut list = vec![Value::State(StepNumber::Res as u8)];
     for (i, pairing) in pairings.iter().enumerate() {
         list.push(Value::Identifier(pairing.id.hyphenated().to_string()));
         list.push(Value::PublicKey(pairing.public_key.to_vec()));

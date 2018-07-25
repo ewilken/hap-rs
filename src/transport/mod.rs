@@ -1,11 +1,13 @@
-use std::io::Error;
+use Error;
 
 pub mod bonjour;
-pub mod ip;
 pub mod http;
 pub mod mdns;
-pub mod tlv;
 pub mod tcp;
+
+mod ip;
+
+pub use self::ip::IpTransport;
 
 pub trait Transport {
     fn start(&mut self) -> Result<(), Error>;

@@ -324,7 +324,7 @@ use characteristic::{
 {{/each}}\
 {{/each}}\
 };
-use hap_type::HapType;
+use HapType;
 
 pub type {{trim service.Name}} = Service<{{trim service.Name}}Inner>;
 
@@ -453,6 +453,8 @@ use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
 use service::{HapService, accessory_information::AccessoryInformation, {{snake_case service.Name}}};
 use event::EmitterPtr;
 
+use Error;
+
 pub type {{trim service.Name}} = Accessory<{{trim service.Name}}Inner>;
 
 #[derive(Default)]
@@ -490,29 +492,30 @@ impl HapAccessory for {{trim service.Name}}Inner {
         &mut self.accessory_information
     }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
             next_iid += 1;
             for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid);
-                characteristic.set_accessory_id(accessory_id);
-                characteristic.set_event_emitter(Some(event_emitter.clone()));
+                characteristic.set_id(next_iid)?;
+                characteristic.set_accessory_id(accessory_id)?;
+                characteristic.set_event_emitter(Some(event_emitter.clone()))?;
                 next_iid += 1;
             }
         }
+        Ok(())
     }
 }
 
-pub fn new(information: Information) -> {{trim service.Name}} {
+pub fn new(information: Information) -> Result<{{trim service.Name}}, Error> {
     let mut {{snake_case service.Name}} = {{snake_case service.Name}}::new();
     {{snake_case service.Name}}.set_primary(true);
-    {{trim service.Name}}::new({{trim service.Name}}Inner {
-        accessory_information: information.to_service(),
+    Ok({{trim service.Name}}::new({{trim service.Name}}Inner {
+        accessory_information: information.to_service()?,
         {{snake_case service.Name}}: {{snake_case service.Name}},
         ..Default::default()
-    })
+    }))
 }
 ";
 

@@ -1,7 +1,7 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 
 use characteristic::HapCharacteristic;
-use hap_type::HapType;
+use HapType;
 
 mod includes;
 pub use service::includes::*;
