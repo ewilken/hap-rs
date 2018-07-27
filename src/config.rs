@@ -41,10 +41,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load(&mut self, storage: &Storage) {
+    pub(crate) fn load_from(&mut self, storage: &Storage) -> Result<(), Error> {
         if let Some(device_id) = storage.get_byte_vec("device_id").ok() {
-            // TODO - make this less shitty
-            self.device_id = MacAddress::parse_str(str::from_utf8(&device_id).unwrap()).unwrap();
+            self.device_id = MacAddress::parse_str(str::from_utf8(&device_id)?)?;
         }
         if let Some(version) = storage.get_u64("version").ok() {
             self.version = version;
@@ -52,9 +51,10 @@ impl Config {
         if let Some(config_hash) = storage.get_u64("config_hash").ok() {
             self.config_hash = Some(config_hash);
         }
+        Ok(())
     }
 
-    pub fn save(&self, storage: &Storage) -> Result<(), Error> {
+    pub(crate) fn save_to(&self, storage: &Storage) -> Result<(), Error> {
         storage.set_byte_vec("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
         storage.set_u64("version", self.version.clone())?;
         if let Some(config_hash) = self.config_hash {
@@ -76,12 +76,12 @@ impl Config {
         }
     }
 
-    pub fn update_hash(&mut self) {
+    pub(crate) fn update_hash(&mut self) {
         let hash = self.calculate_hash();
         self.set_hash(hash);
     }
 
-    pub fn txt_records(&self) -> [String; 8] {
+    pub(crate) fn txt_records(&self) -> [String; 8] {
         [
             format!("md={}", self.name),
             format!("id={}", self.device_id.to_hex_string()),
@@ -118,9 +118,14 @@ impl Default for Config {
         let mut config = Config {
             id: Uuid::new_v4(),
             version: 0,
-            storage_path: format!("{}/data", current_dir().unwrap().to_str().unwrap()),
+            storage_path: format!(
+                "{}/data", current_dir()
+                    .expect("couldn't determine current directory")
+                    .to_str()
+                    .expect("couldn't stringify current directory")
+            ),
             port: 32000,
-            ip: current_ip().expect("could not determine local IP address"),
+            ip: current_ip().expect("couldn't determine local IP address"),
             pin: "11122333".into(),
             name: "Accessory".into(),
             device_id: random_mac_address(),

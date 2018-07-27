@@ -10,7 +10,7 @@ use futures::sync::oneshot;
 use transport::{http::handlers::TlvHandler, tcp};
 use config::ConfigPtr;
 use db::DatabasePtr;
-use protocol::{Device, Pairing, tlv::{self, Type, Value}};
+use protocol::{Device, Pairing, tlv::{self, Type, Value}, IdPtr};
 use event::EmitterPtr;
 
 struct Session {
@@ -73,6 +73,7 @@ impl TlvHandler for PairVerify {
     fn handle(
         &mut self,
         step: Step,
+        _: &IdPtr,
         _: &ConfigPtr,
         database: &DatabasePtr,
         _: &EmitterPtr,
@@ -102,7 +103,7 @@ fn handle_start(
     let b_pub = curve25519::curve25519_base(&b);
     let shared_secret = curve25519::curve25519(&b, &a_pub);
 
-    let accessory = Device::load(database)?;
+    let accessory = Device::load_from(database)?;
     let mut accessory_info: Vec<u8> = Vec::new();
     accessory_info.extend(&b_pub);
     accessory_info.extend(accessory.id.as_bytes());

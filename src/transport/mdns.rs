@@ -1,6 +1,8 @@
-use std::{thread, sync::mpsc::{self, TryRecvError}, time::Duration};
+use std::{thread, sync::mpsc::{self, TryRecvError}, time::Duration, rc::Rc, cell::RefCell};
 
 use libmdns;
+
+use Error;
 
 pub struct Responder {
     name: String,
@@ -25,7 +27,7 @@ impl Responder {
         let port = self.port.clone();
         let tr = self.txt_records.clone();
         thread::spawn(move || {
-            let responder = libmdns::Responder::new().unwrap();
+            let responder = libmdns::Responder::new().expect("couldn't create mDNS responder");
             let _svc = responder.register(
                 "_hap._tcp".into(),
                 name,
@@ -45,9 +47,19 @@ impl Responder {
         self.stop = Some(tx);
     }
 
-    pub fn stop(&self) {
+    pub fn stop(&self) -> Result<(), Error> {
         if let Some(stop) = self.stop.clone() {
-            stop.send(()).unwrap();
+            stop.send(())?;
         }
+        Ok(())
+    }
+
+    pub fn update_txt_records(&mut self, txt_records: [String; 8]) -> Result<(), Error> {
+        self.stop()?;
+        self.txt_records = txt_records;
+        self.start();
+        Ok(())
     }
 }
+
+pub type ResponderPtr = Rc<RefCell<Responder>>;

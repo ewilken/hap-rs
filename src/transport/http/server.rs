@@ -4,7 +4,6 @@ use hyper::{self, server::{Http, Request, Response, Service}, StatusCode, Method
 use futures::{future, Future, stream::Stream, sync::oneshot};
 use route_recognizer::Router;
 use tokio_core::{net::TcpListener, reactor::Core};
-use uuid::Uuid;
 
 use transport::{
     http::{handlers::{
@@ -21,6 +20,7 @@ use transport::{
 use db::{AccessoryList, DatabasePtr};
 use config::ConfigPtr;
 use event::{Event, EmitterPtr};
+use protocol::IdPtr;
 
 use Error;
 
@@ -34,7 +34,7 @@ enum Route {
 }
 
 struct Api {
-    controller_id: Rc<Option<Uuid>>,
+    controller_id: IdPtr,
     event_subscriptions: EventSubscriptions,
     config: ConfigPtr,
     database: DatabasePtr,
@@ -45,7 +45,7 @@ struct Api {
 
 impl Api {
     fn new(
-        controller_id: Rc<Option<Uuid>>,
+        controller_id: IdPtr,
         event_subscriptions: EventSubscriptions,
         config: ConfigPtr,
         database: DatabasePtr,
@@ -126,7 +126,7 @@ impl Service for Api {
                         .handle(
                             uri,
                             body,
-                            controller_id,
+                            &controller_id,
                             &event_subscriptions,
                             &config,
                             &database,
@@ -137,7 +137,7 @@ impl Service for Api {
                         .handle(
                             uri,
                             body,
-                            controller_id,
+                            &controller_id,
                             &event_subscriptions,
                             &config,
                             &database,
@@ -148,7 +148,7 @@ impl Service for Api {
                         .handle(
                             uri,
                             body,
-                            controller_id,
+                            &controller_id,
                             &event_subscriptions,
                             &config,
                             &database,
@@ -159,7 +159,7 @@ impl Service for Api {
                         .handle(
                             uri,
                             body,
-                            controller_id,
+                            &controller_id,
                             &event_subscriptions,
                             &config,
                             &database,
@@ -192,10 +192,9 @@ pub fn serve(
     let server = listener.incoming().for_each(|(stream, _)| {
         let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
         let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
-        let controller_id = Rc::new(encrypted_stream.controller_id);
         let event_subscriptions = Rc::new(RefCell::new(vec![]));
         let api = Api::new(
-            controller_id,
+            encrypted_stream.controller_id.clone(),
             event_subscriptions.clone(),
             config.clone(),
             database.clone(),

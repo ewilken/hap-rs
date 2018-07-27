@@ -17,7 +17,7 @@ use uuid::Uuid;
 use db::DatabasePtr;
 use config::ConfigPtr;
 use transport::http::handlers::TlvHandler;
-use protocol::{Device, Pairing, Permissions, tlv::{self, Type, Value}};
+use protocol::{Device, Pairing, Permissions, tlv::{self, Type, Value}, IdPtr};
 use event::{Event, EmitterPtr};
 
 struct Session {
@@ -29,12 +29,13 @@ struct Session {
 }
 
 pub struct PairSetup {
-    session: Option<Session>
+    session: Option<Session>,
+    unsuccessful_tries: u8,
 }
 
 impl PairSetup {
     pub fn new() -> PairSetup {
-        PairSetup { session: None }
+        PairSetup { session: None, unsuccessful_tries: 0 }
     }
 }
 
@@ -87,22 +88,41 @@ impl TlvHandler for PairSetup {
     fn handle(
         &mut self,
         step: Step,
+        _: &IdPtr,
         config: &ConfigPtr,
         database: &DatabasePtr,
         event_emitter: &EmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start => match handle_start(self, database) {
-                Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err)),
+                Ok(res) => {
+                    self.unsuccessful_tries = 0;
+                    Ok(res)
+                },
+                Err(err) => {
+                    self.unsuccessful_tries += 1;
+                    Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err))
+                },
             },
             Step::Verify { a_pub, a_proof } => match handle_verify(self, a_pub, a_proof) {
-                Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, err)),
+                Ok(res) => {
+                    self.unsuccessful_tries = 0;
+                    Ok(res)
+                },
+                Err(err) => {
+                    self.unsuccessful_tries += 1;
+                    Err(tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, err))
+                },
             },
             Step::Exchange { data } => match handle_exchange(self, config, database, event_emitter, data) {
-                Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::ExchangeRes as u8, err)),
+                Ok(res) => {
+                    self.unsuccessful_tries = 0;
+                    Ok(res)
+                },
+                Err(err) => {
+                    self.unsuccessful_tries += 1;
+                    Err(tlv::ErrorContainer::new(StepNumber::ExchangeRes as u8, err))
+                },
             },
         }
     }
@@ -114,9 +134,11 @@ fn handle_start(
 ) -> Result<tlv::Container, tlv::Error> {
     println!("/pair-setup - M1: Got SRP Start Request");
 
-    // TODO - Errors for kTLVError_Unavailable, kTLVError_MaxTries and kTLVError_Busy
+    if handler.unsuccessful_tries > 99 {
+        return Err(tlv::Error::MaxTries);
+    }
 
-    let accessory = Device::load(database)?;
+    let accessory = Device::load_from(database)?;
 
     let mut rng = rand::thread_rng();
     let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>(); // s
@@ -239,16 +261,14 @@ fn handle_exchange(
                 pairing_ltpk[i] = device_ltpk[i];
             }
 
-            if let Some(max_peers) = config.borrow().max_peers {
-                let count = database.borrow().count_pairings()?;
-                if count + 1 > max_peers {
+            if let Some(max_peers) = config.try_borrow()?.max_peers {
+                if database.try_borrow()?.count_pairings()? + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
             }
 
             let pairing = Pairing::new(pairing_uuid, Permissions::Admin, pairing_ltpk);
             pairing.save(database)?;
-            // TODO - kTLVError_MaxPeers
 
             let mut accessory_x = [0; 32];
             let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
@@ -259,7 +279,7 @@ fn handle_exchange(
                 &mut accessory_x
             );
 
-            let accessory = Device::load(database)?;
+            let accessory = Device::load_from(database)?;
             let mut accessory_info: Vec<u8> = Vec::new();
             accessory_info.extend(&accessory_x);
             accessory_info.extend(accessory.id.as_bytes());

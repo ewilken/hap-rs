@@ -36,7 +36,7 @@ impl<T: HapService> Serialize for Service<T> {
         state.serialize_field("hidden", &self.get_hidden())?;
         state.serialize_field("primary", &self.get_primary())?;
         state.serialize_field("characteristics", &self.get_characteristics())?;
-        // TODO - look into that "linked" array
+        // linked services left out for now
         state.end()
     }
 }

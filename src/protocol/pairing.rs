@@ -1,3 +1,5 @@
+use std::{rc::Rc, cell::RefCell};
+
 use uuid::Uuid;
 use serde_json;
 
@@ -5,7 +7,7 @@ use db::DatabasePtr;
 
 use Error;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Pairing {
     pub id: Uuid,
     pub permissions: Permissions,
@@ -18,11 +20,11 @@ impl Pairing {
     }
 
     pub fn load(id: Uuid, database: &DatabasePtr) -> Result<Pairing, Error> {
-        database.borrow().get_pairing(id)
+        database.try_borrow()?.get_pairing(id)
     }
 
     pub fn save(&self, database: &DatabasePtr) -> Result<(), Error> {
-        database.borrow_mut().set_pairing(self)?;
+        database.try_borrow_mut()?.set_pairing(self)?;
         Ok(())
     }
 
@@ -37,7 +39,7 @@ impl Pairing {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Permissions {
     #[serde(rename = "0x00")]
     User,
@@ -61,3 +63,5 @@ impl Permissions {
         }
     }
 }
+
+pub type IdPtr = Rc<RefCell<Option<Uuid>>>;

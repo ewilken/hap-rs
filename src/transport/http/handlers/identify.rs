@@ -1,9 +1,5 @@
-use std::rc::Rc;
-
 use hyper::{Uri, StatusCode, server::Response};
-use failure::Error;
 use serde_json;
-use uuid::Uuid;
 
 use config::ConfigPtr;
 use db::{AccessoryList, DatabasePtr};
@@ -15,6 +11,9 @@ use transport::http::{
     handlers::JsonHandler,
 };
 use event::EmitterPtr;
+use protocol::IdPtr;
+
+use Error;
 
 pub struct Identify {}
 
@@ -29,15 +28,14 @@ impl JsonHandler for Identify {
         &mut self,
         _: Uri,
         _: Vec<u8>,
-        _: Rc<Option<Uuid>>,
+        _: &IdPtr,
         _: &EventSubscriptions,
         _: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
         _: &EmitterPtr,
     ) -> Result<Response, Error> {
-        let count = database.borrow().count_pairings()?;
-        if count > 0 {
+        if database.try_borrow()?.count_pairings()? > 0 {
             let body = serde_json::to_vec(
                 &json!({"status": Status::InsufficientPrivileges as i32})
             )?;

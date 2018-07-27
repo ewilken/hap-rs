@@ -1,10 +1,8 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use hyper::{Uri, StatusCode, server::Response};
-use failure::Error;
 use serde_json;
 use url::form_urlencoded;
-use uuid::Uuid;
 
 use characteristic::{Format, Perm, Unit};
 use db::{AccessoryList, DatabasePtr};
@@ -18,6 +16,9 @@ use transport::http::{
     status_response,
 };
 use event::EmitterPtr;
+use protocol::IdPtr;
+
+use Error;
 
 pub struct GetCharacteristics {}
 
@@ -32,7 +33,7 @@ impl JsonHandler for GetCharacteristics {
         &mut self,
         uri: Uri,
         _: Vec<u8>,
-        _: Rc<Option<Uuid>>,
+        _: &IdPtr,
         _: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,
@@ -51,12 +52,12 @@ impl JsonHandler for GetCharacteristics {
                 queries.insert(key.into(), val.into());
             }
             let (f_meta, f_perms, f_type, f_ev) = check_flags(&queries);
-            let q_id = queries.get("id").unwrap();
+            let q_id = queries.get("id").ok_or(Error::HttpStatus(StatusCode::BadRequest))?;
             let ids = q_id.split(",").collect::<Vec<&str>>();
             for id in ids {
                 let id_pair = id.split(".").collect::<Vec<&str>>();
                 if id_pair.len() != 2 {
-                    return Ok(status_response(StatusCode::BadRequest));
+                    return Err(Error::HttpStatus(StatusCode::BadRequest));
                 }
                 let aid = id_pair[0].parse::<u64>()?;
                 let iid = id_pair[1].parse::<u64>()?;
@@ -128,7 +129,7 @@ impl JsonHandler for UpdateCharacteristics {
         &mut self,
         _: Uri,
         body: Vec<u8>,
-        controller_id: Rc<Option<Uuid>>,
+        _: &IdPtr,
         event_subscriptions: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,

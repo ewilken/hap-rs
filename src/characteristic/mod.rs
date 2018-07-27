@@ -199,7 +199,8 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
 impl<T: Default + Clone + Serialize> Serialize for Characteristic<T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("Characteristic", 15)?;
-        let inner = self.inner.borrow();
+        let inner = self.inner.try_borrow()
+            .expect("couldn't access Characteristic inner");
         state.serialize_field("iid", &inner.id)?;
         state.serialize_field("type", &inner.hap_type)?;
         state.serialize_field("format", &inner.format)?;
@@ -304,7 +305,7 @@ impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T> whe
         let v;
         // the controller is setting boolean values
         // either as a boolean or as an integer
-        if self.inner.borrow().format == Format::Bool && value.is_number() {
+        if self.inner.try_borrow()?.format == Format::Bool && value.is_number() {
             let num_v: u8 = serde_json::from_value(value)?;
             if num_v == 0 {
                 v = serde_json::from_value(json!(false))?;

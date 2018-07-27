@@ -24,7 +24,7 @@ impl AccessoryList {
 
     pub fn init_aids(&mut self, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_aid = 1;
-        for accessory in self.accessories.borrow_mut().iter_mut() {
+        for accessory in self.accessories.try_borrow_mut()?.iter_mut() {
             accessory.set_id(next_aid);
             accessory.init_iids(next_aid, event_emitter.clone())?;
             next_aid += 1;

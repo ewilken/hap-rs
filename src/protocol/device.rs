@@ -41,12 +41,12 @@ impl Device {
         Ok(device)
     }
 
-    pub fn load(database: &DatabasePtr) -> Result<Device, Error> {
-        database.borrow().get_device()
+    pub fn load_from(database: &DatabasePtr) -> Result<Device, Error> {
+        database.try_borrow()?.get_device()
     }
 
-    pub fn save(&self, database: &DatabasePtr) -> Result<(), Error> {
-        database.borrow_mut().set_device(self)?;
+    pub fn save_to(&self, database: &DatabasePtr) -> Result<(), Error> {
+        database.try_borrow_mut()?.set_device(self)?;
         Ok(())
     }
 

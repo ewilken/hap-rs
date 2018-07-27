@@ -1,4 +1,4 @@
-use std::{io::{self, Read, Write, ErrorKind}, cmp::min};
+use std::{io::{self, Read, Write, ErrorKind}, cmp::min, rc::Rc, cell::RefCell};
 
 use futures::{
     Async::{self, Ready, NotReady},
@@ -15,6 +15,8 @@ use chacha20_poly1305_aead;
 use bytes::{BytesMut, buf::FromBuf};
 use byteorder::{ByteOrder, LittleEndian};
 use uuid::Uuid;
+
+use protocol::IdPtr;
 
 use Error;
 
@@ -88,7 +90,7 @@ pub struct EncryptedStream {
     incoming_sender: UnboundedSender<Vec<u8>>,
     outgoing_receiver: UnboundedReceiver<Vec<u8>>,
     session_receiver: oneshot::Receiver<Session>,
-    pub controller_id: Option<Uuid>,
+    pub controller_id: IdPtr,
     shared_secret: Option<[u8; 32]>,
     decrypt_count: u64,
     encrypt_count: u64,
@@ -117,7 +119,7 @@ impl EncryptedStream {
             incoming_sender,
             outgoing_receiver,
             session_receiver: receiver,
-            controller_id: None,
+            controller_id: Rc::new(RefCell::new(None)),
             shared_secret: None,
             decrypt_count: 0,
             encrypt_count: 0,
@@ -151,7 +153,7 @@ impl EncryptedStream {
     fn read_encrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.missing_data_for_decrypted_buf {
             let decrypted = decrypt_chunk(
-                &self.shared_secret.unwrap(),
+                &self.shared_secret.expect("missing shared secret"),
                 &self.encrypted_buf[..2],
                 self.encrypted_buf[2..(self.packet_len - 14)].to_vec(),
                 &self.encrypted_buf[(self.packet_len - 14)..(self.packet_len + 2)],
@@ -238,7 +240,7 @@ impl Read for EncryptedStream {
         if self.shared_secret.is_none() {
             match self.session_receiver.poll() {
                 Ok(Async::Ready(session)) => {
-                    self.controller_id = Some(session.controller_id);
+                    self.controller_id.replace(Some(session.controller_id));
                     self.shared_secret = Some(session.shared_secret);
                 },
                 _ => {
@@ -317,7 +319,6 @@ fn decrypt_chunk(
     nonce.extend(suffix);
     *count += 1;
 
-    // TODO - handle the error properly and drop the connection if decryption fails
     chacha20_poly1305_aead::decrypt(
         &read_key,
         &nonce,
@@ -347,7 +348,6 @@ fn encrypt_chunk(
     let mut aad = [0; 2];
     LittleEndian::write_u16(&mut aad, data.len() as u16);
 
-    // TODO - handle the error properly
     let auth_tag = chacha20_poly1305_aead::encrypt(
         &write_key,
         &nonce,

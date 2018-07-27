@@ -190,6 +190,12 @@ impl From<cell::BorrowError> for Error {
     }
 }
 
+impl From<cell::BorrowMutError> for Error {
+    fn from(_: cell::BorrowMutError) -> Error {
+        Error::Unknown
+    }
+}
+
 impl From<str::Utf8Error> for Error {
     fn from(_: str::Utf8Error) -> Self {
         Error::Unknown
