@@ -1,7 +1,7 @@
 use std::{rc::Rc, cell::RefCell, net::SocketAddr};
 
 use config::{Config, ConfigPtr};
-use db::{Storage, Database, DatabasePtr, FileStorage, AccessoryList, AccessoryListTrait};
+use db::{Storage, Database, DatabasePtr, FileStorage, AccessoryList, AccessoryListMember};
 use pin;
 use protocol::Device;
 use transport::{http, mdns::{Responder, ResponderPtr}, bonjour::StatusFlag, Transport};
@@ -9,6 +9,7 @@ use event::{Event, Emitter, EmitterPtr};
 
 use Error;
 
+/// Transport via TCP/IP.
 pub struct IpTransport<S: Storage> {
     config: ConfigPtr,
     storage: S,
@@ -19,9 +20,49 @@ pub struct IpTransport<S: Storage> {
 }
 
 impl IpTransport<FileStorage> {
+    /// Creates a new `IpTransport`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hap::{
+    ///     Config,
+    ///     accessory::{Category, Information, bridge, lightbulb},
+    ///     transport::{Transport, IpTransport},
+    /// };
+    ///
+    /// let config = Config {
+    ///     pin: "11122333".into(),
+    ///     name: "Acme Lighting".into(),
+    ///     category: Category::Bridge,
+    /// }
+    ///
+    /// let bridge_info = Information {
+    ///     name: "Bridge".into(),
+    ///     ..Default::default()
+    /// }
+    /// let first_bulb_info = Information {
+    ///     name: "Bulb 1".into(),
+    ///     ..Default::default()
+    /// }
+    /// let second_bulb_info = Information {
+    ///     name: "Bulb 2".into(),
+    ///     ..Default::default()
+    /// }
+    ///
+    /// let bridge = bridge::new(bridge_info).unwrap();
+    /// let first_bulb = lightbulb::new(first_bulb_info).unwrap();
+    /// let second_bulb = lightbulb::new(second_bulb_info).unwrap();
+    ///
+    /// let accessories = vec![Box::new(bridge), Box::new(first_bulb), Box::new(second_bulb)];
+    ///
+    /// let mut ip_transport = IpTransport::new(config, accessories).unwrap();
+    ///
+    /// ip_transport.start().unwrap();
+    /// ```
     pub fn new(
         mut config: Config,
-        accessories: Vec<Box<AccessoryListTrait>>,
+        accessories: Vec<Box<AccessoryListMember>>,
     ) -> Result<IpTransport<FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;

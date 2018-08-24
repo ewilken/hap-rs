@@ -268,7 +268,7 @@ fn handle_exchange(
             }
 
             let pairing = Pairing::new(pairing_uuid, Permissions::Admin, pairing_ltpk);
-            pairing.save(database)?;
+            pairing.save_to(database)?;
 
             let mut accessory_x = [0; 32];
             let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");

@@ -13,6 +13,7 @@ use pin::Pin;
 
 use Error;
 
+/// `Device` represents instances of the HAP server.
 #[derive(Serialize, Deserialize)]
 pub struct Device {
     pub id: String,
@@ -23,15 +24,19 @@ pub struct Device {
 }
 
 impl Device {
+    /// Creates a new `Device` with a given key pair.
     pub fn new(id: String, pin: Pin, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
         Device {id, pin, public_key, private_key}
     }
 
+    /// Creates a new `Device` generating a random key pair.
     pub fn new_random(id: String, pin: Pin) -> Device {
         let (private_key, public_key) = generate_key_pair();
         Device {id, pin, private_key, public_key}
     }
 
+    /// Attempts to load a `Device` from a database and creates a new one with a random key pair if
+    /// none is found for the given ID.
     pub fn load_or_new(id: String, pin: Pin, database: &Database) -> Result<Device, Error> {
         if let Some(device) = database.get_device().ok() {
             return Ok(device)
@@ -41,21 +46,25 @@ impl Device {
         Ok(device)
     }
 
+    /// Loads a `Device` from a database.
     pub fn load_from(database: &DatabasePtr) -> Result<Device, Error> {
         database.try_borrow()?.get_device()
     }
 
+    /// Saves a `Device` to a database.
     pub fn save_to(&self, database: &DatabasePtr) -> Result<(), Error> {
         database.try_borrow_mut()?.set_device(self)?;
         Ok(())
     }
 
-    pub fn as_byte_vec(&self) -> Result<Vec<u8>, Error> {
+    /// Serializes a `Device` to a `Vec<u8>`.
+    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)
     }
 
-    pub fn from_byte_vec(bytes: Vec<u8>) -> Result<Device, Error> {
+    /// Deserializes a `Device` from a `Vec<u8>`.
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<Device, Error> {
         let value = serde_json::from_slice(&bytes)?;
         Ok(value)
     }

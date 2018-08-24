@@ -4,12 +4,16 @@ use event::EmitterPtr;
 
 use Error;
 
+/// Bridge Accessory.
 pub type Bridge = Accessory<BridgeInner>;
 
+/// Inner type of the Bridge Accessory.
 #[derive(Default)]
 pub struct BridgeInner {
+    /// ID of the Bridge Accessory.
     id: u64,
 
+    /// Accessory Information Service.
     pub accessory_information: AccessoryInformation,
 }
 
@@ -54,6 +58,7 @@ impl HapAccessory for BridgeInner {
     }
 }
 
+/// Creates a new Bridge Accessory.
 pub fn new(information: Information) -> Result<Bridge, Error> {
     Ok(Bridge::new(BridgeInner {
         accessory_information: information.to_service()?,

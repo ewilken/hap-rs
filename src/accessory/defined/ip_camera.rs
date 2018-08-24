@@ -9,14 +9,20 @@ use event::EmitterPtr;
 
 use Error;
 
+/// IP Camera Accessory.
 pub type IpCamera = Accessory<IpCameraInner>;
 
+/// Inner type of the IP Camera Accessory.
 #[derive(Default)]
 pub struct IpCameraInner {
+    /// ID of the IP Camera Accessory.
     id: u64,
 
+    /// Accessory Information Service.
     pub accessory_information: AccessoryInformation,
+    /// Camera RTP Stream Management Service.
     pub camera_rtp_stream_management: camera_rtp_stream_management::CameraRTPStreamManagement,
+    /// Microphone Service.
     pub microphone: microphone::Microphone,
 }
 
@@ -65,6 +71,7 @@ impl HapAccessory for IpCameraInner {
     }
 }
 
+/// Creates a new IP Camera Accessory.
 pub fn new(information: Information) -> Result<IpCamera, Error> {
     let mut camera_rtp_stream_management = camera_rtp_stream_management::new();
     camera_rtp_stream_management.set_primary(true);

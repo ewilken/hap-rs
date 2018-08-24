@@ -177,7 +177,7 @@ fn handle_finish(
 
         let uuid_str = str::from_utf8(device_pairing_id)?;
         let pairing_uuid = Uuid::parse_str(uuid_str)?;
-        let pairing = Pairing::load(pairing_uuid, database)?;
+        let pairing = Pairing::load_from(pairing_uuid, database)?;
 
         let mut device_info: Vec<u8> = Vec::new();
         device_info.extend(&session.a_pub);

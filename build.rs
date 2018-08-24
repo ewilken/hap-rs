@@ -231,6 +231,7 @@ fn snake_case_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Resu
 }
 
 static CATEGORIES: &'static str = "// THIS FILE IS AUTO-GENERATED\n
+/// HAP Accessory category.
 #[derive(Copy, Clone)]
 pub enum Category {
 {{#each Categories as |c|}}\
@@ -242,6 +243,7 @@ pub enum Category {
 static HAP_TYPE: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use serde::ser::{Serialize, Serializer};
 
+/// HAP Service and Characteristic type.
 #[derive(Copy, Clone, Debug)]
 pub enum HapType {
     Unknown,
@@ -254,6 +256,7 @@ pub enum HapType {
 }
 
 impl HapType {
+    /// Converts a `HapType` to its corresponding shortened UUID string.
     pub fn to_string(&self) -> String {
         match self {
             &HapType::Unknown => \"unknown\".into(),
@@ -281,8 +284,10 @@ impl Serialize for HapType {
 static CHARACTERISTIC: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use characteristic::{HapType, Characteristic, Inner, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
 
+/// {{characteristic.Name}} Characteristic.
 pub type {{trim characteristic.Name}} = Characteristic<{{type characteristic.Format}}>;
 
+/// Creates a new {{characteristic.Name}} Characteristic.
 pub fn new() -> {{trim characteristic.Name}} {
     Characteristic::new(Inner::<{{type characteristic.Format}}> {
         hap_type: HapType::{{trim characteristic.Name}},
@@ -326,22 +331,29 @@ use characteristic::{
 };
 use HapType;
 
+/// {{service.Name}} Service.
 pub type {{trim service.Name}} = Service<{{trim service.Name}}Inner>;
 
 impl Default for {{trim service.Name}} {
     fn default() -> {{trim service.Name}} { new() }
 }
 
+/// Inner type of the {{service.Name}} Service.
 #[derive(Default)]
 pub struct {{trim service.Name}}Inner {
+    /// ID of the {{service.Name}} Service.
     id: u64,
+    /// `HapType` of the {{service.Name}} Service.
     hap_type: HapType,
+    /// Specifies if the Service is hidden.
     hidden: bool,
+    /// Specifies if the Service is the primary Service of the Accessory.
     primary: bool,
 
 {{#each service.RequiredCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
+\t/// {{c.Name}} Characteristic.
 \tpub {{characteristic_file_name r ../../this.characteristics}}: {{characteristic_file_name r ../../this.characteristics}}::{{characteristic_name r ../../this.characteristics}},
 {{/if_eq}}\
 {{/each}}\
@@ -349,6 +361,7 @@ pub struct {{trim service.Name}}Inner {
 \n{{#each service.OptionalCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
+\t/// {{c.Name}} Characteristic.
 \tpub {{characteristic_file_name r ../../this.characteristics}}: Option<{{characteristic_file_name r ../../this.characteristics}}::{{characteristic_name r ../../this.characteristics}}>,
 {{/if_eq}}\
 {{/each}}\
@@ -429,6 +442,7 @@ impl HapService for {{trim service.Name}}Inner {
     }
 }
 
+/// Creates a new {{service.Name}} Service.
 pub fn new() -> {{trim service.Name}} {
     {{trim service.Name}}::new({{trim service.Name}}Inner {
         hap_type: HapType::{{trim service.Name}},
@@ -455,13 +469,18 @@ use event::EmitterPtr;
 
 use Error;
 
+/// {{service.Name}} Accessory.
 pub type {{trim service.Name}} = Accessory<{{trim service.Name}}Inner>;
 
+/// Inner type of the {{service.Name}} Accessory.
 #[derive(Default)]
 pub struct {{trim service.Name}}Inner {
+    /// ID of the {{service.Name}} Accessory.
     id: u64,
 
+    /// Accessory Information Service.
     pub accessory_information: AccessoryInformation,
+    /// {{service.Name}} Service.
     pub {{snake_case service.Name}}: {{snake_case service.Name}}::{{trim service.Name}},
 }
 
@@ -508,6 +527,7 @@ impl HapAccessory for {{trim service.Name}}Inner {
     }
 }
 
+/// Creates a new {{service.Name}} Accessory.
 pub fn new(information: Information) -> Result<{{trim service.Name}}, Error> {
     let mut {{snake_case service.Name}} = {{snake_case service.Name}}::new();
     {{snake_case service.Name}}.set_primary(true);

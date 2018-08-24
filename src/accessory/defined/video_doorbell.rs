@@ -10,15 +10,22 @@ use event::EmitterPtr;
 
 use Error;
 
+/// Video Doorbell Accessory.
 pub type VideoDoorbell = Accessory<VideoDoorbellInner>;
 
+/// Inner type of the Video Doorbell Accessory.
 #[derive(Default)]
 pub struct VideoDoorbellInner {
+    /// ID of the Video Doorbell Accessory.
     id: u64,
 
+    /// Accessory Information Service.
     pub accessory_information: AccessoryInformation,
+    /// Camera RTP Stream Management Service.
     pub camera_rtp_stream_management: camera_rtp_stream_management::CameraRTPStreamManagement,
+    /// Speaker Service.
     pub speaker: speaker::Speaker,
+    /// Microphone Service.
     pub microphone: microphone::Microphone,
 }
 
@@ -69,6 +76,7 @@ impl HapAccessory for VideoDoorbellInner {
     }
 }
 
+/// Creates a new Video Doorbell Accessory.
 pub fn new(information: Information) -> Result<VideoDoorbell, Error> {
     let mut camera_rtp_stream_management = camera_rtp_stream_management::new();
     camera_rtp_stream_management.set_primary(true);

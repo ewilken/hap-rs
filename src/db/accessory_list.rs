@@ -5,24 +5,30 @@ use erased_serde;
 
 use accessory::HapAccessory;
 use characteristic::Perm;
-use transport::http::{Status, server::EventSubscriptions, handlers::characteristics::{
-    ReadResponseObject, WriteObject, WriteResponseObject
-}};
+use transport::http::{
+    Status,
+    server::EventSubscriptions,
+    ReadResponseObject,
+    WriteObject,
+    WriteResponseObject,
+};
 use event::EmitterPtr;
 
 use Error;
 
+/// `AccessoryList` is a wrapper type holding an `Rc<RefCell>` with a `Vec` of boxed Accessories.
 #[derive(Clone)]
 pub struct AccessoryList {
-    pub accessories: Rc<RefCell<Vec<Box<AccessoryListTrait>>>>,
+    pub accessories: Rc<RefCell<Vec<Box<AccessoryListMember>>>>,
 }
 
 impl AccessoryList {
-    pub fn new(accessories: Vec<Box<AccessoryListTrait>>) -> AccessoryList {
+    /// Creates a new `AccessoryList`.
+    pub fn new(accessories: Vec<Box<AccessoryListMember>>) -> AccessoryList {
         AccessoryList { accessories: Rc::new(RefCell::new(accessories)) }
     }
 
-    pub fn init_aids(&mut self, event_emitter: EmitterPtr) -> Result<(), Error> {
+    pub(crate) fn init_aids(&mut self, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_aid = 1;
         for accessory in self.accessories.try_borrow_mut()?.iter_mut() {
             accessory.set_id(next_aid);
@@ -32,7 +38,7 @@ impl AccessoryList {
         Ok(())
     }
 
-    pub fn read_characteristic(
+    pub(crate) fn read_characteristic(
         &self,
         aid: u64,
         iid: u64,
@@ -95,7 +101,7 @@ impl AccessoryList {
         Ok(result_object)
     }
 
-    pub fn write_characteristic(
+    pub(crate) fn write_characteristic(
         &self,
         write_object: WriteObject,
         event_subscriptions: &EventSubscriptions,
@@ -155,8 +161,9 @@ impl Serialize for AccessoryList {
     }
 }
 
-pub trait AccessoryListTrait: HapAccessory + erased_serde::Serialize {}
+/// `AccessoryListMember` is implemented by members of an `AccessoryList`.
+pub trait AccessoryListMember: HapAccessory + erased_serde::Serialize {}
 
-impl<T: HapAccessory + erased_serde::Serialize> AccessoryListTrait for T {}
+impl<T: HapAccessory + erased_serde::Serialize> AccessoryListMember for T {}
 
-serialize_trait_object!(AccessoryListTrait);
+serialize_trait_object!(AccessoryListMember);

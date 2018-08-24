@@ -35,9 +35,10 @@ pub mod service;
 
 pub mod db;
 pub mod transport;
-pub mod pin;
 pub mod protocol;
-pub mod event;
+
+mod pin;
+mod event;
 
 mod config;
 mod error;

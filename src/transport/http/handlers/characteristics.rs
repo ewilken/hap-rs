@@ -4,12 +4,14 @@ use hyper::{Uri, StatusCode, server::Response};
 use serde_json;
 use url::form_urlencoded;
 
-use characteristic::{Format, Perm, Unit};
 use db::{AccessoryList, DatabasePtr};
 use config::ConfigPtr;
-use HapType;
 use transport::http::{
     Status,
+    CharacteristicResponseBody,
+    ReadResponseObject,
+    WriteObject,
+    WriteResponseObject,
     server::EventSubscriptions,
     handlers::JsonHandler,
     json_response,
@@ -41,7 +43,7 @@ impl JsonHandler for GetCharacteristics {
         _: &EmitterPtr,
     ) -> Result<Response, Error> {
         if let Some(query) = uri.query() {
-            let mut resp_body = Body::<ReadResponseObject> {
+            let mut resp_body = CharacteristicResponseBody::<ReadResponseObject> {
                 characteristics: Vec::new()
             };
             let mut some_err = false;
@@ -136,8 +138,8 @@ impl JsonHandler for UpdateCharacteristics {
         accessories: &AccessoryList,
         _: &EmitterPtr,
     ) -> Result<Response, Error> {
-        let write_body: Body<WriteObject> = serde_json::from_slice(&body)?;
-        let mut resp_body = Body::<WriteResponseObject> {
+        let write_body: CharacteristicResponseBody<WriteObject> = serde_json::from_slice(&body)?;
+        let mut resp_body = CharacteristicResponseBody::<WriteResponseObject> {
             characteristics: Vec::new()
         };
         let mut some_err = false;
@@ -178,72 +180,4 @@ impl JsonHandler for UpdateCharacteristics {
             Ok(status_response(StatusCode::NoContent))
         }
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Body<T> {
-    characteristics: Vec<T>,
-}
-
-#[derive(Debug, Default, Serialize)]
-pub struct ReadResponseObject {
-    pub iid: u64,
-    pub aid: u64,
-    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
-    pub hap_type: Option<HapType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<Format>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub perms: Option<Vec<Perm>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ev: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value: Option<serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub unit: Option<Unit>,
-    #[serde(rename = "maxValue", skip_serializing_if = "Option::is_none")]
-    pub max_value: Option<serde_json::Value>,
-    #[serde(rename = "minValue", skip_serializing_if = "Option::is_none")]
-    pub min_value: Option<serde_json::Value>,
-    #[serde(rename = "minStep", skip_serializing_if = "Option::is_none")]
-    pub step_value: Option<serde_json::Value>,
-    #[serde(rename = "maxLen", skip_serializing_if = "Option::is_none")]
-    pub max_len: Option<u16>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<i32>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct WriteObject {
-    pub iid: u64,
-    pub aid: u64,
-    pub ev: Option<bool>,
-    pub value: Option<serde_json::Value>,
-    #[serde(rename = "authData")]
-    pub auth_data: Option<String>,
-    pub remote: Option<bool>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct WriteResponseObject {
-    pub iid: u64,
-    pub aid: u64,
-    pub status: i32,
-}
-
-#[derive(Debug, Serialize)]
-pub struct EventObject {
-    pub iid: u64,
-    pub aid: u64,
-    pub value: serde_json::Value,
-}
-
-pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, serde_json::Error> {
-    let body = serde_json::to_string(&Body { characteristics: event_objects })?;
-    let response = format!(
-        "EVENT/1.0 200 OK\nContent-Type: application/hap+json\nContent-Length: {}\n\n{}",
-        body.len(),
-        body,
-    );
-    Ok(response.as_bytes().to_vec())
 }

@@ -5,6 +5,7 @@ use hyper;
 use chacha20_poly1305_aead;
 use eui48;
 
+/// Error wrapper type.
 #[derive(Debug, Fail)]
 pub enum Error {
     #[fail(display = "IO Error {}", _0)]
@@ -30,6 +31,7 @@ pub enum Error {
 }
 
 impl Error {
+    /// Creates a new `std::io::Error` wrapped in a `hap::Error::Io()`.
     pub fn new_io(cause: &'static str) -> Error {
         Error::Io(io::Error::new(io::ErrorKind::Other, cause.to_owned()))
     }

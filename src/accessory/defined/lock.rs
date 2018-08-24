@@ -9,14 +9,20 @@ use event::EmitterPtr;
 
 use Error;
 
+/// Lock Accessory.
 pub type Lock = Accessory<LockInner>;
 
+/// Inner type of the Lock Accessory.
 #[derive(Default)]
 pub struct LockInner {
+    /// ID of the Lock Accessory.
     id: u64,
 
+    /// Accessory Information Service.
     pub accessory_information: AccessoryInformation,
+    /// Lock Mechanism Service.
     pub lock_mechanism: lock_mechanism::LockMechanism,
+    /// Lock Management Service.
     pub lock_management: lock_management::LockManagement,
 }
 
@@ -65,6 +71,7 @@ impl HapAccessory for LockInner {
     }
 }
 
+/// Creates a new Lock Accessory.
 pub fn new(information: Information) -> Result<Lock, Error> {
     let mut lock_mechanism = lock_mechanism::new();
     lock_mechanism.set_primary(true);

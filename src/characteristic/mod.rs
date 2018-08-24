@@ -12,6 +12,7 @@ use Error;
 mod includes;
 pub use characteristic::includes::*;
 
+/// Inner type of a `Characteristic`.
 #[derive(Default)]
 pub struct Inner<T: Default + Clone + Serialize> {
     id: u64,
@@ -39,56 +40,70 @@ pub struct Inner<T: Default + Clone + Serialize> {
     event_emitter: Option<EmitterPtr>,
 }
 
+/// A Characteristic. A characteristic is a feature that represents data or an associated behavior
+/// of a service. The characteristic is defined by a universally unique type, and has additional
+/// properties that determine how the value of the characteristic can be accessed
 #[derive(Clone, Default)]
 pub struct Characteristic<T: Default + Clone + Serialize> {
     pub inner: Rc<RefCell<Inner<T>>>,
 }
 
 impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deserialize<'de> {
+    /// Creates a new `Characteristic`.
     pub fn new(inner: Inner<T>) -> Characteristic<T> {
         Characteristic { inner: Rc::new(RefCell::new(inner)) }
     }
 
+    /// Returns the ID of a Characteristic.
     pub fn get_id(&self) -> Result<u64, Error> {
         Ok(self.inner.try_borrow()?.id)
     }
 
+    /// Sets the ID of a Characteristic.
     pub fn set_id(&mut self, id: u64) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.id = id;
         Ok(())
     }
 
+    /// Sets the Accessory ID of a Characteristic.
     pub fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.accessory_id = accessory_id;
         Ok(())
     }
 
+    /// Returns the `HapType` of a Characteristic.
     pub fn get_type(&self) -> Result<HapType, Error> {
         Ok(self.inner.try_borrow()?.hap_type)
     }
 
+    /// Returns the `Format` of a Characteristic.
     pub fn get_format(&self) -> Result<Format, Error> {
         Ok(self.inner.try_borrow()?.format)
     }
 
+    /// Returns the `Perm`s of a Characteristic.
     pub fn get_perms(&self) -> Result<Vec<Perm>, Error> {
         Ok(self.inner.try_borrow()?.perms.clone())
     }
 
+    /// Sets the description of a Characteristic.
     pub fn set_description(&mut self, description: Option<String>) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.description = description;
         Ok(())
     }
 
+    /// Returns the event notifications value of a Characteristic.
     pub fn get_event_notifications(&self) -> Result<Option<bool>, Error> {
         Ok(self.inner.try_borrow()?.event_notifications)
     }
 
+    /// Sets the event notifications value of a Characteristic.
     pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.event_notifications = event_notifications;
         Ok(())
     }
 
+    /// Returns the value of a Characteristic.
     pub fn get_value(&mut self) -> Result<T, Error> {
         let mut val = None;
         {
@@ -105,6 +120,7 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
         Ok(self.inner.try_borrow()?.value.clone())
     }
 
+    /// Sets the value of a Characteristic.
     pub fn set_value(&mut self, val: T) -> Result<(), Error> {
         // TODO - check for min/max on types implementing PartialOrd
         // if let Some(ref max) = self.inner.try_borrow()?.max_value {
@@ -145,51 +161,62 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
         Ok(())
     }
 
+    /// Returns the `Unit` of a Characteristic.
     pub fn get_unit(&self) -> Result<Option<Unit>, Error> {
         Ok(self.inner.try_borrow()?.unit)
     }
 
+    /// Returns the maximum value of a Characteristic.
     pub fn get_max_value(&self) -> Result<Option<T>, Error> {
         Ok(self.inner.try_borrow()?.max_value.clone())
     }
 
+    /// Sets the maximum value of a Characteristic.
     pub fn set_max_value(&mut self, val: Option<T>) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.max_value = val;
         Ok(())
     }
 
+    /// Returns the minimum value of a Characteristic.
     pub fn get_min_value(&self) -> Result<Option<T>, Error> {
         Ok(self.inner.try_borrow()?.min_value.clone())
     }
 
+    /// Sets the minimum value of a Characteristic.
     pub fn set_min_value(&mut self, val: Option<T>) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.min_value = val;
         Ok(())
     }
 
+    /// Returns the step value of a Characteristic.
     pub fn get_step_value(&self) -> Result<Option<T>, Error> {
         Ok(self.inner.try_borrow()?.step_value.clone())
     }
 
+    /// Returns the step value of a Characteristic.
     pub fn set_step_value(&mut self, val: Option<T>) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.step_value = val;
         Ok(())
     }
 
+    /// Returns the maximum length of a Characteristic.
     pub fn get_max_len(&self) -> Result<Option<u16>, Error> {
         Ok(self.inner.try_borrow()?.max_len)
     }
 
+    /// Sets a `Readable` on the Characteristic.
     pub fn set_readable(&mut self, readable: impl Readable<T> + 'static) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.readable = Some(Box::new(readable));
         Ok(())
     }
 
+    /// Sets an `Readable` on the Characteristic.
     pub fn set_updatable(&mut self, updatable: impl Updatable<T> + 'static) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.updatable = Some(Box::new(updatable));
         Ok(())
     }
 
+    /// Sets a `hap::event::EmitterPtr` on the Characteristic.
     pub fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error> {
         self.inner.try_borrow_mut()?.event_emitter = event_emitter;
         Ok(())
@@ -243,22 +270,39 @@ impl<T: Default + Clone + Serialize> Serialize for Characteristic<T> {
     }
 }
 
+/// `HapCharacteristic` is implemented by the inner type of every `Characteristic`.
 pub trait HapCharacteristic: erased_serde::Serialize {
+    /// Returns the ID of a Characteristic.
     fn get_id(&self) -> Result<u64, Error>;
+    /// Sets the ID of a Characteristic.
     fn set_id(&mut self, id: u64) -> Result<(), Error>;
+    /// Sets the Accessory ID of a Characteristic.
     fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error>;
+    /// Returns the `HapType` of a Characteristic.
     fn get_type(&self) -> Result<HapType, Error>;
+    /// Returns the `Format` of a Characteristic.
     fn get_format(&self) -> Result<Format, Error>;
+    /// Returns the `Perm`s of a Characteristic.
     fn get_perms(&self) -> Result<Vec<Perm>, Error>;
+    /// Returns the event notifications value of a Characteristic.
     fn get_event_notifications(&self) -> Result<Option<bool>, Error>;
+    /// Sets the event notifications value of a Characteristic.
     fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error>;
+    /// Returns the value of a Characteristic.
     fn get_value(&mut self) -> Result<serde_json::Value, Error>;
+    /// Sets the value of a Characteristic.
     fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
+    /// Returns the `Unit` of a Characteristic.
     fn get_unit(&self) -> Result<Option<Unit>, Error>;
+    /// Returns the maximum value of a Characteristic.
     fn get_max_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    /// Returns the minimum value of a Characteristic.
     fn get_min_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    /// Returns the step value of a Characteristic.
     fn get_step_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    /// Returns the maximum length of a Characteristic.
     fn get_max_len(&self) -> Result<Option<u16>, Error>;
+    /// Sets a `hap::event::EmitterPtr` on the Characteristic.
     fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error>;
 }
 
@@ -354,14 +398,24 @@ impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T> whe
     }
 }
 
+/// `Readable` can be implemented to react to the remote read of a `Characteristic`.
 pub trait Readable<T: Default + Serialize> {
+    /// This function is called every time a Controller attempts to read the value of a
+    /// `Characteristic`. Returning a `Some(T)` from this function changes the value of the
+    /// `Characteristic` before the Controller reads it so the Controller reads the new value.
     fn on_read(&mut self, hap_type: HapType) -> Option<T>;
 }
 
+/// `Updatable` can be implemented to react to the remote update of a `Characteristic`.
 pub trait Updatable<T: Default + Serialize> {
+    /// This function is called every time a Controller attempts to update the value of a
+    /// `Characteristic`. `old_val` is a reference to the current value of the `Characteristic` and
+    /// `new_val` is a reference to the value the Controller attempts to change the
+    /// `Characteristic`'s to.
     fn on_update(&mut self, old_val: &T, new_val: &T, hap_type: HapType);
 }
 
+/// Permission of a `Characteristic`.
 #[derive(Debug, Copy, Clone, Serialize, PartialEq)]
 pub enum Perm {
     #[serde(rename = "pr")]
@@ -378,6 +432,7 @@ pub enum Perm {
     Hidden,
 }
 
+/// Unit of a `Characteristic`.
 #[derive(Debug, Copy, Clone, Serialize)]
 pub enum Unit {
     #[serde(rename = "percentage")]
@@ -392,6 +447,7 @@ pub enum Unit {
     Seconds,
 }
 
+/// HAP defined format of a `Characteristic`.
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Format {
     #[serde(rename = "string")]

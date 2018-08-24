@@ -6,15 +6,20 @@ use route_recognizer::Router;
 use tokio_core::{net::TcpListener, reactor::Core};
 
 use transport::{
-    http::{handlers::{
-        self,
-        pair_setup,
-        pair_verify,
-        accessories,
-        characteristics::{self, EventObject, event_response},
-        pairings,
-        identify
-    }, status_response},
+    http::{
+        EventObject,
+        status_response,
+        event_response,
+        handlers::{
+            self,
+            pair_setup,
+            pair_verify,
+            accessories,
+            characteristics,
+            pairings,
+            identify
+        },
+    },
     tcp::{EncryptedStream, StreamWrapper, Session},
 };
 use db::{AccessoryList, DatabasePtr};
