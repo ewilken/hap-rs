@@ -83,8 +83,8 @@ pub struct Config {
     pub feature_flag: FeatureFlag, // ff
     /// Optional maximum number of paired controllers.
     pub max_peers: Option<usize>,
-    version: u64,
-    config_hash: Option<u64>,
+    pub version: u64,
+    pub config_hash: Option<u64>,
 }
 
 impl Config {

@@ -98,40 +98,44 @@ impl Updatable<u8> for VirtualDoor {
 }
 
 fn main() {
-    let bridge = bridge::new(Information { name: "Bridge".into(), ..Default::default() })
-        .expect("couldn't create bridge");
-    let mut outlet = outlet::new(Information { name: "Outlet".into(), ..Default::default() })
-        .expect("couldn't create outlet");
+    let bridge = bridge::new(Information {
+        name: "Bridge".into(),
+        ..Default::default()
+    }).unwrap();
 
+    let mut outlet = outlet::new(Information {
+        name: "Outlet".into(),
+        ..Default::default()
+    }).unwrap();
     let virtual_outlet = VirtualOutlet::new(VirtualOutletInner { on: false });
-    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone())
-        .expect("couldn't set readable");
-    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet)
-        .expect("couldn't set updatable");
+    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone()).unwrap();
+    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet).unwrap();
 
-    let mut door = door::new(Information { name: "Door".into(), ..Default::default() })
-        .expect("couldn't create door");
-
+    let mut door = door::new(Information {
+        name: "Door".into(),
+        ..Default::default()
+    }).unwrap();
     let virtual_door = VirtualDoor::new(
         VirtualDoorInner { current_position: 0, target_position: 0 },
         door.inner.door.inner.current_position.clone(),
     );
-    door.inner.door.inner.current_position.set_readable(virtual_door.clone())
-        .expect("couldn't set readable");
-    door.inner.door.inner.current_position.set_updatable(virtual_door.clone())
-        .expect("couldn't set updatable");
-    door.inner.door.inner.target_position.set_readable(virtual_door.clone())
-        .expect("couldn't set readable");
-    door.inner.door.inner.target_position.set_updatable(virtual_door)
-        .expect("couldn't set updatable");
+    door.inner.door.inner.current_position.set_readable(virtual_door.clone()).unwrap();
+    door.inner.door.inner.current_position.set_updatable(virtual_door.clone()).unwrap();
+    door.inner.door.inner.target_position.set_readable(virtual_door.clone()).unwrap();
+    door.inner.door.inner.target_position.set_updatable(virtual_door).unwrap();
 
-    let security_system = security_system::new(Information { name: "Security System".into(), ..Default::default() })
-        .expect("couldn't create security system");
-    let valve = valve::new(Information { name: "Valve".into(), ..Default::default() })
-        .expect("couldn't create valve");
+    let security_system = security_system::new(Information {
+        name: "Security System".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let valve = valve::new(Information {
+        name: "Valve".into(),
+        ..Default::default()
+    }).unwrap();
 
     let config = Config {
-        name: "Korhal".into(),
+        name: "Acme Bridge".into(),
         category: Category::Bridge,
         ..Default::default()
     };
@@ -141,7 +145,7 @@ fn main() {
         Box::new(door),
         Box::new(security_system),
         Box::new(valve),
-    ]).expect("couldn't create IP transport");
+    ]).unwrap();
 
-    ip_transport.start().expect("couldn't start IP transport");
+    ip_transport.start().unwrap();
 }
