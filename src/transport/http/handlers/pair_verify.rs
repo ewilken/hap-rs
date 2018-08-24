@@ -96,7 +96,7 @@ fn handle_start(
     database: &DatabasePtr,
     a_pub: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    println!("/pair-verify - M1: Got Verify Start Request");
+    debug!("/pair-verify - M1: Got Verify Start Request");
 
     let mut rng = rand::thread_rng();
     let b = rng.gen::<[u8; 32]>();
@@ -139,7 +139,7 @@ fn handle_start(
     )?;
     encrypted_data.extend(&auth_tag);
 
-    println!("/pair-verify - M2: Sending Verify Start Response");
+    debug!("/pair-verify - M2: Sending Verify Start Response");
 
     Ok(vec![
         Value::State(StepNumber::StartRes as u8),
@@ -153,7 +153,7 @@ fn handle_finish(
     database: &DatabasePtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    println!("/pair-verify - M3: Got Verify Finish Request");
+    debug!("/pair-verify - M3: Got Verify Finish Request");
 
     if let Some(ref mut session) = handler.session {
         let encrypted_data = Vec::from(&data[..data.len() - 16]);
@@ -197,7 +197,7 @@ fn handle_finish(
             return Err(tlv::Error::Unknown);
         }
 
-        println!("/pair-verify - M4: Sending Verify Finish Response");
+        debug!("/pair-verify - M4: Sending Verify Finish Response");
 
         Ok(vec![Value::State(StepNumber::FinishRes as u8)])
     } else {

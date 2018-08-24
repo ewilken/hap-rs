@@ -132,7 +132,7 @@ fn handle_start(
     handler: &mut PairSetup,
     database: &DatabasePtr,
 ) -> Result<tlv::Container, tlv::Error> {
-    println!("/pair-setup - M1: Got SRP Start Request");
+    debug!("/pair-setup - M1: Got SRP Start Request");
 
     if handler.unsuccessful_tries > 99 {
         return Err(tlv::Error::MaxTries);
@@ -164,7 +164,7 @@ fn handle_start(
         shared_secret: None,
     });
 
-    println!("/pair-setup - M2: Sending SRP Start Response");
+    debug!("/pair-setup - M2: Sending SRP Start Response");
 
     Ok(vec![Value::State(StepNumber::StartRes as u8), Value::PublicKey(b_pub), Value::Salt(salt.clone())])
 }
@@ -174,7 +174,7 @@ fn handle_verify(
     a_pub: Vec<u8>,
     a_proof: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    println!("/pair-setup - M3: Got SRP Verify Request");
+    debug!("/pair-setup - M3: Got SRP Verify Request");
 
     if let Some(ref mut session) = handler.session {
         let user = UserRecord {
@@ -194,7 +194,7 @@ fn handle_verify(
             &G_3072,
         )?;
 
-        println!("/pair-setup - M4: Sending SRP Verify Response");
+        debug!("/pair-setup - M4: Sending SRP Verify Response");
 
         Ok(vec![Value::State(StepNumber::VerifyRes as u8), Value::Proof(b_proof)])
     } else {
@@ -209,7 +209,7 @@ fn handle_exchange(
     event_emitter: &EmitterPtr,
     data: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    println!("/pair-setup - M5: Got SRP Exchange Request");
+    debug!("/pair-setup - M5: Got SRP Exchange Request");
 
     if let Some(ref mut session) = handler.session {
         if let Some(ref mut shared_secret) = session.shared_secret {
@@ -306,7 +306,7 @@ fn handle_exchange(
 
             event_emitter.try_borrow()?.emit(Event::DevicePaired);
 
-            println!("/pair-setup - M6: Sending SRP Exchange Response");
+            debug!("/pair-setup - M6: Sending SRP Exchange Response");
 
             Ok(vec![Value::State(StepNumber::ExchangeRes as u8), Value::EncryptedData(encrypted_data)])
         } else {

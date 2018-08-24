@@ -28,6 +28,8 @@ extern crate erased_serde;
 extern crate url;
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate log;
 
 pub mod accessory;
 pub mod characteristic;
