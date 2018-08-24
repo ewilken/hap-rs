@@ -1,14 +1,13 @@
-use std::sync::Arc;
-
 use hyper::{Uri, StatusCode, server::Response};
-use failure::Error;
 use serde_json;
-use uuid::Uuid;
 
 use config::ConfigPtr;
-use db::{accessory_list::AccessoryList, database::DatabasePtr};
+use db::{AccessoryList, DatabasePtr};
 use transport::http::{server::EventSubscriptions, handlers::JsonHandler, json_response};
 use event::EmitterPtr;
+use protocol::IdPtr;
+
+use Error;
 
 pub struct Accessories {}
 
@@ -23,7 +22,7 @@ impl JsonHandler for Accessories {
         &mut self,
         _: Uri,
         _: Vec<u8>,
-        _: Arc<Option<Uuid>>,
+        _: &IdPtr,
         _: &EventSubscriptions,
         _: &ConfigPtr,
         _: &DatabasePtr,

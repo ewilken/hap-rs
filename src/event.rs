@@ -28,4 +28,5 @@ impl Emitter {
     }
 }
 
+/// Reference counting pointer to an `Emitter`.
 pub type EmitterPtr = Rc<RefCell<Emitter>>;

@@ -2,7 +2,7 @@ use std::{
     fs,
     str,
     ffi::OsStr,
-    io::{Error, ErrorKind, Read, Write, BufReader, BufWriter},
+    io::{Read, Write, BufReader, BufWriter},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
 };
@@ -12,11 +12,15 @@ use uuid::Uuid;
 
 use db::storage::Storage;
 
+use Error;
+
+/// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 pub struct FileStorage {
     dir_path: PathBuf,
 }
 
 impl FileStorage {
+    /// Creates a new `FileStorage`.
     pub fn new(dir: &str) -> Result<FileStorage, Error> {
         let path = Path::new(dir).to_path_buf();
         fs::create_dir_all(&path)?;
@@ -27,6 +31,7 @@ impl FileStorage {
         Ok(FileStorage {dir_path: path})
     }
 
+    /// Returns a readable `File` for the given file name.
     fn file_for_read(&self, file: &str) -> Result<fs::File, Error> {
         let file_path = self.path_to_file(file);
         let file = fs::OpenOptions::new()
@@ -35,6 +40,7 @@ impl FileStorage {
         Ok(file)
     }
 
+    /// Returns a writable `File` for the given file name.
     fn file_for_write(&self, file: &str) -> Result<fs::File, Error> {
         let file_path = self.path_to_file(file);
         let file = fs::OpenOptions::new()
@@ -44,6 +50,7 @@ impl FileStorage {
         Ok(file)
     }
 
+    /// Returns the full storage path for the given file name.
     fn path_to_file(&self, file: &str) -> PathBuf {
         let mut file_path = self.dir_path.clone();
         file_path.push(file);
@@ -64,14 +71,14 @@ impl Storage for FileStorage {
         Ok(writer)
     }
 
-    fn get_byte_vec(&self, key: &str) -> Result<Vec<u8>, Error> {
+    fn get_bytes(&self, key: &str) -> Result<Vec<u8>, Error> {
         let mut reader = self.get_reader(key)?;
         let mut value = Vec::new();
         reader.read_to_end(&mut value)?;
         Ok(value)
     }
 
-    fn set_byte_vec(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
+    fn set_bytes(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
         let mut writer = self.get_writer(key)?;
         writer.write(&value)?;
         Ok(())
@@ -86,7 +93,7 @@ impl Storage for FileStorage {
     fn set_u64(&self, key: &str, value: u64) -> Result<(), Error> {
         let mut buf = [0; 8];
         BigEndian::write_u64(&mut buf, value);
-        self.set_byte_vec(key, buf.to_vec())?;
+        self.set_bytes(key, buf.to_vec())?;
         Ok(())
     }
 
@@ -98,10 +105,10 @@ impl Storage for FileStorage {
             Ok(uuid_str) => {
                 match Uuid::parse_str(uuid_str) {
                     Ok(value) => Ok(value),
-                    _ => Err(Error::new(ErrorKind::Other, "there was a problem parsing the UUID")),
+                    _ => Err(Error::new_io("couldn't parse UUID")),
                 }
             },
-            _ => Err(Error::new(ErrorKind::Other, "there was a problem reading the UUID")),
+            _ => Err(Error::new_io("couldn't read UUID")),
         }
     }
 
@@ -119,10 +126,10 @@ impl Storage for FileStorage {
             let path = entry.path();
             if path.extension() == extension {
                 let key = path.file_stem()
-                    .ok_or(Error::new(ErrorKind::Other, "invalid file name"))?
+                    .ok_or(Error::new_io("invalid file name"))?
                     .to_os_string()
                     .into_string()
-                    .or(Err(Error::new(ErrorKind::Other, "invalid file name")))?;
+                    .or(Err(Error::new_io("invalid file name")))?;
                 keys.push(key);
             }
         }

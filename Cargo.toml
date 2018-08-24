@@ -33,6 +33,7 @@ tokio-io = "0.1.6"
 erased-serde = "0.3.3"
 url = "1.7.0"
 failure = "0.1.1"
+log = "0.4.4"
 
 [build-dependencies]
 uuid = { version = "0.5.1", features = ["v4", "serde"] }

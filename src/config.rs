@@ -1,6 +1,5 @@
 use std::{
     net::IpAddr,
-    io::Error,
     env::current_dir,
     str,
     collections::hash_map::DefaultHasher,
@@ -11,39 +10,87 @@ use std::{
 
 use eui48::MacAddress;
 use rand::{self, Rng};
-use uuid::Uuid;
 use pnet::datalink;
 
 use accessory::Category;
-use db::storage::Storage;
+use db::Storage;
 use transport::bonjour::{StatusFlag, FeatureFlag};
 
+use Error;
+
+/// Reference counting pointer to a `Config`.
 pub type ConfigPtr = Rc<RefCell<Config>>;
 
+/// The `Config` struct is used to store configuration options for the HomeKit Accessory Server.
+///
+/// # Examples
+///
+/// ```
+/// let config = Config {
+///     storage_path: "/etc/homekit".into(),
+///     pin: "11122333".into(),
+///     name: "Acme Outlet".into(),
+///     category: Category::Outlet,
+///     max_peers: Some(32),
+///     ..Default::default()
+/// };
+/// ```
 pub struct Config {
-    pub id: Uuid,
-    pub version: u64,
+    /// Storage path for the persisted data. If no path is specified, the current working directory
+    /// is used.
     pub storage_path: String,
-    pub port: u16,
+    /// IP address to serve on.
     pub ip: IpAddr,
+    /// Port to serve on. Defaults to `32000`.
+    pub port: u16,
+    /// 8 digit pin used for pairing. Defaults to `"11122333"`.
+    ///
+    /// The following pins are considered too easy by Apple and therefore not allowed:
+    /// - `"12345678"`
+    /// - `"87654321"`
+    /// - `"00000000"`
+    /// - `"11111111"`
+    /// - `"22222222"`
+    /// - `"33333333"`
+    /// - `"44444444"`
+    /// - `"55555555"`
+    /// - `"66666666"`
+    /// - `"77777777"`
+    /// - `"88888888"`
+    /// - `"99999999"`
     pub pin: String,
-    pub name: String,              // md
-    pub device_id: MacAddress,     // id
+    /// Model name of the accessory.
+    pub name: String,
+    /// Device ID of the accessory. Generated randomly if not specified. This value is also used as
+    /// the accessory's Pairing Identifier.
+    pub device_id: MacAddress, // id
+    /// Current configuration number. Is updated when an accessory, service, or characteristic is
+    /// added or removed on the accessory server. Accessories must increment the config number after
+    /// a firmware update.
     pub configuration_number: u64, // c#
-    pub state_number: u8,          // s#
-    pub category: Category,        // ci
-    pub protocol_version: String,  // pv
-    pub status_flag: StatusFlag,   // sf
+    /// Current state number. This must have a value of `1`.
+    pub state_number: u8, // s#
+    /// Accessory Category. Indicates the category that best describes the primary function of the
+    /// accessory.
+    pub category: Category, // ci
+    /// Protocol version string `<major>.<minor>` (e.g. `"1.0"`). Defaults to `"1.0"` Required if value
+    /// is not `"1.0"`.
+    pub protocol_version: String, // pv
+    /// Bonjour Status Flag. Defaults to `StatusFlag::NotPaired` and is changed to
+    /// `StatusFlag::Zero` after a successful pairing.
+    pub status_flag: StatusFlag, // sf
+    /// Bonjour Feature Flag. Currently only used to indicate MFi compliance.
     pub feature_flag: FeatureFlag, // ff
+    /// Optional maximum number of paired controllers.
     pub max_peers: Option<usize>,
+    pub version: u64,
     pub config_hash: Option<u64>,
 }
 
 impl Config {
-    pub fn load(&mut self, storage: &Storage) {
-        if let Some(device_id) = storage.get_byte_vec("device_id").ok() {
-            // TODO - make this less shitty
-            self.device_id = MacAddress::parse_str(str::from_utf8(&device_id).unwrap()).unwrap();
+    pub(crate) fn load_from(&mut self, storage: &Storage) -> Result<(), Error> {
+        if let Some(device_id) = storage.get_bytes("device_id").ok() {
+            self.device_id = MacAddress::parse_str(str::from_utf8(&device_id)?)?;
         }
         if let Some(version) = storage.get_u64("version").ok() {
             self.version = version;
@@ -51,10 +98,11 @@ impl Config {
         if let Some(config_hash) = storage.get_u64("config_hash").ok() {
             self.config_hash = Some(config_hash);
         }
+        Ok(())
     }
 
-    pub fn save(&self, storage: &Storage) -> Result<(), Error> {
-        storage.set_byte_vec("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
+    pub(crate) fn save_to(&self, storage: &Storage) -> Result<(), Error> {
+        storage.set_bytes("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
         storage.set_u64("version", self.version.clone())?;
         if let Some(config_hash) = self.config_hash {
             storage.set_u64("config_hash", config_hash)?;
@@ -75,12 +123,12 @@ impl Config {
         }
     }
 
-    pub fn update_hash(&mut self) {
+    pub(crate) fn update_hash(&mut self) {
         let hash = self.calculate_hash();
         self.set_hash(hash);
     }
 
-    pub fn txt_records(&self) -> [String; 8] {
+    pub(crate) fn txt_records(&self) -> [String; 8] {
         [
             format!("md={}", self.name),
             format!("id={}", self.device_id.to_hex_string()),
@@ -96,10 +144,9 @@ impl Config {
 
 impl Hash for Config {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
         self.storage_path.hash(state);
-        self.port.hash(state);
         self.ip.hash(state);
+        self.port.hash(state);
         self.pin.hash(state);
         self.name.hash(state);
         self.device_id.to_hex_string().hash(state);
@@ -115,11 +162,14 @@ impl Hash for Config {
 impl Default for Config {
     fn default() -> Config {
         let mut config = Config {
-            id: Uuid::new_v4(),
-            version: 0,
-            storage_path: format!("{}/data", current_dir().unwrap().to_str().unwrap()),
+            storage_path: format!(
+                "{}/data", current_dir()
+                    .expect("couldn't determine current directory")
+                    .to_str()
+                    .expect("couldn't stringify current directory")
+            ),
+            ip: current_ip().expect("couldn't determine local IP address"),
             port: 32000,
-            ip: current_ip().expect("could not determine local IP address"),
             pin: "11122333".into(),
             name: "Accessory".into(),
             device_id: random_mac_address(),
@@ -130,6 +180,7 @@ impl Default for Config {
             status_flag: StatusFlag::NotPaired,
             feature_flag: FeatureFlag::Zero,
             max_peers: None,
+            version: 0,
             config_hash: None,
         };
         config.update_hash();

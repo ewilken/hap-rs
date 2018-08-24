@@ -3,11 +3,11 @@ use std::{rc::Rc, cell::RefCell};
 extern crate hap;
 
 use hap::{
-    transport::{Transport, ip::IpTransport},
+    transport::{Transport, IpTransport},
     accessory::{Category, Information, bridge, outlet, door, security_system, valve},
     characteristic::{Characteristic, Readable, Updatable},
-    config::Config,
-    hap_type::HapType,
+    Config,
+    HapType,
 };
 
 pub struct VirtualOutletInner {
@@ -98,29 +98,44 @@ impl Updatable<u8> for VirtualDoor {
 }
 
 fn main() {
-    let bridge = bridge::new(Information { name: "Bridge".into(), ..Default::default() });
-    let mut outlet = outlet::new(Information { name: "Outlet".into(), ..Default::default() });
+    let bridge = bridge::new(Information {
+        name: "Bridge".into(),
+        ..Default::default()
+    }).unwrap();
 
+    let mut outlet = outlet::new(Information {
+        name: "Outlet".into(),
+        ..Default::default()
+    }).unwrap();
     let virtual_outlet = VirtualOutlet::new(VirtualOutletInner { on: false });
-    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone());
-    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet);
+    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone()).unwrap();
+    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet).unwrap();
 
-    let mut door = door::new(Information { name: "Door".into(), ..Default::default() });
-
+    let mut door = door::new(Information {
+        name: "Door".into(),
+        ..Default::default()
+    }).unwrap();
     let virtual_door = VirtualDoor::new(
         VirtualDoorInner { current_position: 0, target_position: 0 },
         door.inner.door.inner.current_position.clone(),
     );
-    door.inner.door.inner.current_position.set_readable(virtual_door.clone());
-    door.inner.door.inner.current_position.set_updatable(virtual_door.clone());
-    door.inner.door.inner.target_position.set_readable(virtual_door.clone());
-    door.inner.door.inner.target_position.set_updatable(virtual_door);
+    door.inner.door.inner.current_position.set_readable(virtual_door.clone()).unwrap();
+    door.inner.door.inner.current_position.set_updatable(virtual_door.clone()).unwrap();
+    door.inner.door.inner.target_position.set_readable(virtual_door.clone()).unwrap();
+    door.inner.door.inner.target_position.set_updatable(virtual_door).unwrap();
 
-    let security_system = security_system::new(Information { name: "Security System".into(), ..Default::default() });
-    let valve = valve::new(Information { name: "Valve".into(), ..Default::default() });
+    let security_system = security_system::new(Information {
+        name: "Security System".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let valve = valve::new(Information {
+        name: "Valve".into(),
+        ..Default::default()
+    }).unwrap();
 
     let config = Config {
-        name: "Korhal".into(),
+        name: "Acme Bridge".into(),
         category: Category::Bridge,
         ..Default::default()
     };

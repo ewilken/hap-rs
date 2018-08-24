@@ -1,28 +1,41 @@
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 
 use characteristic::HapCharacteristic;
-use hap_type::HapType;
+use HapType;
 
 mod includes;
 pub use service::includes::*;
 
+/// `HapService` is implemented by the inner type of every `Service`.
 pub trait HapService {
+    /// Returns the ID of a Service.
     fn get_id(&self) -> u64;
+    /// Sets the ID of a Service.
     fn set_id(&mut self, id: u64);
+    /// Returns the `HapType` of a Service.
     fn get_type(&self) -> HapType;
+    /// Returns the hidden value of a Service.
     fn get_hidden(&self) -> bool;
+    /// Sets the hidden value of a Service.
     fn set_hidden(&mut self, hidden: bool);
+    /// Returns the primary value of a Service.
     fn get_primary(&self) -> bool;
+    /// Sets the primary value of a Service.
     fn set_primary(&mut self, primary: bool);
+    /// Returns references to the Characteristics of a Service.
     fn get_characteristics(&self) -> Vec<&HapCharacteristic>;
+    /// Returns mutable references to the Characteristics of a Service.
     fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic>;
 }
 
+/// A Service. Services group functionality in order to provide context. They are comprised of
+/// characteristics.
 pub struct Service<T: HapService> {
     pub inner: T,
 }
 
 impl<T: HapService> Service<T> {
+    /// Creates a new `Service`.
     fn new(inner: T) -> Service<T> {
         Service { inner }
     }
@@ -36,7 +49,7 @@ impl<T: HapService> Serialize for Service<T> {
         state.serialize_field("hidden", &self.get_hidden())?;
         state.serialize_field("primary", &self.get_primary())?;
         state.serialize_field("characteristics", &self.get_characteristics())?;
-        // TODO - look into that "linked" array
+        // linked services left out for now
         state.end()
     }
 }

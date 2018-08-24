@@ -1,12 +1,16 @@
-use std::{io, str, collections::HashMap};
+use std::{io, str, cell, collections::HashMap};
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use srp::types::SrpAuthError;
-use chacha20_poly1305_aead::DecryptError;
+use chacha20_poly1305_aead;
 use uuid;
 
 use protocol::pairing::Permissions;
 
+use error;
+
+/// Encodes a `HashMap<u8, Vec<u8>>` in the format `<Type, Value>` to a `Vec<u8>` of concatenated
+/// TLVs.
 pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::new();
     for (k, v) in hm.iter() {
@@ -41,6 +45,8 @@ pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     vec
 }
 
+/// Decodes a `Vec<u8>` of concatenated TLVs to a `HashMap<u8, Vec<u8>>` in the format
+/// `<Type, Value>`.
 pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
     let mut hm = HashMap::new();
     let mut buf: Vec<u8> = Vec::new();
@@ -70,10 +76,13 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
     hm
 }
 
+/// `Encodable` is implemented by types that can be encoded to a to a `Vec<u8>` of concatenated
+/// TLVs.
 pub trait Encodable {
     fn encode(self) -> Vec<u8>;
 }
 
+/// `Type` represents the TLV types defined by the protocol.
 #[derive(Copy, Clone)]
 pub enum Type {
     Method = 0x00,
@@ -93,6 +102,8 @@ pub enum Type {
     Separator = 0xFF,
 }
 
+/// The variants of `Value` can hold the corresponding values to the types provided by `Type`.
+#[allow(dead_code)]
 pub enum Value {
     Method(Method),
     Identifier(String),
@@ -112,6 +123,7 @@ pub enum Value {
 }
 
 impl Value {
+    /// Converts a variant of `Value` to a `(u8, Vec<u8>)` tuple in the format `(Type, Value)`.
     pub fn as_tlv(self) -> (u8, Vec<u8>) {
         match self {
             Value::Method(method_kind) => (Type::Method as u8, vec![method_kind as u8]),
@@ -137,12 +149,15 @@ impl Value {
         }
     }
 
+    /// Converts a variant of `Value` to a `(u8, Vec<u8>)` tuple in the format `(Type, Value)` and
+    /// inserts it into a `HashMap<u8, Vec<u8>>`.
     pub fn into_map(self, map: &mut HashMap<u8, Vec<u8>>) {
         let (t, v) = self.as_tlv();
         map.insert(t, v);
     }
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone)]
 pub enum Method {
     PairSetup = 1,
@@ -152,6 +167,7 @@ pub enum Method {
     ListPairings = 5,
 }
 
+#[allow(dead_code)]
 #[derive(Copy, Clone, Debug, Fail)]
 pub enum Error {
     #[fail(display = "Unknown error")]
@@ -170,8 +186,26 @@ pub enum Error {
     Busy = 0x07,
 }
 
+impl From<error::Error> for Error {
+    fn from(_: error::Error) -> Self {
+        Error::Unknown
+    }
+}
+
 impl From<io::Error> for Error {
     fn from(_: io::Error) -> Self {
+        Error::Unknown
+    }
+}
+
+impl From<cell::BorrowError> for Error {
+    fn from(_: cell::BorrowError) -> Error {
+        Error::Unknown
+    }
+}
+
+impl From<cell::BorrowMutError> for Error {
+    fn from(_: cell::BorrowMutError) -> Error {
         Error::Unknown
     }
 }
@@ -194,8 +228,8 @@ impl From<SrpAuthError> for Error {
     }
 }
 
-impl From<DecryptError> for Error {
-    fn from(_: DecryptError) -> Self {
+impl From<chacha20_poly1305_aead::DecryptError> for Error {
+    fn from(_: chacha20_poly1305_aead::DecryptError) -> Self {
         Error::Authentication
     }
 }

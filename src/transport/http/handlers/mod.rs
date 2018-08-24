@@ -1,17 +1,13 @@
-use std::sync::Arc;
-
 use hyper::{self, Uri, StatusCode, server::Response};
-use failure::Error;
 use futures::{future, Future};
-use uuid::Uuid;
 
 use config::ConfigPtr;
-use db::{database::DatabasePtr, accessory_list::AccessoryList};
-use transport::{
-    http::{tlv_response, status_response, server::EventSubscriptions},
-    tlv::{self, Encodable},
-};
+use db::{DatabasePtr, AccessoryList};
+use transport::http::{tlv_response, status_response, server::EventSubscriptions};
+use protocol::{tlv::{self, Encodable}, IdPtr};
 use event::EmitterPtr;
+
+use Error;
 
 pub mod accessories;
 pub mod characteristics;
@@ -25,7 +21,7 @@ pub trait Handler {
         &mut self,
         uri: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: &IdPtr,
         event_subscriptions: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -41,6 +37,7 @@ pub trait TlvHandler {
     fn handle(
         &mut self,
         step: Self::ParseResult,
+        controller_id: &IdPtr,
         config: &ConfigPtr,
         database: &DatabasePtr,
         event_emitter: &EmitterPtr,
@@ -60,7 +57,7 @@ impl<T: TlvHandler> Handler for TlvHandlerType<T> {
         &mut self,
         _: Uri,
         body: Vec<u8>,
-        _: Arc<Option<Uuid>>,
+        controller_id: &IdPtr,
         _: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -69,7 +66,7 @@ impl<T: TlvHandler> Handler for TlvHandlerType<T> {
     ) -> Box<Future<Item=Response, Error=hyper::Error>> {
         let response = match self.0.parse(body) {
             Err(e) => e.encode(),
-            Ok(step) => match self.0.handle(step, config, database, event_emitter) {
+            Ok(step) => match self.0.handle(step, controller_id, config, database, event_emitter) {
                 Err(e) => e.encode(),
                 Ok(res) => res.encode(),
             }
@@ -83,7 +80,7 @@ pub trait JsonHandler {
         &mut self,
         uri: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: &IdPtr,
         event_subscriptions: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -105,7 +102,7 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
         &mut self,
         uri: Uri,
         body: Vec<u8>,
-        controller_id: Arc<Option<Uuid>>,
+        controller_id: &IdPtr,
         event_subscriptions: &EventSubscriptions,
         config: &ConfigPtr,
         database: &DatabasePtr,
@@ -123,8 +120,8 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
             event_emitter,
         ) {
             Ok(res) => res,
-            Err(e) => match e.cause() {
-                // TODO - explore the error cause further
+            Err(e) => match e {
+                Error::HttpStatus(status) => status_response(status),
                 _ => status_response(StatusCode::InternalServerError),
             },
         };
