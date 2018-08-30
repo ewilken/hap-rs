@@ -72,9 +72,53 @@ fn main() {
         ..Default::default()
     };
 
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(outlet)]).unwrap();
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(outlet).unwrap();
     ip_transport.start().unwrap();
 }
+```
+
+Dynamically adding and removing Accessories:
+
+```rust
+extern crate hap;
+
+use hap::{
+    transport::{Transport, IpTransport},
+    accessory::{Category, Information, bridge, outlet},
+    Config,
+};
+
+fn main() {
+  let bridge = bridge::new(Information {
+        name: "Acme Bridge".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let first_outlet = outlet::new(Information {
+        name: "Outlet 1".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let second_outlet = outlet::new(Information {
+        name: "Outlet 2".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let mut ip_transport = IpTransport::new(Config {
+        name: "Acme".into(),
+        category: Category::Outlet,
+        ..Default::default()
+    }).unwrap();
+
+    let _bridge = ip_transport.add_accessory(bridge).unwrap();
+    let _first_outlet = ip_transport.add_accessory(first_outlet).unwrap();
+    let second_outlet = ip_transport.add_accessory(second_outlet).unwrap();
+    ip_transport.remove_accessory(&second_outlet).unwrap();
+
+    ip_transport.start().unwrap();
+}
+
 ```
 
 Using the `Readable` and `Updatable` traits to react to remote value reads and updates:
@@ -127,7 +171,8 @@ fn main() {
         ..Default::default()
     };
 
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(outlet)]).unwrap();
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(outlet).unwrap();
     ip_transport.start().unwrap();
 }
 ```
@@ -230,7 +275,8 @@ fn main() {
         category: Category::Door,
         ..Default::default()
     };
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(door)]).unwrap();
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(door).unwrap();
     ip_transport.start().unwrap();
 }
 ```
