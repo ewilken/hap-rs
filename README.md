@@ -1,6 +1,6 @@
 # HAP (HomeKit Accessory Protocol)
 
-<!--- [![Build Status](https://travis-ci.org/korhalio/hap-rs.svg?branch=master)](https://travis-ci.org/korhalio/hap-rs) --->
+[![Build Status](https://travis-ci.org/ewilken/hap-rs.svg?branch=master)](https://travis-ci.org/ewilken/hap-rs)
 [![Latest Version](https://img.shields.io/crates/v/hap.svg)](https://crates.io/crates/hap)
 [![docs](https://docs.rs/hap/badge.svg)](https://docs.rs/hap)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0)
