@@ -26,6 +26,8 @@ pub type ConfigPtr = Rc<RefCell<Config>>;
 /// # Examples
 ///
 /// ```
+/// use hap::{Config, accessory::Category};
+///
 /// let config = Config {
 ///     storage_path: "/etc/homekit".into(),
 ///     pin: "11122333".into(),
