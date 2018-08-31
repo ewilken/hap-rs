@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, ops::Deref};
+use std::{rc::Rc, cell::RefCell};
 
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use erased_serde;
@@ -19,23 +19,46 @@ use Error;
 /// `AccessoryList` is a wrapper type holding an `Rc<RefCell>` with a `Vec` of boxed Accessories.
 #[derive(Clone)]
 pub struct AccessoryList {
-    pub accessories: Rc<RefCell<Vec<Box<AccessoryListMember>>>>,
+    pub accessories: Rc<RefCell<Vec<AccessoryListPtr>>>,
+    event_emitter: EmitterPtr,
+    id_count: u64,
 }
 
 impl AccessoryList {
     /// Creates a new `AccessoryList`.
-    pub fn new(accessories: Vec<Box<AccessoryListMember>>) -> AccessoryList {
-        AccessoryList { accessories: Rc::new(RefCell::new(accessories)) }
+    pub fn new(event_emitter: EmitterPtr) -> AccessoryList {
+        AccessoryList { accessories: Rc::new(RefCell::new(Vec::new())), event_emitter, id_count: 1 }
     }
 
-    pub(crate) fn init_aids(&mut self, event_emitter: EmitterPtr) -> Result<(), Error> {
-        let mut next_aid = 1;
-        for accessory in self.accessories.try_borrow_mut()?.iter_mut() {
-            accessory.set_id(next_aid);
-            accessory.init_iids(next_aid, event_emitter.clone())?;
-            next_aid += 1;
+    /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
+    pub fn add_accessory(
+        &mut self,
+        accessory: Box<AccessoryListMember>,
+    ) -> Result<AccessoryListPtr, Error> {
+        let mut a = accessory;
+        a.set_id(self.id_count);
+        a.init_iids(self.id_count, self.event_emitter.clone())?;
+        let a_ptr = Rc::new(RefCell::new(a));
+        self.accessories.try_borrow_mut()?.push(a_ptr.clone());
+        self.id_count += 1;
+        Ok(a_ptr)
+    }
+
+    /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryList`.
+    pub fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<(), Error> {
+        let accessory = accessory.try_borrow()?;
+        let mut remove = None;
+        for (i, a) in self.accessories.try_borrow()?.iter().enumerate() {
+            if a.try_borrow()?.get_id() == accessory.get_id() {
+                remove = Some(i);
+                break;
+            }
         }
-        Ok(())
+        if let Some(i) = remove {
+            self.accessories.try_borrow_mut()?.remove(i);
+            return Ok(());
+        }
+        Err(Error::new_io("couldn't find the Accessory to remove"))
     }
 
     pub(crate) fn read_characteristic(
@@ -64,8 +87,8 @@ impl AccessoryList {
         };
 
         'l: for accessory in self.accessories.try_borrow_mut()?.iter_mut() {
-            if accessory.get_id() == aid {
-                for service in accessory.get_mut_services() {
+            if accessory.try_borrow()?.get_id() == aid {
+                for service in accessory.try_borrow_mut()?.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id()? == iid {
                             let characteristic_perms = characteristic.get_perms()?;
@@ -114,8 +137,8 @@ impl AccessoryList {
 
         let mut a = self.accessories.try_borrow_mut()?;
         'l: for accessory in a.iter_mut() {
-            if accessory.get_id() == write_object.aid {
-                for service in accessory.get_mut_services() {
+            if accessory.try_borrow()?.get_id() == write_object.aid {
+                for service in accessory.try_borrow_mut()?.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id()? == write_object.iid {
                             let characteristic_perms = characteristic.get_perms()?;
@@ -155,8 +178,7 @@ impl AccessoryList {
 impl Serialize for AccessoryList {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("AccessoryList", 1)?;
-        let a = self.accessories.deref();
-        state.serialize_field("accessories", &a)?;
+        state.serialize_field("accessories", &self.accessories)?;
         state.end()
     }
 }
@@ -167,3 +189,5 @@ pub trait AccessoryListMember: HapAccessory + erased_serde::Serialize {}
 impl<T: HapAccessory + erased_serde::Serialize> AccessoryListMember for T {}
 
 serialize_trait_object!(AccessoryListMember);
+
+pub type AccessoryListPtr = Rc<RefCell<Box<AccessoryListMember>>>;

@@ -1,7 +1,15 @@
 use std::{rc::Rc, cell::RefCell, net::SocketAddr};
 
 use config::{Config, ConfigPtr};
-use db::{Storage, Database, DatabasePtr, FileStorage, AccessoryList, AccessoryListMember};
+use db::{
+    Storage,
+    Database,
+    DatabasePtr,
+    FileStorage,
+    AccessoryList,
+    AccessoryListMember,
+    AccessoryListPtr,
+};
 use pin;
 use protocol::Device;
 use transport::{http, mdns::{Responder, ResponderPtr}, bonjour::StatusFlag, Transport};
@@ -55,22 +63,19 @@ impl IpTransport<FileStorage> {
     /// let first_bulb = lightbulb::new(first_bulb_info).unwrap();
     /// let second_bulb = lightbulb::new(second_bulb_info).unwrap();
     ///
-    /// let mut ip_transport = IpTransport::new(config, vec![
-    ///     Box::new(bridge),
-    ///     Box::new(first_bulb),
-    ///     Box::new(second_bulb),
-    /// ]).unwrap();
+    /// let mut ip_transport = IpTransport::new(config).unwrap();
+    /// ip_transport.add_accessory(bridge).unwrap();
+    /// ip_transport.add_accessory(first_bulb).unwrap();
+    /// ip_transport.add_accessory(second_bulb).unwrap();
     ///
     /// //ip_transport.start().unwrap();
     /// ```
-    pub fn new(
-        mut config: Config,
-        accessories: Vec<Box<AccessoryListMember>>,
-    ) -> Result<IpTransport<FileStorage>, Error> {
+    pub fn new(mut config: Config) -> Result<IpTransport<FileStorage>, Error> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
         config.load_from(&storage)?;
+        config.update_hash();
         config.save_to(&storage)?;
 
         let pin = pin::new(&config.pin)?;
@@ -78,14 +83,11 @@ impl IpTransport<FileStorage> {
         let event_emitter = Rc::new(RefCell::new(Emitter::new()));
         let mdns_responder = Rc::new(RefCell::new(Responder::new(&config.name, &config.port, config.txt_records())));
 
-        let mut accessory_list = AccessoryList::new(accessories);
-        accessory_list.init_aids(event_emitter.clone())?;
-
         let ip_transport = IpTransport {
             config: Rc::new(RefCell::new(config)),
             storage,
             database: Rc::new(RefCell::new(database)),
-            accessories: accessory_list,
+            accessories: AccessoryList::new(event_emitter.clone()),
             event_emitter,
             mdns_responder,
         };
@@ -158,5 +160,13 @@ impl Transport for IpTransport<FileStorage> {
     fn stop(&self) -> Result<(), Error> {
         self.mdns_responder.try_borrow()?.stop()?;
         Ok(())
+    }
+
+    fn add_accessory<A: 'static + AccessoryListMember>(&mut self, accessory: A) -> Result<AccessoryListPtr, Error> {
+        self.accessories.add_accessory(Box::new(accessory))
+    }
+
+    fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<(), Error> {
+        self.accessories.remove_accessory(accessory)
     }
 }

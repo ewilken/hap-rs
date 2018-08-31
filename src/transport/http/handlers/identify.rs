@@ -43,7 +43,7 @@ impl JsonHandler for Identify {
         }
 
         for accessory in accessory_list.accessories.try_borrow_mut()?.iter_mut() {
-            accessory.get_mut_information().inner.identify.set_value(true)?;
+            accessory.try_borrow_mut()?.get_mut_information().inner.identify.set_value(true)?;
         }
         Ok(status_response(StatusCode::NoContent))
     }

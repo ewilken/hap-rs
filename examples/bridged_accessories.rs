@@ -139,13 +139,13 @@ fn main() {
         category: Category::Bridge,
         ..Default::default()
     };
-    let mut ip_transport = IpTransport::new(config, vec![
-        Box::new(bridge),
-        Box::new(outlet),
-        Box::new(door),
-        Box::new(security_system),
-        Box::new(valve),
-    ]).unwrap();
+
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(bridge).unwrap();
+    ip_transport.add_accessory(outlet).unwrap();
+    ip_transport.add_accessory(door).unwrap();
+    ip_transport.add_accessory(security_system).unwrap();
+    ip_transport.add_accessory(valve).unwrap();
 
     ip_transport.start().unwrap();
 }

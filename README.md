@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ewilken/hap-rs.svg?branch=master)](https://travis-ci.org/ewilken/hap-rs)
 [![Latest Version](https://img.shields.io/crates/v/hap.svg)](https://crates.io/crates/hap)
 [![docs](https://docs.rs/hap/badge.svg)](https://docs.rs/hap)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![license: MIT/Apache-2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/ewilken/hap-rs)
 
 Rust implementation of the Apple HomeKit Accessory Protocol (HAP) based on [Tokio](https://github.com/tokio-rs/tokio) and [Hyper](https://github.com/hyperium/hyper).
 
@@ -72,9 +72,53 @@ fn main() {
         ..Default::default()
     };
 
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(outlet)]).unwrap();
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(outlet).unwrap();
     ip_transport.start().unwrap();
 }
+```
+
+Dynamically adding and removing Accessories:
+
+```rust
+extern crate hap;
+
+use hap::{
+    transport::{Transport, IpTransport},
+    accessory::{Category, Information, bridge, outlet},
+    Config,
+};
+
+fn main() {
+  let bridge = bridge::new(Information {
+        name: "Acme Bridge".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let first_outlet = outlet::new(Information {
+        name: "Outlet 1".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let second_outlet = outlet::new(Information {
+        name: "Outlet 2".into(),
+        ..Default::default()
+    }).unwrap();
+
+    let mut ip_transport = IpTransport::new(Config {
+        name: "Acme".into(),
+        category: Category::Outlet,
+        ..Default::default()
+    }).unwrap();
+
+    let _bridge = ip_transport.add_accessory(bridge).unwrap();
+    let _first_outlet = ip_transport.add_accessory(first_outlet).unwrap();
+    let second_outlet = ip_transport.add_accessory(second_outlet).unwrap();
+    ip_transport.remove_accessory(&second_outlet).unwrap();
+
+    ip_transport.start().unwrap();
+}
+
 ```
 
 Using the `Readable` and `Updatable` traits to react to remote value reads and updates:
@@ -127,7 +171,8 @@ fn main() {
         ..Default::default()
     };
 
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(outlet)]).unwrap();
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(outlet).unwrap();
     ip_transport.start().unwrap();
 }
 ```
@@ -230,7 +275,17 @@ fn main() {
         category: Category::Door,
         ..Default::default()
     };
-    let mut ip_transport = IpTransport::new(config, vec![Box::new(door)]).unwrap();
+    let mut ip_transport = IpTransport::new(config).unwrap();
+    ip_transport.add_accessory(door).unwrap();
     ip_transport.start().unwrap();
 }
 ```
+
+## License
+
+HAP is licensed under either of
+
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
