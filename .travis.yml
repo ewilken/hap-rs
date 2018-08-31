@@ -8,3 +8,6 @@ matrix:
     - rust: nightly
   fast_finish: true
 cache: cargo
+branches:
+  only:
+  - master
