@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ewilken/hap-rs.svg?branch=master)](https://travis-ci.org/ewilken/hap-rs)
 [![Latest Version](https://img.shields.io/crates/v/hap.svg)](https://crates.io/crates/hap)
 [![docs](https://docs.rs/hap/badge.svg)](https://docs.rs/hap)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![license: MIT/Apache-2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/ewilken/hap-rs)
 
 Rust implementation of the Apple HomeKit Accessory Protocol (HAP) based on [Tokio](https://github.com/tokio-rs/tokio) and [Hyper](https://github.com/hyperium/hyper).
 
@@ -280,3 +280,12 @@ fn main() {
     ip_transport.start().unwrap();
 }
 ```
+
+## License
+
+HAP is licensed under either of
+
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
