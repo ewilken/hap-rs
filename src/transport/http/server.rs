@@ -214,16 +214,23 @@ pub fn serve(
             .add_listener(Box::new(move |event| {
             match event {
                 &Event::CharacteristicValueChanged { aid, iid, ref value } => {
-                    for &(s_aid, s_iid) in event_subscriptions.try_borrow()
+                    let mut dropped_subscriptions = vec![];
+                    for (i, &(s_aid, s_iid)) in event_subscriptions.try_borrow()
                         .expect("couldn't read event subscriptions")
-                        .iter() {
+                        .iter().enumerate() {
                         if s_aid == aid && s_iid == iid {
                             let event = EventObject { aid, iid, value: value.clone() };
                             let event_res = event_response(vec![event])
                                 .expect("couldn't create event response");
-                            stream_outgoing.unbounded_send(event_res).map_err(|_| ())
-                                .expect("couldn't send event response");
+                            if stream_outgoing.unbounded_send(event_res).is_err() {
+                                dropped_subscriptions.push(i);
+                            }
                         }
+                    }
+                    let mut ev = event_subscriptions.try_borrow_mut()
+                        .expect("couldn't modify event subscriptions");
+                    for s in dropped_subscriptions {
+                        ev.remove(s);
                     }
                 },
                 _ => {},
