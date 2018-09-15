@@ -55,9 +55,9 @@ impl JsonHandler for GetCharacteristics {
             }
             let (f_meta, f_perms, f_type, f_ev) = check_flags(&queries);
             let q_id = queries.get("id").ok_or(Error::HttpStatus(StatusCode::BadRequest))?;
-            let ids = q_id.split(",").collect::<Vec<&str>>();
+            let ids = q_id.split(',').collect::<Vec<&str>>();
             for id in ids {
-                let id_pair = id.split(".").collect::<Vec<&str>>();
+                let id_pair = id.split('.').collect::<Vec<&str>>();
                 if id_pair.len() != 2 {
                     return Err(Error::HttpStatus(StatusCode::BadRequest));
                 }
@@ -160,8 +160,8 @@ impl JsonHandler for UpdateCharacteristics {
                 Err(_) => {
                     some_err = true;
                     WriteResponseObject {
-                        iid: iid,
-                        aid: aid,
+                        iid,
+                        aid,
                         status: Status::ServiceCommunicationFailure as i32,
                     }
                 },

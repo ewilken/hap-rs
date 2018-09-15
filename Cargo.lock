@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "hap"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "byteorder 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",

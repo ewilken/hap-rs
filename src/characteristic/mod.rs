@@ -147,7 +147,7 @@ impl<T: Default + Clone + Serialize> Characteristic<T> where for<'de> T: Deseria
             let inner = self.inner.try_borrow()?;
             if inner.event_notifications == Some(true) {
                 if let Some(ref event_emitter) = inner.event_emitter {
-                    event_emitter.try_borrow()?.emit(Event::CharacteristicValueChanged {
+                    event_emitter.try_borrow()?.emit(&Event::CharacteristicValueChanged {
                         aid: inner.accessory_id,
                         iid: inner.id,
                         value: json!(&val),

@@ -38,7 +38,7 @@ impl StreamWrapper {
         match self.incoming_receiver.poll() {
             Ok(NotReady) => Err(ErrorKind::WouldBlock.into()),
             Ok(Ready(Some(incoming))) => {
-                &self.incoming_buf.extend_from_slice(&incoming);
+                self.incoming_buf.extend_from_slice(&incoming);
                 Ok(incoming.len())
             },
             Ok(Ready(None)) => Ok(0),
@@ -51,9 +51,9 @@ impl Read for StreamWrapper {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         self.poll_receiver()?;
         let r_len = min(buf.len(), self.incoming_buf.len());
-        &buf[..r_len].copy_from_slice(&self.incoming_buf[..r_len]);
+        buf[..r_len].copy_from_slice(&self.incoming_buf[..r_len]);
         self.incoming_buf.advance(r_len);
-        return Ok(r_len);
+        Ok(r_len)
     }
 }
 
@@ -137,7 +137,7 @@ impl EncryptedStream {
     fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
         if self.decrypted_ready {
             let len = min(buf.len(), self.packet_len - 16);
-            &buf[..len].copy_from_slice(&self.decrypted_buf[..len]);
+            buf[..len].copy_from_slice(&self.decrypted_buf[..len]);
             self.already_copied = len;
             if self.already_copied == (self.packet_len - 16) {
                 self.already_copied = 0;
@@ -155,11 +155,11 @@ impl EncryptedStream {
             let decrypted = decrypt_chunk(
                 &self.shared_secret.expect("missing shared secret"),
                 &self.encrypted_buf[..2],
-                self.encrypted_buf[2..(self.packet_len - 14)].to_vec(),
+                &self.encrypted_buf[2..(self.packet_len - 14)],
                 &self.encrypted_buf[(self.packet_len - 14)..(self.packet_len + 2)],
                 &mut self.decrypt_count,
             )?;
-            &self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
+            self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
             self.missing_data_for_decrypted_buf = false;
             self.decrypted_ready = true;
 
@@ -179,7 +179,7 @@ impl EncryptedStream {
                 self.missing_data_for_decrypted_buf = true;
                 return self.read_encrypted(buf);
             }
-            return Err(ErrorKind::WouldBlock.into())
+            Err(ErrorKind::WouldBlock.into())
         } else {
             let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..2])?;
             self.already_read += r_len;
@@ -193,13 +193,13 @@ impl EncryptedStream {
                     self.already_read = 0;
                     self.missing_data_for_encrypted_buf = false;
                     self.missing_data_for_decrypted_buf = true;
-                    return self.read_encrypted(buf);
+                    self.read_encrypted(buf)
                 } else {
                     self.already_read += r_len;
-                    return Err(ErrorKind::WouldBlock.into())
+                    Err(ErrorKind::WouldBlock.into())
                 }
             } else {
-                return Err(ErrorKind::WouldBlock.into())
+                Err(ErrorKind::WouldBlock.into())
             }
         }
     }
@@ -267,23 +267,23 @@ impl Write for EncryptedStream {
             while write_buf.len() > 1024 {
                 let (aad, chunk, auth_tag) = encrypt_chunk(
                     &shared_secret,
-                    write_buf[..1024].to_vec(),
+                    &write_buf[..1024],
                     &mut self.encrypt_count,
                 )?;
-                self.stream.write(&aad)?;
-                self.stream.write(&chunk)?;
-                self.stream.write(&auth_tag)?;
+                self.stream.write_all(&aad)?;
+                self.stream.write_all(&chunk)?;
+                self.stream.write_all(&auth_tag)?;
                 write_buf.advance(1024);
             }
 
             let (aad, chunk, auth_tag) = encrypt_chunk(
                 &shared_secret,
-                write_buf.to_vec(),
+                &write_buf,
                 &mut self.encrypt_count,
             )?;
-            self.stream.write(&aad)?;
-            self.stream.write(&chunk)?;
-            self.stream.write(&auth_tag)?;
+            self.stream.write_all(&aad)?;
+            self.stream.write_all(&chunk)?;
+            self.stream.write_all(&auth_tag)?;
             Ok(buf.len())
         } else {
             self.stream.write(buf)
@@ -306,7 +306,7 @@ impl AsyncWrite for EncryptedStream {
 fn decrypt_chunk(
     shared_secret: &[u8; 32],
     aad: &[u8],
-    data: Vec<u8>,
+    data: &[u8],
     auth_tag: &[u8],
     count: &mut u64,
 ) -> Result<Vec<u8>, Error> {
@@ -333,7 +333,7 @@ fn decrypt_chunk(
 
 fn encrypt_chunk(
     shared_secret: &[u8; 32],
-    data: Vec<u8>,
+    data: &[u8],
     count: &mut u64,
 ) -> Result<([u8; 2], Vec<u8>, [u8; 16]), Error> {
     let mut encrypted_data = Vec::new();
@@ -360,14 +360,14 @@ fn encrypt_chunk(
 }
 
 fn compute_read_key(shared_secret: &[u8; 32]) -> [u8; 32] {
-    compute_key(shared_secret, b"Control-Write-Encryption-Key".to_vec())
+    compute_key(shared_secret, b"Control-Write-Encryption-Key")
 }
 
 fn compute_write_key(shared_secret: &[u8; 32]) -> [u8; 32] {
-    compute_key(shared_secret, b"Control-Read-Encryption-Key".to_vec())
+    compute_key(shared_secret, b"Control-Read-Encryption-Key")
 }
 
-fn compute_key(shared_secret: &[u8; 32], info: Vec<u8>) -> [u8; 32] {
+fn compute_key(shared_secret: &[u8; 32], info: &[u8]) -> [u8; 32] {
     let mut key = [0; 32];
     let salt = hmac::SigningKey::new(&digest::SHA512, b"Control-Salt");
     hkdf::extract_and_expand(&salt, shared_secret, &info, &mut key);

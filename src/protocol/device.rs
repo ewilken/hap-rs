@@ -38,12 +38,14 @@ impl Device {
     /// Attempts to load a `Device` from a database and creates a new one with a random key pair if
     /// none is found for the given ID.
     pub fn load_or_new(id: String, pin: Pin, database: &Database) -> Result<Device, Error> {
-        if let Some(device) = database.get_device().ok() {
-            return Ok(device)
+        match database.get_device() {
+            Ok(device) => Ok(device),
+            Err(_) => {
+                let device = Device::new_random(id, pin);
+                database.set_device(&device)?;
+                Ok(device)
+            },
         }
-        let device = Device::new_random(id, pin);
-        database.set_device(&device)?;
-        Ok(device)
     }
 
     /// Loads a `Device` from a database.
@@ -63,9 +65,9 @@ impl Device {
         Ok(value)
     }
 
-    /// Deserializes a `Device` from a `Vec<u8>`.
-    pub fn from_bytes(bytes: Vec<u8>) -> Result<Device, Error> {
-        let value = serde_json::from_slice(&bytes)?;
+    /// Deserializes a `Device` from a `&[u8]`.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Device, Error> {
+        let value = serde_json::from_slice(bytes)?;
         Ok(value)
     }
 }

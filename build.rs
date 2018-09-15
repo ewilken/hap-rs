@@ -257,14 +257,14 @@ pub enum HapType {
 
 impl HapType {
     /// Converts a `HapType` to its corresponding shortened UUID string.
-    pub fn to_string(&self) -> String {
+    pub fn to_string(self) -> String {
         match self {
-            &HapType::Unknown => \"unknown\".into(),
+            HapType::Unknown => \"unknown\".into(),
 {{#each Characteristics as |c|}}\
-\t\t\t&HapType::{{trim c.Name}} => \"{{uuid c.UUID}}\".into(),
+\t\t\tHapType::{{trim c.Name}} => \"{{uuid c.UUID}}\".into(),
 {{/each}}\
 {{#each Services as |s|}}\
-\t\t\t&HapType::{{trim s.Name}} => \"{{uuid s.UUID}}\".into(),
+\t\t\tHapType::{{trim s.Name}} => \"{{uuid s.UUID}}\".into(),
 {{/each}}\
 \t\t}
     }
@@ -533,7 +533,7 @@ pub fn new(information: Information) -> Result<{{trim service.Name}}, Error> {
     {{snake_case service.Name}}.set_primary(true);
     Ok({{trim service.Name}}::new({{trim service.Name}}Inner {
         accessory_information: information.to_service()?,
-        {{snake_case service.Name}}: {{snake_case service.Name}},
+        {{snake_case service.Name}},
         ..Default::default()
     }))
 }

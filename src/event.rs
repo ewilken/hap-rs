@@ -8,6 +8,7 @@ pub enum Event {
     CharacteristicValueChanged { aid: u64, iid: u64, value: Value }
 }
 
+#[derive(Default)]
 pub struct Emitter {
     listeners: Vec<Box<Fn(&Event)>>,
 }
@@ -21,8 +22,8 @@ impl Emitter {
         self.listeners.push(listener);
     }
 
-    pub fn emit(&self, event: Event) {
-        for listener in self.listeners.iter() {
+    pub fn emit(&self, event: &Event) {
+        for listener in &self.listeners {
             listener(&event);
         }
     }

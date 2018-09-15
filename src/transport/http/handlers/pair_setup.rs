@@ -104,7 +104,7 @@ impl TlvHandler for PairSetup {
                     Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err))
                 },
             },
-            Step::Verify { a_pub, a_proof } => match handle_verify(self, a_pub, a_proof) {
+            Step::Verify { a_pub, a_proof } => match handle_verify(self, &a_pub, &a_proof) {
                 Ok(res) => {
                     self.unsuccessful_tries = 0;
                     Ok(res)
@@ -114,7 +114,7 @@ impl TlvHandler for PairSetup {
                     Err(tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, err))
                 },
             },
-            Step::Exchange { data } => match handle_exchange(self, config, database, event_emitter, data) {
+            Step::Exchange { data } => match handle_exchange(self, config, database, event_emitter, &data) {
                 Ok(res) => {
                     self.unsuccessful_tries = 0;
                     Ok(res)
@@ -171,8 +171,8 @@ fn handle_start(
 
 fn handle_verify(
     handler: &mut PairSetup,
-    a_pub: Vec<u8>,
-    a_proof: Vec<u8>,
+    a_pub: &[u8],
+    a_proof: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("/pair-setup - M3: Got SRP Verify Request");
 
@@ -187,8 +187,8 @@ fn handle_verify(
         session.shared_secret = Some(shared_secret.as_slice().to_vec());
         let b_proof = verify_client_proof::<Sha512>(
             &session.b_pub,
-            &a_pub,
-            &a_proof,
+            a_pub,
+            a_proof,
             &session.salt,
             &shared_secret.as_slice().to_vec(),
             &G_3072,
@@ -207,7 +207,7 @@ fn handle_exchange(
     config: &ConfigPtr,
     database: &DatabasePtr,
     event_emitter: &EmitterPtr,
-    data: Vec<u8>,
+    data: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("/pair-setup - M5: Got SRP Exchange Request");
 
@@ -257,9 +257,7 @@ fn handle_exchange(
             let uuid_str = str::from_utf8(device_pairing_id)?;
             let pairing_uuid = Uuid::parse_str(uuid_str)?;
             let mut pairing_ltpk = [0; 32];
-            for i in 0..32 {
-                pairing_ltpk[i] = device_ltpk[i];
-            }
+            pairing_ltpk[..32].clone_from_slice(&device_ltpk[..32]);
 
             if let Some(max_peers) = config.try_borrow()?.max_peers {
                 if database.try_borrow()?.count_pairings()? + 1 > max_peers {
@@ -304,7 +302,7 @@ fn handle_exchange(
             )?;
             encrypted_data.extend(&auth_tag);
 
-            event_emitter.try_borrow()?.emit(Event::DevicePaired);
+            event_emitter.try_borrow()?.emit(&Event::DevicePaired);
 
             debug!("/pair-setup - M6: Sending SRP Exchange Response");
 
@@ -319,11 +317,11 @@ fn handle_exchange(
 
 // TODO - fix the actual srp package to do proper verification
 fn verify_client_proof<D: Digest>(
-    b_pub: &Vec<u8>,
-    a_pub: &Vec<u8>,
-    a_proof: &Vec<u8>,
-    salt: &Vec<u8>,
-    key: &Vec<u8>,
+    b_pub: &[u8],
+    a_pub: &[u8],
+    a_proof: &[u8],
+    salt: &[u8],
+    key: &[u8],
     group: &SrpGroup,
 ) -> Result<Vec<u8>, tlv::Error> {
     let mut dhn = D::new();
@@ -349,7 +347,7 @@ fn verify_client_proof<D: Digest>(
     d.input(b_pub);
     d.input(key);
 
-    if a_proof.clone() == d.result().as_slice() {
+    if a_proof == d.result().as_slice() {
         // H(A, M, K)
         let mut d = D::new();
         d.input(a_pub);

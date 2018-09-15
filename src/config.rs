@@ -105,7 +105,7 @@ impl Config {
 
     pub(crate) fn save_to(&self, storage: &Storage) -> Result<(), Error> {
         storage.set_bytes("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
-        storage.set_u64("version", self.version.clone())?;
+        storage.set_u64("version", self.version)?;
         if let Some(config_hash) = self.config_hash {
             storage.set_u64("config_hash", config_hash)?;
         }

@@ -13,7 +13,7 @@ use error;
 /// TLVs.
 pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::new();
-    for (k, v) in hm.iter() {
+    for (k, v) in &hm {
         let length = v.len();
         if length <= 255 {
             vec.push(k.clone());
@@ -56,7 +56,7 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
         let t = tlv[p];
         let l = tlv[p + 1];
         if l < 255 {
-            if t != pt && buf.len() > 0 {
+            if t != pt && !buf.is_empty() {
                 hm.insert(t, buf.clone());
                 buf.clear();
             }
@@ -69,7 +69,7 @@ pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
         pt = t;
         p = p + 2 + l as usize;
     }
-    if buf.len() > 0 {
+    if !buf.is_empty() {
         hm.insert(pt, buf.clone());
         buf.clear();
     }

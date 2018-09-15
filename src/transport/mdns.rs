@@ -15,10 +15,10 @@ pub struct Responder {
 
 impl Responder {
     /// Creates a new mDNS Responder.
-    pub fn new(name: &String, port: &u16, txt_records: [String; 8]) -> Self {
+    pub fn new(name: &str, port: u16, txt_records: [String; 8]) -> Self {
         Responder {
-            name: name.clone(),
-            port: port.clone(),
+            name: name.to_string(),
+            port,
             txt_records,
             stop: None,
         }
@@ -28,7 +28,7 @@ impl Responder {
     pub fn start(&mut self) {
         let (tx, rx) = mpsc::channel();
         let name = self.name.clone();
-        let port = self.port.clone();
+        let port = self.port;
         let tr = self.txt_records.clone();
         thread::spawn(move || {
             let responder = libmdns::Responder::new().expect("couldn't create mDNS responder");

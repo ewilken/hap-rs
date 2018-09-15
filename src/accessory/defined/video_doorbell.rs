@@ -82,7 +82,7 @@ pub fn new(information: Information) -> Result<VideoDoorbell, Error> {
     camera_rtp_stream_management.set_primary(true);
     Ok(VideoDoorbell::new(VideoDoorbellInner {
         accessory_information: information.to_service()?,
-        camera_rtp_stream_management: camera_rtp_stream_management,
+        camera_rtp_stream_management,
         speaker: speaker::new(),
         microphone: microphone::new(),
         ..Default::default()

@@ -80,7 +80,7 @@ impl Storage for FileStorage {
 
     fn set_bytes(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
         let mut writer = self.get_writer(key)?;
-        writer.write(&value)?;
+        writer.write_all(&value)?;
         Ok(())
     }
 
@@ -114,7 +114,7 @@ impl Storage for FileStorage {
 
     fn set_uuid(&self, key: &str, value: Uuid) -> Result<(), Error> {
         let mut writer = self.get_writer(key)?;
-        writer.write(value.hyphenated().to_string().as_bytes())?;
+        writer.write_all(value.hyphenated().to_string().as_bytes())?;
         Ok(())
     }
 

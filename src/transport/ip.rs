@@ -81,7 +81,7 @@ impl IpTransport<FileStorage> {
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
         let event_emitter = Rc::new(RefCell::new(Emitter::new()));
-        let mdns_responder = Rc::new(RefCell::new(Responder::new(&config.name, &config.port, config.txt_records())));
+        let mdns_responder = Rc::new(RefCell::new(Responder::new(&config.name, config.port, config.txt_records())));
 
         let ip_transport = IpTransport {
             config: Rc::new(RefCell::new(config)),
@@ -110,12 +110,12 @@ impl Transport for IpTransport<FileStorage> {
         let database = self.database.clone();
         let mdns_responder = self.mdns_responder.clone();
         self.event_emitter.try_borrow_mut()?.add_listener(Box::new(move |event| {
-            match event {
-                &Event::DevicePaired => {
-                    match database.try_borrow()
+            match *event {
+                Event::DevicePaired => {
+                    if let Ok(count) = database.try_borrow()
                         .expect("couldn't access database")
                         .count_pairings() {
-                        Ok(count) => if count > 0 {
+                        if count > 0 {
                             let mut c = config.try_borrow_mut()
                                 .expect("couldn't access config");
                             c.status_flag = StatusFlag::Zero;
@@ -123,15 +123,14 @@ impl Transport for IpTransport<FileStorage> {
                                 .expect("couldn't access mDNS responder")
                                 .update_txt_records(c.txt_records())
                                 .expect("couldn't update mDNS TXT records");
-                        },
-                        _ => {},
+                        }
                     }
                 },
-                &Event::DeviceUnpaired => {
-                    match database.try_borrow()
+                Event::DeviceUnpaired => {
+                    if let Ok(count) = database.try_borrow()
                         .expect("couldn't access database")
                         .count_pairings() {
-                        Ok(count) => if count == 0 {
+                        if count == 0 {
                             let mut c = config.try_borrow_mut()
                                 .expect("couldn't access config");
                             c.status_flag = StatusFlag::NotPaired;
@@ -139,8 +138,7 @@ impl Transport for IpTransport<FileStorage> {
                                 .expect("couldn't access mDNS responder")
                                 .update_txt_records(c.txt_records())
                                 .expect("couldn't update mDNS TXT records");
-                        },
-                        _ => {},
+                        }
                     }
                 },
                 _ => {},
@@ -149,10 +147,10 @@ impl Transport for IpTransport<FileStorage> {
 
         http::server::serve(
             &SocketAddr::new(ip, port),
-            self.config.clone(),
-            self.database.clone(),
-            self.accessories.clone(),
-            self.event_emitter.clone(),
+            &self.config,
+            &self.database,
+            &self.accessories,
+            &self.event_emitter,
         )?;
         Ok(())
     }

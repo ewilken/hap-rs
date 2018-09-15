@@ -83,7 +83,7 @@ impl TlvHandler for PairVerify {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err)),
             },
-            Step::Finish { data } => match handle_finish(self, database, data) {
+            Step::Finish { data } => match handle_finish(self, database, &data) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(StepNumber::FinishRes as u8, err)),
             },
@@ -151,7 +151,7 @@ fn handle_start(
 fn handle_finish(
     handler: &mut PairVerify,
     database: &DatabasePtr,
-    data: Vec<u8>,
+    data: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("/pair-verify - M3: Got Verify Finish Request");
 

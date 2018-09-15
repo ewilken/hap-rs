@@ -92,8 +92,8 @@ impl TlvHandler for Pairings {
                 database,
                 event_emitter,
                 controller_id,
-                pairing_id,
-                ltpk,
+                &pairing_id,
+                &ltpk,
                 permissions,
             ) {
                 Ok(res) => Ok(res),
@@ -103,7 +103,7 @@ impl TlvHandler for Pairings {
                 database,
                 event_emitter,
                 controller_id,
-                pairing_id,
+                &pairing_id,
             ) {
                 Ok(res) => Ok(res),
                 Err(err) => Err(tlv::ErrorContainer::new(StepNumber::Res as u8, err)),
@@ -121,8 +121,8 @@ fn handle_add(
     database: &DatabasePtr,
     event_emitter: &EmitterPtr,
     controller_id: &IdPtr,
-    pairing_id: Vec<u8>,
-    ltpk: Vec<u8>,
+    pairing_id: &[u8],
+    ltpk: &[u8],
     permissions: Permissions,
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("/pairings - M1: Got Add Pairing Request");
@@ -135,14 +135,14 @@ fn handle_add(
     let d = database.try_borrow_mut()?;
     match d.get_pairing(pairing_uuid) {
         Ok(mut pairing) => {
-            if &pairing.public_key.to_vec() != &ltpk {
+            if pairing.public_key != ltpk {
                 return Err(tlv::Error::Unknown);
             }
             pairing.permissions = permissions;
             d.set_pairing(&pairing)?;
             drop(d);
 
-            event_emitter.try_borrow()?.emit(Event::DevicePaired);
+            event_emitter.try_borrow()?.emit(&Event::DevicePaired);
         },
         Err(_) => {
             if let Some(max_peers) = config.try_borrow()?.max_peers {
@@ -157,7 +157,7 @@ fn handle_add(
             d.set_pairing(&pairing)?;
             drop(d);
 
-            event_emitter.try_borrow()?.emit(Event::DevicePaired);
+            event_emitter.try_borrow()?.emit(&Event::DevicePaired);
         },
     }
 
@@ -170,7 +170,7 @@ fn handle_remove(
     database: &DatabasePtr,
     event_emitter: &EmitterPtr,
     controller_id: &IdPtr,
-    pairing_id: Vec<u8>,
+    pairing_id: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("/pairings - M1: Got Remove Pairing Request");
 
@@ -182,7 +182,7 @@ fn handle_remove(
     d.delete_pairing(&d.get_pairing(pairing_uuid)?.id)?;
     drop(d);
 
-    event_emitter.try_borrow()?.emit(Event::DeviceUnpaired);
+    event_emitter.try_borrow()?.emit(&Event::DeviceUnpaired);
 
     debug!("/pairings - M2: Sending Remove Pairing Response");
 

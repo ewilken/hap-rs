@@ -184,10 +184,10 @@ pub type EventSubscriptions = Rc<RefCell<Vec<(u64, u64)>>>;
 
 pub fn serve(
     socket_addr: &SocketAddr,
-    config: ConfigPtr,
-    database: DatabasePtr,
-    accessories: AccessoryList,
-    event_emitter: EmitterPtr,
+    config: &ConfigPtr,
+    database: &DatabasePtr,
+    accessories: &AccessoryList,
+    event_emitter: &EmitterPtr,
 ) -> Result<(), Error> {
     let mut evt_loop = Core::new()?;
     let listener = TcpListener::bind(socket_addr, &evt_loop.handle())?;
@@ -208,12 +208,11 @@ pub fn serve(
             session_sender,
         );
 
-        let event_subscriptions = event_subscriptions.clone();
         event_emitter.try_borrow_mut()
             .expect("couldn't add listener for characteristic value change events")
             .add_listener(Box::new(move |event| {
-            match event {
-                &Event::CharacteristicValueChanged { aid, iid, ref value } => {
+            match *event {
+                Event::CharacteristicValueChanged { aid, iid, ref value } => {
                     let mut dropped_subscriptions = vec![];
                     for (i, &(s_aid, s_iid)) in event_subscriptions.try_borrow()
                         .expect("couldn't read event subscriptions")

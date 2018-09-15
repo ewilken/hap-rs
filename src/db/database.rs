@@ -46,7 +46,7 @@ impl Database {
     /// Returns the stored `Device`.
     pub fn get_device(&self) -> Result<Device, Error> {
         let device_bytes = self.get_bytes("device")?;
-        let device = Device::from_bytes(device_bytes)?;
+        let device = Device::from_bytes(&device_bytes)?;
         Ok(device)
     }
 
@@ -60,7 +60,7 @@ impl Database {
     /// Returns the stored `Pairing` for a given `Uuid`.
     pub fn get_pairing(&self, id: Uuid) -> Result<Pairing, Error> {
         let pairing_bytes = self.get_bytes(&id.simple().to_string())?;
-        let pairing = Pairing::from_bytes(pairing_bytes)?;
+        let pairing = Pairing::from_bytes(&pairing_bytes)?;
         Ok(pairing)
     }
 
@@ -82,9 +82,9 @@ impl Database {
     pub fn list_pairings(&self) -> Result<Vec<Pairing>, Error> {
         let mut pairings = Vec::new();
         for key in self.storage.keys_with_suffix("entity")? {
-            if key != String::from("device") {
+            if &key != "device" {
                 let pairing_bytes = self.get_bytes(&key)?;
-                let pairing = Pairing::from_bytes(pairing_bytes)?;
+                let pairing = Pairing::from_bytes(&pairing_bytes)?;
                 pairings.push(pairing);
             }
         }
@@ -95,7 +95,7 @@ impl Database {
     pub fn count_pairings(&self) -> Result<usize, Error> {
         let mut count = 0;
         for key in self.storage.keys_with_suffix("entity")? {
-            if key != String::from("device") {
+            if &key != "device" {
                 count += 1;
             }
         }

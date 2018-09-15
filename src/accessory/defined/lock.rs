@@ -77,7 +77,7 @@ pub fn new(information: Information) -> Result<Lock, Error> {
     lock_mechanism.set_primary(true);
     Ok(Lock::new(LockInner {
         accessory_information: information.to_service()?,
-        lock_mechanism: lock_mechanism,
+        lock_mechanism,
         lock_management: lock_management::new(),
         ..Default::default()
     }))

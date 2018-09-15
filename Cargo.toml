@@ -1,6 +1,6 @@
 [package]
 name = "hap"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Elias Wilken <eliasw@me.com>"]
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
 repository = "https://github.com/ewilken/hap-rs"

@@ -38,8 +38,8 @@ impl Pairing {
         Ok(value)
     }
 
-    /// Deserializes a `Pairing` from a `Vec<u8>`.
-    pub fn from_bytes(bytes: Vec<u8>) -> Result<Pairing, Error> {
+    /// Deserializes a `Pairing` from a `&[u8]`.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Pairing, Error> {
         let value = serde_json::from_slice(&bytes)?;
         Ok(value)
     }
@@ -66,9 +66,9 @@ impl Permissions {
 
     /// Converts a `Permissions` variant to the corresponding Byte value.
     pub fn as_u8(&self) -> u8 {
-        match self {
-            &Permissions::User => 0x00,
-            &Permissions::Admin => 0x01,
+        match *self {
+            Permissions::User => 0x00,
+            Permissions::Admin => 0x01,
         }
     }
 }

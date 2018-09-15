@@ -77,7 +77,7 @@ pub fn new(information: Information) -> Result<IpCamera, Error> {
     camera_rtp_stream_management.set_primary(true);
     Ok(IpCamera::new(IpCameraInner {
         accessory_information: information.to_service()?,
-        camera_rtp_stream_management: camera_rtp_stream_management,
+        camera_rtp_stream_management,
         microphone: microphone::new(),
         ..Default::default()
     }))

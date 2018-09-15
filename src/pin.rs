@@ -2,7 +2,7 @@ use Error;
 
 pub type Pin = String;
 
-pub fn new(input: &String) -> Result<Pin, Error> {
+pub fn new(input: &str) -> Result<Pin, Error> {
     let invalid_pins: [String; 12] = [
         "12345678".into(),
         "87654321".into(),
@@ -17,7 +17,7 @@ pub fn new(input: &String) -> Result<Pin, Error> {
         "88888888".into(),
         "99999999".into(),
     ];
-    for invalid_pin in invalid_pins.iter() {
+    for invalid_pin in &invalid_pins {
         if input == invalid_pin {
             return Err(Error::new_io("invalid pin - too easy"));
         }

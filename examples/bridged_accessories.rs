@@ -35,7 +35,7 @@ impl Readable<bool> for VirtualOutlet {
 impl Updatable<bool> for VirtualOutlet {
     fn on_update(&mut self, old_val: &bool, new_val: &bool, _: HapType) {
         println!("Outlet: On updated from {} to {}.", old_val, new_val);
-        if new_val != old_val { self.inner.borrow_mut().on = new_val.clone(); }
+        if new_val != old_val { self.inner.borrow_mut().on = *new_val; }
     }
 }
 
@@ -78,7 +78,7 @@ impl Updatable<u8> for VirtualDoor {
             HapType::CurrentPosition => {
                 println!("Door: Current position updated from {} to {}.", old_val, new_val);
                 if new_val != old_val {
-                    self.inner.borrow_mut().current_position = new_val.clone();
+                    self.inner.borrow_mut().current_position = *new_val;
                 }
             },
             HapType::TargetPosition => {
@@ -86,8 +86,8 @@ impl Updatable<u8> for VirtualDoor {
                 if new_val != old_val {
                     {
                         let mut inner = self.inner.borrow_mut();
-                        inner.target_position = new_val.clone();
-                        inner.current_position = new_val.clone();
+                        inner.target_position = *new_val;
+                        inner.current_position = *new_val;
                     }
                     self.current_position.set_value(*new_val).expect("couldn't set value");
                 }
