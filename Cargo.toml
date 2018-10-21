@@ -36,7 +36,7 @@ log = "0.4.4"
 
 [build-dependencies]
 uuid = { version = "0.5.1", features = ["v4", "serde"] }
-handlebars = "0.32.1"
+handlebars = { git = "https://github.com/sunng87/handlebars-rust" }
 serde = "1.0.27"
 serde_derive = "1.0.27"
 serde_json = "1.0.9"

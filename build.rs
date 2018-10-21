@@ -6,7 +6,7 @@ extern crate serde;
 
 use std::{fs::{self, File}, io::Write, collections::HashMap};
 
-use handlebars::{Handlebars, Helper, RenderContext, RenderError, Renderable};
+use handlebars::{Handlebars, Helper, RenderContext, RenderError, Renderable, Context, Output};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Metadata {
@@ -70,127 +70,187 @@ struct Service {
     pub optional_characteristics: Vec<String>,
 }
 
-fn if_eq_helper(h: &Helper, r: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn if_eq_helper<'reg, 'rc>(
+    h: &Helper<'reg, 'rc>,
+    r: &'reg Handlebars,
+    c: &Context,
+    rc: &mut RenderContext<'reg>,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let first = h.param(0).unwrap().value();
     let second = h.param(1).unwrap().value();
     let tmpl = if first == second { h.template() } else { h.inverse() };
     match tmpl {
-        Some(ref t) => t.render(r, rc),
+        Some(ref t) => t.render(r, c, rc, out),
         None => Ok(()),
     }
 }
 
-fn trim_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn trim_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         let trim = s.replace(" ", "").replace(".", "_");
-        try!(rc.writer.write(&trim.into_bytes()));
+        out.write(&trim)?;
     }
     Ok(())
 }
 
-fn file_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn file_name_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         let name = s.replace(" ", "_").replace(".", "_").to_lowercase();
-        try!(rc.writer.write(&name.into_bytes()));
+        out.write(&name)?;
     }
     Ok(())
 }
 
-fn type_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn type_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
-            "bool" => { try!(rc.writer.write(b"bool")); },
-            "uint8" => { try!(rc.writer.write(b"u8")); },
-            "uint16" => { try!(rc.writer.write(b"u16")); },
-            "uint32" => { try!(rc.writer.write(b"u32")); },
-            "uint64" => { try!(rc.writer.write(b"u64")); },
-            "int" => { try!(rc.writer.write(b"i32")); },
-            "int32" => { try!(rc.writer.write(b"i32")); },
-            "float" => { try!(rc.writer.write(b"f32")); },
-            "string" => { try!(rc.writer.write(b"String")); },
-            "tlv8" => { try!(rc.writer.write(b"Vec<u8>")); },
-            "data" => { try!(rc.writer.write(b"Vec<u8>")); },
+            "bool" => { out.write("bool")?; },
+            "uint8" => { out.write("u8")?; },
+            "uint16" => { out.write("u16")?; },
+            "uint32" => { out.write("u32")?; },
+            "uint64" => { out.write("u64")?; },
+            "int" => { out.write("i32")?; },
+            "int32" => { out.write("i32")?; },
+            "float" => { out.write("f32")?; },
+            "string" => { out.write("String")?; },
+            "tlv8" => { out.write("Vec<u8>")?; },
+            "data" => { out.write("Vec<u8>")?; },
             _ => { return Err(RenderError::new("Unknown Characteristic format")); },
         }
     }
     Ok(())
 }
 
-fn format_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn format_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
-            "bool" => { try!(rc.writer.write(b"Format::Bool")); },
-            "uint8" => { try!(rc.writer.write(b"Format::UInt8")); },
-            "uint16" => { try!(rc.writer.write(b"Format::UInt16")); },
-            "uint32" => { try!(rc.writer.write(b"Format::UInt32")); },
-            "uint64" => { try!(rc.writer.write(b"Format::UInt64")); },
-            "int" => { try!(rc.writer.write(b"Format::Int32")); },
-            "int32" => { try!(rc.writer.write(b"Format::Int32")); },
-            "float" => { try!(rc.writer.write(b"Format::Float")); },
-            "string" => { try!(rc.writer.write(b"Format::String")); },
-            "tlv8" => { try!(rc.writer.write(b"Format::Tlv8")); },
-            "data" => { try!(rc.writer.write(b"Format::Data")); },
+            "bool" => { out.write("Format::Bool")?; },
+            "uint8" => { out.write("Format::UInt8")?; },
+            "uint16" => { out.write("Format::UInt16")?; },
+            "uint32" => { out.write("Format::UInt32")?; },
+            "uint64" => { out.write("Format::UInt64")?; },
+            "int" => { out.write("Format::Int32")?; },
+            "int32" => { out.write("Format::Int32")?; },
+            "float" => { out.write("Format::Float")?; },
+            "string" => { out.write("Format::String")?; },
+            "tlv8" => { out.write("Format::Tlv8")?; },
+            "data" => { out.write("Format::Data")?; },
             _ => { return Err(RenderError::new("Unknown Characteristic format")); },
         }
     }
     Ok(())
 }
 
-fn unit_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn unit_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
-            "percentage" => { try!(rc.writer.write(b"Unit::Percentage")); },
-            "arcdegrees" => { try!(rc.writer.write(b"Unit::ArcDegrees")); },
-            "celsius" => { try!(rc.writer.write(b"Unit::Celsius")); },
-            "lux" => { try!(rc.writer.write(b"Unit::Lux")); },
-            "seconds" => { try!(rc.writer.write(b"Unit::Seconds")); },
+            "percentage" => { out.write("Unit::Percentage")?; },
+            "arcdegrees" => { out.write("Unit::ArcDegrees")?; },
+            "celsius" => { out.write("Unit::Celsius")?; },
+            "lux" => { out.write("Unit::Lux")?; },
+            "seconds" => { out.write("Unit::Seconds")?; },
             _ => { return Err(RenderError::new("Unknown Characteristic unit")); },
         }
     }
     Ok(())
 }
 
-fn uuid_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn uuid_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
-        try!(rc.writer.write(shorten_uuid(&s).as_bytes()));
+        out.write(&shorten_uuid(&s))?;
     }
     Ok(())
 }
 
-fn valid_values_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn valid_values_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value().as_object().unwrap();
     let mut output = String::from("vec![\n");
     for (key, val) in param {
         output.push_str(&format!("\t\t\t{}, // {}\n", key, val));
     }
     output.push_str("\t\t]");
-    try!(rc.writer.write(output.as_bytes()));
+    out.write(&output)?;
     Ok(())
 }
 
-fn perms_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn perms_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let params = h.param(0).unwrap().value().as_array().unwrap();
     for param in params {
         match param.as_str() {
-            Some("read") => { try!(rc.writer.write(b"\n\t\t\tPerm::PairedRead,")); },
-            Some("write") => { try!(rc.writer.write(b"\n\t\t\tPerm::PairedWrite,")); },
-            Some("cnotify") => { try!(rc.writer.write(b"\n\t\t\tPerm::Events,")); },
+            Some("read") => { out.write("\n\t\t\tPerm::PairedRead,")?; },
+            Some("write") => { out.write("\n\t\t\tPerm::PairedWrite,")?; },
+            Some("cnotify") => { out.write("\n\t\t\tPerm::Events,")?; },
             _ => {},
         }
     }
     Ok(())
 }
 
-fn float_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn float_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let format = h.param(0).unwrap().value().as_str().unwrap();
     if format == "float" {
-        try!(rc.writer.write(b" as f32"));
+        out.write(" as f32")?;
     }
     Ok(())
 }
@@ -199,34 +259,52 @@ fn shorten_uuid(id: &str) -> String {
     id.split("-").collect::<Vec<&str>>()[0].trim_left_matches('0').to_owned()
 }
 
-fn characteristic_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn characteristic_name_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let id = h.param(0).unwrap().value().as_str().unwrap();
     let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
     for c in characteristics {
         if &c.id == id {
             let name = c.name.replace(" ", "").replace(".", "_");
-            try!(rc.writer.write(name.as_bytes()));
+            out.write(&name)?;
         }
     }
     Ok(())
 }
 
-fn characteristic_file_name_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn characteristic_file_name_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let id = h.param(0).unwrap().value().as_str().unwrap();
     let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
     for c in characteristics {
         if &c.id == id {
             let name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
-            try!(rc.writer.write(name.as_bytes()));
+            out.write(&name)?;
         }
     }
     Ok(())
 }
 
-fn snake_case_helper(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> Result<(), RenderError> {
+fn snake_case_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut Output,
+) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value().as_str().unwrap();
     let name = param.replace(" ", "_").replace(".", "_").to_lowercase();
-    try!(rc.writer.write(name.as_bytes()));
+    out.write(&name)?;
     Ok(())
 }
 
@@ -295,12 +373,12 @@ pub fn new() -> {{trim characteristic.Name}} {
         perms: vec![{{perms characteristic.Properties}}
         ],\
         {{#if characteristic.Unit}}\n\t\tunit: Some({{unit characteristic.Unit}}),{{/if}}\
-        {{#if characteristic.Constraints.MaximumValue}}\n\t\tmax_value: Some({{characteristic.Constraints.MaximumValue}}{{float characteristic.Format}}),{{/if}}\
-        {{#if characteristic.Constraints.MinimumValue}}\n\t\tmin_value: Some({{characteristic.Constraints.MinimumValue}}{{float characteristic.Format}}),{{/if}}\
-        {{#if characteristic.Constraints.StepValue}}\n\t\tstep_value: Some({{characteristic.Constraints.StepValue}}{{float characteristic.Format}}),{{/if}}\
-        {{#if characteristic.Constraints.MaximumLength}}\n\t\tmax_len: Some({{characteristic.Constraints.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
-        {{#if characteristic.Constraints.MaximumDataLength}}\n\t\tmax_data_len: Some({{characteristic.Constraints.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
-        {{#if characteristic.Constraints.ValidValues}}\n\t\tvalid_values: Some({{valid_values characteristic.Constraints.ValidValues}}),{{/if}}
+        {{#if characteristic.Constraints.MaximumValue includeZero=true}}\n\t\tmax_value: Some({{characteristic.Constraints.MaximumValue}}{{float characteristic.Format}}),{{/if}}\
+        {{#if characteristic.Constraints.MinimumValue includeZero=true}}\n\t\tmin_value: Some({{characteristic.Constraints.MinimumValue}}{{float characteristic.Format}}),{{/if}}\
+        {{#if characteristic.Constraints.StepValue includeZero=true}}\n\t\tstep_value: Some({{characteristic.Constraints.StepValue}}{{float characteristic.Format}}),{{/if}}\
+        {{#if characteristic.Constraints.MaximumLength includeZero=true}}\n\t\tmax_len: Some({{characteristic.Constraints.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
+        {{#if characteristic.Constraints.MaximumDataLength includeZero=true}}\n\t\tmax_data_len: Some({{characteristic.Constraints.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
+        {{#if characteristic.Constraints.ValidValues includeZero=true}}\n\t\tvalid_values: Some({{valid_values characteristic.Constraints.ValidValues}}),{{/if}}
         ..Default::default()
     })
 }
