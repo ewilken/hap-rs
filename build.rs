@@ -1,12 +1,18 @@
-extern crate uuid;
 extern crate handlebars;
 extern crate serde;
-#[macro_use] extern crate serde_json;
-#[macro_use] extern crate serde_derive;
+extern crate uuid;
+#[macro_use]
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
 
-use std::{fs::{self, File}, io::Write, collections::HashMap};
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::Write,
+};
 
-use handlebars::{Handlebars, Helper, RenderContext, RenderError, Renderable, Context, Output};
+use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Metadata {
@@ -126,18 +132,42 @@ fn type_helper(
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
-            "bool" => { out.write("bool")?; },
-            "uint8" => { out.write("u8")?; },
-            "uint16" => { out.write("u16")?; },
-            "uint32" => { out.write("u32")?; },
-            "uint64" => { out.write("u64")?; },
-            "int" => { out.write("i32")?; },
-            "int32" => { out.write("i32")?; },
-            "float" => { out.write("f32")?; },
-            "string" => { out.write("String")?; },
-            "tlv8" => { out.write("Vec<u8>")?; },
-            "data" => { out.write("Vec<u8>")?; },
-            _ => { return Err(RenderError::new("Unknown Characteristic format")); },
+            "bool" => {
+                out.write("bool")?;
+            },
+            "uint8" => {
+                out.write("u8")?;
+            },
+            "uint16" => {
+                out.write("u16")?;
+            },
+            "uint32" => {
+                out.write("u32")?;
+            },
+            "uint64" => {
+                out.write("u64")?;
+            },
+            "int" => {
+                out.write("i32")?;
+            },
+            "int32" => {
+                out.write("i32")?;
+            },
+            "float" => {
+                out.write("f32")?;
+            },
+            "string" => {
+                out.write("String")?;
+            },
+            "tlv8" => {
+                out.write("Vec<u8>")?;
+            },
+            "data" => {
+                out.write("Vec<u8>")?;
+            },
+            _ => {
+                return Err(RenderError::new("Unknown Characteristic format"));
+            },
         }
     }
     Ok(())
@@ -153,18 +183,42 @@ fn format_helper(
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
-            "bool" => { out.write("Format::Bool")?; },
-            "uint8" => { out.write("Format::UInt8")?; },
-            "uint16" => { out.write("Format::UInt16")?; },
-            "uint32" => { out.write("Format::UInt32")?; },
-            "uint64" => { out.write("Format::UInt64")?; },
-            "int" => { out.write("Format::Int32")?; },
-            "int32" => { out.write("Format::Int32")?; },
-            "float" => { out.write("Format::Float")?; },
-            "string" => { out.write("Format::String")?; },
-            "tlv8" => { out.write("Format::Tlv8")?; },
-            "data" => { out.write("Format::Data")?; },
-            _ => { return Err(RenderError::new("Unknown Characteristic format")); },
+            "bool" => {
+                out.write("Format::Bool")?;
+            },
+            "uint8" => {
+                out.write("Format::UInt8")?;
+            },
+            "uint16" => {
+                out.write("Format::UInt16")?;
+            },
+            "uint32" => {
+                out.write("Format::UInt32")?;
+            },
+            "uint64" => {
+                out.write("Format::UInt64")?;
+            },
+            "int" => {
+                out.write("Format::Int32")?;
+            },
+            "int32" => {
+                out.write("Format::Int32")?;
+            },
+            "float" => {
+                out.write("Format::Float")?;
+            },
+            "string" => {
+                out.write("Format::String")?;
+            },
+            "tlv8" => {
+                out.write("Format::Tlv8")?;
+            },
+            "data" => {
+                out.write("Format::Data")?;
+            },
+            _ => {
+                return Err(RenderError::new("Unknown Characteristic format"));
+            },
         }
     }
     Ok(())
@@ -180,12 +234,24 @@ fn unit_helper(
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
-            "percentage" => { out.write("Unit::Percentage")?; },
-            "arcdegrees" => { out.write("Unit::ArcDegrees")?; },
-            "celsius" => { out.write("Unit::Celsius")?; },
-            "lux" => { out.write("Unit::Lux")?; },
-            "seconds" => { out.write("Unit::Seconds")?; },
-            _ => { return Err(RenderError::new("Unknown Characteristic unit")); },
+            "percentage" => {
+                out.write("Unit::Percentage")?;
+            },
+            "arcdegrees" => {
+                out.write("Unit::ArcDegrees")?;
+            },
+            "celsius" => {
+                out.write("Unit::Celsius")?;
+            },
+            "lux" => {
+                out.write("Unit::Lux")?;
+            },
+            "seconds" => {
+                out.write("Unit::Seconds")?;
+            },
+            _ => {
+                return Err(RenderError::new("Unknown Characteristic unit"));
+            },
         }
     }
     Ok(())
@@ -232,9 +298,15 @@ fn perms_helper(
     let params = h.param(0).unwrap().value().as_array().unwrap();
     for param in params {
         match param.as_str() {
-            Some("read") => { out.write("\n\t\t\tPerm::PairedRead,")?; },
-            Some("write") => { out.write("\n\t\t\tPerm::PairedWrite,")?; },
-            Some("cnotify") => { out.write("\n\t\t\tPerm::Events,")?; },
+            Some("read") => {
+                out.write("\n\t\t\tPerm::PairedRead,")?;
+            },
+            Some("write") => {
+                out.write("\n\t\t\tPerm::PairedWrite,")?;
+            },
+            Some("cnotify") => {
+                out.write("\n\t\t\tPerm::Events,")?;
+            },
             _ => {},
         }
     }
@@ -256,7 +328,9 @@ fn float_helper(
 }
 
 fn shorten_uuid(id: &str) -> String {
-    id.split("-").collect::<Vec<&str>>()[0].trim_left_matches('0').to_owned()
+    id.split("-").collect::<Vec<&str>>()[0]
+        .trim_start_matches('0')
+        .to_owned()
 }
 
 fn characteristic_name_helper(
@@ -360,7 +434,7 @@ impl Serialize for HapType {
 ";
 
 static CHARACTERISTIC: &'static str = "// THIS FILE IS AUTO-GENERATED\n
-use characteristic::{HapType, Characteristic, Inner, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
+use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm{{#if characteristic.Unit}}, Unit{{/if}}};
 
 /// {{characteristic.Name}} Characteristic.
 pub type {{trim characteristic.Name}} = Characteristic<{{type characteristic.Format}}>;
@@ -389,25 +463,27 @@ static CHARACTERISTIC_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 ";
 
 static SERVICE: &'static str = "// THIS FILE IS AUTO-GENERATED\n
-use service::{HapService, Service};
-use characteristic::{
-    HapCharacteristic,
+use crate::{
+    service::{HapService, Service},
+    characteristic::{
+        HapCharacteristic,
 {{#each service.RequiredCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
-\t{{characteristic_file_name r ../../this.characteristics}},
+\t\t{{characteristic_file_name r ../../this.characteristics}},
 {{/if_eq}}\
 {{/each}}\
 {{/each}}\
 {{#each service.OptionalCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
-\t{{characteristic_file_name r ../../this.characteristics}},
+\t\t{{characteristic_file_name r ../../this.characteristics}},
 {{/if_eq}}\
 {{/each}}\
 {{/each}}\
+\t},
+    HapType,
 };
-use HapType;
 
 /// {{service.Name}} Service.
 pub type {{trim service.Name}} = Service<{{trim service.Name}}Inner>;
@@ -541,11 +617,12 @@ static SERVICE_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 ";
 
 static ACCESSORY: &'static str = "// THIS FILE IS AUTO-GENERATED\n
-use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{HapService, accessory_information::AccessoryInformation, {{snake_case service.Name}}};
-use event::EmitterPtr;
-
-use Error;
+use crate::{
+\taccessory::{HapAccessory, HapAccessoryService, Accessory, Information},
+\tservice::{HapService, accessory_information::AccessoryInformation, {{snake_case service.Name}}},
+\tevent::EmitterPtr,
+\tError,
+};
 
 /// {{service.Name}} Accessory.
 pub type {{trim service.Name}} = Accessory<{{trim service.Name}}Inner>;
@@ -641,12 +718,18 @@ fn main() {
     handlebars.register_helper("snake_case", Box::new(snake_case_helper));
     handlebars.register_template_string("categories", CATEGORIES).unwrap();
     handlebars.register_template_string("hap_type", HAP_TYPE).unwrap();
-    handlebars.register_template_string("characteristic", CHARACTERISTIC).unwrap();
-    handlebars.register_template_string("characteristic_mod", CHARACTERISTIC_MOD).unwrap();
+    handlebars
+        .register_template_string("characteristic", CHARACTERISTIC)
+        .unwrap();
+    handlebars
+        .register_template_string("characteristic_mod", CHARACTERISTIC_MOD)
+        .unwrap();
     handlebars.register_template_string("service", SERVICE).unwrap();
     handlebars.register_template_string("service_mod", SERVICE_MOD).unwrap();
     handlebars.register_template_string("accessory", ACCESSORY).unwrap();
-    handlebars.register_template_string("accessory_mod", ACCESSORY_MOD).unwrap();
+    handlebars
+        .register_template_string("accessory_mod", ACCESSORY_MOD)
+        .unwrap();
 
     let categories = handlebars.render("categories", &metadata).unwrap();
     let categories_path = "src/accessory/category.rs".to_owned();
@@ -662,7 +745,9 @@ fn main() {
     fs::create_dir_all(&characteristics_base_path).unwrap();
     let mut characteristsic_names = vec![];
     for c in &metadata.characteristics {
-        let characteristic = handlebars.render("characteristic", &json!({"characteristic": c})).unwrap();
+        let characteristic = handlebars
+            .render("characteristic", &json!({ "characteristic": c }))
+            .unwrap();
         let characteristic_file_name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
         let mut characteristic_path = String::from(characteristics_base_path);
         characteristic_path.push_str(&characteristic_file_name);
@@ -671,9 +756,16 @@ fn main() {
         characteristic_file.write_all(characteristic.as_bytes()).unwrap();
         characteristsic_names.push(characteristic_file_name);
     }
-    let characteristic_mod = handlebars.render("characteristic_mod", &json!({"characteristics": characteristsic_names})).unwrap();
+    let characteristic_mod = handlebars
+        .render(
+            "characteristic_mod",
+            &json!({ "characteristics": characteristsic_names }),
+        )
+        .unwrap();
     let mut characteristic_mod_file = File::create(&format!("{}mod.rs", characteristics_base_path)).unwrap();
-    characteristic_mod_file.write_all(characteristic_mod.as_bytes()).unwrap();
+    characteristic_mod_file
+        .write_all(characteristic_mod.as_bytes())
+        .unwrap();
 
     let services_base_path = "src/service/includes/";
     let accessory_base_path = "src/accessory/includes/";
@@ -682,7 +774,12 @@ fn main() {
     let mut service_names = vec![];
     let mut accessory_names = vec![];
     for s in &metadata.services {
-        let service = handlebars.render("service", &json!({"service": s, "characteristics": &metadata.characteristics})).unwrap();
+        let service = handlebars
+            .render(
+                "service",
+                &json!({"service": s, "characteristics": &metadata.characteristics}),
+            )
+            .unwrap();
         let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
         let mut service_path = String::from(services_base_path);
         service_path.push_str(&service_file_name);
@@ -691,20 +788,26 @@ fn main() {
         service_file.write_all(service.as_bytes()).unwrap();
         service_names.push(service_file_name.clone());
 
-        if s.name != "Accessory Information" &&
-            s.name != "Battery Service" &&
-            s.name != "Camera RTP Stream Management" &&
-            s.name != "Doorbell" &&
-            s.name != "Faucet" &&
-            s.name != "Filter Maintenance" &&
-            s.name != "Irrigation System" &&
-            s.name != "Lock Management" &&
-            s.name != "Lock Mechanism" &&
-            s.name != "Microphone" &&
-            s.name != "Service Label" &&
-            s.name != "Slat" &&
-            s.name != "Speaker" {
-            let accessory = handlebars.render("accessory", &json!({"service": s, "characteristics": &metadata.characteristics})).unwrap();
+        if s.name != "Accessory Information"
+            && s.name != "Battery Service"
+            && s.name != "Camera RTP Stream Management"
+            && s.name != "Doorbell"
+            && s.name != "Faucet"
+            && s.name != "Filter Maintenance"
+            && s.name != "Irrigation System"
+            && s.name != "Lock Management"
+            && s.name != "Lock Mechanism"
+            && s.name != "Microphone"
+            && s.name != "Service Label"
+            && s.name != "Slat"
+            && s.name != "Speaker"
+        {
+            let accessory = handlebars
+                .render(
+                    "accessory",
+                    &json!({"service": s, "characteristics": &metadata.characteristics}),
+                )
+                .unwrap();
             let mut accessory_path = String::from(accessory_base_path);
             accessory_path.push_str(&service_file_name);
             accessory_path.push_str(".rs");
@@ -713,10 +816,14 @@ fn main() {
             accessory_names.push(service_file_name);
         }
     }
-    let service_mod = handlebars.render("service_mod", &json!({"services": service_names})).unwrap();
+    let service_mod = handlebars
+        .render("service_mod", &json!({ "services": service_names }))
+        .unwrap();
     let mut service_mod_file = File::create(&format!("{}mod.rs", services_base_path)).unwrap();
     service_mod_file.write_all(service_mod.as_bytes()).unwrap();
-    let accessory_mod = handlebars.render("accessory_mod", &json!({"accessories": accessory_names})).unwrap();
+    let accessory_mod = handlebars
+        .render("accessory_mod", &json!({ "accessories": accessory_names }))
+        .unwrap();
     let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
     accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
 }

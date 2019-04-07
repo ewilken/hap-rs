@@ -1,11 +1,10 @@
-use std::{rc::Rc, cell::RefCell};
+use std::sync::{Arc, Mutex};
 
-use uuid::Uuid;
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
+use uuid::Uuid;
 
-use db::DatabasePtr;
-
-use Error;
+use crate::{db::DatabasePtr, Error};
 
 /// `Pairing` represents paired controllers.
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,17 +17,21 @@ pub struct Pairing {
 impl Pairing {
     /// Creates a new `Pairing`.
     pub fn new(id: Uuid, permissions: Permissions, public_key: [u8; 32]) -> Pairing {
-        Pairing {id, permissions, public_key}
+        Pairing {
+            id,
+            permissions,
+            public_key,
+        }
     }
 
     /// Loads a `Pairing` from a database.
     pub fn load_from(id: Uuid, database: &DatabasePtr) -> Result<Pairing, Error> {
-        database.try_borrow()?.get_pairing(id)
+        database.lock().expect("couldn't access database").get_pairing(id)
     }
 
     /// Saves a `Pairing` to a database.
     pub fn save_to(&self, database: &DatabasePtr) -> Result<(), Error> {
-        database.try_borrow_mut()?.set_pairing(self)?;
+        database.lock().expect("couldn't access database").set_pairing(self)?;
         Ok(())
     }
 
@@ -60,7 +63,7 @@ impl Permissions {
         match u {
             0x00 => Ok(Permissions::User),
             0x01 => Ok(Permissions::Admin),
-            _ => Err(Error::new_io("invalid permission Byte"))
+            _ => Err(Error::from_str("invalid permission Byte")),
         }
     }
 
@@ -74,4 +77,4 @@ impl Permissions {
 }
 
 /// Reference counting pointer to a `Uuid`.
-pub type IdPtr = Rc<RefCell<Option<Uuid>>>;
+pub type IdPtr = Arc<Mutex<Option<Uuid>>>;

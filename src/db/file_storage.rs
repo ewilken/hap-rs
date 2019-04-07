@@ -1,18 +1,18 @@
 use std::{
-    fs,
-    str,
     ffi::OsStr,
-    io::{Read, Write, BufReader, BufWriter},
+    fs,
+    io::{BufReader, BufWriter, Read, Write},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
+    str,
 };
 
-use byteorder::{ByteOrder, BigEndian, ReadBytesExt};
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use uuid::Uuid;
 
-use db::storage::Storage;
+use crate::db::storage::Storage;
 
-use Error;
+use crate::Error;
 
 /// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 pub struct FileStorage {
@@ -28,25 +28,20 @@ impl FileStorage {
         let mut perms = fs::metadata(&path)?.permissions();
         perms.set_mode(0o777);
         fs::set_permissions(&path, perms)?;
-        Ok(FileStorage {dir_path: path})
+        Ok(FileStorage { dir_path: path })
     }
 
     /// Returns a readable `File` for the given file name.
     fn file_for_read(&self, file: &str) -> Result<fs::File, Error> {
         let file_path = self.path_to_file(file);
-        let file = fs::OpenOptions::new()
-            .read(true)
-            .open(file_path)?;
+        let file = fs::OpenOptions::new().read(true).open(file_path)?;
         Ok(file)
     }
 
     /// Returns a writable `File` for the given file name.
     fn file_for_write(&self, file: &str) -> Result<fs::File, Error> {
         let file_path = self.path_to_file(file);
-        let file = fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(file_path)?;
+        let file = fs::OpenOptions::new().write(true).create(true).open(file_path)?;
         Ok(file)
     }
 
@@ -102,19 +97,17 @@ impl Storage for FileStorage {
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf)?;
         match str::from_utf8(&buf) {
-            Ok(uuid_str) => {
-                match Uuid::parse_str(uuid_str) {
-                    Ok(value) => Ok(value),
-                    _ => Err(Error::new_io("couldn't parse UUID")),
-                }
+            Ok(uuid_str) => match Uuid::parse_str(uuid_str) {
+                Ok(value) => Ok(value),
+                _ => Err(Error::from_str("couldn't parse UUID")),
             },
-            _ => Err(Error::new_io("couldn't read UUID")),
+            _ => Err(Error::from_str("couldn't read UUID")),
         }
     }
 
     fn set_uuid(&self, key: &str, value: Uuid) -> Result<(), Error> {
         let mut writer = self.get_writer(key)?;
-        writer.write_all(value.hyphenated().to_string().as_bytes())?;
+        writer.write_all(value.to_hyphenated().to_string().as_bytes())?;
         Ok(())
     }
 
@@ -125,11 +118,12 @@ impl Storage for FileStorage {
             let entry = entry?;
             let path = entry.path();
             if path.extension() == extension {
-                let key = path.file_stem()
-                    .ok_or(Error::new_io("invalid file name"))?
+                let key = path
+                    .file_stem()
+                    .ok_or(Error::from_str("invalid file name"))?
                     .to_os_string()
                     .into_string()
-                    .or(Err(Error::new_io("invalid file name")))?;
+                    .or(Err(Error::from_str("invalid file name")))?;
                 keys.push(key);
             }
         }

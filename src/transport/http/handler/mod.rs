@@ -1,13 +1,18 @@
-use hyper::{self, Uri, StatusCode, server::Response};
 use futures::{future, Future};
+use hyper::{self, Body, Response, StatusCode, Uri};
 
-use config::ConfigPtr;
-use db::{DatabasePtr, AccessoryList};
-use transport::http::{tlv_response, status_response, server::EventSubscriptions};
-use protocol::{tlv::{self, Encodable}, IdPtr};
-use event::EmitterPtr;
-
-use Error;
+use crate::{
+    config::ConfigPtr,
+    db::{AccessoryList, DatabasePtr},
+    event::EmitterPtr,
+    protocol::{
+        tlv::{self, Encodable},
+        IdPtr,
+    },
+    transport::http::{server::EventSubscriptions, status_response, tlv_response},
+    Error,
+    ErrorKind,
+};
 
 pub mod accessories;
 pub mod characteristics;
@@ -27,7 +32,7 @@ pub trait Handler {
         database: &DatabasePtr,
         accessories: &AccessoryList,
         event_emitter: &EmitterPtr,
-    ) -> Box<Future<Item=Response, Error=hyper::Error>>;
+    ) -> Box<dyn Future<Item = Response<Body>, Error = Error> + Send>;
 }
 
 pub trait TlvHandler {
@@ -47,9 +52,7 @@ pub trait TlvHandler {
 pub struct TlvHandlerType<T: TlvHandler>(T);
 
 impl<T: TlvHandler> From<T> for TlvHandlerType<T> {
-    fn from(inst: T) -> TlvHandlerType<T> {
-        TlvHandlerType(inst)
-    }
+    fn from(inst: T) -> TlvHandlerType<T> { TlvHandlerType(inst) }
 }
 
 impl<T: TlvHandler> Handler for TlvHandlerType<T> {
@@ -63,15 +66,17 @@ impl<T: TlvHandler> Handler for TlvHandlerType<T> {
         database: &DatabasePtr,
         _: &AccessoryList,
         event_emitter: &EmitterPtr,
-    ) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    ) -> Box<dyn Future<Item = Response<Body>, Error = Error> + Send> {
         let response = match self.0.parse(body) {
             Err(e) => e.encode(),
             Ok(step) => match self.0.handle(step, controller_id, config, database, event_emitter) {
                 Err(e) => e.encode(),
                 Ok(res) => res.encode(),
-            }
+            },
         };
-        Box::new(future::ok(tlv_response(response, StatusCode::Ok)))
+        Box::new(future::result(
+            tlv_response(response, StatusCode::OK).map_err(Error::from),
+        ))
     }
 }
 
@@ -86,15 +91,13 @@ pub trait JsonHandler {
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
         event_emitter: &EmitterPtr,
-    ) -> Result<Response, Error>;
+    ) -> Result<Response<Body>, Error>;
 }
 
 pub struct JsonHandlerType<T: JsonHandler>(T);
 
 impl<T: JsonHandler> From<T> for JsonHandlerType<T> {
-    fn from(inst: T) -> JsonHandlerType<T> {
-        JsonHandlerType(inst)
-    }
+    fn from(inst: T) -> JsonHandlerType<T> { JsonHandlerType(inst) }
 }
 
 impl<T: JsonHandler> Handler for JsonHandlerType<T> {
@@ -108,7 +111,7 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
         event_emitter: &EmitterPtr,
-    ) -> Box<Future<Item=Response, Error=hyper::Error>> {
+    ) -> Box<dyn Future<Item = Response<Body>, Error = Error> + Send> {
         let response = match self.0.handle(
             uri,
             body,
@@ -119,12 +122,12 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
             accessory_list,
             event_emitter,
         ) {
-            Ok(res) => res,
-            Err(e) => match e {
-                Error::HttpStatus(status) => status_response(status),
-                _ => status_response(StatusCode::InternalServerError),
+            Ok(res) => Ok(res),
+            Err(e) => match e.kind() {
+                &ErrorKind::HttpStatus(status) => status_response(status),
+                _ => status_response(StatusCode::INTERNAL_SERVER_ERROR),
             },
         };
-        Box::new(future::ok(response))
+        Box::new(future::result(response))
     }
 }

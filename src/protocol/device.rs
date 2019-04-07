@@ -1,17 +1,19 @@
 use std::{fmt, marker::PhantomData};
 
-use rand::{self, Rng};
 use crypto::ed25519;
+use rand::{self, Rng};
 use serde::{
-    ser::{Serialize, Serializer, SerializeTuple},
-    de::{self, Deserialize, Deserializer, Visitor, SeqAccess},
+    de::{self, Deserialize, Deserializer, SeqAccess, Visitor},
+    ser::{Serialize, SerializeTuple, Serializer},
 };
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
 
-use db::{Database, DatabasePtr};
-use pin::Pin;
-
-use Error;
+use crate::{
+    db::{Database, DatabasePtr},
+    pin::Pin,
+    Error,
+};
 
 /// `Device` represents instances of the HAP server.
 #[derive(Serialize, Deserialize)]
@@ -26,13 +28,23 @@ pub struct Device {
 impl Device {
     /// Creates a new `Device` with a given key pair.
     pub fn new(id: String, pin: Pin, private_key: [u8; 64], public_key: [u8; 32]) -> Device {
-        Device {id, pin, public_key, private_key}
+        Device {
+            id,
+            pin,
+            public_key,
+            private_key,
+        }
     }
 
     /// Creates a new `Device` generating a random key pair.
     pub fn new_random(id: String, pin: Pin) -> Device {
         let (private_key, public_key) = generate_key_pair();
-        Device {id, pin, private_key, public_key}
+        Device {
+            id,
+            pin,
+            private_key,
+            public_key,
+        }
     }
 
     /// Attempts to load a `Device` from a database and creates a new one with a random key pair if
@@ -50,12 +62,12 @@ impl Device {
 
     /// Loads a `Device` from a database.
     pub fn load_from(database: &DatabasePtr) -> Result<Device, Error> {
-        database.try_borrow()?.get_device()
+        database.lock().expect("couldn't access database").get_device()
     }
 
     /// Saves a `Device` to a database.
     pub fn save_to(&self, database: &DatabasePtr) -> Result<(), Error> {
-        database.try_borrow_mut()?.set_device(self)?;
+        database.lock().expect("couldn't access database").set_device(self)?;
         Ok(())
     }
 
@@ -81,9 +93,11 @@ fn generate_key_pair() -> ([u8; 64], [u8; 32]) {
 // see https://github.com/serde-rs/serde/issues/631
 trait BigArray<'de>: Sized {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where S: Serializer;
+    where
+        S: Serializer;
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where D: Deserializer<'de>;
+    where
+        D: Deserializer<'de>;
 }
 
 macro_rules! big_array {

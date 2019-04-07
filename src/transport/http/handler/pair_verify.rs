@@ -1,17 +1,25 @@
-use std::{str, collections::HashMap};
+use std::{collections::HashMap, str};
 
-use rand::{self, Rng};
-use crypto::{curve25519, ed25519};
-use ring::{hkdf, hmac, digest};
 use chacha20_poly1305_aead;
-use uuid::Uuid;
+use crypto::{curve25519, ed25519};
 use futures::sync::oneshot;
+use log::debug;
+use rand::{self, Rng};
+use ring::{digest, hkdf, hmac};
+use uuid::Uuid;
 
-use transport::{http::handlers::TlvHandler, tcp};
-use config::ConfigPtr;
-use db::DatabasePtr;
-use protocol::{Device, Pairing, tlv::{self, Type, Value}, IdPtr};
-use event::EmitterPtr;
+use crate::{
+    config::ConfigPtr,
+    db::DatabasePtr,
+    event::EmitterPtr,
+    protocol::{
+        tlv::{self, Type, Value},
+        Device,
+        IdPtr,
+        Pairing,
+    },
+    transport::{http::handler::TlvHandler, tcp},
+};
 
 struct Session {
     b_pub: [u8; 32],
@@ -27,7 +35,10 @@ pub struct PairVerify {
 
 impl PairVerify {
     pub fn new(session_sender: oneshot::Sender<tcp::Session>) -> PairVerify {
-        PairVerify { session: None, session_sender: Some(session_sender) }
+        PairVerify {
+            session: None,
+            session_sender: Some(session_sender),
+        }
     }
 }
 
@@ -53,15 +64,19 @@ impl TlvHandler for PairVerify {
         match decoded.get(&(Type::State as u8)) {
             Some(method) => match method[0] {
                 x if x == StepNumber::StartReq as u8 => {
-                    let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(
-                        tlv::ErrorContainer::new(StepNumber::StartRes as u8, tlv::Error::Unknown)
-                    )?;
+                    let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(tlv::ErrorContainer::new(
+                        StepNumber::StartRes as u8,
+                        tlv::Error::Unknown,
+                    ))?;
                     Ok(Step::Start { a_pub: a_pub.clone() })
                 },
                 x if x == StepNumber::FinishReq as u8 => {
-                    let data = decoded.get(&(Type::EncryptedData as u8)).ok_or(
-                        tlv::ErrorContainer::new(StepNumber::FinishRes as u8, tlv::Error::Unknown)
-                    )?;
+                    let data = decoded
+                        .get(&(Type::EncryptedData as u8))
+                        .ok_or(tlv::ErrorContainer::new(
+                            StepNumber::FinishRes as u8,
+                            tlv::Error::Unknown,
+                        ))?;
                     Ok(Step::Finish { data: data.clone() })
                 },
                 _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
@@ -131,12 +146,7 @@ fn handle_start(
     let mut encrypted_data = Vec::new();
     let mut nonce = vec![0; 4];
     nonce.extend(b"PV-Msg02");
-    let auth_tag = chacha20_poly1305_aead::encrypt(
-        &session_key,
-        &nonce, &[],
-        &encoded_sub_tlv,
-        &mut encrypted_data,
-    )?;
+    let auth_tag = chacha20_poly1305_aead::encrypt(&session_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data)?;
     encrypted_data.extend(&auth_tag);
 
     debug!("/pair-verify - M2: Sending Verify Start Response");
@@ -148,11 +158,7 @@ fn handle_start(
     ])
 }
 
-fn handle_finish(
-    handler: &mut PairVerify,
-    database: &DatabasePtr,
-    data: &[u8],
-) -> Result<tlv::Container, tlv::Error> {
+fn handle_finish(handler: &mut PairVerify, database: &DatabasePtr, data: &[u8]) -> Result<tlv::Container, tlv::Error> {
     debug!("/pair-verify - M3: Got Verify Finish Request");
 
     if let Some(ref mut session) = handler.session {
@@ -168,7 +174,7 @@ fn handle_finish(
             &[],
             &encrypted_data,
             &auth_tag,
-            &mut decrypted_data
+            &mut decrypted_data,
         )?;
 
         let sub_tlv = tlv::decode(decrypted_data);

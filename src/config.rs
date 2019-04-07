@@ -1,32 +1,33 @@
 use std::{
-    net::IpAddr,
-    env::current_dir,
-    str,
     collections::hash_map::DefaultHasher,
+    env::current_dir,
     hash::{Hash, Hasher},
-    rc::Rc,
-    cell::RefCell,
+    net::IpAddr,
+    str,
+    sync::{Arc, Mutex},
 };
 
 use eui48::MacAddress;
-use rand::{self, Rng};
 use pnet::datalink;
+use rand::{self, Rng};
 
-use accessory::Category;
-use db::Storage;
-use transport::bonjour::{StatusFlag, FeatureFlag};
+use crate::{
+    accessory::Category,
+    db::Storage,
+    transport::bonjour::{FeatureFlag, StatusFlag},
+};
 
-use Error;
+use crate::Error;
 
 /// Reference counting pointer to a `Config`.
-pub type ConfigPtr = Rc<RefCell<Config>>;
+pub type ConfigPtr = Arc<Mutex<Config>>;
 
 /// The `Config` struct is used to store configuration options for the HomeKit Accessory Server.
 ///
 /// # Examples
 ///
 /// ```
-/// use hap::{Config, accessory::Category};
+/// use hap::{accessory::Category, Config};
 ///
 /// let config = Config {
 ///     storage_path: "/etc/homekit".into(),
@@ -165,7 +166,8 @@ impl Default for Config {
     fn default() -> Config {
         let mut config = Config {
             storage_path: format!(
-                "{}/data", current_dir()
+                "{}/data",
+                current_dir()
                     .expect("couldn't determine current directory")
                     .to_str()
                     .expect("couldn't stringify current directory")

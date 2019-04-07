@@ -1,11 +1,20 @@
-use hyper::{server::Response, header::{self, ContentLength}, StatusCode};
+use hyper::{
+    header::{CONTENT_LENGTH, CONTENT_TYPE},
+    Body,
+    Response,
+    StatusCode,
+};
+use serde_derive::{Deserialize, Serialize};
 use serde_json;
 
-use characteristic::{Format, Perm, Unit};
-use HapType;
+use crate::{
+    characteristic::{Format, Perm, Unit},
+    Error,
+    HapType,
+};
 
+pub(crate) mod handler;
 pub(crate) mod server;
-pub(crate) mod handlers;
 
 #[allow(dead_code)]
 pub enum Status {
@@ -28,10 +37,10 @@ enum ContentType {
 }
 
 impl ContentType {
-    pub fn for_hyper(self) -> header::ContentType {
+    pub fn to_string(self) -> String {
         match self {
-            ContentType::PairingTLV8 => header::ContentType("application/pairing+tlv8".parse().unwrap()),
-            ContentType::HapJson => header::ContentType("application/hap+json".parse().unwrap()),
+            ContentType::PairingTLV8 => "application/pairing+tlv8".into(),
+            ContentType::HapJson => "application/hap+json".into(),
         }
     }
 }
@@ -94,21 +103,24 @@ pub struct EventObject {
     pub value: serde_json::Value,
 }
 
-pub fn tlv_response(body: Vec<u8>, status: StatusCode) -> Response {
+pub fn tlv_response(body: Vec<u8>, status: StatusCode) -> Result<Response<Body>, Error> {
     response(body, status, ContentType::PairingTLV8)
 }
 
-pub fn json_response(body: Vec<u8>, status: StatusCode) -> Response {
+pub fn json_response(body: Vec<u8>, status: StatusCode) -> Result<Response<Body>, Error> {
     response(body, status, ContentType::HapJson)
 }
 
-pub fn status_response(status: StatusCode) -> Response {
-    Response::new().with_status(status)
+pub fn status_response(status: StatusCode) -> Result<Response<Body>, Error> {
+    Response::builder()
+        .status(status)
+        .body(Body::empty())
+        .map_err(Error::from)
 }
 
-pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, serde_json::Error> {
+pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, Error> {
     let body = serde_json::to_string(&CharacteristicResponseBody {
-        characteristics: event_objects
+        characteristics: event_objects,
     })?;
     let response = format!(
         "EVENT/1.0 200 OK\nContent-Type: application/hap+json\nContent-Length: {}\n\n{}",
@@ -118,10 +130,11 @@ pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, serde_
     Ok(response.as_bytes().to_vec())
 }
 
-fn response(body: Vec<u8>, status: StatusCode, content_type: ContentType) -> Response {
-    Response::new()
-        .with_status(status)
-        .with_header(ContentLength(body.len() as u64))
-        .with_header(content_type.for_hyper())
-        .with_body(body)
+fn response(body: Vec<u8>, status: StatusCode, content_type: ContentType) -> Result<Response<Body>, Error> {
+    Response::builder()
+        .status(status)
+        .header(CONTENT_TYPE, content_type.to_string())
+        .header(CONTENT_LENGTH, body.len() as u64)
+        .body(body.into())
+        .map_err(Error::from)
 }

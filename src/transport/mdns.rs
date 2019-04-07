@@ -1,8 +1,16 @@
-use std::{thread, sync::mpsc::{self, TryRecvError}, time::Duration, rc::Rc, cell::RefCell};
+use std::{
+    sync::{
+        mpsc::{self, TryRecvError},
+        Arc,
+        Mutex,
+    },
+    thread,
+    time::Duration,
+};
 
 use libmdns;
 
-use Error;
+use crate::Error;
 
 /// An mDNS Responder. Used to announce the Accessory's name and HAP TXT records to potential
 /// controllers.
@@ -32,19 +40,16 @@ impl Responder {
         let tr = self.txt_records.clone();
         thread::spawn(move || {
             let responder = libmdns::Responder::new().expect("couldn't create mDNS responder");
-            let _svc = responder.register(
-                "_hap._tcp".into(),
-                name,
-                port,
-                &[&tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7]],
-            );
+            let _svc = responder.register("_hap._tcp".into(), name, port, &[
+                &tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7],
+            ]);
             loop {
-                thread::sleep(Duration::from_secs(10));
+                thread::sleep(Duration::from_secs(2));
                 match rx.try_recv() {
                     Ok(_) | Err(TryRecvError::Disconnected) => {
                         break;
-                    }
-                    Err(TryRecvError::Empty) => {}
+                    },
+                    Err(TryRecvError::Empty) => {},
                 }
             }
         });
@@ -69,4 +74,4 @@ impl Responder {
 }
 
 /// Reference counting pointer to a `Responder`.
-pub type ResponderPtr = Rc<RefCell<Responder>>;
+pub type ResponderPtr = Arc<Mutex<Responder>>;

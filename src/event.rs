@@ -1,26 +1,22 @@
-use std::{rc::Rc, cell::RefCell};
+use std::sync::{Arc, Mutex};
 
 use serde_json::Value;
 
 pub enum Event {
     DevicePaired,
     DeviceUnpaired,
-    CharacteristicValueChanged { aid: u64, iid: u64, value: Value }
+    CharacteristicValueChanged { aid: u64, iid: u64, value: Value },
 }
 
 #[derive(Default)]
 pub struct Emitter {
-    listeners: Vec<Box<Fn(&Event)>>,
+    listeners: Vec<Box<dyn Fn(&Event) + Send>>,
 }
 
 impl Emitter {
-    pub fn new() -> Emitter {
-        Emitter { listeners: vec![] }
-    }
+    pub fn new() -> Emitter { Emitter { listeners: vec![] } }
 
-    pub fn add_listener(&mut self, listener: Box<Fn(&Event)>) {
-        self.listeners.push(listener);
-    }
+    pub fn add_listener(&mut self, listener: Box<dyn Fn(&Event) + Send>) { self.listeners.push(listener); }
 
     pub fn emit(&self, event: &Event) {
         for listener in &self.listeners {
@@ -30,4 +26,4 @@ impl Emitter {
 }
 
 /// Reference counting pointer to an `Emitter`.
-pub type EmitterPtr = Rc<RefCell<Emitter>>;
+pub type EmitterPtr = Arc<Mutex<Emitter>>;

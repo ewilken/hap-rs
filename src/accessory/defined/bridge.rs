@@ -1,8 +1,10 @@
-use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::accessory_information::AccessoryInformation;
-use event::EmitterPtr;
+use crate::{
+    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
+    event::EmitterPtr,
+    service::accessory_information::AccessoryInformation,
+};
 
-use Error;
+use crate::Error;
 
 /// Bridge Accessory.
 pub type Bridge = Accessory<BridgeInner>;
@@ -18,29 +20,15 @@ pub struct BridgeInner {
 }
 
 impl HapAccessory for BridgeInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> {
-        vec![
-            &self.accessory_information,
-        ]
-    }
+    fn get_services(&self) -> Vec<&HapAccessoryService> { vec![&self.accessory_information] }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
-        vec![
-            &mut self.accessory_information,
-        ]
-    }
+    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> { vec![&mut self.accessory_information] }
 
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
-        &mut self.accessory_information
-    }
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
     fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_iid = 1;

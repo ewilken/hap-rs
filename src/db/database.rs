@@ -1,25 +1,25 @@
-use std::{rc::Rc, cell::RefCell};
+use std::sync::{Arc, Mutex};
 
 use uuid::Uuid;
 
-use db::{file_storage, storage::Storage};
-use protocol::{Device, Pairing};
+use crate::{
+    db::{file_storage, storage::Storage},
+    protocol::{Device, Pairing},
+};
 
-use Error;
+use crate::Error;
 
 /// Reference counting pointer to a `Database`.
-pub type DatabasePtr = Rc<RefCell<Database>>;
+pub type DatabasePtr = Arc<Mutex<Database>>;
 
 /// `Database` is a wrapper type around a boxed implementor of the `Storage` trait.
 pub struct Database {
-    storage: Box<Storage>,
+    storage: Box<dyn Storage + Send>,
 }
 
 impl Database {
     /// Creates a new `Database`.
-    pub fn new(storage: Box<Storage>) -> Database {
-        Database { storage }
-    }
+    pub fn new(storage: Box<dyn Storage + Send>) -> Database { Database { storage } }
 
     /// Creates a new `Database` with a `FileStorage` as its `Storage`.
     pub fn new_with_file_storage(dir: &str) -> Result<Database, Error> {
@@ -59,7 +59,7 @@ impl Database {
 
     /// Returns the stored `Pairing` for a given `Uuid`.
     pub fn get_pairing(&self, id: Uuid) -> Result<Pairing, Error> {
-        let pairing_bytes = self.get_bytes(&id.simple().to_string())?;
+        let pairing_bytes = self.get_bytes(&id.to_simple().to_string())?;
         let pairing = Pairing::from_bytes(&pairing_bytes)?;
         Ok(pairing)
     }
@@ -67,13 +67,13 @@ impl Database {
     /// Stores a given `Pairing`.
     pub fn set_pairing(&self, pairing: &Pairing) -> Result<(), Error> {
         let pairing_bytes = pairing.as_bytes()?;
-        self.set_bytes(&pairing.id.simple().to_string(), pairing_bytes)?;
+        self.set_bytes(&pairing.id.to_simple().to_string(), pairing_bytes)?;
         Ok(())
     }
 
     /// Deletes the stored `Pairing` for a given `Uuid`.
     pub fn delete_pairing(&self, id: &Uuid) -> Result<(), Error> {
-        let mut key = id.simple().to_string();
+        let mut key = id.to_simple().to_string();
         key.push_str(".entity");
         self.storage.delete(&key)
     }

@@ -1,24 +1,33 @@
-use std::{str, collections::HashMap, ops::BitXor};
+use std::{collections::HashMap, ops::BitXor, str};
 
-use rand::{self, Rng};
-use sha2::{Sha512, Digest};
-use srp::{
-    server::{UserRecord, SrpServer},
-    client::{SrpClient, srp_private_key},
-    groups::G_3072,
-    types::SrpGroup,
-};
-use num::BigUint;
-use ring::{hkdf, hmac, digest};
 use chacha20_poly1305_aead;
 use crypto::ed25519;
+use log::debug;
+use num::BigUint;
+use rand::{self, distributions::Standard, Rng};
+use ring::{digest, hkdf, hmac};
+use sha2::{Digest, Sha512};
+use srp::{
+    client::{srp_private_key, SrpClient},
+    groups::G_3072,
+    server::{SrpServer, UserRecord},
+    types::SrpGroup,
+};
 use uuid::Uuid;
 
-use db::DatabasePtr;
-use config::ConfigPtr;
-use transport::http::handlers::TlvHandler;
-use protocol::{Device, Pairing, Permissions, tlv::{self, Type, Value}, IdPtr};
-use event::{Event, EmitterPtr};
+use crate::{
+    config::ConfigPtr,
+    db::DatabasePtr,
+    event::{EmitterPtr, Event},
+    protocol::{
+        tlv::{self, Type, Value},
+        Device,
+        IdPtr,
+        Pairing,
+        Permissions,
+    },
+    transport::http::handler::TlvHandler,
+};
 
 struct Session {
     salt: Vec<u8>,
@@ -35,7 +44,10 @@ pub struct PairSetup {
 
 impl PairSetup {
     pub fn new() -> PairSetup {
-        PairSetup { session: None, unsuccessful_tries: 0 }
+        PairSetup {
+            session: None,
+            unsuccessful_tries: 0,
+        }
     }
 }
 
@@ -65,18 +77,26 @@ impl TlvHandler for PairSetup {
             Some(method) => match method[0] {
                 x if x == StepNumber::StartReq as u8 => Ok(Step::Start),
                 x if x == StepNumber::VerifyReq as u8 => {
-                    let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(
-                        tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, tlv::Error::Unknown)
-                    )?;
-                    let a_proof = decoded.get(&(Type::Proof as u8)).ok_or(
-                        tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, tlv::Error::Unknown)
-                    )?;
-                    Ok(Step::Verify { a_pub: a_pub.clone(), a_proof: a_proof.clone() })
+                    let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(tlv::ErrorContainer::new(
+                        StepNumber::VerifyRes as u8,
+                        tlv::Error::Unknown,
+                    ))?;
+                    let a_proof = decoded.get(&(Type::Proof as u8)).ok_or(tlv::ErrorContainer::new(
+                        StepNumber::VerifyRes as u8,
+                        tlv::Error::Unknown,
+                    ))?;
+                    Ok(Step::Verify {
+                        a_pub: a_pub.clone(),
+                        a_proof: a_proof.clone(),
+                    })
                 },
                 x if x == StepNumber::ExchangeReq as u8 => {
-                    let data = decoded.get(&(Type::EncryptedData as u8)).ok_or(
-                        tlv::ErrorContainer::new(StepNumber::ExchangeRes as u8, tlv::Error::Unknown)
-                    )?;
+                    let data = decoded
+                        .get(&(Type::EncryptedData as u8))
+                        .ok_or(tlv::ErrorContainer::new(
+                            StepNumber::ExchangeRes as u8,
+                            tlv::Error::Unknown,
+                        ))?;
                     Ok(Step::Exchange { data: data.clone() })
                 },
                 _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
@@ -128,10 +148,7 @@ impl TlvHandler for PairSetup {
     }
 }
 
-fn handle_start(
-    handler: &mut PairSetup,
-    database: &DatabasePtr,
-) -> Result<tlv::Container, tlv::Error> {
+fn handle_start(handler: &mut PairSetup, database: &DatabasePtr) -> Result<tlv::Container, tlv::Error> {
     debug!("/pair-setup - M1: Got SRP Start Request");
 
     if handler.unsuccessful_tries > 99 {
@@ -141,8 +158,8 @@ fn handle_start(
     let accessory = Device::load_from(database)?;
 
     let mut rng = rand::thread_rng();
-    let salt = rng.gen_iter::<u8>().take(16).collect::<Vec<u8>>(); // s
-    let b = rng.gen_iter::<u8>().take(64).collect::<Vec<u8>>();
+    let salt = rng.sample_iter::<u8, Standard>(&Standard).take(16).collect::<Vec<u8>>(); // s
+    let b = rng.sample_iter::<u8, Standard>(&Standard).take(64).collect::<Vec<u8>>();
 
     let private_key = srp_private_key::<Sha512>(b"Pair-Setup", accessory.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
     let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
@@ -166,14 +183,14 @@ fn handle_start(
 
     debug!("/pair-setup - M2: Sending SRP Start Response");
 
-    Ok(vec![Value::State(StepNumber::StartRes as u8), Value::PublicKey(b_pub), Value::Salt(salt.clone())])
+    Ok(vec![
+        Value::State(StepNumber::StartRes as u8),
+        Value::PublicKey(b_pub),
+        Value::Salt(salt.clone()),
+    ])
 }
 
-fn handle_verify(
-    handler: &mut PairSetup,
-    a_pub: &[u8],
-    a_proof: &[u8],
-) -> Result<tlv::Container, tlv::Error> {
+fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) -> Result<tlv::Container, tlv::Error> {
     debug!("/pair-setup - M3: Got SRP Verify Request");
 
     if let Some(ref mut session) = handler.session {
@@ -239,12 +256,7 @@ fn handle_exchange(
 
             let mut device_x = [0; 32];
             let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
-            hkdf::extract_and_expand(
-                &salt,
-                &shared_secret,
-                b"Pair-Setup-Controller-Sign-Info",
-                &mut device_x,
-            );
+            hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut device_x);
 
             let mut device_info: Vec<u8> = Vec::new();
             device_info.extend(&device_x);
@@ -259,8 +271,8 @@ fn handle_exchange(
             let mut pairing_ltpk = [0; 32];
             pairing_ltpk[..32].clone_from_slice(&device_ltpk[..32]);
 
-            if let Some(max_peers) = config.try_borrow()?.max_peers {
-                if database.try_borrow()?.count_pairings()? + 1 > max_peers {
+            if let Some(max_peers) = config.lock().expect("couldn't access config").max_peers {
+                if database.lock().expect("couldn't access database").count_pairings()? + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
             }
@@ -274,7 +286,7 @@ fn handle_exchange(
                 &salt,
                 &shared_secret,
                 b"Pair-Setup-Accessory-Sign-Info",
-                &mut accessory_x
+                &mut accessory_x,
             );
 
             let accessory = Device::load_from(database)?;
@@ -293,20 +305,21 @@ fn handle_exchange(
             let mut encrypted_data = Vec::new();
             let mut nonce = vec![0; 4];
             nonce.extend(b"PS-Msg06");
-            let auth_tag = chacha20_poly1305_aead::encrypt(
-                &encryption_key,
-                &nonce,
-                &[],
-                &encoded_sub_tlv,
-                &mut encrypted_data,
-            )?;
+            let auth_tag =
+                chacha20_poly1305_aead::encrypt(&encryption_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data)?;
             encrypted_data.extend(&auth_tag);
 
-            event_emitter.try_borrow()?.emit(&Event::DevicePaired);
+            event_emitter
+                .lock()
+                .expect("couldn't access event_emitter")
+                .emit(&Event::DevicePaired);
 
             debug!("/pair-setup - M6: Sending SRP Exchange Response");
 
-            Ok(vec![Value::State(StepNumber::ExchangeRes as u8), Value::EncryptedData(encrypted_data)])
+            Ok(vec![
+                Value::State(StepNumber::ExchangeRes as u8),
+                Value::EncryptedData(encrypted_data),
+            ])
         } else {
             Err(tlv::Error::Unknown)
         }

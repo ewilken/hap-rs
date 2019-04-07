@@ -5,7 +5,7 @@
 [![docs](https://docs.rs/hap/badge.svg)](https://docs.rs/hap)
 [![license: MIT/Apache-2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/ewilken/hap-rs)
 
-Rust implementation of the Apple HomeKit Accessory Protocol (HAP) based on [Tokio](https://github.com/tokio-rs/tokio) and [Hyper](https://github.com/hyperium/hyper).
+Rust implementation of the Apple HomeKit Accessory Protocol (HAP).
 
 This crate supports all HomeKit Services and Characteristics currently implemented by Apple and provides the ability to create custom Characteristics, Services and Accessories.
 
@@ -50,8 +50,6 @@ For a full list of the predefined Characteristics, Services and Accessories, see
 Creating a simple outlet Accessory and starting the IP transport:
 
 ```rust
-extern crate hap;
-
 use hap::{
     transport::{Transport, IpTransport},
     accessory::{Category, Information, outlet},
@@ -81,8 +79,6 @@ fn main() {
 Dynamically adding and removing Accessories:
 
 ```rust
-extern crate hap;
-
 use hap::{
     transport::{Transport, IpTransport},
     accessory::{Category, Information, bridge, outlet},
@@ -124,8 +120,6 @@ fn main() {
 Using the `Readable` and `Updatable` traits to react to remote value reads and updates:
 
 ```rust
-extern crate hap;
-
 use hap::{
     transport::{Transport, IpTransport},
     accessory::{Category, Information, outlet},
@@ -188,8 +182,6 @@ Change dependent Characteristics on value changes:
 ```rust
 use std::{rc::Rc, cell::RefCell};
 
-extern crate hap;
-
 use hap::{
     transport::{Transport, IpTransport},
     accessory::{Category, Information, door},
@@ -205,13 +197,13 @@ pub struct VirtualDoorInner {
 
 #[derive(Clone)]
 pub struct VirtualDoor {
-    inner: Rc<RefCell<VirtualDoorInner>>,
+    inner: Arc<Mutex<VirtualDoorInner>>,
     current_position: Characteristic<u8>,
 }
 
 impl VirtualDoor {
     pub fn new(inner: VirtualDoorInner, current_position: Characteristic<u8>) -> VirtualDoor {
-        VirtualDoor { inner: Rc::new(RefCell::new(inner)), current_position }
+        VirtualDoor { inner: Arc::new(Mutex::new(inner)), current_position }
     }
 }
 
