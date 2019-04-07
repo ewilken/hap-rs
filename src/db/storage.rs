@@ -1,8 +1,11 @@
-use std::{fs::File, io::{BufReader, BufWriter}};
+use std::{
+    fs::File,
+    io::{BufReader, BufWriter},
+};
 
 use uuid::Uuid;
 
-use Error;
+use crate::Error;
 
 /// `Storage` is implemented by the data storage methods HAP supports. Currently, that's just
 /// `FileStorage`.

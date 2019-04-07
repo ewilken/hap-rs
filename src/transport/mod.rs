@@ -1,15 +1,15 @@
-use db::{AccessoryListMember, AccessoryListPtr};
-
-use Error;
+use crate::{
+    db::{AccessoryListMember, AccessoryListPtr},
+    Error,
+};
 
 pub mod bonjour;
 pub mod mdns;
 
 pub(crate) mod http;
 
-mod tcp;
-
 mod ip;
+mod tcp;
 
 pub use self::ip::IpTransport;
 
@@ -21,7 +21,10 @@ pub trait Transport {
     /// Stops the transport.
     fn stop(&self) -> Result<(), Error>;
     /// Adds an Accessory to the transport and returns a pointer to the added Accessory.
-    fn add_accessory<A: 'static + AccessoryListMember>(&mut self, accessory: A) -> Result<AccessoryListPtr, Error>;
+    fn add_accessory<A: 'static + AccessoryListMember + Send>(
+        &mut self,
+        accessory: A,
+    ) -> Result<AccessoryListPtr, Error>;
     /// Takes a pointer to an Accessory and removes the Accessory from the transport.
     fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<(), Error>;
 }

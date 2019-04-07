@@ -1,13 +1,12 @@
-use std::{io, str, cell, collections::HashMap};
+use std::{cell, collections::HashMap, io, str};
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use srp::types::SrpAuthError;
 use chacha20_poly1305_aead;
+use failure::Fail;
+use srp::types::SrpAuthError;
 use uuid;
 
-use protocol::pairing::Permissions;
-
-use error;
+use crate::{error, protocol::pairing::Permissions};
 
 /// Encodes a `HashMap<u8, Vec<u8>>` in the format `<Type, Value>` to a `Vec<u8>` of concatenated
 /// TLVs.
@@ -41,7 +40,7 @@ pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
                 }
             }
         }
-    };
+    }
     vec
 }
 
@@ -187,51 +186,35 @@ pub enum Error {
 }
 
 impl From<error::Error> for Error {
-    fn from(_: error::Error) -> Self {
-        Error::Unknown
-    }
+    fn from(_: error::Error) -> Self { Error::Unknown }
 }
 
 impl From<io::Error> for Error {
-    fn from(_: io::Error) -> Self {
-        Error::Unknown
-    }
+    fn from(_: io::Error) -> Self { Error::Unknown }
 }
 
 impl From<cell::BorrowError> for Error {
-    fn from(_: cell::BorrowError) -> Error {
-        Error::Unknown
-    }
+    fn from(_: cell::BorrowError) -> Error { Error::Unknown }
 }
 
 impl From<cell::BorrowMutError> for Error {
-    fn from(_: cell::BorrowMutError) -> Error {
-        Error::Unknown
-    }
+    fn from(_: cell::BorrowMutError) -> Error { Error::Unknown }
 }
 
 impl From<str::Utf8Error> for Error {
-    fn from(_: str::Utf8Error) -> Self {
-        Error::Unknown
-    }
+    fn from(_: str::Utf8Error) -> Self { Error::Unknown }
 }
 
-impl From<uuid::ParseError> for Error {
-    fn from(_: uuid::ParseError) -> Self {
-        Error::Unknown
-    }
+impl From<uuid::parser::ParseError> for Error {
+    fn from(_: uuid::parser::ParseError) -> Self { Error::Unknown }
 }
 
 impl From<SrpAuthError> for Error {
-    fn from(_: SrpAuthError) -> Self {
-        Error::Authentication
-    }
+    fn from(_: SrpAuthError) -> Self { Error::Authentication }
 }
 
 impl From<chacha20_poly1305_aead::DecryptError> for Error {
-    fn from(_: chacha20_poly1305_aead::DecryptError) -> Self {
-        Error::Authentication
-    }
+    fn from(_: chacha20_poly1305_aead::DecryptError) -> Self { Error::Authentication }
 }
 
 pub type Container = Vec<Value>;
@@ -252,9 +235,7 @@ pub struct ErrorContainer {
 }
 
 impl ErrorContainer {
-    pub fn new(step: u8, error: Error) -> ErrorContainer {
-        ErrorContainer { step, error }
-    }
+    pub fn new(step: u8, error: Error) -> ErrorContainer { ErrorContainer { step, error } }
 }
 
 impl Encodable for ErrorContainer {

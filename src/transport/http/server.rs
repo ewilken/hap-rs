@@ -1,40 +1,37 @@
-use std::{net::SocketAddr, sync::Arc, rc::Rc, cell::RefCell};
-
-use hyper::{self, server::{Http, Request, Response, Service}, StatusCode, Method};
-use futures::{future, Future, stream::Stream, sync::oneshot};
-use route_recognizer::Router;
-use tokio_core::{net::TcpListener, reactor::Core};
-
-use transport::{
-    http::{
-        EventObject,
-        status_response,
-        event_response,
-        handlers::{
-            self,
-            pair_setup,
-            pair_verify,
-            accessories,
-            characteristics,
-            pairings,
-            identify
-        },
-    },
-    tcp::{EncryptedStream, StreamWrapper, Session},
+use std::{
+    net::SocketAddr,
+    sync::{Arc, Mutex},
 };
-use db::{AccessoryList, DatabasePtr};
-use config::ConfigPtr;
-use event::{Event, EmitterPtr};
-use protocol::IdPtr;
 
-use Error;
+use futures::{future, stream::Stream, sync::oneshot, Future};
+use hyper::{self, server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
+use log::error;
+use route_recognizer::Router;
+use tokio::net::TcpListener;
+
+use crate::{
+    config::ConfigPtr,
+    db::{AccessoryList, DatabasePtr},
+    event::{EmitterPtr, Event},
+    protocol::IdPtr,
+    transport::{
+        http::{
+            event_response,
+            handler::{self, accessories, characteristics, identify, pair_setup, pair_verify, pairings},
+            status_response,
+            EventObject,
+        },
+        tcp::{EncryptedStream, Session, StreamWrapper},
+    },
+    Error,
+};
 
 enum Route {
-    Get(Box<RefCell<handlers::Handler>>),
-    Post(Box<RefCell<handlers::Handler>>),
+    Get(Box<Mutex<dyn handler::Handler + Send>>),
+    Post(Box<Mutex<dyn handler::Handler + Send>>),
     GetPut {
-        _get: Box<RefCell<handlers::Handler>>,
-        _put: Box<RefCell<handlers::Handler>>,
+        _get: Box<Mutex<dyn handler::Handler + Send>>,
+        _put: Box<Mutex<dyn handler::Handler + Send>>,
     },
 }
 
@@ -59,39 +56,44 @@ impl Api {
         session_sender: oneshot::Sender<Session>,
     ) -> Api {
         let mut router = Router::new();
-        router.add("/pair-setup", Route::Post(
-            Box::new(RefCell::new(
-                handlers::TlvHandlerType::from(pair_setup::PairSetup::new())
-            ))
-        ));
-        router.add("/pair-verify", Route::Post(
-            Box::new(RefCell::new(
-                handlers::TlvHandlerType::from(pair_verify::PairVerify::new(session_sender))
-            ))
-        ));
-        router.add("/accessories", Route::Get(
-            Box::new(RefCell::new(
-                handlers::JsonHandlerType::from(accessories::Accessories::new())
-            ))
-        ));
+        router.add(
+            "/pair-setup",
+            Route::Post(Box::new(Mutex::new(handler::TlvHandlerType::from(
+                pair_setup::PairSetup::new(),
+            )))),
+        );
+        router.add(
+            "/pair-verify",
+            Route::Post(Box::new(Mutex::new(handler::TlvHandlerType::from(
+                pair_verify::PairVerify::new(session_sender),
+            )))),
+        );
+        router.add(
+            "/accessories",
+            Route::Get(Box::new(Mutex::new(handler::JsonHandlerType::from(
+                accessories::Accessories::new(),
+            )))),
+        );
         router.add("/characteristics", Route::GetPut {
-            _get: Box::new(RefCell::new(
-                handlers::JsonHandlerType::from(characteristics::GetCharacteristics::new())
-            )),
-            _put: Box::new(RefCell::new(
-                handlers::JsonHandlerType::from(characteristics::UpdateCharacteristics::new())
-            )),
+            _get: Box::new(Mutex::new(handler::JsonHandlerType::from(
+                characteristics::GetCharacteristics::new(),
+            ))),
+            _put: Box::new(Mutex::new(handler::JsonHandlerType::from(
+                characteristics::UpdateCharacteristics::new(),
+            ))),
         });
-        router.add("/pairings", Route::Post(
-            Box::new(RefCell::new(
-                handlers::TlvHandlerType::from(pairings::Pairings::new())
-            ))
-        ));
-        router.add("/identify", Route::Post(
-            Box::new(RefCell::new(
-                handlers::JsonHandlerType::from(identify::Identify::new())
-            ))
-        ));
+        router.add(
+            "/pairings",
+            Route::Post(Box::new(Mutex::new(handler::TlvHandlerType::from(
+                pairings::Pairings::new(),
+            )))),
+        );
+        router.add(
+            "/identify",
+            Route::Post(Box::new(Mutex::new(handler::JsonHandlerType::from(
+                identify::Identify::new(),
+            )))),
+        );
 
         Api {
             controller_id,
@@ -106,13 +108,13 @@ impl Api {
 }
 
 impl Service for Api {
-    type Request = Request;
-    type Response = Response;
-    type Error = hyper::Error;
-    type Future = Box<Future<Item=Response, Error=hyper::Error>>;
+    type Error = Error;
+    type Future = Box<dyn Future<Item = Response<Self::ResBody>, Error = Self::Error> + Send>;
+    type ReqBody = Body;
+    type ResBody = Body;
 
-    fn call(&self, req: Request) -> Self::Future {
-        let (method, uri, _, _, body) = req.deconstruct();
+    fn call(&mut self, req: Request<Self::ReqBody>) -> Self::Future {
+        let (parts, body) = req.into_parts();
         let router = self.router.clone();
         let controller_id = self.controller_id.clone();
         let event_subscriptions = self.event_subscriptions.clone();
@@ -121,16 +123,18 @@ impl Service for Api {
         let accessories = self.accessories.clone();
         let event_emitter = self.event_emitter.clone();
 
-        Box::new(body.fold(vec![], |mut v, c| {
-            v.extend(c.to_vec());
-            future::ok::<Vec<u8>, hyper::Error>(v)
-        }).and_then(move |body| {
-            if let Ok(route_match) = router.recognize(uri.path()) {
-                match (route_match.handler, method) {
-                    (&Route::Get(ref handler), Method::Get) => handler.borrow_mut()
-                        .handle(
-                            uri,
-                            body,
+        Box::new(
+            body.fold(vec![], |mut v, c| {
+                v.extend(c.to_vec());
+                future::ok::<Vec<u8>, hyper::Error>(v)
+            })
+            .map_err(|e| e.into())
+            .and_then(move |body| {
+                if let Ok(route_match) = router.recognize(parts.uri.path()) {
+                    match (route_match.handler, parts.method) {
+                        (&Route::Get(ref handler), Method::GET) => handler.lock().unwrap().handle(
+                            parts.uri,
+                            body.into(),
                             &controller_id,
                             &event_subscriptions,
                             &config,
@@ -138,10 +142,9 @@ impl Service for Api {
                             &accessories,
                             &event_emitter,
                         ),
-                    (&Route::Post(ref handler), Method::Post) => handler.borrow_mut()
-                        .handle(
-                            uri,
-                            body,
+                        (&Route::Post(ref handler), Method::POST) => handler.lock().unwrap().handle(
+                            parts.uri,
+                            body.into(),
                             &controller_id,
                             &event_subscriptions,
                             &config,
@@ -149,10 +152,9 @@ impl Service for Api {
                             &accessories,
                             &event_emitter,
                         ),
-                    (&Route::GetPut { ref _get, ref _put }, Method::Get) => _get.borrow_mut()
-                        .handle(
-                            uri,
-                            body,
+                        (&Route::GetPut { ref _get, ref _put }, Method::GET) => _get.lock().unwrap().handle(
+                            parts.uri,
+                            body.into(),
                             &controller_id,
                             &event_subscriptions,
                             &config,
@@ -160,10 +162,9 @@ impl Service for Api {
                             &accessories,
                             &event_emitter,
                         ),
-                    (&Route::GetPut { ref _get, ref _put }, Method::Put) => _put.borrow_mut()
-                        .handle(
-                            uri,
-                            body,
+                        (&Route::GetPut { ref _get, ref _put }, Method::PUT) => _put.lock().unwrap().handle(
+                            parts.uri,
+                            body.into(),
                             &controller_id,
                             &event_subscriptions,
                             &config,
@@ -171,16 +172,17 @@ impl Service for Api {
                             &accessories,
                             &event_emitter,
                         ),
-                    _ => Box::new(future::ok(status_response(StatusCode::BadRequest))),
+                        _ => Box::new(future::result(status_response(StatusCode::BAD_REQUEST))),
+                    }
+                } else {
+                    Box::new(future::result(status_response(StatusCode::NOT_FOUND)))
                 }
-            } else {
-                Box::new(future::ok(status_response(StatusCode::NotFound)))
-            }
-        }))
+            }),
+        )
     }
 }
 
-pub type EventSubscriptions = Rc<RefCell<Vec<(u64, u64)>>>;
+pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
 
 pub fn serve(
     socket_addr: &SocketAddr,
@@ -189,58 +191,72 @@ pub fn serve(
     accessories: &AccessoryList,
     event_emitter: &EmitterPtr,
 ) -> Result<(), Error> {
-    let mut evt_loop = Core::new()?;
-    let listener = TcpListener::bind(socket_addr, &evt_loop.handle())?;
-    let http: Http<hyper::Chunk> = Http::new();
-    let handle = evt_loop.handle();
+    let listener = TcpListener::bind(socket_addr)?;
 
-    let server = listener.incoming().for_each(|(stream, _)| {
-        let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
-        let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
-        let event_subscriptions = Rc::new(RefCell::new(vec![]));
-        let api = Api::new(
-            encrypted_stream.controller_id.clone(),
-            event_subscriptions.clone(),
-            config.clone(),
-            database.clone(),
-            accessories.clone(),
-            event_emitter.clone(),
-            session_sender,
-        );
+    let config = config.clone();
+    let database = database.clone();
+    let accessories = accessories.clone();
+    let event_emitter = event_emitter.clone();
 
-        event_emitter.try_borrow_mut()
-            .expect("couldn't add listener for characteristic value change events")
-            .add_listener(Box::new(move |event| {
-            match *event {
-                Event::CharacteristicValueChanged { aid, iid, ref value } => {
-                    let mut dropped_subscriptions = vec![];
-                    for (i, &(s_aid, s_iid)) in event_subscriptions.try_borrow()
-                        .expect("couldn't read event subscriptions")
-                        .iter().enumerate() {
-                        if s_aid == aid && s_iid == iid {
-                            let event = EventObject { aid, iid, value: value.clone() };
-                            let event_res = event_response(vec![event])
-                                .expect("couldn't create event response");
-                            if stream_outgoing.unbounded_send(event_res).is_err() {
-                                dropped_subscriptions.push(i);
+    let server = listener
+        .incoming()
+        .for_each(move |stream| {
+            let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
+            let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
+            let event_subscriptions = Arc::new(Mutex::new(vec![]));
+            let api = Api::new(
+                encrypted_stream.controller_id.clone(),
+                event_subscriptions.clone(),
+                config.clone(),
+                database.clone(),
+                accessories.clone(),
+                event_emitter.clone(),
+                session_sender,
+            );
+            let http = Http::new();
+
+            event_emitter
+                .lock()
+                .expect("couldn't add listener for characteristic value change events")
+                .add_listener(Box::new(move |event| match *event {
+                    Event::CharacteristicValueChanged { aid, iid, ref value } => {
+                        let mut dropped_subscriptions = vec![];
+                        for (i, &(s_aid, s_iid)) in event_subscriptions
+                            .lock()
+                            .expect("couldn't read event subscriptions")
+                            .iter()
+                            .enumerate()
+                        {
+                            if s_aid == aid && s_iid == iid {
+                                let event = EventObject {
+                                    aid,
+                                    iid,
+                                    value: value.clone(),
+                                };
+                                let event_res = event_response(vec![event]).expect("couldn't create event response");
+                                if stream_outgoing.unbounded_send(event_res).is_err() {
+                                    dropped_subscriptions.push(i);
+                                }
                             }
                         }
-                    }
-                    let mut ev = event_subscriptions.try_borrow_mut()
-                        .expect("couldn't modify event subscriptions");
-                    for s in dropped_subscriptions {
-                        ev.remove(s);
-                    }
-                },
-                _ => {},
-            }
-        }));
+                        let mut ev = event_subscriptions.lock().expect("couldn't modify event subscriptions");
+                        for s in dropped_subscriptions {
+                            ev.remove(s);
+                        }
+                    },
+                    _ => {},
+                }));
 
-        handle.spawn(encrypted_stream.map_err(|_| ()).map(|_| ()));
-        handle.spawn(http.serve_connection(stream_wrapper, api).map_err(|_| ()).map(|_| ()));
-        Ok(())
-    });
+            tokio::spawn(encrypted_stream.map(|_| ()).map_err(|e| error!("{}", e)));
+            tokio::spawn(
+                http.serve_connection(stream_wrapper, api)
+                    .map(|_| ())
+                    .map_err(|e| error!("{}", e)),
+            );
+            Ok(())
+        })
+        .map_err(|e| error!("{}", e));
 
-    evt_loop.run(server)?;
+    tokio::run(server);
     Ok(())
 }

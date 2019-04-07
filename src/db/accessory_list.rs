@@ -1,25 +1,20 @@
-use std::{rc::Rc, cell::RefCell};
+use std::sync::{Arc, Mutex};
 
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use erased_serde;
+use erased_serde::{self, __internal_serialize_trait_object, serialize_trait_object};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
-use accessory::HapAccessory;
-use characteristic::Perm;
-use transport::http::{
-    Status,
-    server::EventSubscriptions,
-    ReadResponseObject,
-    WriteObject,
-    WriteResponseObject,
+use crate::{
+    accessory::HapAccessory,
+    characteristic::Perm,
+    event::EmitterPtr,
+    transport::http::{server::EventSubscriptions, ReadResponseObject, Status, WriteObject, WriteResponseObject},
+    Error,
 };
-use event::EmitterPtr;
-
-use Error;
 
 /// `AccessoryList` is a wrapper type holding an `Rc<RefCell>` with a `Vec` of boxed Accessories.
 #[derive(Clone)]
 pub struct AccessoryList {
-    pub accessories: Rc<RefCell<Vec<AccessoryListPtr>>>,
+    pub accessories: Arc<Mutex<Vec<AccessoryListPtr>>>,
     event_emitter: EmitterPtr,
     id_count: u64,
 }
@@ -27,38 +22,48 @@ pub struct AccessoryList {
 impl AccessoryList {
     /// Creates a new `AccessoryList`.
     pub fn new(event_emitter: EmitterPtr) -> AccessoryList {
-        AccessoryList { accessories: Rc::new(RefCell::new(Vec::new())), event_emitter, id_count: 1 }
+        AccessoryList {
+            accessories: Arc::new(Mutex::new(Vec::new())),
+            event_emitter,
+            id_count: 1,
+        }
     }
 
     /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
-    pub fn add_accessory(
-        &mut self,
-        accessory: Box<AccessoryListMember>,
-    ) -> Result<AccessoryListPtr, Error> {
+    pub fn add_accessory(&mut self, accessory: Box<dyn AccessoryListMember + Send>) -> Result<AccessoryListPtr, Error> {
         let mut a = accessory;
         a.set_id(self.id_count);
         a.init_iids(self.id_count, self.event_emitter.clone())?;
-        let a_ptr = Rc::new(RefCell::new(a));
-        self.accessories.try_borrow_mut()?.push(a_ptr.clone());
+        let a_ptr = Arc::new(Mutex::new(a));
+        self.accessories
+            .lock()
+            .expect("couldn't access accessories")
+            .push(a_ptr.clone());
         self.id_count += 1;
         Ok(a_ptr)
     }
 
     /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryList`.
     pub fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<(), Error> {
-        let accessory = accessory.try_borrow()?;
+        let accessory = accessory.lock().expect("couldn't access accessory");
         let mut remove = None;
-        for (i, a) in self.accessories.try_borrow()?.iter().enumerate() {
-            if a.try_borrow()?.get_id() == accessory.get_id() {
+        for (i, a) in self
+            .accessories
+            .lock()
+            .expect("couldn't access accessories")
+            .iter()
+            .enumerate()
+        {
+            if a.lock().expect("couldn't access accessory").get_id() == accessory.get_id() {
                 remove = Some(i);
                 break;
             }
         }
         if let Some(i) = remove {
-            self.accessories.try_borrow_mut()?.remove(i);
+            self.accessories.lock().expect("couldn't access accessories").remove(i);
             return Ok(());
         }
-        Err(Error::new_io("couldn't find the Accessory to remove"))
+        Err(Error::from_str("couldn't find the Accessory to remove"))
     }
 
     pub(crate) fn read_characteristic(
@@ -86,9 +91,10 @@ impl AccessoryList {
             status: Some(0),
         };
 
-        'l: for accessory in self.accessories.try_borrow_mut()?.iter_mut() {
-            if accessory.try_borrow()?.get_id() == aid {
-                for service in accessory.try_borrow_mut()?.get_mut_services() {
+        'l: for accessory in self.accessories.lock().expect("couldn't access accessories").iter_mut() {
+            let mut a = accessory.lock().expect("couldn't access accessory");
+            if a.get_id() == aid {
+                for service in a.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id()? == iid {
                             let characteristic_perms = characteristic.get_perms()?;
@@ -135,10 +141,11 @@ impl AccessoryList {
             status: 0,
         };
 
-        let mut a = self.accessories.try_borrow_mut()?;
+        let mut a = self.accessories.lock().expect("couldn't access accessories");
         'l: for accessory in a.iter_mut() {
-            if accessory.try_borrow()?.get_id() == write_object.aid {
-                for service in accessory.try_borrow_mut()?.get_mut_services() {
+            let mut a = accessory.lock().expect("couldn't access accessory");
+            if a.get_id() == write_object.aid {
+                for service in a.get_mut_services() {
                     for characteristic in service.get_mut_characteristics() {
                         if characteristic.get_id()? == write_object.iid {
                             let characteristic_perms = characteristic.get_perms()?;
@@ -146,11 +153,16 @@ impl AccessoryList {
                                 if characteristic_perms.contains(&Perm::Events) {
                                     characteristic.set_event_notifications(Some(ev))?;
                                     let subscription = (write_object.aid, write_object.iid);
-                                    let mut es = event_subscriptions.try_borrow_mut()?;
+                                    let mut es =
+                                        event_subscriptions.lock().expect("couldn't access event_subscriptions");
                                     let pos = es.iter().position(|&s| s == subscription);
                                     match (ev, pos) {
-                                        (true, None) => { es.push(subscription); },
-                                        (false, Some(p)) => { es.remove(p); },
+                                        (true, None) => {
+                                            es.push(subscription);
+                                        },
+                                        (false, Some(p)) => {
+                                            es.remove(p);
+                                        },
                                         _ => {},
                                     }
                                 } else {
@@ -190,4 +202,4 @@ impl<T: HapAccessory + erased_serde::Serialize> AccessoryListMember for T {}
 
 serialize_trait_object!(AccessoryListMember);
 
-pub type AccessoryListPtr = Rc<RefCell<Box<AccessoryListMember>>>;
+pub type AccessoryListPtr = Arc<Mutex<Box<dyn AccessoryListMember + Send>>>;

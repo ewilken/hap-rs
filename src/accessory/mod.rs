@@ -1,20 +1,25 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
-use erased_serde;
+use erased_serde::{self, __internal_serialize_trait_object, serialize_trait_object};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
-use service::{HapService, accessory_information::{self, AccessoryInformation}};
-use characteristic::{hardware_revision, accessory_flags};
-use event::EmitterPtr;
+use crate::{
+    characteristic::{accessory_flags, hardware_revision},
+    event::EmitterPtr,
+    service::{
+        accessory_information::{self, AccessoryInformation},
+        HapService,
+    },
+};
 
-use Error;
+use crate::Error;
 
 mod category;
-pub use accessory::category::Category;
+pub use crate::accessory::category::Category;
 
 mod defined;
-pub use accessory::defined::*;
+pub use crate::accessory::defined::*;
 
 mod includes;
-pub use accessory::includes::*;
+pub use crate::accessory::includes::*;
 
 /// `HapAccessoryService` is implemented by every `Service` inside of an `Accessory`.
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
@@ -51,9 +56,7 @@ pub struct Accessory<T: HapAccessory> {
 
 impl<T: HapAccessory> Accessory<T> {
     /// Creates a new `Accessory`.
-    fn new(inner: T) -> Accessory<T> {
-        Accessory { inner }
-    }
+    fn new(inner: T) -> Accessory<T> { Accessory { inner } }
 }
 
 impl<T: HapAccessory> Serialize for Accessory<T> {
@@ -66,25 +69,15 @@ impl<T: HapAccessory> Serialize for Accessory<T> {
 }
 
 impl<T: HapAccessory> HapAccessory for Accessory<T> {
-    fn get_id(&self) -> u64 {
-        self.inner.get_id()
-    }
+    fn get_id(&self) -> u64 { self.inner.get_id() }
 
-    fn set_id(&mut self, id: u64) {
-        self.inner.set_id(id)
-    }
+    fn set_id(&mut self, id: u64) { self.inner.set_id(id) }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> {
-        self.inner.get_services()
-    }
+    fn get_services(&self) -> Vec<&HapAccessoryService> { self.inner.get_services() }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
-        self.inner.get_mut_services()
-    }
+    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> { self.inner.get_mut_services() }
 
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
-        self.inner.get_mut_information()
-    }
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation { self.inner.get_mut_information() }
 
     fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         self.inner.init_iids(accessory_id, event_emitter)
@@ -97,7 +90,7 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
 /// # Examples
 ///
 /// ```
-/// use hap::accessory::{Information, outlet};
+/// use hap::accessory::{outlet, Information};
 ///
 /// let info = Information {
 ///     manufacturer: "Acme".into(),
@@ -152,7 +145,7 @@ pub struct Information {
     pub hardware_revision: Option<String>,
     /// When set indicates accessory requires additional setup. Use of Accessory Flags requires
     /// written approval by Apple in advance.
-	pub accessory_flags: Option<u32>,
+    pub accessory_flags: Option<u32>,
 }
 
 impl Information {

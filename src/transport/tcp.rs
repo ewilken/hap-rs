@@ -1,24 +1,32 @@
-use std::{io::{self, Read, Write, ErrorKind}, cmp::min, rc::Rc, cell::RefCell};
+use std::{
+    cmp::min,
+    io::{self, ErrorKind, Read, Write},
+    sync::{Arc, Mutex},
+};
 
+use byteorder::{ByteOrder, LittleEndian};
+use bytes::{buf::FromBuf, BytesMut};
+use chacha20_poly1305_aead;
 use futures::{
-    Async::{self, Ready, NotReady},
+    sync::{
+        mpsc::{self, UnboundedReceiver, UnboundedSender},
+        oneshot,
+    },
+    try_ready,
+    Async::{self, NotReady, Ready},
     Future,
     Poll,
-    Stream,
     Sink,
-    sync::{oneshot, mpsc::{self, UnboundedSender, UnboundedReceiver}}
+    Stream,
 };
-use tokio_core::net::TcpStream;
-use tokio_io::{AsyncRead, AsyncWrite};
-use ring::{hkdf, hmac, digest};
-use chacha20_poly1305_aead;
-use bytes::{BytesMut, buf::FromBuf};
-use byteorder::{ByteOrder, LittleEndian};
+use ring::{digest, hkdf, hmac};
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    net::TcpStream,
+};
 use uuid::Uuid;
 
-use protocol::IdPtr;
-
-use Error;
+use crate::{protocol::IdPtr, Error};
 
 pub struct StreamWrapper {
     incoming_receiver: UnboundedReceiver<Vec<u8>>,
@@ -31,7 +39,11 @@ impl StreamWrapper {
         incoming_receiver: UnboundedReceiver<Vec<u8>>,
         outgoing_sender: UnboundedSender<Vec<u8>>,
     ) -> StreamWrapper {
-        StreamWrapper { incoming_receiver, outgoing_sender, incoming_buf: BytesMut::new() }
+        StreamWrapper {
+            incoming_receiver,
+            outgoing_sender,
+            incoming_buf: BytesMut::new(),
+        }
     }
 
     fn poll_receiver(&mut self) -> Result<usize, io::Error> {
@@ -42,7 +54,8 @@ impl StreamWrapper {
                 Ok(incoming.len())
             },
             Ok(Ready(None)) => Ok(0),
-            Err(_) => Err(Error::new_io("couldn't poll receiver").into()),
+            // Err(_) => Err(Error::from_str("couldn't poll receiver").into()),
+            Err(_) => Err(io::Error::new(io::ErrorKind::Other, "couldn't poll receiver")),
         }
     }
 }
@@ -60,14 +73,16 @@ impl Read for StreamWrapper {
 impl Write for StreamWrapper {
     fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
         self.outgoing_sender.unbounded_send(buf.to_vec())
-            .map_err(|_| Error::new_io("couldn't write"))?;
+            // .map_err(|_| Error::from_str("couldn't write").into())?;
+            .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't write"))?;
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> Result<(), io::Error> {
         self.outgoing_sender.poll_complete()
             .map(|_| ())
-            .map_err(|_| Error::new_io("couldn't flush").into())
+            // .map_err(|_| Error::from_str("couldn't flush").into())
+            .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't flush"))
     }
 }
 
@@ -105,7 +120,9 @@ pub struct EncryptedStream {
 }
 
 impl EncryptedStream {
-    pub fn new(stream: TcpStream) -> (
+    pub fn new(
+        stream: TcpStream,
+    ) -> (
         EncryptedStream,
         UnboundedReceiver<Vec<u8>>,
         UnboundedSender<Vec<u8>>,
@@ -114,24 +131,29 @@ impl EncryptedStream {
         let (sender, receiver) = oneshot::channel();
         let (incoming_sender, incoming_receiver) = mpsc::unbounded();
         let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
-        (EncryptedStream {
-            stream,
-            incoming_sender,
-            outgoing_receiver,
-            session_receiver: receiver,
-            controller_id: Rc::new(RefCell::new(None)),
-            shared_secret: None,
-            decrypt_count: 0,
-            encrypt_count: 0,
-            encrypted_buf: BytesMut::from_buf(vec![0; 1042]),
-            decrypted_buf: BytesMut::from_buf(vec![0; 1024]),
-            packet_len: 0,
-            already_copied: 0,
-            already_read: 0,
-            decrypted_ready: false,
-            missing_data_for_decrypted_buf: false,
-            missing_data_for_encrypted_buf: false,
-        }, incoming_receiver, outgoing_sender, sender)
+        (
+            EncryptedStream {
+                stream,
+                incoming_sender,
+                outgoing_receiver,
+                session_receiver: receiver,
+                controller_id: Arc::new(Mutex::new(None)),
+                shared_secret: None,
+                decrypt_count: 0,
+                encrypt_count: 0,
+                encrypted_buf: BytesMut::from_buf(vec![0; 1042]),
+                decrypted_buf: BytesMut::from_buf(vec![0; 1024]),
+                packet_len: 0,
+                already_copied: 0,
+                already_read: 0,
+                decrypted_ready: false,
+                missing_data_for_decrypted_buf: false,
+                missing_data_for_encrypted_buf: false,
+            },
+            incoming_receiver,
+            outgoing_sender,
+            sender,
+        )
     }
 
     fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
@@ -158,7 +180,8 @@ impl EncryptedStream {
                 &self.encrypted_buf[2..(self.packet_len - 14)],
                 &self.encrypted_buf[(self.packet_len - 14)..(self.packet_len + 2)],
                 &mut self.decrypt_count,
-            )?;
+            )
+            .map_err(|_| io::Error::new(io::ErrorKind::Other, "decryption failed"))?;
             self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
             self.missing_data_for_decrypted_buf = false;
             self.decrypted_ready = true;
@@ -207,30 +230,50 @@ impl EncryptedStream {
     fn poll_incoming(&mut self) -> Poll<(), io::Error> {
         let mut data = [0; 1536];
         loop {
-            let r_len = try_nb!(self.read(&mut data));
-            if r_len == 0 { return Ok(Ready(())); }
-            self.incoming_sender.unbounded_send(data[..r_len].to_vec())
-                .map_err(|_| Error::new_io("couldn't send incoming data"))?;
+            match self.read(&mut data) {
+                Err(e) => match e.kind() {
+                    ErrorKind::WouldBlock => {
+                        return Ok(NotReady);
+                    },
+                    _ => {
+                        return Err(e);
+                    },
+                },
+                Ok(r_len) => {
+                    if r_len == 0 {
+                        return Ok(Ready(()));
+                    }
+                    self.incoming_sender.unbounded_send(data[..r_len].to_vec())
+                        // .map_err(|_| Error::from_str("couldn't send incoming data").into())?;
+                        .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't send incoming data"))?;
+                },
+            }
         }
     }
 
     fn poll_outgoing(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.outgoing_receiver.poll()) {
-                None => { return Ok(Ready(())); },
-                Some(data) => { self.write(&data).map_err(|_| ())?; },
+                None => {
+                    return Ok(Ready(()));
+                },
+                Some(data) => {
+                    self.write(&data).map_err(|_| ())?;
+                },
             }
         }
     }
 }
 
 impl Future for EncryptedStream {
-    type Item = ();
     type Error = io::Error;
+    type Item = ();
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         self.poll_outgoing()
-            .map_err(|_| Error::new_io("couldn't receive outgoing data"))?;
+            // .map_err(|_| Error::from_str("couldn't receive outgoing data").into())?;
+            .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't receive incoming data"))?;
+
         self.poll_incoming()
     }
 }
@@ -240,7 +283,7 @@ impl Read for EncryptedStream {
         if self.shared_secret.is_none() {
             match self.session_receiver.poll() {
                 Ok(Async::Ready(session)) => {
-                    self.controller_id.replace(Some(session.controller_id));
+                    *self.controller_id.lock().expect("couldn't access controller_id") = Some(session.controller_id);
                     self.shared_secret = Some(session.shared_secret);
                 },
                 _ => {
@@ -265,22 +308,16 @@ impl Write for EncryptedStream {
             let mut write_buf = BytesMut::from_buf(buf);
 
             while write_buf.len() > 1024 {
-                let (aad, chunk, auth_tag) = encrypt_chunk(
-                    &shared_secret,
-                    &write_buf[..1024],
-                    &mut self.encrypt_count,
-                )?;
+                let (aad, chunk, auth_tag) = encrypt_chunk(&shared_secret, &write_buf[..1024], &mut self.encrypt_count)
+                    .map_err(|_| io::Error::new(io::ErrorKind::Other, "encryption failed"))?;
                 self.stream.write_all(&aad)?;
                 self.stream.write_all(&chunk)?;
                 self.stream.write_all(&auth_tag)?;
                 write_buf.advance(1024);
             }
 
-            let (aad, chunk, auth_tag) = encrypt_chunk(
-                &shared_secret,
-                &write_buf,
-                &mut self.encrypt_count,
-            )?;
+            let (aad, chunk, auth_tag) = encrypt_chunk(&shared_secret, &write_buf, &mut self.encrypt_count)
+                .map_err(|_| io::Error::new(io::ErrorKind::Other, "encryption failed"))?; // TODO - make this better
             self.stream.write_all(&aad)?;
             self.stream.write_all(&chunk)?;
             self.stream.write_all(&auth_tag)?;
@@ -290,17 +327,13 @@ impl Write for EncryptedStream {
         }
     }
 
-    fn flush(&mut self) -> Result<(), io::Error> {
-        self.stream.flush()
-    }
+    fn flush(&mut self) -> Result<(), io::Error> { self.stream.flush() }
 }
 
 impl AsyncRead for EncryptedStream {}
 
 impl AsyncWrite for EncryptedStream {
-    fn shutdown(&mut self) -> Poll<(), io::Error> {
-        AsyncWrite::shutdown(&mut self.stream)
-    }
+    fn shutdown(&mut self) -> Poll<(), io::Error> { AsyncWrite::shutdown(&mut self.stream) }
 }
 
 fn decrypt_chunk(
@@ -319,14 +352,7 @@ fn decrypt_chunk(
     nonce.extend(suffix);
     *count += 1;
 
-    chacha20_poly1305_aead::decrypt(
-        &read_key,
-        &nonce,
-        aad,
-        &data,
-        auth_tag,
-        &mut decrypted_data,
-    )?;
+    chacha20_poly1305_aead::decrypt(&read_key, &nonce, aad, &data, auth_tag, &mut decrypted_data)?;
 
     Ok(decrypted_data)
 }
@@ -348,13 +374,7 @@ fn encrypt_chunk(
     let mut aad = [0; 2];
     LittleEndian::write_u16(&mut aad, data.len() as u16);
 
-    let auth_tag = chacha20_poly1305_aead::encrypt(
-        &write_key,
-        &nonce,
-        &aad,
-        &data,
-        &mut encrypted_data,
-    )?;
+    let auth_tag = chacha20_poly1305_aead::encrypt(&write_key, &nonce, &aad, &data, &mut encrypted_data)?;
 
     Ok((aad, encrypted_data, auth_tag))
 }

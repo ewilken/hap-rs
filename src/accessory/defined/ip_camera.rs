@@ -1,13 +1,10 @@
-use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{
-    HapService,
-    accessory_information::AccessoryInformation,
-    camera_rtp_stream_management,
-    microphone,
+use crate::{
+    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
+    event::EmitterPtr,
+    service::{accessory_information::AccessoryInformation, camera_rtp_stream_management, microphone, HapService},
 };
-use event::EmitterPtr;
 
-use Error;
+use crate::Error;
 
 /// IP Camera Accessory.
 pub type IpCamera = Accessory<IpCameraInner>;
@@ -27,13 +24,9 @@ pub struct IpCameraInner {
 }
 
 impl HapAccessory for IpCameraInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
     fn get_services(&self) -> Vec<&HapAccessoryService> {
         vec![
@@ -51,9 +44,7 @@ impl HapAccessory for IpCameraInner {
         ]
     }
 
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
-        &mut self.accessory_information
-    }
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
     fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_iid = 1;

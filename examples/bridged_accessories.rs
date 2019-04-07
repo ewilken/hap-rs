@@ -1,11 +1,9 @@
-use std::{rc::Rc, cell::RefCell};
-
-extern crate hap;
+use std::sync::{Arc, Mutex};
 
 use hap::{
-    transport::{Transport, IpTransport},
-    accessory::{Category, Information, bridge, outlet, door, security_system, valve},
+    accessory::{bridge, door, outlet, security_system, valve, Category, Information},
     characteristic::{Characteristic, Readable, Updatable},
+    transport::{IpTransport, Transport},
     Config,
     HapType,
 };
@@ -16,26 +14,30 @@ pub struct VirtualOutletInner {
 
 #[derive(Clone)]
 pub struct VirtualOutlet {
-    inner: Rc<RefCell<VirtualOutletInner>>
+    inner: Arc<Mutex<VirtualOutletInner>>,
 }
 
 impl VirtualOutlet {
     pub fn new(inner: VirtualOutletInner) -> VirtualOutlet {
-        VirtualOutlet { inner: Rc::new(RefCell::new(inner)) }
+        VirtualOutlet {
+            inner: Arc::new(Mutex::new(inner)),
+        }
     }
 }
 
 impl Readable<bool> for VirtualOutlet {
     fn on_read(&mut self, _: HapType) -> Option<bool> {
         println!("Outlet: On read.");
-        Some(self.inner.borrow().on)
+        Some(self.inner.lock().unwrap().on)
     }
 }
 
 impl Updatable<bool> for VirtualOutlet {
     fn on_update(&mut self, old_val: &bool, new_val: &bool, _: HapType) {
         println!("Outlet: On updated from {} to {}.", old_val, new_val);
-        if new_val != old_val { self.inner.borrow_mut().on = *new_val; }
+        if new_val != old_val {
+            self.inner.lock().unwrap().on = *new_val;
+        }
     }
 }
 
@@ -46,13 +48,16 @@ pub struct VirtualDoorInner {
 
 #[derive(Clone)]
 pub struct VirtualDoor {
-    inner: Rc<RefCell<VirtualDoorInner>>,
+    inner: Arc<Mutex<VirtualDoorInner>>,
     current_position: Characteristic<u8>,
 }
 
 impl VirtualDoor {
     pub fn new(inner: VirtualDoorInner, current_position: Characteristic<u8>) -> VirtualDoor {
-        VirtualDoor { inner: Rc::new(RefCell::new(inner)), current_position }
+        VirtualDoor {
+            inner: Arc::new(Mutex::new(inner)),
+            current_position,
+        }
     }
 }
 
@@ -61,11 +66,11 @@ impl Readable<u8> for VirtualDoor {
         match hap_type {
             HapType::CurrentPosition => {
                 println!("Door: Current position read.");
-                Some(self.inner.borrow().current_position)
+                Some(self.inner.lock().unwrap().current_position)
             },
             HapType::TargetPosition => {
                 println!("Door: Target position read.");
-                Some(self.inner.borrow().target_position)
+                Some(self.inner.lock().unwrap().target_position)
             },
             _ => None,
         }
@@ -78,14 +83,14 @@ impl Updatable<u8> for VirtualDoor {
             HapType::CurrentPosition => {
                 println!("Door: Current position updated from {} to {}.", old_val, new_val);
                 if new_val != old_val {
-                    self.inner.borrow_mut().current_position = *new_val;
+                    self.inner.lock().unwrap().current_position = *new_val;
                 }
             },
             HapType::TargetPosition => {
                 println!("Door: Target position updated from {} to {}.", old_val, new_val);
                 if new_val != old_val {
                     {
-                        let mut inner = self.inner.borrow_mut();
+                        let mut inner = self.inner.lock().unwrap();
                         inner.target_position = *new_val;
                         inner.current_position = *new_val;
                     }
@@ -101,38 +106,72 @@ fn main() {
     let bridge = bridge::new(Information {
         name: "Bridge".into(),
         ..Default::default()
-    }).unwrap();
+    })
+    .unwrap();
 
     let mut outlet = outlet::new(Information {
         name: "Outlet".into(),
         ..Default::default()
-    }).unwrap();
+    })
+    .unwrap();
     let virtual_outlet = VirtualOutlet::new(VirtualOutletInner { on: false });
-    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone()).unwrap();
+    outlet
+        .inner
+        .outlet
+        .inner
+        .on
+        .set_readable(virtual_outlet.clone())
+        .unwrap();
     outlet.inner.outlet.inner.on.set_updatable(virtual_outlet).unwrap();
 
     let mut door = door::new(Information {
         name: "Door".into(),
         ..Default::default()
-    }).unwrap();
+    })
+    .unwrap();
     let virtual_door = VirtualDoor::new(
-        VirtualDoorInner { current_position: 0, target_position: 0 },
+        VirtualDoorInner {
+            current_position: 0,
+            target_position: 0,
+        },
         door.inner.door.inner.current_position.clone(),
     );
-    door.inner.door.inner.current_position.set_readable(virtual_door.clone()).unwrap();
-    door.inner.door.inner.current_position.set_updatable(virtual_door.clone()).unwrap();
-    door.inner.door.inner.target_position.set_readable(virtual_door.clone()).unwrap();
-    door.inner.door.inner.target_position.set_updatable(virtual_door).unwrap();
+    door.inner
+        .door
+        .inner
+        .current_position
+        .set_readable(virtual_door.clone())
+        .unwrap();
+    door.inner
+        .door
+        .inner
+        .current_position
+        .set_updatable(virtual_door.clone())
+        .unwrap();
+    door.inner
+        .door
+        .inner
+        .target_position
+        .set_readable(virtual_door.clone())
+        .unwrap();
+    door.inner
+        .door
+        .inner
+        .target_position
+        .set_updatable(virtual_door)
+        .unwrap();
 
     let security_system = security_system::new(Information {
         name: "Security System".into(),
         ..Default::default()
-    }).unwrap();
+    })
+    .unwrap();
 
     let valve = valve::new(Information {
         name: "Valve".into(),
         ..Default::default()
-    }).unwrap();
+    })
+    .unwrap();
 
     let config = Config {
         name: "Acme Bridge".into(),

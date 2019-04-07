@@ -1,21 +1,23 @@
-use std::{rc::Rc, cell::RefCell, net::SocketAddr};
-
-use config::{Config, ConfigPtr};
-use db::{
-    Storage,
-    Database,
-    DatabasePtr,
-    FileStorage,
-    AccessoryList,
-    AccessoryListMember,
-    AccessoryListPtr,
+use std::{
+    net::SocketAddr,
+    sync::{Arc, Mutex},
 };
-use pin;
-use protocol::Device;
-use transport::{http, mdns::{Responder, ResponderPtr}, bonjour::StatusFlag, Transport};
-use event::{Event, Emitter, EmitterPtr};
 
-use Error;
+use crate::{
+    config::{Config, ConfigPtr},
+    db::{AccessoryList, AccessoryListMember, AccessoryListPtr, Database, DatabasePtr, FileStorage, Storage},
+    event::{Emitter, EmitterPtr, Event},
+    pin,
+    protocol::Device,
+    transport::{
+        bonjour::StatusFlag,
+        http,
+        mdns::{Responder, ResponderPtr},
+        Transport,
+    },
+};
+
+use crate::Error;
 
 /// Transport via TCP/IP.
 pub struct IpTransport<S: Storage> {
@@ -34,9 +36,9 @@ impl IpTransport<FileStorage> {
     ///
     /// ```
     /// use hap::{
+    ///     accessory::{bridge, lightbulb, Category, Information},
+    ///     transport::{IpTransport, Transport},
     ///     Config,
-    ///     accessory::{Category, Information, bridge, lightbulb},
-    ///     transport::{Transport, IpTransport},
     /// };
     ///
     /// let config = Config {
@@ -80,13 +82,17 @@ impl IpTransport<FileStorage> {
 
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
-        let event_emitter = Rc::new(RefCell::new(Emitter::new()));
-        let mdns_responder = Rc::new(RefCell::new(Responder::new(&config.name, config.port, config.txt_records())));
+        let event_emitter = Arc::new(Mutex::new(Emitter::new()));
+        let mdns_responder = Arc::new(Mutex::new(Responder::new(
+            &config.name,
+            config.port,
+            config.txt_records(),
+        )));
 
         let ip_transport = IpTransport {
-            config: Rc::new(RefCell::new(config)),
+            config: Arc::new(Mutex::new(config)),
             storage,
-            database: Rc::new(RefCell::new(database)),
+            database: Arc::new(Mutex::new(database)),
             accessories: AccessoryList::new(event_emitter.clone()),
             event_emitter,
             mdns_responder,
@@ -99,27 +105,30 @@ impl IpTransport<FileStorage> {
 
 impl Transport for IpTransport<FileStorage> {
     fn start(&mut self) -> Result<(), Error> {
-        self.mdns_responder.try_borrow_mut()?.start();
+        self.mdns_responder
+            .lock()
+            .expect("couldn't access event_emitter")
+            .start();
 
         let (ip, port) = {
-            let c = self.config.try_borrow()?;
+            let c = self.config.lock().expect("couldn't access config");
             (c.ip, c.port)
         };
 
         let config = self.config.clone();
         let database = self.database.clone();
         let mdns_responder = self.mdns_responder.clone();
-        self.event_emitter.try_borrow_mut()?.add_listener(Box::new(move |event| {
-            match *event {
+        self.event_emitter
+            .lock()
+            .expect("couldn't access event_emitter")
+            .add_listener(Box::new(move |event| match *event {
                 Event::DevicePaired => {
-                    if let Ok(count) = database.try_borrow()
-                        .expect("couldn't access database")
-                        .count_pairings() {
+                    if let Ok(count) = database.lock().expect("couldn't access database").count_pairings() {
                         if count > 0 {
-                            let mut c = config.try_borrow_mut()
-                                .expect("couldn't access config");
+                            let mut c = config.lock().expect("couldn't access config");
                             c.status_flag = StatusFlag::Zero;
-                            mdns_responder.try_borrow_mut()
+                            mdns_responder
+                                .lock()
                                 .expect("couldn't access mDNS responder")
                                 .update_txt_records(c.txt_records())
                                 .expect("couldn't update mDNS TXT records");
@@ -127,14 +136,12 @@ impl Transport for IpTransport<FileStorage> {
                     }
                 },
                 Event::DeviceUnpaired => {
-                    if let Ok(count) = database.try_borrow()
-                        .expect("couldn't access database")
-                        .count_pairings() {
+                    if let Ok(count) = database.lock().expect("couldn't access database").count_pairings() {
                         if count == 0 {
-                            let mut c = config.try_borrow_mut()
-                                .expect("couldn't access config");
+                            let mut c = config.lock().expect("couldn't access config");
                             c.status_flag = StatusFlag::NotPaired;
-                            mdns_responder.try_borrow_mut()
+                            mdns_responder
+                                .lock()
                                 .expect("couldn't access mDNS responder")
                                 .update_txt_records(c.txt_records())
                                 .expect("couldn't update mDNS TXT records");
@@ -142,8 +149,7 @@ impl Transport for IpTransport<FileStorage> {
                     }
                 },
                 _ => {},
-            }
-        }));
+            }));
 
         http::server::serve(
             &SocketAddr::new(ip, port),
@@ -156,11 +162,17 @@ impl Transport for IpTransport<FileStorage> {
     }
 
     fn stop(&self) -> Result<(), Error> {
-        self.mdns_responder.try_borrow()?.stop()?;
+        self.mdns_responder
+            .lock()
+            .expect("couldn't access mDNS responder")
+            .stop()?;
         Ok(())
     }
 
-    fn add_accessory<A: 'static + AccessoryListMember>(&mut self, accessory: A) -> Result<AccessoryListPtr, Error> {
+    fn add_accessory<A: 'static + AccessoryListMember + Send>(
+        &mut self,
+        accessory: A,
+    ) -> Result<AccessoryListPtr, Error> {
         self.accessories.add_accessory(Box::new(accessory))
     }
 

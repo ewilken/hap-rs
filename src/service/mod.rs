@@ -1,10 +1,9 @@
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
-use characteristic::HapCharacteristic;
-use HapType;
+use crate::{characteristic::HapCharacteristic, HapType};
 
 mod includes;
-pub use service::includes::*;
+pub use crate::service::includes::*;
 
 /// `HapService` is implemented by the inner type of every `Service`.
 pub trait HapService {
@@ -36,9 +35,7 @@ pub struct Service<T: HapService> {
 
 impl<T: HapService> Service<T> {
     /// Creates a new `Service`.
-    fn new(inner: T) -> Service<T> {
-        Service { inner }
-    }
+    fn new(inner: T) -> Service<T> { Service { inner } }
 }
 
 impl<T: HapService> Serialize for Service<T> {
@@ -55,39 +52,21 @@ impl<T: HapService> Serialize for Service<T> {
 }
 
 impl<T: HapService> HapService for Service<T> {
-    fn get_id(&self) -> u64 {
-        self.inner.get_id()
-    }
+    fn get_id(&self) -> u64 { self.inner.get_id() }
 
-    fn set_id(&mut self, id: u64) {
-        self.inner.set_id(id)
-    }
+    fn set_id(&mut self, id: u64) { self.inner.set_id(id) }
 
-    fn get_type(&self) -> HapType {
-        self.inner.get_type()
-    }
+    fn get_type(&self) -> HapType { self.inner.get_type() }
 
-    fn get_hidden(&self) -> bool {
-        self.inner.get_hidden()
-    }
+    fn get_hidden(&self) -> bool { self.inner.get_hidden() }
 
-    fn set_hidden(&mut self, hidden: bool) {
-        self.inner.set_hidden(hidden)
-    }
+    fn set_hidden(&mut self, hidden: bool) { self.inner.set_hidden(hidden) }
 
-    fn get_primary(&self) -> bool {
-        self.inner.get_primary()
-    }
+    fn get_primary(&self) -> bool { self.inner.get_primary() }
 
-    fn set_primary(&mut self, primary: bool) {
-        self.inner.set_primary(primary)
-    }
+    fn set_primary(&mut self, primary: bool) { self.inner.set_primary(primary) }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        self.inner.get_characteristics()
-    }
+    fn get_characteristics(&self) -> Vec<&HapCharacteristic> { self.inner.get_characteristics() }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        self.inner.get_mut_characteristics()
-    }
+    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> { self.inner.get_mut_characteristics() }
 }

@@ -1,13 +1,10 @@
-use accessory::{HapAccessory, HapAccessoryService, Accessory, Information};
-use service::{
-    HapService,
-    accessory_information::AccessoryInformation,
-    lock_mechanism,
-    lock_management,
+use crate::{
+    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
+    event::EmitterPtr,
+    service::{accessory_information::AccessoryInformation, lock_management, lock_mechanism, HapService},
 };
-use event::EmitterPtr;
 
-use Error;
+use crate::Error;
 
 /// Lock Accessory.
 pub type Lock = Accessory<LockInner>;
@@ -27,20 +24,12 @@ pub struct LockInner {
 }
 
 impl HapAccessory for LockInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
     fn get_services(&self) -> Vec<&HapAccessoryService> {
-        vec![
-            &self.accessory_information,
-            &self.lock_mechanism,
-            &self.lock_management,
-        ]
+        vec![&self.accessory_information, &self.lock_mechanism, &self.lock_management]
     }
 
     fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
@@ -51,9 +40,7 @@ impl HapAccessory for LockInner {
         ]
     }
 
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
-        &mut self.accessory_information
-    }
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
     fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
         let mut next_iid = 1;

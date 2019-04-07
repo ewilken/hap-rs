@@ -1,4 +1,4 @@
-use Error;
+use crate::Error;
 
 pub type Pin = String;
 
@@ -19,15 +19,15 @@ pub fn new(input: &str) -> Result<Pin, Error> {
     ];
     for invalid_pin in &invalid_pins {
         if input == invalid_pin {
-            return Err(Error::new_io("invalid pin - too easy"));
+            return Err(Error::from_str("invalid pin - too easy"));
         }
     }
     if input.chars().count() != 8 {
-        return Err(Error::new_io("pin must be 8 characters long"));
+        return Err(Error::from_str("pin must be 8 characters long"));
     }
     for digit in input.chars() {
         if digit < '0' || digit > '9' {
-            return Err(Error::new_io("pin must only contain numbers"));
+            return Err(Error::from_str("pin must only contain numbers"));
         }
     }
 
