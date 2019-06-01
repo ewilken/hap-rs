@@ -15,6 +15,7 @@ use crate::{
 };
 
 mod includes;
+
 pub use crate::characteristic::includes::*;
 
 /// Inner type of a `Characteristic`.

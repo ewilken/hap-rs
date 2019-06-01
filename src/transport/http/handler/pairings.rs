@@ -136,7 +136,7 @@ fn handle_add(
     ltpk: &[u8],
     permissions: Permissions,
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pairings - M1: Got Add Pairing Request");
+    debug!("M1: Got Add Pairing Request");
 
     check_admin(database, controller_id)?;
 
@@ -182,7 +182,7 @@ fn handle_add(
         },
     }
 
-    debug!("/pairings - M2: Sending Add Pairing Response");
+    debug!("M2: Sending Add Pairing Response");
 
     Ok(vec![Value::State(StepNumber::Res as u8)])
 }
@@ -193,7 +193,7 @@ fn handle_remove(
     controller_id: &IdPtr,
     pairing_id: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pairings - M1: Got Remove Pairing Request");
+    debug!("M1: Got Remove Pairing Request");
 
     check_admin(database, controller_id)?;
 
@@ -208,13 +208,13 @@ fn handle_remove(
         .expect("couldn't access event_emitter")
         .emit(&Event::DeviceUnpaired);
 
-    debug!("/pairings - M2: Sending Remove Pairing Response");
+    debug!("M2: Sending Remove Pairing Response");
 
     Ok(vec![Value::State(StepNumber::Res as u8)])
 }
 
 fn handle_list(database: &DatabasePtr, controller_id: &IdPtr) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pairings - M1: Got List Pairings Request");
+    debug!("M1: Got List Pairings Request");
 
     check_admin(database, controller_id)?;
 
@@ -229,7 +229,7 @@ fn handle_list(database: &DatabasePtr, controller_id: &IdPtr) -> Result<tlv::Con
         }
     }
 
-    debug!("/pairings - M2: Sending List Pairings Response");
+    debug!("M2: Sending List Pairings Response");
 
     Ok(list)
 }

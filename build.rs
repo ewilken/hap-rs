@@ -801,6 +801,7 @@ fn main() {
             && s.name != "Service Label"
             && s.name != "Slat"
             && s.name != "Speaker"
+            && s.name != "Television"
         {
             let accessory = handlebars
                 .render(

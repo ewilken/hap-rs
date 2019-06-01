@@ -111,7 +111,7 @@ fn handle_start(
     database: &DatabasePtr,
     a_pub: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pair-verify - M1: Got Verify Start Request");
+    debug!("M1: Got Verify Start Request");
 
     let mut rng = rand::thread_rng();
     let b = rng.gen::<[u8; 32]>();
@@ -149,7 +149,7 @@ fn handle_start(
     let auth_tag = chacha20_poly1305_aead::encrypt(&session_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data)?;
     encrypted_data.extend(&auth_tag);
 
-    debug!("/pair-verify - M2: Sending Verify Start Response");
+    debug!("M2: Sending Verify Start Response");
 
     Ok(vec![
         Value::State(StepNumber::StartRes as u8),
@@ -159,7 +159,7 @@ fn handle_start(
 }
 
 fn handle_finish(handler: &mut PairVerify, database: &DatabasePtr, data: &[u8]) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pair-verify - M3: Got Verify Finish Request");
+    debug!("M3: Got Verify Finish Request");
 
     if let Some(ref mut session) = handler.session {
         let encrypted_data = Vec::from(&data[..data.len() - 16]);
@@ -203,7 +203,7 @@ fn handle_finish(handler: &mut PairVerify, database: &DatabasePtr, data: &[u8]) 
             return Err(tlv::Error::Unknown);
         }
 
-        debug!("/pair-verify - M4: Sending Verify Finish Response");
+        debug!("M4: Sending Verify Finish Response");
 
         Ok(vec![Value::State(StepNumber::FinishRes as u8)])
     } else {

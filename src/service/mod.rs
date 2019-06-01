@@ -3,6 +3,7 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 use crate::{characteristic::HapCharacteristic, HapType};
 
 mod includes;
+
 pub use crate::service::includes::*;
 
 /// `HapService` is implemented by the inner type of every `Service`.

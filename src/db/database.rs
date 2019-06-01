@@ -9,7 +9,7 @@ use crate::{
 
 use crate::Error;
 
-/// Reference counting pointer to a `Database`.
+/// Pointer to a `Database`.
 pub type DatabasePtr = Arc<Mutex<Database>>;
 
 /// `Database` is a wrapper type around a boxed implementor of the `Storage` trait.

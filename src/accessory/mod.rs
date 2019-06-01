@@ -8,18 +8,14 @@ use crate::{
         accessory_information::{self, AccessoryInformation},
         HapService,
     },
+    Error,
 };
 
-use crate::Error;
-
 mod category;
-pub use crate::accessory::category::Category;
-
 mod defined;
-pub use crate::accessory::defined::*;
-
 mod includes;
-pub use crate::accessory::includes::*;
+
+pub use crate::accessory::{category::Category, defined::*, includes::*};
 
 /// `HapAccessoryService` is implemented by every `Service` inside of an `Accessory`.
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}

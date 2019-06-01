@@ -76,5 +76,5 @@ impl Permissions {
     }
 }
 
-/// Reference counting pointer to a `Uuid`.
+/// Pointer to a `Uuid`.
 pub type IdPtr = Arc<Mutex<Option<Uuid>>>;

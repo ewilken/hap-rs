@@ -11,7 +11,7 @@ use crate::{
     Error,
 };
 
-/// `AccessoryList` is a wrapper type holding an `Rc<RefCell>` with a `Vec` of boxed Accessories.
+/// `AccessoryList` is a wrapper type holding an `Arc<Mutex>` with a `Vec` of boxed Accessories.
 #[derive(Clone)]
 pub struct AccessoryList {
     pub accessories: Arc<Mutex<Vec<AccessoryListPtr>>>,

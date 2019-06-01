@@ -72,32 +72,31 @@ impl TlvHandler for PairSetup {
     type Result = tlv::Container;
 
     fn parse(&self, body: Vec<u8>) -> Result<Step, tlv::ErrorContainer> {
-        let decoded = tlv::decode(body);
+        let mut decoded = tlv::decode(body);
         match decoded.get(&(Type::State as u8)) {
             Some(method) => match method[0] {
                 x if x == StepNumber::StartReq as u8 => Ok(Step::Start),
                 x if x == StepNumber::VerifyReq as u8 => {
-                    let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(tlv::ErrorContainer::new(
+                    let a_pub = decoded
+                        .remove(&(Type::PublicKey as u8))
+                        .ok_or(tlv::ErrorContainer::new(
+                            StepNumber::VerifyRes as u8,
+                            tlv::Error::Unknown,
+                        ))?;
+                    let a_proof = decoded.remove(&(Type::Proof as u8)).ok_or(tlv::ErrorContainer::new(
                         StepNumber::VerifyRes as u8,
                         tlv::Error::Unknown,
                     ))?;
-                    let a_proof = decoded.get(&(Type::Proof as u8)).ok_or(tlv::ErrorContainer::new(
-                        StepNumber::VerifyRes as u8,
-                        tlv::Error::Unknown,
-                    ))?;
-                    Ok(Step::Verify {
-                        a_pub: a_pub.clone(),
-                        a_proof: a_proof.clone(),
-                    })
+                    Ok(Step::Verify { a_pub, a_proof })
                 },
                 x if x == StepNumber::ExchangeReq as u8 => {
                     let data = decoded
-                        .get(&(Type::EncryptedData as u8))
+                        .remove(&(Type::EncryptedData as u8))
                         .ok_or(tlv::ErrorContainer::new(
                             StepNumber::ExchangeRes as u8,
                             tlv::Error::Unknown,
                         ))?;
-                    Ok(Step::Exchange { data: data.clone() })
+                    Ok(Step::Exchange { data })
                 },
                 _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
             },
@@ -149,7 +148,7 @@ impl TlvHandler for PairSetup {
 }
 
 fn handle_start(handler: &mut PairSetup, database: &DatabasePtr) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pair-setup - M1: Got SRP Start Request");
+    debug!("M1: Got SRP Start Request");
 
     if handler.unsuccessful_tries > 99 {
         return Err(tlv::Error::MaxTries);
@@ -181,7 +180,7 @@ fn handle_start(handler: &mut PairSetup, database: &DatabasePtr) -> Result<tlv::
         shared_secret: None,
     });
 
-    debug!("/pair-setup - M2: Sending SRP Start Response");
+    debug!("M2: Sending SRP Start Response");
 
     Ok(vec![
         Value::State(StepNumber::StartRes as u8),
@@ -191,7 +190,7 @@ fn handle_start(handler: &mut PairSetup, database: &DatabasePtr) -> Result<tlv::
 }
 
 fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pair-setup - M3: Got SRP Verify Request");
+    debug!("M3: Got SRP Verify Request");
 
     if let Some(ref mut session) = handler.session {
         let user = UserRecord {
@@ -211,7 +210,7 @@ fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) -> Resul
             &G_3072,
         )?;
 
-        debug!("/pair-setup - M4: Sending SRP Verify Response");
+        debug!("M4: Sending SRP Verify Response");
 
         Ok(vec![Value::State(StepNumber::VerifyRes as u8), Value::Proof(b_proof)])
     } else {
@@ -226,7 +225,7 @@ fn handle_exchange(
     event_emitter: &EmitterPtr,
     data: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("/pair-setup - M5: Got SRP Exchange Request");
+    debug!("M5: Got SRP Exchange Request");
 
     if let Some(ref mut session) = handler.session {
         if let Some(ref mut shared_secret) = session.shared_secret {
@@ -314,7 +313,7 @@ fn handle_exchange(
                 .expect("couldn't access event_emitter")
                 .emit(&Event::DevicePaired);
 
-            debug!("/pair-setup - M6: Sending SRP Exchange Response");
+            debug!("M6: Sending SRP Exchange Response");
 
             Ok(vec![
                 Value::State(StepNumber::ExchangeRes as u8),
@@ -328,7 +327,6 @@ fn handle_exchange(
     }
 }
 
-// TODO - fix the actual srp package to do proper verification
 fn verify_client_proof<D: Digest>(
     b_pub: &[u8],
     a_pub: &[u8],

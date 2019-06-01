@@ -25,5 +25,5 @@ impl Emitter {
     }
 }
 
-/// Reference counting pointer to an `Emitter`.
+/// Pointer to an `Emitter`.
 pub type EmitterPtr = Arc<Mutex<Emitter>>;

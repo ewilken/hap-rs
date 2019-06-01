@@ -15,11 +15,10 @@ use crate::{
     accessory::Category,
     db::Storage,
     transport::bonjour::{FeatureFlag, StatusFlag},
+    Error,
 };
 
-use crate::Error;
-
-/// Reference counting pointer to a `Config`.
+/// Pointer to a `Config`.
 pub type ConfigPtr = Arc<Mutex<Config>>;
 
 /// The `Config` struct is used to store configuration options for the HomeKit Accessory Server.
@@ -48,7 +47,7 @@ pub struct Config {
     pub port: u16,
     /// 8 digit pin used for pairing. Defaults to `"11122333"`.
     ///
-    /// The following pins are considered too easy by Apple and therefore not allowed:
+    /// The following pins are considered too easy and are therefore not allowed:
     /// - `"12345678"`
     /// - `"87654321"`
     /// - `"00000000"`

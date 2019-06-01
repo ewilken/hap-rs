@@ -105,7 +105,7 @@ impl JsonHandler for GetCharacteristics {
 }
 
 fn check_flags(flags: &HashMap<String, String>) -> (bool, bool, bool, bool) {
-    let true_val = "1".to_owned();
+    let true_val = "1".to_string();
     (
         flags.get("meta") == Some(&true_val),
         flags.get("perms") == Some(&true_val),

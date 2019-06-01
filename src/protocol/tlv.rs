@@ -15,19 +15,19 @@ pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
     for (k, v) in &hm {
         let length = v.len();
         if length <= 255 {
-            vec.push(k.clone());
+            vec.push(*k);
             vec.push(length as u8);
             for byte in v {
-                vec.push(byte.clone());
+                vec.push(*byte);
             }
         } else {
             let mut l = length;
             let mut p = 0;
             while l > 255 {
-                vec.push(k.clone());
+                vec.push(*k);
                 vec.push(255);
                 for byte in &v[p..(p + 255)] {
-                    vec.push(byte.clone());
+                    vec.push(*byte);
                 }
                 l -= 255;
                 p += 255;
@@ -36,7 +36,7 @@ pub fn encode(hm: HashMap<u8, Vec<u8>>) -> Vec<u8> {
                 vec.push(k.clone());
                 vec.push(l as u8);
                 for byte in &v[p..(p + l)] {
-                    vec.push(byte.clone());
+                    vec.push(*byte);
                 }
             }
         }

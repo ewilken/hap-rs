@@ -73,5 +73,5 @@ impl Responder {
     }
 }
 
-/// Reference counting pointer to a `Responder`.
+/// Pointer to a `Responder`.
 pub type ResponderPtr = Arc<Mutex<Responder>>;
