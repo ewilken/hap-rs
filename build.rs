@@ -548,8 +548,8 @@ impl HapService for {{trim service.Name}}Inner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 {{#each service.RequiredCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
@@ -570,8 +570,8 @@ impl HapService for {{trim service.Name}}Inner {
         \t\tcharacteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 {{#each service.RequiredCharacteristics as |r|}}\
 {{#each ../this.characteristics as |c|}}\
 {{#if_eq r c.UUID}}\
@@ -645,14 +645,14 @@ impl HapAccessory for {{trim service.Name}}Inner {
         self.id = id;
     }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> {
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
         vec![
             &self.accessory_information,
             &self.{{snake_case service.Name}},
         ]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
         vec![
             &mut self.accessory_information,
             &mut self.{{snake_case service.Name}},
@@ -697,7 +697,7 @@ static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 
 fn main() {
     let mut metadata_file = File::open("default.metadata.json").unwrap();
-    let mut metadata_hash_file = OpenOptions::new().read(true).write(true).open("metadata_hash").unwrap();
+    let mut metadata_hash_file = OpenOptions::new().read(true).open("metadata_hash").unwrap();
 
     let mut buf = Vec::new();
     let mut cached_hash = String::new();
@@ -713,6 +713,11 @@ fn main() {
         return;
     }
 
+    let mut metadata_hash_file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open("metadata_hash")
+        .unwrap();
     metadata_hash_file.write_all(&current_hash.as_bytes()).unwrap();
 
     let metadata: Metadata = serde_json::from_slice(&buf).unwrap();

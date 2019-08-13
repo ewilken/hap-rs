@@ -68,8 +68,8 @@ impl HapService for LockMechanismInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.lock_current_state,
 			&self.lock_target_state,
 		];
@@ -79,8 +79,8 @@ impl HapService for LockMechanismInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.lock_current_state,
 			&mut self.lock_target_state,
 		];

@@ -71,8 +71,8 @@ impl HapService for FilterMaintenanceInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.filter_change_indication,
 		];
 		if let Some(c) = &self.filter_life_level {
@@ -87,8 +87,8 @@ impl HapService for FilterMaintenanceInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.filter_change_indication,
 		];
 		if let Some(c) = &mut self.filter_life_level {

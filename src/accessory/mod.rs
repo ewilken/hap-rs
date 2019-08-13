@@ -31,9 +31,9 @@ pub trait HapAccessory {
     /// Sets the ID of an Accessory.
     fn set_id(&mut self, id: u64);
     /// Returns references to all Services of an Accessory.
-    fn get_services(&self) -> Vec<&HapAccessoryService>;
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService>;
     /// Returns mutable references to the Services of an Accessory.
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService>;
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService>;
     /// Returns a mutable reference to the Accessory Information Service of an Accessory.
     fn get_mut_information(&mut self) -> &mut AccessoryInformation;
     /// Initializes the Service and Characteristic instance IDs of an Accessory. Service and
@@ -69,9 +69,9 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
 
     fn set_id(&mut self, id: u64) { self.inner.set_id(id) }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> { self.inner.get_services() }
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService> { self.inner.get_services() }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> { self.inner.get_mut_services() }
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> { self.inner.get_mut_services() }
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { self.inner.get_mut_information() }
 

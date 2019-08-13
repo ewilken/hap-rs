@@ -77,8 +77,8 @@ impl HapService for IrrigationSystemInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.active,
 			&self.program_mode,
 			&self.in_use,
@@ -95,8 +95,8 @@ impl HapService for IrrigationSystemInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.active,
 			&mut self.program_mode,
 			&mut self.in_use,

@@ -77,8 +77,8 @@ impl HapService for SecuritySystemInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.security_system_current_state,
 			&self.security_system_target_state,
 		];
@@ -97,8 +97,8 @@ impl HapService for SecuritySystemInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.security_system_current_state,
 			&mut self.security_system_target_state,
 		];

@@ -27,7 +27,7 @@ impl HapAccessory for IpCameraInner {
 
     fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> {
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
         vec![
             &self.accessory_information,
             &self.camera_rtp_stream_management,
@@ -35,7 +35,7 @@ impl HapAccessory for IpCameraInner {
         ]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
         vec![
             &mut self.accessory_information,
             &mut self.camera_rtp_stream_management,

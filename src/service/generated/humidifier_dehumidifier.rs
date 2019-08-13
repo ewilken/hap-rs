@@ -92,8 +92,8 @@ impl HapService for HumidifierDehumidifierInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.current_relative_humidity,
 			&self.current_humidifier_dehumidifier_state,
 			&self.target_humidifier_dehumidifier_state,
@@ -123,8 +123,8 @@ impl HapService for HumidifierDehumidifierInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.current_relative_humidity,
 			&mut self.current_humidifier_dehumidifier_state,
 			&mut self.target_humidifier_dehumidifier_state,

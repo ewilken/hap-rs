@@ -23,9 +23,9 @@ impl HapAccessory for BridgeInner {
 
     fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> { vec![&self.accessory_information] }
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService> { vec![&self.accessory_information] }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> { vec![&mut self.accessory_information] }
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> { vec![&mut self.accessory_information] }
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 

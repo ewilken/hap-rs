@@ -23,9 +23,9 @@ pub trait HapService {
     /// Sets the primary value of a Service.
     fn set_primary(&mut self, primary: bool);
     /// Returns references to the Characteristics of a Service.
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic>;
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic>;
     /// Returns mutable references to the Characteristics of a Service.
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic>;
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic>;
 }
 
 /// A Service. Services group functionality in order to provide context. They are comprised of
@@ -67,7 +67,7 @@ impl<T: HapService> HapService for Service<T> {
 
     fn set_primary(&mut self, primary: bool) { self.inner.set_primary(primary) }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> { self.inner.get_characteristics() }
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> { self.inner.get_characteristics() }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> { self.inner.get_mut_characteristics() }
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> { self.inner.get_mut_characteristics() }
 }

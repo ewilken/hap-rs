@@ -89,8 +89,8 @@ impl HapService for ThermostatInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.current_heating_cooling_state,
 			&self.target_heating_cooling_state,
 			&self.current_temperature,
@@ -115,8 +115,8 @@ impl HapService for ThermostatInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.current_heating_cooling_state,
 			&mut self.target_heating_cooling_state,
 			&mut self.current_temperature,

@@ -92,8 +92,8 @@ impl HapService for HeaterCoolerInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.active,
 			&self.current_heater_cooler_state,
 			&self.target_heater_cooler_state,
@@ -123,8 +123,8 @@ impl HapService for HeaterCoolerInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.active,
 			&mut self.current_heater_cooler_state,
 			&mut self.target_heater_cooler_state,

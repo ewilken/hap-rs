@@ -31,14 +31,14 @@ impl HapAccessory for ContactSensorInner {
         self.id = id;
     }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> {
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
         vec![
             &self.accessory_information,
             &self.contact_sensor,
         ]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
         vec![
             &mut self.accessory_information,
             &mut self.contact_sensor,

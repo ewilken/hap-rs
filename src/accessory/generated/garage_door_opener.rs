@@ -31,14 +31,14 @@ impl HapAccessory for GarageDoorOpenerInner {
         self.id = id;
     }
 
-    fn get_services(&self) -> Vec<&HapAccessoryService> {
+    fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
         vec![
             &self.accessory_information,
             &self.garage_door_opener,
         ]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut HapAccessoryService> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
         vec![
             &mut self.accessory_information,
             &mut self.garage_door_opener,

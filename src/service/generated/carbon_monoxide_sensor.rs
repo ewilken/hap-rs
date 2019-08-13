@@ -83,8 +83,8 @@ impl HapService for CarbonMonoxideSensorInner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&HapCharacteristic> {
-        let mut characteristics: Vec<&HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.carbon_monoxide_detected,
 		];
 		if let Some(c) = &self.status_active {
@@ -111,8 +111,8 @@ impl HapService for CarbonMonoxideSensorInner {
 		characteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut HapCharacteristic> {
-        let mut characteristics: Vec<&mut HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.carbon_monoxide_detected,
 		];
 		if let Some(c) = &mut self.status_active {
