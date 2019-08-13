@@ -4,7 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use uuid::Uuid;
 
-use crate::{db::DatabasePtr, Error};
+use crate::{db::DatabasePtr, Error, Result};
 
 /// `Pairing` represents paired controllers.
 #[derive(Debug, Serialize, Deserialize)]
@@ -25,24 +25,24 @@ impl Pairing {
     }
 
     /// Loads a `Pairing` from a database.
-    pub fn load_from(id: Uuid, database: &DatabasePtr) -> Result<Pairing, Error> {
+    pub fn load_from(id: Uuid, database: &DatabasePtr) -> Result<Pairing> {
         database.lock().expect("couldn't access database").get_pairing(id)
     }
 
     /// Saves a `Pairing` to a database.
-    pub fn save_to(&self, database: &DatabasePtr) -> Result<(), Error> {
+    pub fn save_to(&self, database: &DatabasePtr) -> Result<()> {
         database.lock().expect("couldn't access database").set_pairing(self)?;
         Ok(())
     }
 
     /// Serializes a `Pairing` to a `Vec<u8>`.
-    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
+    pub fn as_bytes(&self) -> Result<Vec<u8>> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)
     }
 
     /// Deserializes a `Pairing` from a `&[u8]`.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Pairing, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Pairing> {
         let value = serde_json::from_slice(&bytes)?;
         Ok(value)
     }
@@ -59,7 +59,7 @@ pub enum Permissions {
 
 impl Permissions {
     /// Converts a Byte value to the corresponding `Permissions` variant.
-    pub fn from_u8(u: u8) -> Result<Permissions, Error> {
+    pub fn from_u8(u: u8) -> Result<Permissions> {
         match u {
             0x00 => Ok(Permissions::User),
             0x01 => Ok(Permissions::Admin),

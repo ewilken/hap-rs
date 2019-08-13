@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::db::storage::Storage;
 
-use crate::Error;
+use crate::{Error, Result};
 
 /// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 pub struct FileStorage {
@@ -21,7 +21,7 @@ pub struct FileStorage {
 
 impl FileStorage {
     /// Creates a new `FileStorage`.
-    pub fn new(dir: &str) -> Result<FileStorage, Error> {
+    pub fn new(dir: &str) -> Result<FileStorage> {
         let path = Path::new(dir).to_path_buf();
         fs::create_dir_all(&path)?;
 
@@ -32,14 +32,14 @@ impl FileStorage {
     }
 
     /// Returns a readable `File` for the given file name.
-    fn file_for_read(&self, file: &str) -> Result<fs::File, Error> {
+    fn file_for_read(&self, file: &str) -> Result<fs::File> {
         let file_path = self.path_to_file(file);
         let file = fs::OpenOptions::new().read(true).open(file_path)?;
         Ok(file)
     }
 
     /// Returns a writable `File` for the given file name.
-    fn file_for_write(&self, file: &str) -> Result<fs::File, Error> {
+    fn file_for_write(&self, file: &str) -> Result<fs::File> {
         let file_path = self.path_to_file(file);
         let file = fs::OpenOptions::new().write(true).create(true).open(file_path)?;
         Ok(file)
@@ -54,45 +54,45 @@ impl FileStorage {
 }
 
 impl Storage for FileStorage {
-    fn get_reader(&self, key: &str) -> Result<BufReader<fs::File>, Error> {
+    fn get_reader(&self, key: &str) -> Result<BufReader<fs::File>> {
         let file = self.file_for_read(key)?;
         let reader = BufReader::new(file);
         Ok(reader)
     }
 
-    fn get_writer(&self, key: &str) -> Result<BufWriter<fs::File>, Error> {
+    fn get_writer(&self, key: &str) -> Result<BufWriter<fs::File>> {
         let file = self.file_for_write(key)?;
         let writer = BufWriter::new(file);
         Ok(writer)
     }
 
-    fn get_bytes(&self, key: &str) -> Result<Vec<u8>, Error> {
+    fn get_bytes(&self, key: &str) -> Result<Vec<u8>> {
         let mut reader = self.get_reader(key)?;
         let mut value = Vec::new();
         reader.read_to_end(&mut value)?;
         Ok(value)
     }
 
-    fn set_bytes(&self, key: &str, value: Vec<u8>) -> Result<(), Error> {
+    fn set_bytes(&self, key: &str, value: Vec<u8>) -> Result<()> {
         let mut writer = self.get_writer(key)?;
         writer.write_all(&value)?;
         Ok(())
     }
 
-    fn get_u64(&self, key: &str) -> Result<u64, Error> {
+    fn get_u64(&self, key: &str) -> Result<u64> {
         let mut reader = self.get_reader(key)?;
         let value = reader.read_u64::<BigEndian>()?;
         Ok(value)
     }
 
-    fn set_u64(&self, key: &str, value: u64) -> Result<(), Error> {
+    fn set_u64(&self, key: &str, value: u64) -> Result<()> {
         let mut buf = [0; 8];
         BigEndian::write_u64(&mut buf, value);
         self.set_bytes(key, buf.to_vec())?;
         Ok(())
     }
 
-    fn get_uuid(&self, key: &str) -> Result<Uuid, Error> {
+    fn get_uuid(&self, key: &str) -> Result<Uuid> {
         let mut reader = self.get_reader(key)?;
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf)?;
@@ -105,13 +105,13 @@ impl Storage for FileStorage {
         }
     }
 
-    fn set_uuid(&self, key: &str, value: Uuid) -> Result<(), Error> {
+    fn set_uuid(&self, key: &str, value: Uuid) -> Result<()> {
         let mut writer = self.get_writer(key)?;
         writer.write_all(value.to_hyphenated().to_string().as_bytes())?;
         Ok(())
     }
 
-    fn keys_with_suffix(&self, suffix: &str) -> Result<Vec<String>, Error> {
+    fn keys_with_suffix(&self, suffix: &str) -> Result<Vec<String>> {
         let extension = Some(OsStr::new(suffix));
         let mut keys = Vec::new();
         for entry in fs::read_dir(&self.dir_path)? {
@@ -130,7 +130,7 @@ impl Storage for FileStorage {
         Ok(keys)
     }
 
-    fn delete(&self, key: &str) -> Result<(), Error> {
+    fn delete(&self, key: &str) -> Result<()> {
         let file_path = self.path_to_file(key);
         fs::remove_file(file_path)?;
         Ok(())

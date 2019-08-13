@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::{
     config::ConfigPtr,
     db::DatabasePtr,
-    event::{EmitterPtr, Event},
+    event::{EventEmitterPtr, Event},
     protocol::{
         tlv::{self, Type, Value},
         IdPtr,
@@ -95,7 +95,7 @@ impl TlvHandler for Pairings {
         controller_id: &IdPtr,
         config: &ConfigPtr,
         database: &DatabasePtr,
-        event_emitter: &EmitterPtr,
+        event_emitter: &EventEmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match handler {
             HandlerType::Add {
@@ -130,7 +130,7 @@ impl TlvHandler for Pairings {
 fn handle_add(
     config: &ConfigPtr,
     database: &DatabasePtr,
-    event_emitter: &EmitterPtr,
+    event_emitter: &EventEmitterPtr,
     controller_id: &IdPtr,
     pairing_id: &[u8],
     ltpk: &[u8],
@@ -189,7 +189,7 @@ fn handle_add(
 
 fn handle_remove(
     database: &DatabasePtr,
-    event_emitter: &EmitterPtr,
+    event_emitter: &EventEmitterPtr,
     controller_id: &IdPtr,
     pairing_id: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {

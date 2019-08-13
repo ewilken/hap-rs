@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     config::ConfigPtr,
     db::DatabasePtr,
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     protocol::{
         tlv::{self, Type, Value},
         Device,
@@ -91,7 +91,7 @@ impl TlvHandler for PairVerify {
         _: &IdPtr,
         _: &ConfigPtr,
         database: &DatabasePtr,
-        _: &EmitterPtr,
+        _: &EventEmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start { a_pub } => match handle_start(self, database, a_pub) {

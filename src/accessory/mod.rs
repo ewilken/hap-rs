@@ -3,19 +3,19 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
     characteristic::{accessory_flags, hardware_revision},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     service::{
         accessory_information::{self, AccessoryInformation},
         HapService,
     },
-    Error,
+    Result,
 };
 
 mod category;
 mod defined;
-mod includes;
+mod generated;
 
-pub use crate::accessory::{category::Category, defined::*, includes::*};
+pub use crate::accessory::{category::Category, defined::*, generated::*};
 
 /// `HapAccessoryService` is implemented by every `Service` inside of an `Accessory`.
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
@@ -41,7 +41,7 @@ pub trait HapAccessory {
     /// within each Accessory object. For example, if the first Service object has an instance ID of
     /// "1" then no other Service or Characteristic objects can have an instance ID of "1" within
     /// the parent Accessory object.
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error>;
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()>;
 }
 
 /// An Accessory. Accessories are the outermost data type defined by the HAP. They are comprised of
@@ -56,7 +56,7 @@ impl<T: HapAccessory> Accessory<T> {
 }
 
 impl<T: HapAccessory> Serialize for Accessory<T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapAccessory", 2)?;
         state.serialize_field("aid", &self.get_id())?;
         state.serialize_field("services", &self.get_services())?;
@@ -75,7 +75,7 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { self.inner.get_mut_information() }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
         self.inner.init_iids(accessory_id, event_emitter)
     }
 }
@@ -146,7 +146,7 @@ pub struct Information {
 
 impl Information {
     /// Converts the `Information` struct to an Accessory Information Service.
-    pub fn to_service(self) -> Result<AccessoryInformation, Error> {
+    pub fn to_service(self) -> Result<AccessoryInformation> {
         let mut i = accessory_information::new();
         i.inner.identify.set_value(self.identify)?;
         i.inner.manufacturer.set_value(self.manufacturer)?;

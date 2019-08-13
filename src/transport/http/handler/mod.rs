@@ -4,7 +4,7 @@ use hyper::{self, Body, Response, StatusCode, Uri};
 use crate::{
     config::ConfigPtr,
     db::{AccessoryList, DatabasePtr},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     protocol::{
         tlv::{self, Encodable},
         IdPtr,
@@ -12,6 +12,7 @@ use crate::{
     transport::http::{server::EventSubscriptions, status_response, tlv_response},
     Error,
     ErrorKind,
+    Result,
 };
 
 pub mod accessories;
@@ -31,22 +32,22 @@ pub trait Handler {
         config: &ConfigPtr,
         database: &DatabasePtr,
         accessories: &AccessoryList,
-        event_emitter: &EmitterPtr,
+        event_emitter: &EventEmitterPtr,
     ) -> Box<dyn Future<Item = Response<Body>, Error = Error> + Send>;
 }
 
 pub trait TlvHandler {
     type ParseResult;
     type Result: Encodable;
-    fn parse(&self, body: Vec<u8>) -> Result<Self::ParseResult, tlv::ErrorContainer>;
+    fn parse(&self, body: Vec<u8>) -> std::result::Result<Self::ParseResult, tlv::ErrorContainer>;
     fn handle(
         &mut self,
         step: Self::ParseResult,
         controller_id: &IdPtr,
         config: &ConfigPtr,
         database: &DatabasePtr,
-        event_emitter: &EmitterPtr,
-    ) -> Result<Self::Result, tlv::ErrorContainer>;
+        event_emitter: &EventEmitterPtr,
+    ) -> std::result::Result<Self::Result, tlv::ErrorContainer>;
 }
 
 pub struct TlvHandlerType<T: TlvHandler>(T);
@@ -65,7 +66,7 @@ impl<T: TlvHandler> Handler for TlvHandlerType<T> {
         config: &ConfigPtr,
         database: &DatabasePtr,
         _: &AccessoryList,
-        event_emitter: &EmitterPtr,
+        event_emitter: &EventEmitterPtr,
     ) -> Box<dyn Future<Item = Response<Body>, Error = Error> + Send> {
         let response = match self.0.parse(body) {
             Err(e) => e.encode(),
@@ -90,8 +91,8 @@ pub trait JsonHandler {
         config: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
-        event_emitter: &EmitterPtr,
-    ) -> Result<Response<Body>, Error>;
+        event_emitter: &EventEmitterPtr,
+    ) -> Result<Response<Body>>;
 }
 
 pub struct JsonHandlerType<T: JsonHandler>(T);
@@ -110,7 +111,7 @@ impl<T: JsonHandler> Handler for JsonHandlerType<T> {
         config: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
-        event_emitter: &EmitterPtr,
+        event_emitter: &EventEmitterPtr,
     ) -> Box<dyn Future<Item = Response<Body>, Error = Error> + Send> {
         let response = match self.0.handle(
             uri,

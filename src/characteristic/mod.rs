@@ -9,14 +9,15 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json::{self, json};
 
 use crate::{
-    event::{EmitterPtr, Event},
+    event::{Event, EventEmitterPtr},
     Error,
     HapType,
+    Result,
 };
 
-mod includes;
+mod generated;
 
-pub use crate::characteristic::includes::*;
+pub use crate::characteristic::generated::*;
 
 /// Inner type of a `Characteristic`.
 #[derive(Default)]
@@ -43,7 +44,7 @@ pub struct Inner<T: Default + Clone + Serialize> {
     readable: Option<Box<dyn Readable<T> + Send>>,
     updatable: Option<Box<dyn Updatable<T> + Send>>,
 
-    event_emitter: Option<EmitterPtr>,
+    event_emitter: Option<EventEmitterPtr>,
 }
 
 /// A Characteristic. A characteristic is a feature that represents data or an associated behavior
@@ -66,43 +67,41 @@ where
     }
 
     /// Returns the ID of a Characteristic.
-    pub fn get_id(&self) -> Result<u64, Error> { Ok(self.inner.lock().expect("couldn't access characteristic").id) }
+    pub fn get_id(&self) -> Result<u64> { Ok(self.inner.lock().expect("couldn't access characteristic").id) }
 
     /// Sets the ID of a Characteristic.
-    pub fn set_id(&mut self, id: u64) -> Result<(), Error> {
+    pub fn set_id(&mut self, id: u64) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").id = id;
         Ok(())
     }
 
     /// Sets the Accessory ID of a Characteristic.
-    pub fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error> {
+    pub fn set_accessory_id(&mut self, accessory_id: u64) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").accessory_id = accessory_id;
         Ok(())
     }
 
     /// Returns the `HapType` of a Characteristic.
-    pub fn get_type(&self) -> Result<HapType, Error> {
+    pub fn get_type(&self) -> Result<HapType> {
         Ok(self.inner.lock().expect("couldn't access characteristic").hap_type)
     }
 
     /// Returns the `Format` of a Characteristic.
-    pub fn get_format(&self) -> Result<Format, Error> {
-        Ok(self.inner.lock().expect("couldn't access characteristic").format)
-    }
+    pub fn get_format(&self) -> Result<Format> { Ok(self.inner.lock().expect("couldn't access characteristic").format) }
 
     /// Returns the `Perm`s of a Characteristic.
-    pub fn get_perms(&self) -> Result<Vec<Perm>, Error> {
+    pub fn get_perms(&self) -> Result<Vec<Perm>> {
         Ok(self.inner.lock().expect("couldn't access characteristic").perms.clone())
     }
 
     /// Sets the description of a Characteristic.
-    pub fn set_description(&mut self, description: Option<String>) -> Result<(), Error> {
+    pub fn set_description(&mut self, description: Option<String>) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").description = description;
         Ok(())
     }
 
     /// Returns the event notifications value of a Characteristic.
-    pub fn get_event_notifications(&self) -> Result<Option<bool>, Error> {
+    pub fn get_event_notifications(&self) -> Result<Option<bool>> {
         Ok(self
             .inner
             .lock()
@@ -111,7 +110,7 @@ where
     }
 
     /// Sets the event notifications value of a Characteristic.
-    pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error> {
+    pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<()> {
         self.inner
             .lock()
             .expect("couldn't access characteristic")
@@ -120,7 +119,7 @@ where
     }
 
     /// Returns the value of a Characteristic.
-    pub fn get_value(&mut self) -> Result<T, Error> {
+    pub fn get_value(&mut self) -> Result<T> {
         let mut val = None;
         {
             let mut inner = self.inner.lock().expect("couldn't access characteristic");
@@ -137,7 +136,7 @@ where
     }
 
     /// Sets the value of a Characteristic.
-    pub fn set_value(&mut self, val: T) -> Result<(), Error> {
+    pub fn set_value(&mut self, val: T) -> Result<()> {
         // TODO - check for min/max on types implementing PartialOrd
         // if let Some(ref max) = self.inner.try_borrow()?.max_value {
         //     if &val > max {
@@ -180,12 +179,12 @@ where
     }
 
     /// Returns the `Unit` of a Characteristic.
-    pub fn get_unit(&self) -> Result<Option<Unit>, Error> {
+    pub fn get_unit(&self) -> Result<Option<Unit>> {
         Ok(self.inner.lock().expect("couldn't access characteristic").unit)
     }
 
     /// Returns the maximum value of a Characteristic.
-    pub fn get_max_value(&self) -> Result<Option<T>, Error> {
+    pub fn get_max_value(&self) -> Result<Option<T>> {
         Ok(self
             .inner
             .lock()
@@ -195,13 +194,13 @@ where
     }
 
     /// Sets the maximum value of a Characteristic.
-    pub fn set_max_value(&mut self, val: Option<T>) -> Result<(), Error> {
+    pub fn set_max_value(&mut self, val: Option<T>) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").max_value = val;
         Ok(())
     }
 
     /// Returns the minimum value of a Characteristic.
-    pub fn get_min_value(&self) -> Result<Option<T>, Error> {
+    pub fn get_min_value(&self) -> Result<Option<T>> {
         Ok(self
             .inner
             .lock()
@@ -211,13 +210,13 @@ where
     }
 
     /// Sets the minimum value of a Characteristic.
-    pub fn set_min_value(&mut self, val: Option<T>) -> Result<(), Error> {
+    pub fn set_min_value(&mut self, val: Option<T>) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").min_value = val;
         Ok(())
     }
 
     /// Returns the step value of a Characteristic.
-    pub fn get_step_value(&self) -> Result<Option<T>, Error> {
+    pub fn get_step_value(&self) -> Result<Option<T>> {
         Ok(self
             .inner
             .lock()
@@ -227,37 +226,37 @@ where
     }
 
     /// Returns the step value of a Characteristic.
-    pub fn set_step_value(&mut self, val: Option<T>) -> Result<(), Error> {
+    pub fn set_step_value(&mut self, val: Option<T>) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").step_value = val;
         Ok(())
     }
 
     /// Returns the maximum length of a Characteristic.
-    pub fn get_max_len(&self) -> Result<Option<u16>, Error> {
+    pub fn get_max_len(&self) -> Result<Option<u16>> {
         Ok(self.inner.lock().expect("couldn't access characteristic").max_len)
     }
 
     /// Sets a `Readable` on the Characteristic.
-    pub fn set_readable(&mut self, readable: impl Readable<T> + 'static + Send) -> Result<(), Error> {
+    pub fn set_readable(&mut self, readable: impl Readable<T> + 'static + Send) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").readable = Some(Box::new(readable));
         Ok(())
     }
 
     /// Sets an `Readable` on the Characteristic.
-    pub fn set_updatable(&mut self, updatable: impl Updatable<T> + 'static + Send) -> Result<(), Error> {
+    pub fn set_updatable(&mut self, updatable: impl Updatable<T> + 'static + Send) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").updatable = Some(Box::new(updatable));
         Ok(())
     }
 
-    /// Sets a `hap::event::EmitterPtr` on the Characteristic.
-    pub fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error> {
+    /// Sets a `hap::event::EventEmitterPtr` on the Characteristic.
+    pub fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").event_emitter = event_emitter;
         Ok(())
     }
 }
 
 impl<T: Default + Clone + Serialize> Serialize for Characteristic<T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("Characteristic", 15)?;
         let inner = self.inner.lock().expect("couldn't access characteristic");
         state.serialize_field("iid", &inner.id)?;
@@ -305,37 +304,37 @@ impl<T: Default + Clone + Serialize> Serialize for Characteristic<T> {
 /// `HapCharacteristic` is implemented by the inner type of every `Characteristic`.
 pub trait HapCharacteristic: erased_serde::Serialize {
     /// Returns the ID of a Characteristic.
-    fn get_id(&self) -> Result<u64, Error>;
+    fn get_id(&self) -> Result<u64>;
     /// Sets the ID of a Characteristic.
-    fn set_id(&mut self, id: u64) -> Result<(), Error>;
+    fn set_id(&mut self, id: u64) -> Result<()>;
     /// Sets the Accessory ID of a Characteristic.
-    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error>;
+    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<()>;
     /// Returns the `HapType` of a Characteristic.
-    fn get_type(&self) -> Result<HapType, Error>;
+    fn get_type(&self) -> Result<HapType>;
     /// Returns the `Format` of a Characteristic.
-    fn get_format(&self) -> Result<Format, Error>;
+    fn get_format(&self) -> Result<Format>;
     /// Returns the `Perm`s of a Characteristic.
-    fn get_perms(&self) -> Result<Vec<Perm>, Error>;
+    fn get_perms(&self) -> Result<Vec<Perm>>;
     /// Returns the event notifications value of a Characteristic.
-    fn get_event_notifications(&self) -> Result<Option<bool>, Error>;
+    fn get_event_notifications(&self) -> Result<Option<bool>>;
     /// Sets the event notifications value of a Characteristic.
-    fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error>;
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<()>;
     /// Returns the value of a Characteristic.
-    fn get_value(&mut self) -> Result<serde_json::Value, Error>;
+    fn get_value(&mut self) -> Result<serde_json::Value>;
     /// Sets the value of a Characteristic.
-    fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error>;
+    fn set_value(&mut self, value: serde_json::Value) -> Result<()>;
     /// Returns the `Unit` of a Characteristic.
-    fn get_unit(&self) -> Result<Option<Unit>, Error>;
+    fn get_unit(&self) -> Result<Option<Unit>>;
     /// Returns the maximum value of a Characteristic.
-    fn get_max_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    fn get_max_value(&self) -> Result<Option<serde_json::Value>>;
     /// Returns the minimum value of a Characteristic.
-    fn get_min_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    fn get_min_value(&self) -> Result<Option<serde_json::Value>>;
     /// Returns the step value of a Characteristic.
-    fn get_step_value(&self) -> Result<Option<serde_json::Value>, Error>;
+    fn get_step_value(&self) -> Result<Option<serde_json::Value>>;
     /// Returns the maximum length of a Characteristic.
-    fn get_max_len(&self) -> Result<Option<u16>, Error>;
-    /// Sets a `hap::event::EmitterPtr` on the Characteristic.
-    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error>;
+    fn get_max_len(&self) -> Result<Option<u16>>;
+    /// Sets a `hap::event::EventEmitterPtr` on the Characteristic.
+    fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()>;
 }
 
 serialize_trait_object!(HapCharacteristic);
@@ -344,27 +343,27 @@ impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T>
 where
     for<'de> T: Deserialize<'de>,
 {
-    fn get_id(&self) -> Result<u64, Error> { self.get_id() }
+    fn get_id(&self) -> Result<u64> { self.get_id() }
 
-    fn set_id(&mut self, id: u64) -> Result<(), Error> { self.set_id(id) }
+    fn set_id(&mut self, id: u64) -> Result<()> { self.set_id(id) }
 
-    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<(), Error> { self.set_accessory_id(accessory_id) }
+    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<()> { self.set_accessory_id(accessory_id) }
 
-    fn get_type(&self) -> Result<HapType, Error> { self.get_type() }
+    fn get_type(&self) -> Result<HapType> { self.get_type() }
 
-    fn get_format(&self) -> Result<Format, Error> { self.get_format() }
+    fn get_format(&self) -> Result<Format> { self.get_format() }
 
-    fn get_perms(&self) -> Result<Vec<Perm>, Error> { self.get_perms() }
+    fn get_perms(&self) -> Result<Vec<Perm>> { self.get_perms() }
 
-    fn get_event_notifications(&self) -> Result<Option<bool>, Error> { self.get_event_notifications() }
+    fn get_event_notifications(&self) -> Result<Option<bool>> { self.get_event_notifications() }
 
-    fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<(), Error> {
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<()> {
         self.set_event_notifications(event_notifications)
     }
 
-    fn get_value(&mut self) -> Result<serde_json::Value, Error> { Ok(json!(self.get_value()?)) }
+    fn get_value(&mut self) -> Result<serde_json::Value> { Ok(json!(self.get_value()?)) }
 
-    fn set_value(&mut self, value: serde_json::Value) -> Result<(), Error> {
+    fn set_value(&mut self, value: serde_json::Value) -> Result<()> {
         let v;
         // the controller is setting boolean values
         // either as a boolean or as an integer
@@ -383,32 +382,32 @@ where
         self.set_value(v)
     }
 
-    fn get_unit(&self) -> Result<Option<Unit>, Error> { self.get_unit() }
+    fn get_unit(&self) -> Result<Option<Unit>> { self.get_unit() }
 
-    fn get_max_value(&self) -> Result<Option<serde_json::Value>, Error> {
+    fn get_max_value(&self) -> Result<Option<serde_json::Value>> {
         Ok(match self.get_max_value()? {
             Some(v) => Some(json!(v)),
             None => None,
         })
     }
 
-    fn get_min_value(&self) -> Result<Option<serde_json::Value>, Error> {
+    fn get_min_value(&self) -> Result<Option<serde_json::Value>> {
         Ok(match self.get_min_value()? {
             Some(v) => Some(json!(v)),
             None => None,
         })
     }
 
-    fn get_step_value(&self) -> Result<Option<serde_json::Value>, Error> {
+    fn get_step_value(&self) -> Result<Option<serde_json::Value>> {
         Ok(match self.get_step_value()? {
             Some(v) => Some(json!(v)),
             None => None,
         })
     }
 
-    fn get_max_len(&self) -> Result<Option<u16>, Error> { self.get_max_len() }
+    fn get_max_len(&self) -> Result<Option<u16>> { self.get_max_len() }
 
-    fn set_event_emitter(&mut self, event_emitter: Option<EmitterPtr>) -> Result<(), Error> {
+    fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()> {
         self.set_event_emitter(event_emitter)
     }
 }

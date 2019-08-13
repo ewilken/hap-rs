@@ -1,6 +1,6 @@
 use crate::{
     accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     service::{
         accessory_information::AccessoryInformation,
         camera_rtp_stream_management,
@@ -8,9 +8,8 @@ use crate::{
         speaker,
         HapService,
     },
+    Result,
 };
-
-use crate::Error;
 
 /// Video Doorbell Accessory.
 pub type VideoDoorbell = Accessory<VideoDoorbellInner>;
@@ -56,7 +55,7 @@ impl HapAccessory for VideoDoorbellInner {
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
@@ -73,7 +72,7 @@ impl HapAccessory for VideoDoorbellInner {
 }
 
 /// Creates a new Video Doorbell Accessory.
-pub fn new(information: Information) -> Result<VideoDoorbell, Error> {
+pub fn new(information: Information) -> Result<VideoDoorbell> {
     let mut camera_rtp_stream_management = camera_rtp_stream_management::new();
     camera_rtp_stream_management.set_primary(true);
     Ok(VideoDoorbell::new(VideoDoorbellInner {

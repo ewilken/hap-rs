@@ -6,7 +6,7 @@ use std::{
 use crate::{
     config::{Config, ConfigPtr},
     db::{AccessoryList, AccessoryListMember, AccessoryListPtr, Database, DatabasePtr, FileStorage, Storage},
-    event::{Emitter, EmitterPtr, Event},
+    event::{EventEmitter, EventEmitterPtr, Event},
     pin,
     protocol::Device,
     transport::{
@@ -15,17 +15,17 @@ use crate::{
         mdns::{Responder, ResponderPtr},
         Transport,
     },
+    Result,
 };
 
-use crate::Error;
-
 /// Transport via TCP/IP.
+#[derive(Clone)]
 pub struct IpTransport<S: Storage> {
     config: ConfigPtr,
     storage: S,
     database: DatabasePtr,
     accessories: AccessoryList,
-    event_emitter: EmitterPtr,
+    event_emitter: EventEmitterPtr,
     mdns_responder: ResponderPtr,
 }
 
@@ -72,7 +72,7 @@ impl IpTransport<FileStorage> {
     ///
     /// //ip_transport.start().unwrap();
     /// ```
-    pub fn new(mut config: Config) -> Result<IpTransport<FileStorage>, Error> {
+    pub fn new(mut config: Config) -> Result<IpTransport<FileStorage>> {
         let storage = FileStorage::new(&config.storage_path)?;
         let database = Database::new_with_file_storage(&config.storage_path)?;
 
@@ -82,7 +82,7 @@ impl IpTransport<FileStorage> {
 
         let pin = pin::new(&config.pin)?;
         let device = Device::load_or_new(config.device_id.to_hex_string(), pin, &database)?;
-        let event_emitter = Arc::new(Mutex::new(Emitter::new()));
+        let event_emitter = Arc::new(Mutex::new(EventEmitter::new()));
         let mdns_responder = Arc::new(Mutex::new(Responder::new(
             &config.name,
             config.port,
@@ -104,7 +104,7 @@ impl IpTransport<FileStorage> {
 }
 
 impl Transport for IpTransport<FileStorage> {
-    fn start(&mut self) -> Result<(), Error> {
+    fn start(&mut self) -> Result<()> {
         self.mdns_responder
             .lock()
             .expect("couldn't access event_emitter")
@@ -161,7 +161,7 @@ impl Transport for IpTransport<FileStorage> {
         Ok(())
     }
 
-    fn stop(&self) -> Result<(), Error> {
+    fn stop(&self) -> Result<()> {
         self.mdns_responder
             .lock()
             .expect("couldn't access mDNS responder")
@@ -169,14 +169,11 @@ impl Transport for IpTransport<FileStorage> {
         Ok(())
     }
 
-    fn add_accessory<A: 'static + AccessoryListMember + Send>(
-        &mut self,
-        accessory: A,
-    ) -> Result<AccessoryListPtr, Error> {
+    fn add_accessory<A: 'static + AccessoryListMember + Send>(&mut self, accessory: A) -> Result<AccessoryListPtr> {
         self.accessories.add_accessory(Box::new(accessory))
     }
 
-    fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<(), Error> {
+    fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<()> {
         self.accessories.remove_accessory(accessory)
     }
 }

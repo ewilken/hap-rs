@@ -1,10 +1,9 @@
 use crate::{
     accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     service::accessory_information::AccessoryInformation,
+    Result,
 };
-
-use crate::Error;
 
 /// Bridge Accessory.
 pub type Bridge = Accessory<BridgeInner>;
@@ -30,7 +29,7 @@ impl HapAccessory for BridgeInner {
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
@@ -47,7 +46,7 @@ impl HapAccessory for BridgeInner {
 }
 
 /// Creates a new Bridge Accessory.
-pub fn new(information: Information) -> Result<Bridge, Error> {
+pub fn new(information: Information) -> Result<Bridge> {
     Ok(Bridge::new(BridgeInner {
         accessory_information: information.to_service()?,
         ..Default::default()

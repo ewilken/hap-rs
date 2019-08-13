@@ -2,9 +2,9 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{characteristic::HapCharacteristic, HapType};
 
-mod includes;
+mod generated;
 
-pub use crate::service::includes::*;
+pub use crate::service::generated::*;
 
 /// `HapService` is implemented by the inner type of every `Service`.
 pub trait HapService {

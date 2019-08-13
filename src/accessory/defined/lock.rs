@@ -1,10 +1,9 @@
 use crate::{
     accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     service::{accessory_information::AccessoryInformation, lock_management, lock_mechanism, HapService},
+    Result,
 };
-
-use crate::Error;
 
 /// Lock Accessory.
 pub type Lock = Accessory<LockInner>;
@@ -42,7 +41,7 @@ impl HapAccessory for LockInner {
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
@@ -59,7 +58,7 @@ impl HapAccessory for LockInner {
 }
 
 /// Creates a new Lock Accessory.
-pub fn new(information: Information) -> Result<Lock, Error> {
+pub fn new(information: Information) -> Result<Lock> {
     let mut lock_mechanism = lock_mechanism::new();
     lock_mechanism.set_primary(true);
     Ok(Lock::new(LockInner {

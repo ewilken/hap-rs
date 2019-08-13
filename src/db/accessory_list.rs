@@ -6,22 +6,23 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 use crate::{
     accessory::HapAccessory,
     characteristic::Perm,
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     transport::http::{server::EventSubscriptions, ReadResponseObject, Status, WriteObject, WriteResponseObject},
     Error,
+    Result,
 };
 
 /// `AccessoryList` is a wrapper type holding an `Arc<Mutex>` with a `Vec` of boxed Accessories.
 #[derive(Clone)]
 pub struct AccessoryList {
     pub accessories: Arc<Mutex<Vec<AccessoryListPtr>>>,
-    event_emitter: EmitterPtr,
+    event_emitter: EventEmitterPtr,
     id_count: u64,
 }
 
 impl AccessoryList {
     /// Creates a new `AccessoryList`.
-    pub fn new(event_emitter: EmitterPtr) -> AccessoryList {
+    pub fn new(event_emitter: EventEmitterPtr) -> AccessoryList {
         AccessoryList {
             accessories: Arc::new(Mutex::new(Vec::new())),
             event_emitter,
@@ -30,7 +31,7 @@ impl AccessoryList {
     }
 
     /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
-    pub fn add_accessory(&mut self, accessory: Box<dyn AccessoryListMember + Send>) -> Result<AccessoryListPtr, Error> {
+    pub fn add_accessory(&mut self, accessory: Box<dyn AccessoryListMember + Send>) -> Result<AccessoryListPtr> {
         let mut a = accessory;
         a.set_id(self.id_count);
         a.init_iids(self.id_count, self.event_emitter.clone())?;
@@ -44,7 +45,7 @@ impl AccessoryList {
     }
 
     /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryList`.
-    pub fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<(), Error> {
+    pub fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<()> {
         let accessory = accessory.lock().expect("couldn't access accessory");
         let mut remove = None;
         for (i, a) in self
@@ -74,7 +75,7 @@ impl AccessoryList {
         perms: bool,
         hap_type: bool,
         ev: bool,
-    ) -> Result<ReadResponseObject, Error> {
+    ) -> Result<ReadResponseObject> {
         let mut result_object = ReadResponseObject {
             iid,
             aid,
@@ -134,7 +135,7 @@ impl AccessoryList {
         &self,
         write_object: WriteObject,
         event_subscriptions: &EventSubscriptions,
-    ) -> Result<WriteResponseObject, Error> {
+    ) -> Result<WriteResponseObject> {
         let mut result_object = WriteResponseObject {
             aid: write_object.aid,
             iid: write_object.iid,
@@ -188,7 +189,7 @@ impl AccessoryList {
 }
 
 impl Serialize for AccessoryList {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("AccessoryList", 1)?;
         state.serialize_field("accessories", &self.accessories)?;
         state.end()

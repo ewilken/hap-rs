@@ -4,10 +4,10 @@ use serde_json;
 use crate::{
     config::ConfigPtr,
     db::{AccessoryList, DatabasePtr},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     protocol::IdPtr,
     transport::http::{handler::JsonHandler, json_response, server::EventSubscriptions},
-    Error,
+    Result,
 };
 
 pub struct Accessories;
@@ -26,8 +26,8 @@ impl JsonHandler for Accessories {
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
-        _: &EmitterPtr,
-    ) -> Result<Response<Body>, Error> {
+        _: &EventEmitterPtr,
+    ) -> Result<Response<Body>> {
         let resp_body = serde_json::to_vec(accessories)?;
         json_response(resp_body, StatusCode::OK)
     }

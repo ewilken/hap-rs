@@ -1,7 +1,3 @@
 target
 data
 .DS_Store
-
-src/**/includes/*
-src/accessory/category.rs
-src/hap_type.rs

@@ -1,18 +1,15 @@
-extern crate handlebars;
-extern crate serde;
-extern crate uuid;
 #[macro_use]
 extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
 
 use std::{
     collections::HashMap,
-    fs::{self, File},
-    io::Write,
+    fs::{self, File, OpenOptions},
+    io::{Read, Write},
 };
 
+use crypto::{digest::Digest, sha2::Sha256};
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Metadata {
@@ -620,8 +617,8 @@ static ACCESSORY: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use crate::{
 \taccessory::{HapAccessory, HapAccessoryService, Accessory, Information},
 \tservice::{HapService, accessory_information::AccessoryInformation, {{snake_case service.Name}}},
-\tevent::EmitterPtr,
-\tError,
+\tevent::EventEmitterPtr,
+\tResult,
 };
 
 /// {{service.Name}} Accessory.
@@ -666,7 +663,7 @@ impl HapAccessory for {{trim service.Name}}Inner {
         &mut self.accessory_information
     }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EmitterPtr) -> Result<(), Error> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);
@@ -683,7 +680,7 @@ impl HapAccessory for {{trim service.Name}}Inner {
 }
 
 /// Creates a new {{service.Name}} Accessory.
-pub fn new(information: Information) -> Result<{{trim service.Name}}, Error> {
+pub fn new(information: Information) -> Result<{{trim service.Name}}> {
     let mut {{snake_case service.Name}} = {{snake_case service.Name}}::new();
     {{snake_case service.Name}}.set_primary(true);
     Ok({{trim service.Name}}::new({{trim service.Name}}Inner {
@@ -699,8 +696,26 @@ static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 ";
 
 fn main() {
-    let metadata_file = File::open("default.metadata.json").unwrap();
-    let metadata: Metadata = serde_json::from_reader(metadata_file).unwrap();
+    let mut metadata_file = File::open("default.metadata.json").unwrap();
+    let mut metadata_hash_file = OpenOptions::new().read(true).write(true).open("metadata_hash").unwrap();
+
+    let mut buf = Vec::new();
+    let mut cached_hash = String::new();
+
+    metadata_file.read_to_end(&mut buf).unwrap();
+    metadata_hash_file.read_to_string(&mut cached_hash).unwrap();
+
+    let mut hasher = Sha256::new();
+    hasher.input(&buf);
+    let current_hash = hasher.result_str();
+
+    if cached_hash == current_hash {
+        return;
+    }
+
+    metadata_hash_file.write_all(&current_hash.as_bytes()).unwrap();
+
+    let metadata: Metadata = serde_json::from_slice(&buf).unwrap();
 
     let mut handlebars = Handlebars::new();
     handlebars.register_helper("if_eq", Box::new(if_eq_helper));
@@ -741,7 +756,8 @@ fn main() {
     let mut hap_type_file = File::create(&hap_type_path).unwrap();
     hap_type_file.write_all(hap_type.as_bytes()).unwrap();
 
-    let characteristics_base_path = "src/characteristic/includes/";
+    let characteristics_base_path = "src/characteristic/generated/";
+    fs::remove_dir_all(&characteristics_base_path).unwrap();
     fs::create_dir_all(&characteristics_base_path).unwrap();
     let mut characteristsic_names = vec![];
     for c in &metadata.characteristics {
@@ -767,8 +783,10 @@ fn main() {
         .write_all(characteristic_mod.as_bytes())
         .unwrap();
 
-    let services_base_path = "src/service/includes/";
-    let accessory_base_path = "src/accessory/includes/";
+    let services_base_path = "src/service/generated/";
+    let accessory_base_path = "src/accessory/generated/";
+    fs::remove_dir_all(&services_base_path).unwrap();
+    fs::remove_dir_all(&accessory_base_path).unwrap();
     fs::create_dir_all(&services_base_path).unwrap();
     fs::create_dir_all(&accessory_base_path).unwrap();
     let mut service_names = vec![];

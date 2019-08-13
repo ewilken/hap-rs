@@ -18,7 +18,7 @@ use uuid::Uuid;
 use crate::{
     config::ConfigPtr,
     db::DatabasePtr,
-    event::{EmitterPtr, Event},
+    event::{EventEmitterPtr, Event},
     protocol::{
         tlv::{self, Type, Value},
         Device,
@@ -110,7 +110,7 @@ impl TlvHandler for PairSetup {
         _: &IdPtr,
         config: &ConfigPtr,
         database: &DatabasePtr,
-        event_emitter: &EmitterPtr,
+        event_emitter: &EventEmitterPtr,
     ) -> Result<tlv::Container, tlv::ErrorContainer> {
         match step {
             Step::Start => match handle_start(self, database) {
@@ -222,7 +222,7 @@ fn handle_exchange(
     handler: &mut PairSetup,
     config: &ConfigPtr,
     database: &DatabasePtr,
-    event_emitter: &EmitterPtr,
+    event_emitter: &EventEmitterPtr,
     data: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("M5: Got SRP Exchange Request");

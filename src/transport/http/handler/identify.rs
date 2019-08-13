@@ -4,10 +4,10 @@ use serde_json::{self, json};
 use crate::{
     config::ConfigPtr,
     db::{AccessoryList, DatabasePtr},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     protocol::IdPtr,
     transport::http::{handler::JsonHandler, json_response, server::EventSubscriptions, status_response, Status},
-    Error,
+    Result,
 };
 
 pub struct Identify;
@@ -26,8 +26,8 @@ impl JsonHandler for Identify {
         _: &ConfigPtr,
         database: &DatabasePtr,
         accessory_list: &AccessoryList,
-        _: &EmitterPtr,
-    ) -> Result<Response<Body>, Error> {
+        _: &EventEmitterPtr,
+    ) -> Result<Response<Body>> {
         if database.lock().expect("couldn't access database").count_pairings()? > 0 {
             let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
             return json_response(body, StatusCode::BAD_REQUEST);

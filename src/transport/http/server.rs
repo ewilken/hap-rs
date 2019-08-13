@@ -12,7 +12,7 @@ use tokio::net::TcpListener;
 use crate::{
     config::ConfigPtr,
     db::{AccessoryList, DatabasePtr},
-    event::{EmitterPtr, Event},
+    event::{EventEmitterPtr, Event},
     protocol::IdPtr,
     transport::{
         http::{
@@ -24,6 +24,7 @@ use crate::{
         tcp::{EncryptedStream, Session, StreamWrapper},
     },
     Error,
+    Result,
 };
 
 enum Route {
@@ -41,7 +42,7 @@ struct Api {
     config: ConfigPtr,
     database: DatabasePtr,
     accessories: AccessoryList,
-    event_emitter: EmitterPtr,
+    event_emitter: EventEmitterPtr,
     router: Arc<Router<Route>>,
 }
 
@@ -52,7 +53,7 @@ impl Api {
         config: ConfigPtr,
         database: DatabasePtr,
         accessories: AccessoryList,
-        event_emitter: EmitterPtr,
+        event_emitter: EventEmitterPtr,
         session_sender: oneshot::Sender<Session>,
     ) -> Api {
         let mut router = Router::new();
@@ -189,8 +190,8 @@ pub fn serve(
     config: &ConfigPtr,
     database: &DatabasePtr,
     accessories: &AccessoryList,
-    event_emitter: &EmitterPtr,
-) -> Result<(), Error> {
+    event_emitter: &EventEmitterPtr,
+) -> Result<()> {
     let listener = TcpListener::bind(socket_addr)?;
 
     let config = config.clone();
@@ -247,16 +248,15 @@ pub fn serve(
                     _ => {},
                 }));
 
-            tokio::spawn(encrypted_stream.map(|_| ()).map_err(|e| error!("{}", e)));
-            tokio::spawn(
-                http.serve_connection(stream_wrapper, api)
-                    .map(|_| ())
-                    .map_err(|e| error!("{}", e)),
-            );
-            Ok(())
+            encrypted_stream
+                .map_err(|e| error!("{}", e))
+                .join(http.serve_connection(stream_wrapper, api).map_err(|e| error!("{}", e)))
+                .map(|_| ())
+                .then(|_| Ok(()))
         })
         .map_err(|e| error!("{}", e));
 
     tokio::run(server);
+
     Ok(())
 }

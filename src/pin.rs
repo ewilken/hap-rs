@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::{Error, Result};
 
 pub type Pin = String;
 
@@ -7,7 +7,7 @@ const INVALID_PINS: [&'static str; 12] = [
     "77777777", "88888888", "99999999",
 ];
 
-pub fn new(input: &str) -> Result<Pin, Error> {
+pub fn new(input: &str) -> Result<Pin> {
     if INVALID_PINS.contains(&input) {
         return Err(Error::from_str("invalid pin - too easy"));
     }

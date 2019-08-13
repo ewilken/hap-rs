@@ -12,7 +12,7 @@ use serde_json;
 use crate::{
     db::{Database, DatabasePtr},
     pin::Pin,
-    Error,
+    Result,
 };
 
 /// `Device` represents instances of the HAP server.
@@ -49,7 +49,7 @@ impl Device {
 
     /// Attempts to load a `Device` from a database and creates a new one with a random key pair if
     /// none is found for the given ID.
-    pub fn load_or_new(id: String, pin: Pin, database: &Database) -> Result<Device, Error> {
+    pub fn load_or_new(id: String, pin: Pin, database: &Database) -> Result<Device> {
         match database.get_device() {
             Ok(device) => Ok(device),
             Err(_) => {
@@ -61,24 +61,24 @@ impl Device {
     }
 
     /// Loads a `Device` from a database.
-    pub fn load_from(database: &DatabasePtr) -> Result<Device, Error> {
+    pub fn load_from(database: &DatabasePtr) -> Result<Device> {
         database.lock().expect("couldn't access database").get_device()
     }
 
     /// Saves a `Device` to a database.
-    pub fn save_to(&self, database: &DatabasePtr) -> Result<(), Error> {
+    pub fn save_to(&self, database: &DatabasePtr) -> Result<()> {
         database.lock().expect("couldn't access database").set_device(self)?;
         Ok(())
     }
 
     /// Serializes a `Device` to a `Vec<u8>`.
-    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
+    pub fn as_bytes(&self) -> Result<Vec<u8>> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)
     }
 
     /// Deserializes a `Device` from a `&[u8]`.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Device, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Device> {
         let value = serde_json::from_slice(bytes)?;
         Ok(value)
     }
@@ -92,10 +92,10 @@ fn generate_key_pair() -> ([u8; 64], [u8; 32]) {
 
 // see https://github.com/serde-rs/serde/issues/631
 trait BigArray<'de>: Sized {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: Serializer;
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>;
 }
@@ -104,7 +104,7 @@ macro_rules! big_array {
     ($($len:expr,)+) => {
         $(
             impl<'de, T> BigArray<'de> for [T; $len] where T: Default + Copy + Serialize + Deserialize<'de> {
-                fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+                fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> where S: Serializer {
                     let mut seq = serializer.serialize_tuple(self.len())?;
                     for elem in &self[..] {
                         seq.serialize_element(elem)?;
@@ -112,7 +112,7 @@ macro_rules! big_array {
                     seq.end()
                 }
 
-                fn deserialize<D>(deserializer: D) -> Result<[T; $len], D::Error> where D: Deserializer<'de> {
+                fn deserialize<D>(deserializer: D) -> std::result::Result<[T; $len], D::Error> where D: Deserializer<'de> {
                     struct ArrayVisitor<T> {
                         element: PhantomData<T>,
                     }
@@ -124,7 +124,7 @@ macro_rules! big_array {
                             formatter.write_str(concat!("an array of length ", $len))
                         }
 
-                        fn visit_seq<A>(self, mut seq: A) -> Result<[T; $len], A::Error> where A: SeqAccess<'de> {
+                        fn visit_seq<A>(self, mut seq: A) -> std::result::Result<[T; $len], A::Error> where A: SeqAccess<'de> {
                             let mut arr = [T::default(); $len];
                             for i in 0..$len {
                                 arr[i] = seq.next_element()?

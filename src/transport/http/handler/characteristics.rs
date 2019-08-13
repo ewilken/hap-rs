@@ -7,7 +7,7 @@ use url::form_urlencoded;
 use crate::{
     config::ConfigPtr,
     db::{AccessoryList, DatabasePtr},
-    event::EmitterPtr,
+    event::EventEmitterPtr,
     protocol::IdPtr,
     transport::http::{
         handler::JsonHandler,
@@ -22,6 +22,7 @@ use crate::{
     },
     Error,
     ErrorKind,
+    Result,
 };
 
 pub struct GetCharacteristics;
@@ -40,8 +41,8 @@ impl JsonHandler for GetCharacteristics {
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
-        _: &EmitterPtr,
-    ) -> Result<Response<Body>, Error> {
+        _: &EventEmitterPtr,
+    ) -> Result<Response<Body>> {
         if let Some(query) = uri.query() {
             let mut resp_body = CharacteristicResponseBody::<ReadResponseObject> {
                 characteristics: Vec::new(),
@@ -130,8 +131,8 @@ impl JsonHandler for UpdateCharacteristics {
         _: &ConfigPtr,
         _: &DatabasePtr,
         accessories: &AccessoryList,
-        _: &EmitterPtr,
-    ) -> Result<Response<Body>, Error> {
+        _: &EventEmitterPtr,
+    ) -> Result<Response<Body>> {
         let write_body: CharacteristicResponseBody<WriteObject> = serde_json::from_slice(&body)?;
         let mut resp_body = CharacteristicResponseBody::<WriteResponseObject> {
             characteristics: Vec::new(),

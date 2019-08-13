@@ -15,7 +15,7 @@ use crate::{
     accessory::Category,
     db::Storage,
     transport::bonjour::{FeatureFlag, StatusFlag},
-    Error,
+    Result,
 };
 
 /// Pointer to a `Config`.
@@ -90,7 +90,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub(crate) fn load_from(&mut self, storage: &Storage) -> Result<(), Error> {
+    pub(crate) fn load_from(&mut self, storage: &Storage) -> Result<()> {
         if let Some(device_id) = storage.get_bytes("device_id").ok() {
             self.device_id = MacAddress::parse_str(str::from_utf8(&device_id)?)?;
         }
@@ -103,7 +103,7 @@ impl Config {
         Ok(())
     }
 
-    pub(crate) fn save_to(&self, storage: &Storage) -> Result<(), Error> {
+    pub(crate) fn save_to(&self, storage: &Storage) -> Result<()> {
         storage.set_bytes("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
         storage.set_u64("version", self.version)?;
         if let Some(config_hash) = self.config_hash {

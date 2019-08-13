@@ -17,3 +17,5 @@ pub use crate::{
     error::{Error, ErrorKind},
     hap_type::HapType,
 };
+
+pub type Result<T> = std::result::Result<T, Error>;

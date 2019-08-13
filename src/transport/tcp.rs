@@ -26,7 +26,7 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{protocol::IdPtr, Error};
+use crate::{protocol::IdPtr, Result};
 
 pub struct StreamWrapper {
     incoming_receiver: UnboundedReceiver<Vec<u8>>,
@@ -46,7 +46,7 @@ impl StreamWrapper {
         }
     }
 
-    fn poll_receiver(&mut self) -> Result<usize, io::Error> {
+    fn poll_receiver(&mut self) -> std::result::Result<usize, io::Error> {
         match self.incoming_receiver.poll() {
             Ok(NotReady) => Err(ErrorKind::WouldBlock.into()),
             Ok(Ready(Some(incoming))) => {
@@ -61,7 +61,7 @@ impl StreamWrapper {
 }
 
 impl Read for StreamWrapper {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+    fn read(&mut self, buf: &mut [u8]) -> std::result::Result<usize, io::Error> {
         self.poll_receiver()?;
         let r_len = min(buf.len(), self.incoming_buf.len());
         buf[..r_len].copy_from_slice(&self.incoming_buf[..r_len]);
@@ -71,14 +71,14 @@ impl Read for StreamWrapper {
 }
 
 impl Write for StreamWrapper {
-    fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
+    fn write(&mut self, buf: &[u8]) -> std::result::Result<usize, io::Error> {
         self.outgoing_sender.unbounded_send(buf.to_vec())
             // .map_err(|_| Error::from_str("couldn't write").into())?;
             .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't write"))?;
         Ok(buf.len())
     }
 
-    fn flush(&mut self) -> Result<(), io::Error> {
+    fn flush(&mut self) -> std::result::Result<(), io::Error> {
         self.outgoing_sender.poll_complete()
             .map(|_| ())
             // .map_err(|_| Error::from_str("couldn't flush").into())
@@ -156,7 +156,7 @@ impl EncryptedStream {
         )
     }
 
-    fn read_decrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+    fn read_decrypted(&mut self, buf: &mut [u8]) -> std::result::Result<usize, io::Error> {
         if self.decrypted_ready {
             let len = min(buf.len(), self.packet_len - 16);
             buf[..len].copy_from_slice(&self.decrypted_buf[..len]);
@@ -172,7 +172,7 @@ impl EncryptedStream {
         Err(ErrorKind::WouldBlock.into())
     }
 
-    fn read_encrypted(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+    fn read_encrypted(&mut self, buf: &mut [u8]) -> std::result::Result<usize, io::Error> {
         if self.missing_data_for_decrypted_buf {
             let decrypted = decrypt_chunk(
                 &self.shared_secret.expect("missing shared secret"),
@@ -192,7 +192,7 @@ impl EncryptedStream {
         Err(ErrorKind::WouldBlock.into())
     }
 
-    fn read_stream(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+    fn read_stream(&mut self, buf: &mut [u8]) -> std::result::Result<usize, io::Error> {
         if self.missing_data_for_encrypted_buf {
             let r_len = self.stream.read(&mut self.encrypted_buf[self.already_read..])?;
 
@@ -279,7 +279,7 @@ impl Future for EncryptedStream {
 }
 
 impl Read for EncryptedStream {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+    fn read(&mut self, buf: &mut [u8]) -> std::result::Result<usize, io::Error> {
         if self.shared_secret.is_none() {
             match self.session_receiver.poll() {
                 Ok(Async::Ready(session)) => {
@@ -303,7 +303,7 @@ impl Read for EncryptedStream {
 }
 
 impl Write for EncryptedStream {
-    fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
+    fn write(&mut self, buf: &[u8]) -> std::result::Result<usize, io::Error> {
         if let Some(shared_secret) = self.shared_secret {
             let mut write_buf = BytesMut::from_buf(buf);
 
@@ -327,7 +327,7 @@ impl Write for EncryptedStream {
         }
     }
 
-    fn flush(&mut self) -> Result<(), io::Error> { self.stream.flush() }
+    fn flush(&mut self) -> std::result::Result<(), io::Error> { self.stream.flush() }
 }
 
 impl AsyncRead for EncryptedStream {}
@@ -342,7 +342,7 @@ fn decrypt_chunk(
     data: &[u8],
     auth_tag: &[u8],
     count: &mut u64,
-) -> Result<Vec<u8>, Error> {
+) -> Result<Vec<u8>> {
     let mut decrypted_data = Vec::new();
     let read_key = compute_read_key(shared_secret);
 
@@ -357,11 +357,7 @@ fn decrypt_chunk(
     Ok(decrypted_data)
 }
 
-fn encrypt_chunk(
-    shared_secret: &[u8; 32],
-    data: &[u8],
-    count: &mut u64,
-) -> Result<([u8; 2], Vec<u8>, [u8; 16]), Error> {
+fn encrypt_chunk(shared_secret: &[u8; 32], data: &[u8], count: &mut u64) -> Result<([u8; 2], Vec<u8>, [u8; 16])> {
     let mut encrypted_data = Vec::new();
     let write_key = compute_write_key(shared_secret);
 

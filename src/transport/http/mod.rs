@@ -11,6 +11,7 @@ use crate::{
     characteristic::{Format, Perm, Unit},
     Error,
     HapType,
+    Result,
 };
 
 pub(crate) mod handler;
@@ -103,22 +104,22 @@ pub struct EventObject {
     pub value: serde_json::Value,
 }
 
-pub fn tlv_response(body: Vec<u8>, status: StatusCode) -> Result<Response<Body>, Error> {
+pub fn tlv_response(body: Vec<u8>, status: StatusCode) -> Result<Response<Body>> {
     response(body, status, ContentType::PairingTLV8)
 }
 
-pub fn json_response(body: Vec<u8>, status: StatusCode) -> Result<Response<Body>, Error> {
+pub fn json_response(body: Vec<u8>, status: StatusCode) -> Result<Response<Body>> {
     response(body, status, ContentType::HapJson)
 }
 
-pub fn status_response(status: StatusCode) -> Result<Response<Body>, Error> {
+pub fn status_response(status: StatusCode) -> Result<Response<Body>> {
     Response::builder()
         .status(status)
         .body(Body::empty())
         .map_err(Error::from)
 }
 
-pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, Error> {
+pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>> {
     let body = serde_json::to_string(&CharacteristicResponseBody {
         characteristics: event_objects,
     })?;
@@ -130,7 +131,7 @@ pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>, Error>
     Ok(response.as_bytes().to_vec())
 }
 
-fn response(body: Vec<u8>, status: StatusCode, content_type: ContentType) -> Result<Response<Body>, Error> {
+fn response(body: Vec<u8>, status: StatusCode, content_type: ContentType) -> Result<Response<Body>> {
     Response::builder()
         .status(status)
         .header(CONTENT_TYPE, content_type.to_string())

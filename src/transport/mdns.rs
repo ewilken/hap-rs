@@ -10,7 +10,7 @@ use std::{
 
 use libmdns;
 
-use crate::Error;
+use crate::Result;
 
 /// An mDNS Responder. Used to announce the Accessory's name and HAP TXT records to potential
 /// controllers.
@@ -57,7 +57,7 @@ impl Responder {
     }
 
     /// Stops mDNS announcement.
-    pub fn stop(&self) -> Result<(), Error> {
+    pub fn stop(&self) -> Result<()> {
         if let Some(stop) = self.stop.clone() {
             stop.send(())?;
         }
@@ -65,7 +65,7 @@ impl Responder {
     }
 
     /// Stops mDNS announcement and restarts it with updated TXT records.
-    pub fn update_txt_records(&mut self, txt_records: [String; 8]) -> Result<(), Error> {
+    pub fn update_txt_records(&mut self, txt_records: [String; 8]) -> Result<()> {
         self.stop()?;
         self.txt_records = txt_records;
         self.start();

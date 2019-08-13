@@ -9,12 +9,12 @@ pub enum Event {
 }
 
 #[derive(Default)]
-pub struct Emitter {
+pub struct EventEmitter {
     listeners: Vec<Box<dyn Fn(&Event) + Send>>,
 }
 
-impl Emitter {
-    pub fn new() -> Emitter { Emitter { listeners: vec![] } }
+impl EventEmitter {
+    pub fn new() -> EventEmitter { EventEmitter { listeners: vec![] } }
 
     pub fn add_listener(&mut self, listener: Box<dyn Fn(&Event) + Send>) { self.listeners.push(listener); }
 
@@ -25,5 +25,8 @@ impl Emitter {
     }
 }
 
-/// Pointer to an `Emitter`.
-pub type EmitterPtr = Arc<Mutex<Emitter>>;
+/// Pointer to an `EventEmitter`.
+pub type EventEmitterPtr = Arc<Mutex<EventEmitter>>;
+
+/// Pointer to a list of event subscriptions.
+pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
