@@ -2,17 +2,14 @@ use std::sync::{Arc, Mutex};
 
 use erased_serde::{self, __internal_serialize_trait_object, serialize_trait_object};
 use serde::{
-    ser::{Serialize, SerializeStruct, Serializer},
-    Deserialize,
+    ser::{SerializeStruct, Serializer},
+    Deserialize, Serialize,
 };
-use serde_derive::{Deserialize, Serialize};
 use serde_json::{self, json};
 
 use crate::{
     event::{Event, EventEmitterPtr},
-    Error,
-    HapType,
-    Result,
+    Error, HapType, Result,
 };
 
 mod generated;
@@ -67,7 +64,9 @@ where
     }
 
     /// Returns the ID of a Characteristic.
-    pub fn get_id(&self) -> Result<u64> { Ok(self.inner.lock().expect("couldn't access characteristic").id) }
+    pub fn get_id(&self) -> Result<u64> {
+        Ok(self.inner.lock().expect("couldn't access characteristic").id)
+    }
 
     /// Sets the ID of a Characteristic.
     pub fn set_id(&mut self, id: u64) -> Result<()> {
@@ -87,7 +86,9 @@ where
     }
 
     /// Returns the `Format` of a Characteristic.
-    pub fn get_format(&self) -> Result<Format> { Ok(self.inner.lock().expect("couldn't access characteristic").format) }
+    pub fn get_format(&self) -> Result<Format> {
+        Ok(self.inner.lock().expect("couldn't access characteristic").format)
+    }
 
     /// Returns the `Perm`s of a Characteristic.
     pub fn get_perms(&self) -> Result<Vec<Perm>> {
@@ -343,25 +344,41 @@ impl<T: Default + Clone + Serialize> HapCharacteristic for Characteristic<T>
 where
     for<'de> T: Deserialize<'de>,
 {
-    fn get_id(&self) -> Result<u64> { self.get_id() }
+    fn get_id(&self) -> Result<u64> {
+        self.get_id()
+    }
 
-    fn set_id(&mut self, id: u64) -> Result<()> { self.set_id(id) }
+    fn set_id(&mut self, id: u64) -> Result<()> {
+        self.set_id(id)
+    }
 
-    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<()> { self.set_accessory_id(accessory_id) }
+    fn set_accessory_id(&mut self, accessory_id: u64) -> Result<()> {
+        self.set_accessory_id(accessory_id)
+    }
 
-    fn get_type(&self) -> Result<HapType> { self.get_type() }
+    fn get_type(&self) -> Result<HapType> {
+        self.get_type()
+    }
 
-    fn get_format(&self) -> Result<Format> { self.get_format() }
+    fn get_format(&self) -> Result<Format> {
+        self.get_format()
+    }
 
-    fn get_perms(&self) -> Result<Vec<Perm>> { self.get_perms() }
+    fn get_perms(&self) -> Result<Vec<Perm>> {
+        self.get_perms()
+    }
 
-    fn get_event_notifications(&self) -> Result<Option<bool>> { self.get_event_notifications() }
+    fn get_event_notifications(&self) -> Result<Option<bool>> {
+        self.get_event_notifications()
+    }
 
     fn set_event_notifications(&mut self, event_notifications: Option<bool>) -> Result<()> {
         self.set_event_notifications(event_notifications)
     }
 
-    fn get_value(&mut self) -> Result<serde_json::Value> { Ok(json!(self.get_value()?)) }
+    fn get_value(&mut self) -> Result<serde_json::Value> {
+        Ok(json!(self.get_value()?))
+    }
 
     fn set_value(&mut self, value: serde_json::Value) -> Result<()> {
         let v;
@@ -382,7 +399,9 @@ where
         self.set_value(v)
     }
 
-    fn get_unit(&self) -> Result<Option<Unit>> { self.get_unit() }
+    fn get_unit(&self) -> Result<Option<Unit>> {
+        self.get_unit()
+    }
 
     fn get_max_value(&self) -> Result<Option<serde_json::Value>> {
         Ok(match self.get_max_value()? {
@@ -405,7 +424,9 @@ where
         })
     }
 
-    fn get_max_len(&self) -> Result<Option<u16>> { self.get_max_len() }
+    fn get_max_len(&self) -> Result<Option<u16>> {
+        self.get_max_len()
+    }
 
     fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()> {
         self.set_event_emitter(event_emitter)
@@ -487,5 +508,7 @@ pub enum Format {
 }
 
 impl Default for Format {
-    fn default() -> Format { Format::String }
+    fn default() -> Format {
+        Format::String
+    }
 }
