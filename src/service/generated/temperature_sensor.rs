@@ -1,16 +1,16 @@
 // THIS FILE IS AUTO-GENERATED
 
 use crate::{
-    service::{HapService, Service},
     characteristic::{
+        current_temperature,
+        name,
+        status_active,
+        status_fault,
+        status_low_battery,
+        status_tampered,
         HapCharacteristic,
-		current_temperature,
-		status_active,
-		status_fault,
-		status_low_battery,
-		status_tampered,
-		name,
-	},
+    },
+    service::{HapService, Service},
     HapType,
 };
 
@@ -33,92 +33,74 @@ pub struct TemperatureSensorInner {
     /// Specifies if the Service is the primary Service of the Accessory.
     primary: bool,
 
-	/// Current Temperature Characteristic.
-	pub current_temperature: current_temperature::CurrentTemperature,
+    /// Current Temperature Characteristic.
+    pub current_temperature: current_temperature::CurrentTemperature,
 
-	/// Status Active Characteristic.
-	pub status_active: Option<status_active::StatusActive>,
-	/// Status Fault Characteristic.
-	pub status_fault: Option<status_fault::StatusFault>,
-	/// Status Low Battery Characteristic.
-	pub status_low_battery: Option<status_low_battery::StatusLowBattery>,
-	/// Status Tampered Characteristic.
-	pub status_tampered: Option<status_tampered::StatusTampered>,
-	/// Name Characteristic.
-	pub name: Option<name::Name>,
+    /// Status Active Characteristic.
+    pub status_active: Option<status_active::StatusActive>,
+    /// Status Fault Characteristic.
+    pub status_fault: Option<status_fault::StatusFault>,
+    /// Status Low Battery Characteristic.
+    pub status_low_battery: Option<status_low_battery::StatusLowBattery>,
+    /// Status Tampered Characteristic.
+    pub status_tampered: Option<status_tampered::StatusTampered>,
+    /// Name Characteristic.
+    pub name: Option<name::Name>,
 }
 
 impl HapService for TemperatureSensorInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_type(&self) -> HapType {
-        self.hap_type
-    }
+    fn get_type(&self) -> HapType { self.hap_type }
 
-    fn get_hidden(&self) -> bool {
-        self.hidden
-    }
+    fn get_hidden(&self) -> bool { self.hidden }
 
-    fn set_hidden(&mut self, hidden: bool) {
-        self.hidden = hidden;
-    }
+    fn set_hidden(&mut self, hidden: bool) { self.hidden = hidden; }
 
-    fn get_primary(&self) -> bool {
-        self.primary
-    }
+    fn get_primary(&self) -> bool { self.primary }
 
-    fn set_primary(&mut self, primary: bool) {
-        self.primary = primary;
-    }
+    fn set_primary(&mut self, primary: bool) { self.primary = primary; }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
-        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.current_temperature,
-		];
-		if let Some(c) = &self.status_active {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_low_battery {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_tampered {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
-		characteristics
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![&self.current_temperature];
+        if let Some(c) = &self.status_active {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_fault {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_low_battery {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_tampered {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.name {
+            characteristics.push(c);
+        }
+        characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
-        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.current_temperature,
-		];
-		if let Some(c) = &mut self.status_active {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_low_battery {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_tampered {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
-		characteristics
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![&mut self.current_temperature];
+        if let Some(c) = &mut self.status_active {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_fault {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_low_battery {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_tampered {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.name {
+            characteristics.push(c);
+        }
+        characteristics
     }
 }
 
@@ -126,7 +108,7 @@ impl HapService for TemperatureSensorInner {
 pub fn new() -> TemperatureSensor {
     TemperatureSensor::new(TemperatureSensorInner {
         hap_type: HapType::TemperatureSensor,
-		current_temperature: current_temperature::new(),
-		..Default::default()
+        current_temperature: current_temperature::new(),
+        ..Default::default()
     })
 }

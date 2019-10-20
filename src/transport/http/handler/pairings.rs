@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::{
     config::ConfigPtr,
     db::DatabasePtr,
-    event::{EventEmitterPtr, Event},
+    event::{Event, EventEmitterPtr},
     protocol::{
         tlv::{self, Type, Value},
         IdPtr,

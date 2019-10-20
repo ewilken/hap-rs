@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Serial Number Characteristic.
 pub type SerialNumber = Characteristic<String>;
@@ -10,10 +10,8 @@ pub fn new() -> SerialNumber {
     Characteristic::new(Inner::<String> {
         hap_type: HapType::SerialNumber,
         format: Format::String,
-        perms: vec![
-			Perm::PairedRead,
-        ],
-		max_len: Some(64),
+        perms: vec![Perm::PairedRead],
+        max_len: Some(64),
         ..Default::default()
     })
 }

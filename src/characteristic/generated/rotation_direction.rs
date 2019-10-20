@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Rotation Direction Characteristic.
 pub type RotationDirection = Characteristic<i32>;
@@ -10,15 +10,11 @@ pub fn new() -> RotationDirection {
     Characteristic::new(Inner::<i32> {
         hap_type: HapType::RotationDirection,
         format: Format::Int32,
-        perms: vec![
-			Perm::PairedRead,
-			Perm::PairedWrite,
-			Perm::Events,
-        ],
-		valid_values: Some(vec![
-			0, // "Clockwise"
-			1, // "Counter-clockwise"
-		]),
+        perms: vec![Perm::PairedRead, Perm::PairedWrite, Perm::Events],
+        valid_values: Some(vec![
+            0, // "Clockwise"
+            1, // "Counter-clockwise"
+        ]),
         ..Default::default()
     })
 }

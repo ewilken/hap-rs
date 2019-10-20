@@ -12,7 +12,7 @@ use tokio::net::TcpListener;
 use crate::{
     config::ConfigPtr,
     db::{AccessoryList, DatabasePtr},
-    event::{EventEmitterPtr, Event},
+    event::{Event, EventEmitterPtr},
     protocol::IdPtr,
     transport::{
         http::{

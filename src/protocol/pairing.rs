@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use serde_derive::{Deserialize, Serialize};
-use serde_json;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{db::DatabasePtr, Error, Result};

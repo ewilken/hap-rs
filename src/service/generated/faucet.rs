@@ -1,13 +1,8 @@
 // THIS FILE IS AUTO-GENERATED
 
 use crate::{
+    characteristic::{active, name, status_fault, HapCharacteristic},
     service::{HapService, Service},
-    characteristic::{
-        HapCharacteristic,
-		active,
-		name,
-		status_fault,
-	},
     HapType,
 };
 
@@ -30,68 +25,50 @@ pub struct FaucetInner {
     /// Specifies if the Service is the primary Service of the Accessory.
     primary: bool,
 
-	/// Active Characteristic.
-	pub active: active::Active,
+    /// Active Characteristic.
+    pub active: active::Active,
 
-	/// Name Characteristic.
-	pub name: Option<name::Name>,
-	/// Status Fault Characteristic.
-	pub status_fault: Option<status_fault::StatusFault>,
+    /// Name Characteristic.
+    pub name: Option<name::Name>,
+    /// Status Fault Characteristic.
+    pub status_fault: Option<status_fault::StatusFault>,
 }
 
 impl HapService for FaucetInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_type(&self) -> HapType {
-        self.hap_type
-    }
+    fn get_type(&self) -> HapType { self.hap_type }
 
-    fn get_hidden(&self) -> bool {
-        self.hidden
-    }
+    fn get_hidden(&self) -> bool { self.hidden }
 
-    fn set_hidden(&mut self, hidden: bool) {
-        self.hidden = hidden;
-    }
+    fn set_hidden(&mut self, hidden: bool) { self.hidden = hidden; }
 
-    fn get_primary(&self) -> bool {
-        self.primary
-    }
+    fn get_primary(&self) -> bool { self.primary }
 
-    fn set_primary(&mut self, primary: bool) {
-        self.primary = primary;
-    }
+    fn set_primary(&mut self, primary: bool) { self.primary = primary; }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
-        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.active,
-		];
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_fault {
-		    characteristics.push(c);
-		}
-		characteristics
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![&self.active];
+        if let Some(c) = &self.name {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_fault {
+            characteristics.push(c);
+        }
+        characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
-        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.active,
-		];
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_fault {
-		    characteristics.push(c);
-		}
-		characteristics
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![&mut self.active];
+        if let Some(c) = &mut self.name {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_fault {
+            characteristics.push(c);
+        }
+        characteristics
     }
 }
 
@@ -99,7 +76,7 @@ impl HapService for FaucetInner {
 pub fn new() -> Faucet {
     Faucet::new(FaucetInner {
         hap_type: HapType::Faucet,
-		active: active::new(),
-		..Default::default()
+        active: active::new(),
+        ..Default::default()
     })
 }

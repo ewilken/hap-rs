@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Accessory Flags Characteristic.
 pub type AccessoryFlags = Characteristic<u32>;
@@ -10,10 +10,7 @@ pub fn new() -> AccessoryFlags {
     Characteristic::new(Inner::<u32> {
         hap_type: HapType::AccessoryFlags,
         format: Format::UInt32,
-        perms: vec![
-			Perm::PairedRead,
-			Perm::Events,
-        ],
+        perms: vec![Perm::PairedRead, Perm::Events],
         ..Default::default()
     })
 }

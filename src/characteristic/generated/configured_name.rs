@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Configured Name Characteristic.
 pub type ConfiguredName = Characteristic<String>;
@@ -10,11 +10,7 @@ pub fn new() -> ConfiguredName {
     Characteristic::new(Inner::<String> {
         hap_type: HapType::ConfiguredName,
         format: Format::String,
-        perms: vec![
-			Perm::PairedRead,
-			Perm::PairedWrite,
-			Perm::Events,
-        ],
+        perms: vec![Perm::PairedRead, Perm::PairedWrite, Perm::Events],
         ..Default::default()
     })
 }

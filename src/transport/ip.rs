@@ -6,7 +6,7 @@ use std::{
 use crate::{
     config::{Config, ConfigPtr},
     db::{AccessoryList, AccessoryListMember, AccessoryListPtr, Database, DatabasePtr, FileStorage, Storage},
-    event::{EventEmitter, EventEmitterPtr, Event},
+    event::{Event, EventEmitter, EventEmitterPtr},
     pin,
     protocol::Device,
     transport::{

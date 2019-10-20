@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use hyper::{Body, Response, StatusCode, Uri};
-use serde_json;
 use url::form_urlencoded;
 
 use crate::{

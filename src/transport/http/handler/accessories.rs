@@ -1,5 +1,4 @@
 use hyper::{Body, Response, StatusCode, Uri};
-use serde_json;
 
 use crate::{
     config::ConfigPtr,

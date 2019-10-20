@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Hold Position Characteristic.
 pub type HoldPosition = Characteristic<bool>;
@@ -10,9 +10,7 @@ pub fn new() -> HoldPosition {
     Characteristic::new(Inner::<bool> {
         hap_type: HapType::HoldPosition,
         format: Format::Bool,
-        perms: vec![
-			Perm::PairedWrite,
-        ],
+        perms: vec![Perm::PairedWrite],
         ..Default::default()
     })
 }

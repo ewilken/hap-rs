@@ -3,11 +3,11 @@ use std::{fmt, marker::PhantomData};
 use crypto::ed25519;
 use rand::{self, Rng};
 use serde::{
-    de::{self, Deserialize, Deserializer, SeqAccess, Visitor},
-    ser::{Serialize, SerializeTuple, Serializer},
+    de::{self, Deserializer, SeqAccess, Visitor},
+    ser::{SerializeTuple, Serializer},
+    Deserialize,
+    Serialize,
 };
-use serde_derive::{Deserialize, Serialize};
-use serde_json;
 
 use crate::{
     db::{Database, DatabasePtr},

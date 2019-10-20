@@ -1,10 +1,10 @@
 // THIS FILE IS AUTO-GENERATED
 
 use crate::{
-	accessory::{HapAccessory, HapAccessoryService, Accessory, Information},
-	service::{HapService, accessory_information::AccessoryInformation, garage_door_opener},
-	event::EventEmitterPtr,
-	Result,
+    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
+    event::EventEmitterPtr,
+    service::{accessory_information::AccessoryInformation, garage_door_opener, HapService},
+    Result,
 };
 
 /// Garage Door Opener Accessory.
@@ -23,31 +23,19 @@ pub struct GarageDoorOpenerInner {
 }
 
 impl HapAccessory for GarageDoorOpenerInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
     fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
-        vec![
-            &self.accessory_information,
-            &self.garage_door_opener,
-        ]
+        vec![&self.accessory_information, &self.garage_door_opener]
     }
 
     fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
-        vec![
-            &mut self.accessory_information,
-            &mut self.garage_door_opener,
-        ]
+        vec![&mut self.accessory_information, &mut self.garage_door_opener]
     }
 
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation {
-        &mut self.accessory_information
-    }
+    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
     fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
         let mut next_iid = 1;

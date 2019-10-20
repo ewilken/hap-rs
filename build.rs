@@ -9,7 +9,7 @@ use std::{
 
 use crypto::{digest::Digest, sha2::Sha256};
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Metadata {
@@ -78,7 +78,7 @@ fn if_eq_helper<'reg, 'rc>(
     r: &'reg Handlebars,
     c: &Context,
     rc: &mut RenderContext<'reg>,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let first = h.param(0).unwrap().value();
     let second = h.param(1).unwrap().value();
@@ -94,7 +94,7 @@ fn trim_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
@@ -109,7 +109,7 @@ fn file_name_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
@@ -124,7 +124,7 @@ fn type_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
@@ -175,7 +175,7 @@ fn format_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
@@ -226,7 +226,7 @@ fn unit_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
@@ -259,7 +259,7 @@ fn uuid_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
@@ -273,7 +273,7 @@ fn valid_values_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value().as_object().unwrap();
     let mut output = String::from("vec![\n");
@@ -290,7 +290,7 @@ fn perms_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let params = h.param(0).unwrap().value().as_array().unwrap();
     for param in params {
@@ -315,7 +315,7 @@ fn float_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let format = h.param(0).unwrap().value().as_str().unwrap();
     if format == "float" {
@@ -335,7 +335,7 @@ fn characteristic_name_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let id = h.param(0).unwrap().value().as_str().unwrap();
     let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
@@ -353,7 +353,7 @@ fn characteristic_file_name_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let id = h.param(0).unwrap().value().as_str().unwrap();
     let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
@@ -371,7 +371,7 @@ fn snake_case_helper(
     _: &Handlebars,
     _: &Context,
     _: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value().as_str().unwrap();
     let name = param.replace(" ", "_").replace(".", "_").to_lowercase();

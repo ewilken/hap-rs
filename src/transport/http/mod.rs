@@ -4,8 +4,7 @@ use hyper::{
     Response,
     StatusCode,
 };
-use serde_derive::{Deserialize, Serialize};
-use serde_json;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     characteristic::{Format, Perm, Unit},

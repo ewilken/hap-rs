@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Version Characteristic.
 pub type Version = Characteristic<String>;
@@ -10,11 +10,8 @@ pub fn new() -> Version {
     Characteristic::new(Inner::<String> {
         hap_type: HapType::Version,
         format: Format::String,
-        perms: vec![
-			Perm::PairedRead,
-			Perm::Events,
-        ],
-		max_len: Some(64),
+        perms: vec![Perm::PairedRead, Perm::Events],
+        max_len: Some(64),
         ..Default::default()
     })
 }

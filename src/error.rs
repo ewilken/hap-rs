@@ -4,7 +4,6 @@ use chacha20_poly1305_aead;
 use eui48;
 use failure::{self, err_msg, Context, Fail};
 use hyper::{self, http};
-use serde_json;
 
 /// ErrorKind wrapper type.
 #[derive(Debug, Fail)]

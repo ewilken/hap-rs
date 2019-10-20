@@ -1,16 +1,16 @@
 // THIS FILE IS AUTO-GENERATED
 
 use crate::{
-    service::{HapService, Service},
     characteristic::{
+        contact_sensor_state,
+        name,
+        status_active,
+        status_fault,
+        status_low_battery,
+        status_tampered,
         HapCharacteristic,
-		contact_sensor_state,
-		status_active,
-		status_fault,
-		status_tampered,
-		status_low_battery,
-		name,
-	},
+    },
+    service::{HapService, Service},
     HapType,
 };
 
@@ -33,92 +33,74 @@ pub struct ContactSensorInner {
     /// Specifies if the Service is the primary Service of the Accessory.
     primary: bool,
 
-	/// Contact Sensor State Characteristic.
-	pub contact_sensor_state: contact_sensor_state::ContactSensorState,
+    /// Contact Sensor State Characteristic.
+    pub contact_sensor_state: contact_sensor_state::ContactSensorState,
 
-	/// Status Active Characteristic.
-	pub status_active: Option<status_active::StatusActive>,
-	/// Status Fault Characteristic.
-	pub status_fault: Option<status_fault::StatusFault>,
-	/// Status Tampered Characteristic.
-	pub status_tampered: Option<status_tampered::StatusTampered>,
-	/// Status Low Battery Characteristic.
-	pub status_low_battery: Option<status_low_battery::StatusLowBattery>,
-	/// Name Characteristic.
-	pub name: Option<name::Name>,
+    /// Status Active Characteristic.
+    pub status_active: Option<status_active::StatusActive>,
+    /// Status Fault Characteristic.
+    pub status_fault: Option<status_fault::StatusFault>,
+    /// Status Tampered Characteristic.
+    pub status_tampered: Option<status_tampered::StatusTampered>,
+    /// Status Low Battery Characteristic.
+    pub status_low_battery: Option<status_low_battery::StatusLowBattery>,
+    /// Name Characteristic.
+    pub name: Option<name::Name>,
 }
 
 impl HapService for ContactSensorInner {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_type(&self) -> HapType {
-        self.hap_type
-    }
+    fn get_type(&self) -> HapType { self.hap_type }
 
-    fn get_hidden(&self) -> bool {
-        self.hidden
-    }
+    fn get_hidden(&self) -> bool { self.hidden }
 
-    fn set_hidden(&mut self, hidden: bool) {
-        self.hidden = hidden;
-    }
+    fn set_hidden(&mut self, hidden: bool) { self.hidden = hidden; }
 
-    fn get_primary(&self) -> bool {
-        self.primary
-    }
+    fn get_primary(&self) -> bool { self.primary }
 
-    fn set_primary(&mut self, primary: bool) {
-        self.primary = primary;
-    }
+    fn set_primary(&mut self, primary: bool) { self.primary = primary; }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
-        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.contact_sensor_state,
-		];
-		if let Some(c) = &self.status_active {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_tampered {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.status_low_battery {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
-		characteristics
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![&self.contact_sensor_state];
+        if let Some(c) = &self.status_active {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_fault {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_tampered {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.status_low_battery {
+            characteristics.push(c);
+        }
+        if let Some(c) = &self.name {
+            characteristics.push(c);
+        }
+        characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
-        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.contact_sensor_state,
-		];
-		if let Some(c) = &mut self.status_active {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_tampered {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_low_battery {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
-		characteristics
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![&mut self.contact_sensor_state];
+        if let Some(c) = &mut self.status_active {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_fault {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_tampered {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.status_low_battery {
+            characteristics.push(c);
+        }
+        if let Some(c) = &mut self.name {
+            characteristics.push(c);
+        }
+        characteristics
     }
 }
 
@@ -126,7 +108,7 @@ impl HapService for ContactSensorInner {
 pub fn new() -> ContactSensor {
     ContactSensor::new(ContactSensorInner {
         hap_type: HapType::ContactSensor,
-		contact_sensor_state: contact_sensor_state::new(),
-		..Default::default()
+        contact_sensor_state: contact_sensor_state::new(),
+        ..Default::default()
     })
 }

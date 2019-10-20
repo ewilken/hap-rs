@@ -1,6 +1,6 @@
 // THIS FILE IS AUTO-GENERATED
 
-use crate::characteristic::{HapType, Characteristic, Inner, Format, Perm};
+use crate::characteristic::{Characteristic, Format, HapType, Inner, Perm};
 
 /// Carbon Monoxide Detected Characteristic.
 pub type CarbonMonoxideDetected = Characteristic<u8>;
@@ -10,14 +10,11 @@ pub fn new() -> CarbonMonoxideDetected {
     Characteristic::new(Inner::<u8> {
         hap_type: HapType::CarbonMonoxideDetected,
         format: Format::UInt8,
-        perms: vec![
-			Perm::PairedRead,
-			Perm::Events,
-        ],
-		valid_values: Some(vec![
-			0, // "CO Levels Normal"
-			1, // "CO Levels Abnormal"
-		]),
+        perms: vec![Perm::PairedRead, Perm::Events],
+        valid_values: Some(vec![
+            0, // "CO Levels Normal"
+            1, // "CO Levels Abnormal"
+        ]),
         ..Default::default()
     })
 }
