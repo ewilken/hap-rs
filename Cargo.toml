@@ -21,7 +21,7 @@ libmdns = "0.2.3"
 log = "0.4.6"
 num = "0.2.0"
 pnet = "0.22.0"
-rand = "0.6.5"
+rand = "0.7.2"
 ring = "0.14.6"
 route-recognizer = "0.1.12"
 rust-crypto = "0.2.36"
@@ -30,13 +30,13 @@ serde_json = "1.0.38"
 sha2 = "0.8.0"
 srp = "0.4.0"
 tokio = "0.1.15"
-url = "1.7.2"
-uuid = { version = "0.7.2", features = ["v4", "serde"] }
+url = "2.1.0"
+uuid = { version = "0.8.1", features = ["v4", "serde"] }
 
 [build-dependencies]
-handlebars = "1.1.0"
+handlebars = "2.0.2"
 rust-crypto = "0.2.36"
 serde = "1.0.87"
 serde_derive = "1.0.87"
 serde_json = "1.0.38"
-uuid = { version = "0.7.2", features = ["v4", "serde"] }
+uuid = { version = "0.8.1", features = ["v4", "serde"] }

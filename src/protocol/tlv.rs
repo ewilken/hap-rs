@@ -205,8 +205,8 @@ impl From<str::Utf8Error> for Error {
     fn from(_: str::Utf8Error) -> Self { Error::Unknown }
 }
 
-impl From<uuid::parser::ParseError> for Error {
-    fn from(_: uuid::parser::ParseError) -> Self { Error::Unknown }
+impl From<uuid::Error> for Error {
+    fn from(_: uuid::Error) -> Self { Error::Unknown }
 }
 
 impl From<SrpAuthError> for Error {
