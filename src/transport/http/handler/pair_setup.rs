@@ -156,9 +156,9 @@ fn handle_start(handler: &mut PairSetup, database: &DatabasePtr) -> Result<tlv::
 
     let accessory = Device::load_from(database)?;
 
-    let mut rng = rand::thread_rng();
-    let salt = rng.sample_iter::<u8, Standard>(&Standard).take(16).collect::<Vec<u8>>(); // s
-    let b = rng.sample_iter::<u8, Standard>(&Standard).take(64).collect::<Vec<u8>>();
+    let rng = rand::thread_rng();
+    let salt = rng.sample_iter::<u8, Standard>(Standard).take(16).collect::<Vec<u8>>(); // s
+    let b = rng.sample_iter::<u8, Standard>(Standard).take(64).collect::<Vec<u8>>();
 
     let private_key = srp_private_key::<Sha512>(b"Pair-Setup", accessory.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
     let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
