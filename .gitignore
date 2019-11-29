@@ -1,3 +1,7 @@
 target
 data
 .DS_Store
+
+src/**/generated/*
+src/accessory/category.rs
+src/hap_type.rs

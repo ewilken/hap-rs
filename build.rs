@@ -3,11 +3,10 @@ extern crate serde_json;
 
 use std::{
     collections::HashMap,
-    fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    fs::{self, File},
+    io::Write,
 };
 
-use crypto::{digest::Digest, sha2::Sha256};
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
 use serde::{Deserialize, Serialize};
 
@@ -696,31 +695,8 @@ static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 ";
 
 fn main() {
-    let mut metadata_file = File::open("default.metadata.json").unwrap();
-    let mut metadata_hash_file = OpenOptions::new().read(true).open("metadata_hash").unwrap();
-
-    let mut buf = Vec::new();
-    let mut cached_hash = String::new();
-
-    metadata_file.read_to_end(&mut buf).unwrap();
-    metadata_hash_file.read_to_string(&mut cached_hash).unwrap();
-
-    let mut hasher = Sha256::new();
-    hasher.input(&buf);
-    let current_hash = hasher.result_str();
-
-    if cached_hash == current_hash {
-        return;
-    }
-
-    let mut metadata_hash_file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("metadata_hash")
-        .unwrap();
-    metadata_hash_file.write_all(&current_hash.as_bytes()).unwrap();
-
-    let metadata: Metadata = serde_json::from_slice(&buf).unwrap();
+    let metadata_file = File::open("default.metadata.json").unwrap();
+    let metadata: Metadata = serde_json::from_reader(&metadata_file).unwrap();
 
     let mut handlebars = Handlebars::new();
     handlebars.register_helper("if_eq", Box::new(if_eq_helper));
@@ -762,7 +738,9 @@ fn main() {
     hap_type_file.write_all(hap_type.as_bytes()).unwrap();
 
     let characteristics_base_path = "src/characteristic/generated/";
-    fs::remove_dir_all(&characteristics_base_path).unwrap();
+    if std::path::Path::new(&characteristics_base_path).exists() {
+        fs::remove_dir_all(&characteristics_base_path).unwrap();
+    }
     fs::create_dir_all(&characteristics_base_path).unwrap();
     let mut characteristsic_names = vec![];
     for c in &metadata.characteristics {
@@ -790,8 +768,12 @@ fn main() {
 
     let services_base_path = "src/service/generated/";
     let accessory_base_path = "src/accessory/generated/";
-    fs::remove_dir_all(&services_base_path).unwrap();
-    fs::remove_dir_all(&accessory_base_path).unwrap();
+    if std::path::Path::new(&services_base_path).exists() {
+        fs::remove_dir_all(&services_base_path).unwrap();
+    }
+    if std::path::Path::new(&services_base_path).exists() {
+        fs::remove_dir_all(&accessory_base_path).unwrap();
+    }
     fs::create_dir_all(&services_base_path).unwrap();
     fs::create_dir_all(&accessory_base_path).unwrap();
     let mut service_names = vec![];
@@ -850,4 +832,6 @@ fn main() {
         .unwrap();
     let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
     accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
+
+    println!("cargo:rerun-if-changed=default.metadata.json");
 }
