@@ -3,11 +3,10 @@ extern crate serde_json;
 
 use std::{
     collections::HashMap,
-    fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    fs::{self, File},
+    io::Write,
 };
 
-use crypto::{digest::Digest, sha2::Sha256};
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
 use serde::{Deserialize, Serialize};
 
@@ -71,6 +70,11 @@ struct Service {
     pub required_characteristics: Vec<String>,
     #[serde(rename = "OptionalCharacteristics")]
     pub optional_characteristics: Vec<String>,
+}
+
+struct MetadataEx<'a> {
+    metadata: Metadata,
+    characteristics: std::collections::HashMap<String, &'a Characteristic>,
 }
 
 fn if_eq_helper<'reg, 'rc>(
@@ -337,14 +341,9 @@ fn characteristic_name_helper(
     _: &mut RenderContext,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
-    let id = h.param(0).unwrap().value().as_str().unwrap();
-    let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
-    for c in characteristics {
-        if &c.id == id {
-            let name = c.name.replace(" ", "").replace(".", "_");
-            out.write(&name)?;
-        }
-    }
+    let arg_name = h.param(0).unwrap().value().as_str().unwrap();
+    let name = arg_name.replace(" ", "").replace(".", "_");
+    out.write(&name)?;
     Ok(())
 }
 
@@ -355,14 +354,9 @@ fn characteristic_file_name_helper(
     _: &mut RenderContext,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
-    let id = h.param(0).unwrap().value().as_str().unwrap();
-    let characteristics: Vec<Characteristic> = serde_json::from_value(h.param(1).unwrap().value().clone()).unwrap();
-    for c in characteristics {
-        if &c.id == id {
-            let name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
-            out.write(&name)?;
-        }
-    }
+    let arg_name = h.param(0).unwrap().value().as_str().unwrap();
+    let name = arg_name.replace(" ", "_").replace(".", "_").to_lowercase();
+    out.write(&name)?;
     Ok(())
 }
 
@@ -464,19 +458,11 @@ use crate::{
     service::{HapService, Service},
     characteristic::{
         HapCharacteristic,
-{{#each service.RequiredCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\t{{characteristic_file_name r ../../this.characteristics}},
-{{/if_eq}}\
+{{#each required_characteristics as |r|}}\
+\t\t{{characteristic_file_name r.Name}},
 {{/each}}\
-{{/each}}\
-{{#each service.OptionalCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\t{{characteristic_file_name r ../../this.characteristics}},
-{{/if_eq}}\
-{{/each}}\
+{{#each optional_characteristics as |r|}}\
+\t\t{{characteristic_file_name r.Name}},
 {{/each}}\
 \t},
     HapType,
@@ -501,21 +487,13 @@ pub struct {{trim service.Name}}Inner {
     /// Specifies if the Service is the primary Service of the Accessory.
     primary: bool,
 
-{{#each service.RequiredCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t/// {{c.Name}} Characteristic.
-\tpub {{characteristic_file_name r ../../this.characteristics}}: {{characteristic_file_name r ../../this.characteristics}}::{{characteristic_name r ../../this.characteristics}},
-{{/if_eq}}\
+{{#each required_characteristics as |r|}}\
+\t/// {{r.Name}} Characteristic.
+\tpub {{characteristic_file_name r.Name}}: {{characteristic_file_name r.Name}}::{{characteristic_name r.Name}},
 {{/each}}\
-{{/each}}\
-\n{{#each service.OptionalCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t/// {{c.Name}} Characteristic.
-\tpub {{characteristic_file_name r ../../this.characteristics}}: Option<{{characteristic_file_name r ../../this.characteristics}}::{{characteristic_name r ../../this.characteristics}}>,
-{{/if_eq}}\
-{{/each}}\
+\n{{#each optional_characteristics as |r|}}\
+\t/// {{r.Name}} Characteristic.
+\tpub {{characteristic_file_name r.Name}}: Option<{{characteristic_file_name r.Name}}::{{characteristic_name r.Name}}>,
 {{/each}}\
 }
 
@@ -550,44 +528,28 @@ impl HapService for {{trim service.Name}}Inner {
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-{{#each service.RequiredCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\t\t&self.{{characteristic_file_name r ../../this.characteristics}},
-{{/if_eq}}\
-{{/each}}\
+{{#each required_characteristics as |r|}}\
+\t\t\t&self.{{characteristic_file_name r.Name}},
 {{/each}}\
         \t\t];
-{{#each service.OptionalCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\tif let Some(c) = &self.{{characteristic_file_name r ../../this.characteristics}} {
+{{#each optional_characteristics as |r|}}\
+\t\tif let Some(c) = &self.{{characteristic_file_name r.Name}} {
 \t\t    characteristics.push(c);
 \t\t}
-{{/if_eq}}\
-{{/each}}\
 {{/each}}\
         \t\tcharacteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-{{#each service.RequiredCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\t\t&mut self.{{characteristic_file_name r ../../this.characteristics}},
-{{/if_eq}}\
-{{/each}}\
+{{#each required_characteristics as |r|}}\
+\t\t\t&mut self.{{characteristic_file_name r.Name}},
 {{/each}}\
         \t\t];
-{{#each service.OptionalCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\tif let Some(c) = &mut self.{{characteristic_file_name r ../../this.characteristics}} {
+{{#each optional_characteristics as |r|}}\
+\t\tif let Some(c) = &mut self.{{characteristic_file_name r.Name}} {
 \t\t    characteristics.push(c);
 \t\t}
-{{/if_eq}}\
-{{/each}}\
 {{/each}}\
         \t\tcharacteristics
     }
@@ -597,12 +559,8 @@ impl HapService for {{trim service.Name}}Inner {
 pub fn new() -> {{trim service.Name}} {
     {{trim service.Name}}::new({{trim service.Name}}Inner {
         hap_type: HapType::{{trim service.Name}},
-{{#each service.RequiredCharacteristics as |r|}}\
-{{#each ../this.characteristics as |c|}}\
-{{#if_eq r c.UUID}}\
-\t\t{{characteristic_file_name r ../../this.characteristics}}: {{characteristic_file_name r ../../this.characteristics}}::new(),
-{{/if_eq}}\
-{{/each}}\
+{{#each required_characteristics as |r|}}\
+\t\t{{characteristic_file_name r.Name}}: {{characteristic_file_name r.Name}}::new(),
 {{/each}}\
         \t\t..Default::default()
     })
@@ -696,31 +654,17 @@ static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 ";
 
 fn main() {
-    let mut metadata_file = File::open("default.metadata.json").unwrap();
-    let mut metadata_hash_file = OpenOptions::new().read(true).open("metadata_hash").unwrap();
+    let metadata_file = File::open("default.metadata.json").unwrap();
+    let mut metadata_ex = MetadataEx {
+        metadata: serde_json::from_reader(&metadata_file).unwrap(),
+        characteristics: std::collections::HashMap::new(),
+    };
+    let metadata = &metadata_ex.metadata;
 
-    let mut buf = Vec::new();
-    let mut cached_hash = String::new();
-
-    metadata_file.read_to_end(&mut buf).unwrap();
-    metadata_hash_file.read_to_string(&mut cached_hash).unwrap();
-
-    let mut hasher = Sha256::new();
-    hasher.input(&buf);
-    let current_hash = hasher.result_str();
-
-    if cached_hash == current_hash {
-        return;
+    // build characteristic map
+    for c in &metadata.characteristics {
+        metadata_ex.characteristics.insert(c.id.to_string(), &c);
     }
-
-    let mut metadata_hash_file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open("metadata_hash")
-        .unwrap();
-    metadata_hash_file.write_all(&current_hash.as_bytes()).unwrap();
-
-    let metadata: Metadata = serde_json::from_slice(&buf).unwrap();
 
     let mut handlebars = Handlebars::new();
     handlebars.register_helper("if_eq", Box::new(if_eq_helper));
@@ -762,7 +706,9 @@ fn main() {
     hap_type_file.write_all(hap_type.as_bytes()).unwrap();
 
     let characteristics_base_path = "src/characteristic/generated/";
-    fs::remove_dir_all(&characteristics_base_path).unwrap();
+    if std::path::Path::new(&characteristics_base_path).exists() {
+        fs::remove_dir_all(&characteristics_base_path).unwrap();
+    }
     fs::create_dir_all(&characteristics_base_path).unwrap();
     let mut characteristsic_names = vec![];
     for c in &metadata.characteristics {
@@ -790,19 +736,39 @@ fn main() {
 
     let services_base_path = "src/service/generated/";
     let accessory_base_path = "src/accessory/generated/";
-    fs::remove_dir_all(&services_base_path).unwrap();
-    fs::remove_dir_all(&accessory_base_path).unwrap();
+    if std::path::Path::new(&services_base_path).exists() {
+        fs::remove_dir_all(&services_base_path).unwrap();
+    }
+    if std::path::Path::new(&services_base_path).exists() {
+        fs::remove_dir_all(&accessory_base_path).unwrap();
+    }
     fs::create_dir_all(&services_base_path).unwrap();
     fs::create_dir_all(&accessory_base_path).unwrap();
     let mut service_names = vec![];
     let mut accessory_names = vec![];
     for s in &metadata.services {
+        let mut required_characteristics = Vec::new();
+        let mut optional_characteristics = Vec::new();
+
+        for c in &s.required_characteristics {
+            required_characteristics.push(metadata_ex.characteristics[c]);
+        }
+
+        for c in &s.optional_characteristics {
+            optional_characteristics.push(metadata_ex.characteristics[c]);
+        }
+
         let service = handlebars
             .render(
                 "service",
-                &json!({"service": s, "characteristics": &metadata.characteristics}),
+                &json!({
+                    "service": s,
+                    "required_characteristics": &required_characteristics,
+                    "optional_characteristics": &optional_characteristics,
+                }),
             )
             .unwrap();
+
         let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
         let mut service_path = String::from(services_base_path);
         service_path.push_str(&service_file_name);
@@ -850,4 +816,6 @@ fn main() {
         .unwrap();
     let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
     accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
+
+    println!("cargo:rerun-if-changed=default.metadata.json");
 }
