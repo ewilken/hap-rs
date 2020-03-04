@@ -1,7 +1,8 @@
-use std::sync::{Arc, Mutex};
+use std::fmt::Debug;
 
 use serde_json::Value;
 
+#[derive(Debug)]
 pub enum Event {
     DevicePaired,
     DeviceUnpaired,
@@ -24,9 +25,3 @@ impl EventEmitter {
         }
     }
 }
-
-/// Pointer to an `EventEmitter`.
-pub type EventEmitterPtr = Arc<Mutex<EventEmitter>>;
-
-/// Pointer to a list of event subscriptions.
-pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;

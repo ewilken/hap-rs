@@ -1,29 +1,28 @@
-use std::{collections::HashMap, str};
+use std::str;
 
-use chacha20_poly1305_aead;
-use crypto::{curve25519, ed25519};
-use futures::sync::oneshot;
-use log::debug;
-use rand::{self, Rng};
+use aead::{generic_array::GenericArray, Aead, NewAead};
+use chacha20poly1305::ChaCha20Poly1305;
+use futures::{
+    channel::oneshot,
+    future::{BoxFuture, FutureExt},
+    stream::StreamExt,
+};
+use hyper::Body;
+use log::{debug, info};
+use rand::{self, rngs::OsRng};
 use ring::{digest, hkdf, hmac};
 use uuid::Uuid;
+use x25519_dalek::{EphemeralSecret, PublicKey};
 
 use crate::{
-    config::ConfigPtr,
-    db::DatabasePtr,
-    event::EventEmitterPtr,
-    protocol::{
-        tlv::{self, Type, Value},
-        Device,
-        IdPtr,
-        Pairing,
-    },
-    transport::{http::handler::TlvHandler, tcp},
+    pointer,
+    tlv::{self, Encodable, Type, Value},
+    transport::{http::handler::TlvHandlerExt, tcp},
 };
 
 struct Session {
-    b_pub: [u8; 32],
-    a_pub: Vec<u8>,
+    b_pub: PublicKey,
+    a_pub: PublicKey,
     shared_secret: [u8; 32],
     session_key: [u8; 32],
 }
@@ -42,6 +41,7 @@ impl PairVerify {
     }
 }
 
+#[derive(Debug, Clone)]
 enum StepNumber {
     Unknown = 0,
     StartReq = 1,
@@ -50,146 +50,195 @@ enum StepNumber {
     FinishRes = 4,
 }
 
+#[derive(Debug, Clone)]
 pub enum Step {
     Start { a_pub: Vec<u8> },
     Finish { data: Vec<u8> },
 }
 
-impl TlvHandler for PairVerify {
+impl TlvHandlerExt for PairVerify {
     type ParseResult = Step;
     type Result = tlv::Container;
 
-    fn parse(&self, body: Vec<u8>) -> Result<Step, tlv::ErrorContainer> {
-        let decoded = tlv::decode(body);
-        match decoded.get(&(Type::State as u8)) {
-            Some(method) => match method[0] {
-                x if x == StepNumber::StartReq as u8 => {
-                    let a_pub = decoded.get(&(Type::PublicKey as u8)).ok_or(tlv::ErrorContainer::new(
-                        StepNumber::StartRes as u8,
-                        tlv::Error::Unknown,
-                    ))?;
-                    Ok(Step::Start { a_pub: a_pub.clone() })
+    fn parse(&self, body: Body) -> BoxFuture<Result<Step, tlv::ErrorContainer>> {
+        async {
+            let mut body = body;
+            let mut concatenated_body = Vec::new();
+            while let Some(chunk) = body.next().await {
+                let bytes =
+                    chunk.map_err(|_| tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown))?;
+                concatenated_body.extend(&bytes[..]);
+            }
+
+            debug!("received body: {:?}", &concatenated_body);
+
+            let mut decoded = tlv::decode(concatenated_body);
+            match decoded.get(&(Type::State as u8)) {
+                Some(method) => match method[0] {
+                    x if x == StepNumber::StartReq as u8 => {
+                        let a_pub = decoded
+                            .remove(&(Type::PublicKey as u8))
+                            .ok_or(tlv::ErrorContainer::new(
+                                StepNumber::StartRes as u8,
+                                tlv::Error::Unknown,
+                            ))?;
+                        Ok(Step::Start { a_pub })
+                    },
+                    x if x == StepNumber::FinishReq as u8 => {
+                        let data = decoded
+                            .remove(&(Type::EncryptedData as u8))
+                            .ok_or(tlv::ErrorContainer::new(
+                                StepNumber::FinishRes as u8,
+                                tlv::Error::Unknown,
+                            ))?;
+                        Ok(Step::Finish { data })
+                    },
+                    _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
                 },
-                x if x == StepNumber::FinishReq as u8 => {
-                    let data = decoded
-                        .get(&(Type::EncryptedData as u8))
-                        .ok_or(tlv::ErrorContainer::new(
-                            StepNumber::FinishRes as u8,
-                            tlv::Error::Unknown,
-                        ))?;
-                    Ok(Step::Finish { data: data.clone() })
-                },
-                _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
-            },
-            None => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
+                None => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
+            }
         }
+        .boxed()
     }
 
     fn handle(
         &mut self,
         step: Step,
-        _: &IdPtr,
-        _: &ConfigPtr,
-        database: &DatabasePtr,
-        _: &EventEmitterPtr,
-    ) -> Result<tlv::Container, tlv::ErrorContainer> {
-        match step {
-            Step::Start { a_pub } => match handle_start(self, database, a_pub) {
-                Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err)),
-            },
-            Step::Finish { data } => match handle_finish(self, database, &data) {
-                Ok(res) => Ok(res),
-                Err(err) => Err(tlv::ErrorContainer::new(StepNumber::FinishRes as u8, err)),
-            },
+        _: pointer::ControllerId,
+        config: pointer::Config,
+        storage: pointer::Storage,
+        _: pointer::EventEmitter,
+    ) -> BoxFuture<Result<tlv::Container, tlv::ErrorContainer>> {
+        async move {
+            match step {
+                Step::Start { a_pub } => match handle_start(self, config, a_pub).await {
+                    Ok(res) => Ok(res),
+                    Err(err) => Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err)),
+                },
+                Step::Finish { data } => match handle_finish(self, storage, &data).await {
+                    Ok(res) => Ok(res),
+                    Err(err) => Err(tlv::ErrorContainer::new(StepNumber::FinishRes as u8, err)),
+                },
+            }
         }
+        .boxed()
     }
 }
 
-fn handle_start(
+async fn handle_start(
     handler: &mut PairVerify,
-    database: &DatabasePtr,
-    a_pub: Vec<u8>,
+    config: pointer::Config,
+    a_pub_bytes: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("M1: Got Verify Start Request");
+    info!("pair verify M1: received verify start request");
 
-    let mut rng = rand::thread_rng();
-    let b = rng.gen::<[u8; 32]>();
-    let b_pub = curve25519::curve25519_base(&b);
-    let shared_secret = curve25519::curve25519(&b, &a_pub);
+    // let mut rng = rand::thread_rng();
+    // let b = rng.gen::<[u8; 32]>();
+    // let b_pub = curve25519::curve25519_base(&b);
+    // let shared_secret = curve25519::curve25519(b, a_pub);
 
-    let accessory = Device::load_from(database)?;
+    let mut a_pub = [0; 32];
+    let bytes = &a_pub_bytes[..a_pub.len()]; // panics if not enough data
+    a_pub.copy_from_slice(bytes);
+    let a_pub = PublicKey::from(a_pub);
+
+    let mut csprng = OsRng {};
+    let b = EphemeralSecret::new(&mut csprng);
+    let b_pub = PublicKey::from(&b);
+    let shared_secret = b.diffie_hellman(&a_pub);
+
+    let config = config.lock().expect("couldn't access config");
+    let device_id = config.device_id.to_hex_string();
+
     let mut accessory_info: Vec<u8> = Vec::new();
-    accessory_info.extend(&b_pub);
-    accessory_info.extend(accessory.id.as_bytes());
-    accessory_info.extend(&a_pub);
-    let accessory_signature = ed25519::signature(&accessory_info, &accessory.private_key);
+    accessory_info.extend(b_pub.as_bytes());
+    accessory_info.extend(device_id.as_bytes());
+    accessory_info.extend(a_pub.as_bytes());
+    let accessory_signature = config.device_ed25519_keypair.sign(&accessory_info);
 
-    let mut sub_tlv: HashMap<u8, Vec<u8>> = HashMap::new();
-    let (t, v) = Value::Identifier(accessory.id).as_tlv();
-    sub_tlv.insert(t, v);
-    let (t, v) = Value::Signature(accessory_signature.to_vec()).as_tlv();
-    sub_tlv.insert(t, v);
-    let encoded_sub_tlv = tlv::encode(sub_tlv);
+    let encoded_sub_tlv = vec![Value::Identifier(device_id), Value::Signature(accessory_signature)].encode();
 
     let mut session_key = [0; 32];
     let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Verify-Encrypt-Salt");
-    hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Verify-Encrypt-Info", &mut session_key);
+    hkdf::extract_and_expand(
+        &salt,
+        shared_secret.as_bytes(),
+        b"Pair-Verify-Encrypt-Info",
+        &mut session_key,
+    );
 
     handler.session = Some(Session {
         b_pub,
         a_pub,
-        shared_secret,
+        shared_secret: *shared_secret.as_bytes(),
         session_key,
     });
 
-    let mut encrypted_data = Vec::new();
     let mut nonce = vec![0; 4];
     nonce.extend(b"PV-Msg02");
-    let auth_tag = chacha20_poly1305_aead::encrypt(&session_key, &nonce, &[], &encoded_sub_tlv, &mut encrypted_data)?;
+
+    let aead = ChaCha20Poly1305::new(session_key.into());
+
+    let mut encrypted_data = Vec::new();
+    encrypted_data.extend_from_slice(&encoded_sub_tlv);
+    let auth_tag = aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &[], &mut encrypted_data)?;
     encrypted_data.extend(&auth_tag);
 
-    debug!("M2: Sending Verify Start Response");
+    info!("pair verify M2: sending verify start response");
 
     Ok(vec![
         Value::State(StepNumber::StartRes as u8),
-        Value::PublicKey(b_pub.to_vec()),
+        Value::X25519PublicKey(b_pub),
         Value::EncryptedData(encrypted_data),
     ])
 }
 
-fn handle_finish(handler: &mut PairVerify, database: &DatabasePtr, data: &[u8]) -> Result<tlv::Container, tlv::Error> {
-    debug!("M3: Got Verify Finish Request");
+async fn handle_finish(
+    handler: &mut PairVerify,
+    storage: pointer::Storage,
+    data: &[u8],
+) -> Result<tlv::Container, tlv::Error> {
+    info!("pair verify M3: received verify finish request");
 
     if let Some(ref mut session) = handler.session {
         let encrypted_data = Vec::from(&data[..data.len() - 16]);
         let auth_tag = Vec::from(&data[data.len() - 16..]);
 
-        let mut decrypted_data = Vec::new();
         let mut nonce = vec![0; 4];
         nonce.extend(b"PV-Msg03");
-        chacha20_poly1305_aead::decrypt(
-            &session.session_key,
-            &nonce,
+
+        let aead = ChaCha20Poly1305::new(session.session_key.into());
+
+        let mut decrypted_data = Vec::new();
+        decrypted_data.extend_from_slice(&encrypted_data);
+        aead.decrypt_in_place_detached(
+            GenericArray::from_slice(&nonce),
             &[],
-            &encrypted_data,
-            &auth_tag,
             &mut decrypted_data,
+            GenericArray::from_slice(&auth_tag),
         )?;
 
         let sub_tlv = tlv::decode(decrypted_data);
         let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
-        let device_signature = sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?;
+        let device_signature =
+            ed25519_dalek::Signature::from_bytes(sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?)?;
 
         let uuid_str = str::from_utf8(device_pairing_id)?;
         let pairing_uuid = Uuid::parse_str(uuid_str)?;
-        let pairing = Pairing::load_from(pairing_uuid, database)?;
+        let pairing = storage
+            .lock()
+            .expect("couldn't access storage")
+            .select_pairing(&pairing_uuid)?;
 
         let mut device_info: Vec<u8> = Vec::new();
-        device_info.extend(&session.a_pub);
+        device_info.extend(session.a_pub.as_bytes());
         device_info.extend(device_pairing_id);
-        device_info.extend(&session.b_pub);
-        if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
+        device_info.extend(session.b_pub.as_bytes());
+
+        // if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
+        //     return Err(tlv::Error::Authentication);
+        // }
+        if pairing.public_key.verify(&device_info, &device_signature).is_err() {
             return Err(tlv::Error::Authentication);
         }
 
@@ -203,7 +252,7 @@ fn handle_finish(handler: &mut PairVerify, database: &DatabasePtr, data: &[u8]) 
             return Err(tlv::Error::Unknown);
         }
 
-        debug!("M4: Sending Verify Finish Response");
+        info!("pair verify M4: sending verify finish response");
 
         Ok(vec![Value::State(StepNumber::FinishRes as u8)])
     } else {

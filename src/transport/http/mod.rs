@@ -13,10 +13,12 @@ use crate::{
     Result,
 };
 
-pub(crate) mod handler;
+mod handler;
+
 pub(crate) mod server;
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub enum Status {
     Success = 0,
     InsufficientPrivileges = -70401,
@@ -31,6 +33,7 @@ pub enum Status {
     InvalidValueInRequest = -70410,
 }
 
+#[derive(Debug)]
 enum ContentType {
     PairingTLV8,
     HapJson,
@@ -123,7 +126,8 @@ pub fn event_response(event_objects: Vec<EventObject>) -> Result<Vec<u8>> {
         characteristics: event_objects,
     })?;
     let response = format!(
-        "EVENT/1.0 200 OK\nContent-Type: application/hap+json\nContent-Length: {}\n\n{}",
+        "EVENT/1.0 200 OK\nContent-Type: {}\nContent-Length: {}\n\n{}",
+        ContentType::HapJson.to_string(),
         body.len(),
         body,
     );

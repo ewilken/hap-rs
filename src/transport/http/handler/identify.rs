@@ -1,12 +1,10 @@
+use futures::future::{BoxFuture, FutureExt};
 use hyper::{Body, Response, StatusCode, Uri};
-use serde_json::{self, json};
+use serde_json::json;
 
 use crate::{
-    config::ConfigPtr,
-    db::{AccessoryList, DatabasePtr},
-    event::EventEmitterPtr,
-    protocol::IdPtr,
-    transport::http::{handler::JsonHandler, json_response, server::EventSubscriptions, status_response, Status},
+    pointer,
+    transport::http::{handler::JsonHandlerExt, json_response, status_response, Status},
     Result,
 };
 
@@ -16,38 +14,46 @@ impl Identify {
     pub fn new() -> Identify { Identify }
 }
 
-impl JsonHandler for Identify {
+impl JsonHandlerExt for Identify {
     fn handle(
         &mut self,
         _: Uri,
-        _: Vec<u8>,
-        _: &IdPtr,
-        _: &EventSubscriptions,
-        _: &ConfigPtr,
-        database: &DatabasePtr,
-        accessory_list: &AccessoryList,
-        _: &EventEmitterPtr,
-    ) -> Result<Response<Body>> {
-        if database.lock().expect("couldn't access database").count_pairings()? > 0 {
-            let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
-            return json_response(body, StatusCode::BAD_REQUEST);
-        }
+        _: Body,
+        _: pointer::ControllerId,
+        _: pointer::EventSubscriptions,
+        _: pointer::Config,
+        storage: pointer::Storage,
+        accessory_list: pointer::AccessoryList,
+        _: pointer::EventEmitter,
+    ) -> BoxFuture<Result<Response<Body>>> {
+        let storage = storage.clone();
+        let accessory_list = accessory_list.clone();
 
-        for accessory in accessory_list
-            .accessories
-            .lock()
-            .expect("couldn't access accessory_list")
-            .iter_mut()
-        {
-            accessory
+        async move {
+            if storage.lock().expect("couldn't access storage").count_pairings()? > 0 {
+                let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
+                return json_response(body, StatusCode::BAD_REQUEST);
+            }
+
+            for accessory in accessory_list
                 .lock()
-                .expect("couldn't access accessory")
-                .get_mut_information()
-                .inner
-                .identify
-                .set_value(true)?;
-        }
+                .expect("couldn't access accessory_list")
+                .accessories
+                .lock()
+                .expect("couldn't access accessory_list")
+                .iter_mut()
+            {
+                accessory
+                    .lock()
+                    .expect("couldn't access accessory")
+                    .get_mut_information()
+                    .inner
+                    .identify
+                    .set_value(true)?;
+            }
 
-        status_response(StatusCode::NO_CONTENT)
+            status_response(StatusCode::NO_CONTENT)
+        }
+        .boxed()
     }
 }

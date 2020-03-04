@@ -1,25 +1,11 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    env::current_dir,
-    hash::{Hash, Hasher},
-    net::IpAddr,
-    str,
-    sync::{Arc, Mutex},
-};
+use std::net::SocketAddr;
 
+use ed25519_dalek::Keypair;
 use eui48::MacAddress;
-use pnet::datalink;
-use rand::{self, Rng};
+use rand::{rngs::OsRng, Rng};
+use serde::{Deserialize, Serialize};
 
-use crate::{
-    accessory::Category,
-    db::Storage,
-    transport::bonjour::{FeatureFlag, StatusFlag},
-    Result,
-};
-
-/// Pointer to a `Config`.
-pub type ConfigPtr = Arc<Mutex<Config>>;
+use crate::{accessory::Category, BonjourFeatureFlag, BonjourStatusFlag, Pin};
 
 /// The `Config` struct is used to store configuration options for the HomeKit Accessory Server.
 ///
@@ -29,22 +15,17 @@ pub type ConfigPtr = Arc<Mutex<Config>>;
 /// use hap::{accessory::Category, Config};
 ///
 /// let config = Config {
-///     storage_path: "/etc/homekit".into(),
-///     pin: "11122333".into(),
+///     pin: Pin::from_str("11122333").unwrap(),
 ///     name: "Acme Outlet".into(),
 ///     category: Category::Outlet,
 ///     max_peers: Some(32),
 ///     ..Default::default()
 /// };
 /// ```
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    /// Storage path for the persisted data. If no path is specified, the current working directory
-    /// is used.
-    pub storage_path: String,
-    /// IP address to serve on.
-    pub ip: IpAddr,
-    /// Port to serve on. Defaults to `32000`.
-    pub port: u16,
+    /// Socket address to serve on.
+    pub socket_addr: SocketAddr,
     /// 8 digit pin used for pairing. Defaults to `"11122333"`.
     ///
     /// The following pins are considered too easy and are therefore not allowed:
@@ -60,12 +41,14 @@ pub struct Config {
     /// - `"77777777"`
     /// - `"88888888"`
     /// - `"99999999"`
-    pub pin: String,
+    pub pin: Pin,
     /// Model name of the accessory.
     pub name: String,
     /// Device ID of the accessory. Generated randomly if not specified. This value is also used as
     /// the accessory's Pairing Identifier.
     pub device_id: MacAddress, // id
+    ///
+    pub device_ed25519_keypair: Keypair,
     /// Current configuration number. Is updated when an accessory, service, or characteristic is
     /// added or removed on the accessory server. Accessories must increment the config number after
     /// a firmware update.
@@ -80,56 +63,14 @@ pub struct Config {
     pub protocol_version: String, // pv
     /// Bonjour Status Flag. Defaults to `StatusFlag::NotPaired` and is changed to
     /// `StatusFlag::Zero` after a successful pairing.
-    pub status_flag: StatusFlag, // sf
+    pub status_flag: BonjourStatusFlag, // sf
     /// Bonjour Feature Flag. Currently only used to indicate MFi compliance.
-    pub feature_flag: FeatureFlag, // ff
+    pub feature_flag: BonjourFeatureFlag, // ff
     /// Optional maximum number of paired controllers.
     pub max_peers: Option<usize>,
-    pub version: u64,
-    pub config_hash: Option<u64>,
 }
 
 impl Config {
-    pub(crate) fn load_from(&mut self, storage: &dyn Storage) -> Result<()> {
-        if let Some(device_id) = storage.get_bytes("device_id").ok() {
-            self.device_id = MacAddress::parse_str(str::from_utf8(&device_id)?)?;
-        }
-        if let Some(version) = storage.get_u64("version").ok() {
-            self.version = version;
-        }
-        if let Some(config_hash) = storage.get_u64("config_hash").ok() {
-            self.config_hash = Some(config_hash);
-        }
-        Ok(())
-    }
-
-    pub(crate) fn save_to(&self, storage: &dyn Storage) -> Result<()> {
-        storage.set_bytes("device_id", self.device_id.to_hex_string().as_bytes().to_vec())?;
-        storage.set_u64("version", self.version)?;
-        if let Some(config_hash) = self.config_hash {
-            storage.set_u64("config_hash", config_hash)?;
-        }
-        Ok(())
-    }
-
-    fn calculate_hash(&self) -> u64 {
-        let mut s = DefaultHasher::new();
-        self.hash(&mut s);
-        s.finish()
-    }
-
-    fn set_hash(&mut self, config_hash: u64) {
-        if self.config_hash != Some(config_hash) {
-            self.version += 1;
-            self.config_hash = Some(config_hash);
-        }
-    }
-
-    pub(crate) fn update_hash(&mut self) {
-        let hash = self.calculate_hash();
-        self.set_hash(hash);
-    }
-
     pub(crate) fn txt_records(&self) -> [String; 8] {
         [
             format!("md={}", self.name),
@@ -144,69 +85,32 @@ impl Config {
     }
 }
 
-impl Hash for Config {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.storage_path.hash(state);
-        self.ip.hash(state);
-        self.port.hash(state);
-        self.pin.hash(state);
-        self.name.hash(state);
-        self.device_id.to_hex_string().hash(state);
-        self.configuration_number.hash(state);
-        self.state_number.hash(state);
-        (self.category as u8).hash(state);
-        self.protocol_version.hash(state);
-        (self.status_flag as u8).hash(state);
-        (self.feature_flag as u8).hash(state);
-    }
-}
-
 impl Default for Config {
     fn default() -> Config {
-        let mut config = Config {
-            storage_path: format!(
-                "{}/data",
-                current_dir()
-                    .expect("couldn't determine current directory")
-                    .to_str()
-                    .expect("couldn't stringify current directory")
-            ),
-            ip: current_ip().expect("couldn't determine local IP address"),
-            port: 32000,
-            pin: "11122333".into(),
+        Config {
+            socket_addr: SocketAddr::from(([127, 0, 0, 1], 32000)),
+            pin: Pin::from_str("11122333").unwrap(),
             name: "Accessory".into(),
-            device_id: random_mac_address(),
+            device_id: generate_random_mac_address(),
+            device_ed25519_keypair: generate_ed25519_keypair(),
             configuration_number: 1,
             state_number: 1,
             category: Category::Unknown,
             protocol_version: "1.0".into(),
-            status_flag: StatusFlag::NotPaired,
-            feature_flag: FeatureFlag::Zero,
+            status_flag: BonjourStatusFlag::NotPaired,
+            feature_flag: BonjourFeatureFlag::Zero,
             max_peers: None,
-            version: 0,
-            config_hash: None,
-        };
-        config.update_hash();
-        config
-    }
-}
-
-fn current_ip() -> Option<IpAddr> {
-    for iface in datalink::interfaces() {
-        for ip_network in iface.ips {
-            if ip_network.is_ipv4() {
-                let ip = ip_network.ip();
-                if !ip.is_loopback() {
-                    return Some(ip);
-                }
-            }
         }
     }
-    None
 }
 
-fn random_mac_address() -> MacAddress {
-    let mut rng = rand::thread_rng();
-    let eui = rng.gen::<[u8; 6]>();
+fn generate_random_mac_address() -> MacAddress {
+    let mut csprng = OsRng {};
+    let eui = csprng.gen::<[u8; 6]>();
     MacAddress::new(eui)
+}
+
+fn generate_ed25519_keypair() -> Keypair {
+    let mut csprng = OsRng {};
+    Keypair::generate(&mut csprng)
 }

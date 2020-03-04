@@ -1,77 +1,38 @@
-use std::{
-    sync::{
-        mpsc::{self, TryRecvError},
-        Arc,
-        Mutex,
-    },
-    thread,
-    time::Duration,
-};
+use std::time::Duration;
 
-use libmdns;
+use futures::{future::Future, stream::StreamExt};
+use log::debug;
+use tokio::time;
 
-use crate::Result;
+use crate::pointer;
 
 /// An mDNS Responder. Used to announce the Accessory's name and HAP TXT records to potential
 /// controllers.
-pub struct Responder {
-    name: String,
-    port: u16,
-    txt_records: [String; 8],
-    stop: Option<mpsc::Sender<()>>,
+#[derive(Debug, Clone)]
+pub struct MdnsResponder {
+    config: pointer::Config,
 }
 
-impl Responder {
+impl MdnsResponder {
     /// Creates a new mDNS Responder.
-    pub fn new(name: &str, port: u16, txt_records: [String; 8]) -> Self {
-        Responder {
-            name: name.to_string(),
-            port,
-            txt_records,
-            stop: None,
-        }
-    }
+    pub fn new(config: pointer::Config) -> Self { MdnsResponder { config } }
 
-    /// Starts mDNS announcement in a separate thread.
-    pub fn start(&mut self) {
-        let (tx, rx) = mpsc::channel();
-        let name = self.name.clone();
-        let port = self.port;
-        let tr = self.txt_records.clone();
-        thread::spawn(move || {
+    /// Returns a Future handle to the mDNS responder operation that can be passed to an executor.
+    pub fn run_handle(&self) -> impl Future<Output = ()> + Send + '_ {
+        let config = self.config.clone();
+        async move {
             let responder = libmdns::Responder::new().expect("couldn't create mDNS responder");
-            let _svc = responder.register("_hap._tcp".into(), name, port, &[
-                &tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7],
-            ]);
-            loop {
-                thread::sleep(Duration::from_secs(2));
-                match rx.try_recv() {
-                    Ok(_) | Err(TryRecvError::Disconnected) => {
-                        break;
-                    },
-                    Err(TryRecvError::Empty) => {},
-                }
+            let mut interval = time::interval(Duration::from_millis(200));
+            while let Some(_) = interval.next().await {
+                let config = config.lock().expect("couldn't access config");
+                let name = config.name.clone();
+                let port = config.socket_addr.port();
+                let tr = config.txt_records();
+                let _svc = responder.register("_hap._tcp".into(), name, port, &[
+                    &tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7],
+                ]);
+                debug!("announcing mDNS: {:?}", &tr);
             }
-        });
-        self.stop = Some(tx);
-    }
-
-    /// Stops mDNS announcement.
-    pub fn stop(&self) -> Result<()> {
-        if let Some(stop) = self.stop.clone() {
-            stop.send(())?;
         }
-        Ok(())
-    }
-
-    /// Stops mDNS announcement and restarts it with updated TXT records.
-    pub fn update_txt_records(&mut self, txt_records: [String; 8]) -> Result<()> {
-        self.stop()?;
-        self.txt_records = txt_records;
-        self.start();
-        Ok(())
     }
 }
-
-/// Pointer to a `Responder`.
-pub type ResponderPtr = Arc<Mutex<Responder>>;

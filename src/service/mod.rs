@@ -30,6 +30,7 @@ pub trait HapService {
 
 /// A Service. Services group functionality in order to provide context. They are comprised of
 /// characteristics.
+#[derive(Debug)]
 pub struct Service<T: HapService> {
     pub inner: T,
 }

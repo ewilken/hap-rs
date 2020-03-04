@@ -1,8 +1,8 @@
 # HAP (HomeKit Accessory Protocol)
 
-[![Build Status](https://travis-ci.org/ewilken/hap-rs.svg?branch=master)](https://travis-ci.org/ewilken/hap-rs)
-[![Latest Version](https://img.shields.io/crates/v/hap.svg)](https://crates.io/crates/hap)
-[![docs](https://docs.rs/hap/badge.svg)](https://docs.rs/hap)
+[![CI](https://github.com/ewilken/hap-rs/workflows/CI/badge.svg)](https://github.com/ewilken/hap-rs/actions?query=workflow%3ACI)
+[![crates.io](https://img.shields.io/crates/v/hap.svg)](https://crates.io/crates/hap)
+[![docs.rs](https://docs.rs/hap/badge.svg)](https://docs.rs/hap)
 [![license: MIT/Apache-2.0](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](https://github.com/ewilken/hap-rs)
 
 Rust implementation of the Apple HomeKit Accessory Protocol (HAP).

@@ -1,9 +1,9 @@
-use erased_serde::{self, __internal_serialize_trait_object, serialize_trait_object};
+use erased_serde::{self, serialize_trait_object};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
     characteristic::{accessory_flags, hardware_revision},
-    event::EventEmitterPtr,
+    pointer,
     service::{
         accessory_information::{self, AccessoryInformation},
         HapService,
@@ -41,7 +41,7 @@ pub trait HapAccessory {
     /// within each Accessory object. For example, if the first Service object has an instance ID of
     /// "1" then no other Service or Characteristic objects can have an instance ID of "1" within
     /// the parent Accessory object.
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()>;
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()>;
 }
 
 /// An Accessory. Accessories are the outermost data type defined by the HAP. They are comprised of
@@ -75,7 +75,7 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { self.inner.get_mut_information() }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
         self.inner.init_iids(accessory_id, event_emitter)
     }
 }
@@ -98,6 +98,7 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
 ///
 /// let outlet = outlet::new(info).unwrap();
 /// ```
+#[derive(Debug)]
 pub struct Information {
     /// Used to cause the `Accessory` to run its identify routine.
     pub identify: bool,

@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate serde_json;
-
 use std::{
     collections::HashMap,
     fs::{self, File},
@@ -9,6 +6,7 @@ use std::{
 
 use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Metadata {
@@ -72,6 +70,7 @@ struct Service {
     pub optional_characteristics: Vec<String>,
 }
 
+#[derive(Debug)]
 struct MetadataEx<'a> {
     metadata: Metadata,
     characteristics: std::collections::HashMap<String, &'a Characteristic>,
@@ -374,8 +373,10 @@ fn snake_case_helper(
 }
 
 static CATEGORIES: &'static str = "// THIS FILE IS AUTO-GENERATED\n
+use serde::{Deserialize, Serialize};
+
 /// HAP Accessory category.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Category {
 {{#each Categories as |c|}}\
 \t{{trim c.Name}} = {{c.Category}},
@@ -387,7 +388,7 @@ static HAP_TYPE: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use serde::ser::{Serialize, Serializer};
 
 /// HAP Service and Characteristic type.
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum HapType {
     Unknown,
 {{#each Characteristics as |c|}}\
@@ -400,7 +401,7 @@ pub enum HapType {
 
 impl HapType {
     /// Converts a `HapType` to its corresponding shortened UUID string.
-    pub fn to_string(self) -> String {
+    pub(crate) fn to_string(self) -> String {
         match self {
             HapType::Unknown => \"unknown\".into(),
 {{#each Characteristics as |c|}}\
@@ -575,7 +576,7 @@ static ACCESSORY: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use crate::{
 \taccessory::{HapAccessory, HapAccessoryService, Accessory, Information},
 \tservice::{HapService, accessory_information::AccessoryInformation, {{snake_case service.Name}}},
-\tevent::EventEmitterPtr,
+\tpointer,
 \tResult,
 };
 
@@ -621,7 +622,7 @@ impl HapAccessory for {{trim service.Name}}Inner {
         &mut self.accessory_information
     }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);

@@ -1,28 +1,27 @@
 use std::sync::{Arc, Mutex};
 
-use erased_serde::{self, __internal_serialize_trait_object, serialize_trait_object};
+use erased_serde::{self, serialize_trait_object};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
     accessory::HapAccessory,
     characteristic::Perm,
-    event::EventEmitterPtr,
-    transport::http::{server::EventSubscriptions, ReadResponseObject, Status, WriteObject, WriteResponseObject},
+    pointer,
+    transport::http::{ReadResponseObject, Status, WriteObject, WriteResponseObject},
     Error,
     Result,
 };
 
-/// `AccessoryList` is a wrapper type holding an `Arc<Mutex>` with a `Vec` of boxed Accessories.
-#[derive(Clone)]
+/// `AccessoryList` is a wrapper type holding a list of Accessories.
 pub struct AccessoryList {
-    pub accessories: Arc<Mutex<Vec<AccessoryListPtr>>>,
-    event_emitter: EventEmitterPtr,
+    pub accessories: Arc<Mutex<Vec<pointer::AccessoryListMember>>>,
+    event_emitter: pointer::EventEmitter,
     id_count: u64,
 }
 
 impl AccessoryList {
     /// Creates a new `AccessoryList`.
-    pub fn new(event_emitter: EventEmitterPtr) -> AccessoryList {
+    pub fn new(event_emitter: pointer::EventEmitter) -> AccessoryList {
         AccessoryList {
             accessories: Arc::new(Mutex::new(Vec::new())),
             event_emitter,
@@ -31,7 +30,10 @@ impl AccessoryList {
     }
 
     /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
-    pub fn add_accessory(&mut self, accessory: Box<dyn AccessoryListMember + Send>) -> Result<AccessoryListPtr> {
+    pub fn add_accessory(
+        &mut self,
+        accessory: Box<dyn AccessoryListMember + Send>,
+    ) -> Result<pointer::AccessoryListMember> {
         let mut a = accessory;
         a.set_id(self.id_count);
         a.init_iids(self.id_count, self.event_emitter.clone())?;
@@ -45,7 +47,7 @@ impl AccessoryList {
     }
 
     /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryList`.
-    pub fn remove_accessory(&mut self, accessory: &AccessoryListPtr) -> Result<()> {
+    pub fn remove_accessory(&mut self, accessory: &pointer::AccessoryListMember) -> Result<()> {
         let accessory = accessory.lock().expect("couldn't access accessory");
         let mut remove = None;
         for (i, a) in self
@@ -134,7 +136,7 @@ impl AccessoryList {
     pub(crate) fn write_characteristic(
         &self,
         write_object: WriteObject,
-        event_subscriptions: &EventSubscriptions,
+        event_subscriptions: &pointer::EventSubscriptions,
     ) -> Result<WriteResponseObject> {
         let mut result_object = WriteResponseObject {
             aid: write_object.aid,
@@ -202,5 +204,3 @@ pub trait AccessoryListMember: HapAccessory + erased_serde::Serialize {}
 impl<T: HapAccessory + erased_serde::Serialize> AccessoryListMember for T {}
 
 serialize_trait_object!(AccessoryListMember);
-
-pub type AccessoryListPtr = Arc<Mutex<Box<dyn AccessoryListMember + Send>>>;

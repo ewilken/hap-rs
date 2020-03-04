@@ -1,9 +1,6 @@
 use std::{fmt, io, num, str, sync::mpsc};
 
-use chacha20_poly1305_aead;
-use eui48;
 use failure::{self, err_msg, Context, Fail};
-use hyper::{self, http};
 
 /// ErrorKind wrapper type.
 #[derive(Debug, Fail)]
@@ -15,11 +12,12 @@ pub enum ErrorKind {
     #[fail(display = "HTTP Status Code {}", _0)]
     HttpStatus(hyper::StatusCode),
     #[fail(display = "HTTP Error {}", _0)]
-    Http(#[cause] http::Error),
+    Http(#[cause] hyper::http::Error),
     #[fail(display = "Hyper Error {}", _0)]
     Hyper(#[cause] hyper::error::Error),
-    #[fail(display = "ChaCha20-Poly1305-AEAD Error {}", _0)]
-    ChaCha20Poly1305Aead(#[cause] chacha20_poly1305_aead::DecryptError),
+    // #[fail(display = "AEAD Error {}", _0)]
+    #[fail(display = "AEAD Error")]
+    Aead, /* (#[cause] aead::Error) */
     #[fail(display = "UTF-8 Error {}", _0)]
     Utf8(#[cause] str::Utf8Error),
     #[fail(display = "MAC Address Parse Error {}", _0)]
@@ -88,33 +86,34 @@ impl From<io::Error> for Error {
 // }
 
 impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Error { ErrorKind::Json(err).into() }
+    fn from(err: serde_json::Error) -> Self { ErrorKind::Json(err).into() }
 }
 
-impl From<http::Error> for Error {
-    fn from(err: http::Error) -> Error { ErrorKind::Http(err).into() }
+impl From<hyper::http::Error> for Error {
+    fn from(err: hyper::http::Error) -> Self { ErrorKind::Http(err).into() }
 }
 
 impl From<hyper::error::Error> for Error {
-    fn from(err: hyper::error::Error) -> Error { ErrorKind::Hyper(err).into() }
+    fn from(err: hyper::error::Error) -> Self { ErrorKind::Hyper(err).into() }
 }
 
-impl From<chacha20_poly1305_aead::DecryptError> for Error {
-    fn from(err: chacha20_poly1305_aead::DecryptError) -> Error { ErrorKind::ChaCha20Poly1305Aead(err).into() }
+impl From<aead::Error> for Error {
+    // fn from(err: aead::Error) -> Self { ErrorKind::Aead(err).into() }
+    fn from(_: aead::Error) -> Self { ErrorKind::Aead.into() }
 }
 
 impl From<str::Utf8Error> for Error {
-    fn from(err: str::Utf8Error) -> Error { ErrorKind::Utf8(err).into() }
+    fn from(err: str::Utf8Error) -> Self { ErrorKind::Utf8(err).into() }
 }
 
 impl From<eui48::ParseError> for Error {
-    fn from(err: eui48::ParseError) -> Error { ErrorKind::MacAddressParse(err).into() }
+    fn from(err: eui48::ParseError) -> Self { ErrorKind::MacAddressParse(err).into() }
 }
 
 impl From<num::ParseIntError> for Error {
-    fn from(err: num::ParseIntError) -> Error { ErrorKind::ParseInt(err).into() }
+    fn from(err: num::ParseIntError) -> Self { ErrorKind::ParseInt(err).into() }
 }
 
 impl From<mpsc::SendError<()>> for Error {
-    fn from(err: mpsc::SendError<()>) -> Error { ErrorKind::MpscSend(err).into() }
+    fn from(err: mpsc::SendError<()>) -> Self { ErrorKind::MpscSend(err).into() }
 }

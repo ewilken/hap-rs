@@ -1,13 +1,15 @@
+use serde::{Deserialize, Serialize};
+
 /// Bonjour Feature Flag.
-#[derive(Copy, Clone)]
-pub enum FeatureFlag {
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum BonjourFeatureFlag {
     Zero = 0,
     MfiCompliant = 1,
 }
 
 /// Bonjour Status Flag.
-#[derive(Copy, Clone)]
-pub enum StatusFlag {
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub enum BonjourStatusFlag {
     Zero = 0,
     NotPaired = 1,
     WifiNotConfigured = 2,

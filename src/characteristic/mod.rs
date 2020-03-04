@@ -1,23 +1,18 @@
 use std::sync::{Arc, Mutex};
 
-use erased_serde::{self, __internal_serialize_trait_object, serialize_trait_object};
+use erased_serde::{self, serialize_trait_object};
 use serde::{
     ser::{SerializeStruct, Serializer},
     Deserialize,
     Serialize,
 };
-use serde_json::{self, json};
+use serde_json::json;
 
-use crate::{
-    event::{Event, EventEmitterPtr},
-    Error,
-    HapType,
-    Result,
-};
+use crate::{event::Event, pointer, Error, HapType, Result};
 
 mod generated;
 
-pub use crate::characteristic::generated::*;
+pub use generated::*;
 
 /// Inner type of a `Characteristic`.
 #[derive(Default)]
@@ -44,12 +39,12 @@ pub struct Inner<T: Default + Clone + Serialize> {
     readable: Option<Box<dyn Readable<T> + Send>>,
     updatable: Option<Box<dyn Updatable<T> + Send>>,
 
-    event_emitter: Option<EventEmitterPtr>,
+    event_emitter: Option<pointer::EventEmitter>,
 }
 
 /// A Characteristic. A characteristic is a feature that represents data or an associated behavior
 /// of a service. The characteristic is defined by a universally unique type, and has additional
-/// properties that determine how the value of the characteristic can be accessed
+/// properties that determine how the value of the characteristic can be accessed.
 #[derive(Clone, Default)]
 pub struct Characteristic<T: Default + Clone + Serialize> {
     pub inner: Arc<Mutex<Inner<T>>>,
@@ -248,8 +243,8 @@ where
         Ok(())
     }
 
-    /// Sets a `hap::event::EventEmitterPtr` on the Characteristic.
-    pub fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()> {
+    /// Sets a `hap::event::pointer::EventEmitter` on the Characteristic.
+    pub fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) -> Result<()> {
         self.inner.lock().expect("couldn't access characteristic").event_emitter = event_emitter;
         Ok(())
     }
@@ -333,8 +328,8 @@ pub trait HapCharacteristic: erased_serde::Serialize {
     fn get_step_value(&self) -> Result<Option<serde_json::Value>>;
     /// Returns the maximum length of a Characteristic.
     fn get_max_len(&self) -> Result<Option<u16>>;
-    /// Sets a `hap::event::EventEmitterPtr` on the Characteristic.
-    fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()>;
+    /// Sets a `hap::event::pointer::EventEmitter` on the Characteristic.
+    fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) -> Result<()>;
 }
 
 serialize_trait_object!(HapCharacteristic);
@@ -365,8 +360,7 @@ where
 
     fn set_value(&mut self, value: serde_json::Value) -> Result<()> {
         let v;
-        // the controller is setting boolean values
-        // either as a boolean or as an integer
+        // for whatever reason, the controller is setting boolean values either as a boolean or as an integer
         if self.inner.lock().expect("couldn't access characteristic").format == Format::Bool && value.is_number() {
             let num_v: u8 = serde_json::from_value(value)?;
             if num_v == 0 {
@@ -407,7 +401,7 @@ where
 
     fn get_max_len(&self) -> Result<Option<u16>> { self.get_max_len() }
 
-    fn set_event_emitter(&mut self, event_emitter: Option<EventEmitterPtr>) -> Result<()> {
+    fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) -> Result<()> {
         self.set_event_emitter(event_emitter)
     }
 }
@@ -461,7 +455,7 @@ pub enum Unit {
     Seconds,
 }
 
-/// HAP defined format of a `Characteristic`.
+/// Format (data type) of a `Characteristic`.
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Format {
     #[serde(rename = "string")]

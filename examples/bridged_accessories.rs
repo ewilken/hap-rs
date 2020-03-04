@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use hap::{
     accessory::{bridge, door, outlet, security_system, valve, Category, Information},
     characteristic::{Characteristic, Readable, Updatable},
-    transport::{IpTransport, Transport},
+    server::{IpServer, Server},
     Config,
     HapType,
 };
@@ -179,12 +179,12 @@ fn main() {
         ..Default::default()
     };
 
-    let mut ip_transport = IpTransport::new(config).unwrap();
-    ip_transport.add_accessory(bridge).unwrap();
-    ip_transport.add_accessory(outlet).unwrap();
-    ip_transport.add_accessory(door).unwrap();
-    ip_transport.add_accessory(security_system).unwrap();
-    ip_transport.add_accessory(valve).unwrap();
+    // let mut ip_transport = IpServer::new(config).unwrap();
+    // ip_transport.add_accessory(bridge).unwrap();
+    // ip_transport.add_accessory(outlet).unwrap();
+    // ip_transport.add_accessory(door).unwrap();
+    // ip_transport.add_accessory(security_system).unwrap();
+    // ip_transport.add_accessory(valve).unwrap();
 
-    ip_transport.start().unwrap();
+    // ip_transport.start().unwrap();
 }

@@ -1,6 +1,6 @@
 use crate::{
     accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    event::EventEmitterPtr,
+    pointer,
     service::{
         accessory_information::AccessoryInformation,
         camera_rtp_stream_management,
@@ -55,7 +55,7 @@ impl HapAccessory for VideoDoorbellInner {
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
 
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: EventEmitterPtr) -> Result<()> {
+    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
         let mut next_iid = 1;
         for service in self.get_mut_services() {
             service.set_id(next_iid);

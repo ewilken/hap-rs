@@ -1,23 +1,36 @@
 use std::{
-    net::SocketAddr,
+    pin::Pin,
     sync::{Arc, Mutex},
+    task::{Context, Poll},
 };
 
-use futures::{future, stream::Stream, sync::oneshot, Future};
-use hyper::{self, server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
-use log::error;
-use route_recognizer::Router;
+use futures::{
+    channel::oneshot,
+    future::{self, BoxFuture, Future, FutureExt, TryFutureExt},
+    lock::Mutex as FutureMutex,
+    stream::StreamExt,
+};
+use hyper::{server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
+use log::{debug, error};
 use tokio::net::TcpListener;
 
 use crate::{
-    config::ConfigPtr,
-    db::{AccessoryList, DatabasePtr},
-    event::{Event, EventEmitterPtr},
-    protocol::IdPtr,
+    event::Event,
+    pointer,
     transport::{
         http::{
             event_response,
-            handler::{self, accessories, characteristics, identify, pair_setup, pair_verify, pairings},
+            handler::{
+                accessories::Accessories,
+                characteristics::{GetCharacteristics, UpdateCharacteristics},
+                identify::Identify,
+                pair_setup::PairSetup,
+                pair_verify::PairVerify,
+                pairings::Pairings,
+                HandlerExt,
+                JsonHandler,
+                TlvHandler,
+            },
             status_response,
             EventObject,
         },
@@ -27,236 +40,229 @@ use crate::{
     Result,
 };
 
-enum Route {
-    Get(Box<Mutex<dyn handler::Handler + Send>>),
-    Post(Box<Mutex<dyn handler::Handler + Send>>),
-    GetPut {
-        _get: Box<Mutex<dyn handler::Handler + Send>>,
-        _put: Box<Mutex<dyn handler::Handler + Send>>,
-    },
+struct Handlers {
+    pub pair_setup: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub pair_verify: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub accessories: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub get_characteristics: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub put_characteristics: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub pairings: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub identify: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
 }
 
 struct Api {
-    controller_id: IdPtr,
-    event_subscriptions: EventSubscriptions,
-    config: ConfigPtr,
-    database: DatabasePtr,
-    accessories: AccessoryList,
-    event_emitter: EventEmitterPtr,
-    router: Arc<Router<Route>>,
+    controller_id: pointer::ControllerId,
+    event_subscriptions: pointer::EventSubscriptions,
+    config: pointer::Config,
+    storage: pointer::Storage,
+    accessory_list: pointer::AccessoryList,
+    event_emitter: pointer::EventEmitter,
+    handlers: Handlers,
 }
 
 impl Api {
     fn new(
-        controller_id: IdPtr,
-        event_subscriptions: EventSubscriptions,
-        config: ConfigPtr,
-        database: DatabasePtr,
-        accessories: AccessoryList,
-        event_emitter: EventEmitterPtr,
+        controller_id: pointer::ControllerId,
+        event_subscriptions: pointer::EventSubscriptions,
+        config: pointer::Config,
+        storage: pointer::Storage,
+        accessory_list: pointer::AccessoryList,
+        event_emitter: pointer::EventEmitter,
         session_sender: oneshot::Sender<Session>,
-    ) -> Api {
-        let mut router = Router::new();
-        router.add(
-            "/pair-setup",
-            Route::Post(Box::new(Mutex::new(handler::TlvHandlerType::from(
-                pair_setup::PairSetup::new(),
-            )))),
-        );
-        router.add(
-            "/pair-verify",
-            Route::Post(Box::new(Mutex::new(handler::TlvHandlerType::from(
-                pair_verify::PairVerify::new(session_sender),
-            )))),
-        );
-        router.add(
-            "/accessories",
-            Route::Get(Box::new(Mutex::new(handler::JsonHandlerType::from(
-                accessories::Accessories::new(),
-            )))),
-        );
-        router.add("/characteristics", Route::GetPut {
-            _get: Box::new(Mutex::new(handler::JsonHandlerType::from(
-                characteristics::GetCharacteristics::new(),
-            ))),
-            _put: Box::new(Mutex::new(handler::JsonHandlerType::from(
-                characteristics::UpdateCharacteristics::new(),
-            ))),
-        });
-        router.add(
-            "/pairings",
-            Route::Post(Box::new(Mutex::new(handler::TlvHandlerType::from(
-                pairings::Pairings::new(),
-            )))),
-        );
-        router.add(
-            "/identify",
-            Route::Post(Box::new(Mutex::new(handler::JsonHandlerType::from(
-                identify::Identify::new(),
-            )))),
-        );
-
+    ) -> Self {
         Api {
             controller_id,
             event_subscriptions,
             config,
-            database,
-            accessories,
+            storage,
+            accessory_list,
             event_emitter,
-            router: Arc::new(router),
+            handlers: Handlers {
+                pair_setup: Arc::new(FutureMutex::new(Box::new(TlvHandler::from(PairSetup::new())))),
+                pair_verify: Arc::new(FutureMutex::new(Box::new(TlvHandler::from(PairVerify::new(
+                    session_sender,
+                ))))),
+                accessories: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(Accessories::new())))),
+                get_characteristics: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(GetCharacteristics::new())))),
+                put_characteristics: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(
+                    UpdateCharacteristics::new(),
+                )))),
+                pairings: Arc::new(FutureMutex::new(Box::new(TlvHandler::from(Pairings::new())))),
+                identify: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(Identify::new())))),
+            },
         }
     }
 }
 
-impl Service for Api {
+impl Service<Request<Body>> for Api {
+    // type Error = http::Error;
     type Error = Error;
-    type Future = Box<dyn Future<Item = Response<Self::ResBody>, Error = Self::Error> + Send>;
-    type ReqBody = Body;
-    type ResBody = Body;
+    type Future = Pin<Box<dyn Future<Output = std::result::Result<Self::Response, Self::Error>> + Send>>;
+    type Response = Response<Body>;
 
-    fn call(&mut self, req: Request<Self::ReqBody>) -> Self::Future {
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<std::result::Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, req: Request<Body>) -> Self::Future {
         let (parts, body) = req.into_parts();
-        let router = self.router.clone();
+        let method = parts.method;
+        let uri = parts.uri;
+
+        let mut handler: Option<Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>> = match (method, uri.path()) {
+            (Method::POST, "/pair-setup") => Some(self.handlers.pair_setup.clone()),
+            (Method::POST, "/pair-verify") => Some(self.handlers.pair_verify.clone()),
+            (Method::GET, "/accessories") => Some(self.handlers.accessories.clone()),
+            (Method::GET, "/characteristics") => Some(self.handlers.get_characteristics.clone()),
+            (Method::PUT, "/characteristics") => Some(self.handlers.put_characteristics.clone()),
+            (Method::POST, "/pairings") => Some(self.handlers.pairings.clone()),
+            (Method::POST, "/identify") => Some(self.handlers.identify.clone()),
+            _ => None,
+        };
+
         let controller_id = self.controller_id.clone();
         let event_subscriptions = self.event_subscriptions.clone();
         let config = self.config.clone();
-        let database = self.database.clone();
-        let accessories = self.accessories.clone();
+        let storage = self.storage.clone();
+        let accessory_list = self.accessory_list.clone();
         let event_emitter = self.event_emitter.clone();
 
-        Box::new(
-            body.fold(vec![], |mut v, c| {
-                v.extend(c.to_vec());
-                future::ok::<Vec<u8>, hyper::Error>(v)
-            })
-            .map_err(|e| e.into())
-            .and_then(move |body| {
-                if let Ok(route_match) = router.recognize(parts.uri.path()) {
-                    match (route_match.handler, parts.method) {
-                        (&Route::Get(ref handler), Method::GET) => handler.lock().unwrap().handle(
-                            parts.uri,
-                            body.into(),
-                            &controller_id,
-                            &event_subscriptions,
-                            &config,
-                            &database,
-                            &accessories,
-                            &event_emitter,
-                        ),
-                        (&Route::Post(ref handler), Method::POST) => handler.lock().unwrap().handle(
-                            parts.uri,
-                            body.into(),
-                            &controller_id,
-                            &event_subscriptions,
-                            &config,
-                            &database,
-                            &accessories,
-                            &event_emitter,
-                        ),
-                        (&Route::GetPut { ref _get, ref _put }, Method::GET) => _get.lock().unwrap().handle(
-                            parts.uri,
-                            body.into(),
-                            &controller_id,
-                            &event_subscriptions,
-                            &config,
-                            &database,
-                            &accessories,
-                            &event_emitter,
-                        ),
-                        (&Route::GetPut { ref _get, ref _put }, Method::PUT) => _put.lock().unwrap().handle(
-                            parts.uri,
-                            body.into(),
-                            &controller_id,
-                            &event_subscriptions,
-                            &config,
-                            &database,
-                            &accessories,
-                            &event_emitter,
-                        ),
-                        _ => Box::new(future::result(status_response(StatusCode::BAD_REQUEST))),
-                    }
-                } else {
-                    Box::new(future::result(status_response(StatusCode::NOT_FOUND)))
-                }
-            }),
-        )
+        let fut = async move {
+            match handler.take() {
+                Some(handler) =>
+                    handler
+                        .lock()
+                        .await
+                        .handle(
+                            uri,
+                            body,
+                            controller_id,
+                            event_subscriptions,
+                            config,
+                            storage,
+                            accessory_list,
+                            event_emitter,
+                        )
+                        .await,
+                None => future::ready(status_response(StatusCode::NOT_FOUND)).await,
+            }
+        }
+        .boxed();
+
+        fut
     }
 }
 
-pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
+#[derive(Clone)]
+pub struct Server {
+    config: pointer::Config,
+    storage: pointer::Storage,
+    accessory_list: pointer::AccessoryList,
+    event_emitter: pointer::EventEmitter,
+}
 
-pub fn serve(
-    socket_addr: &SocketAddr,
-    config: &ConfigPtr,
-    database: &DatabasePtr,
-    accessories: &AccessoryList,
-    event_emitter: &EventEmitterPtr,
-) -> Result<()> {
-    let listener = TcpListener::bind(socket_addr)?;
+impl Server {
+    pub fn new(
+        config: pointer::Config,
+        storage: pointer::Storage,
+        accessory_list: pointer::AccessoryList,
+        event_emitter: pointer::EventEmitter,
+    ) -> Self {
+        Server {
+            config,
+            storage,
+            accessory_list,
+            event_emitter,
+        }
+    }
 
-    let config = config.clone();
-    let database = database.clone();
-    let accessories = accessories.clone();
-    let event_emitter = event_emitter.clone();
+    pub fn run_handle(&self) -> BoxFuture<Result<()>> {
+        let config = self.config.clone();
+        let storage = self.storage.clone();
+        let accessory_list = self.accessory_list.clone();
+        let event_emitter = self.event_emitter.clone();
 
-    let server = listener
-        .incoming()
-        .for_each(move |stream| {
-            let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
-            let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
-            let event_subscriptions = Arc::new(Mutex::new(vec![]));
-            let api = Api::new(
-                encrypted_stream.controller_id.clone(),
-                event_subscriptions.clone(),
-                config.clone(),
-                database.clone(),
-                accessories.clone(),
-                event_emitter.clone(),
-                session_sender,
-            );
-            let http = Http::new();
+        async move {
+            let socket_addr = config.lock().expect("accessing config").socket_addr;
+            let mut listener = TcpListener::bind(socket_addr).await?;
 
-            event_emitter
-                .lock()
-                .expect("couldn't add listener for characteristic value change events")
-                .add_listener(Box::new(move |event| match *event {
-                    Event::CharacteristicValueChanged { aid, iid, ref value } => {
-                        let mut dropped_subscriptions = vec![];
-                        for (i, &(s_aid, s_iid)) in event_subscriptions
-                            .lock()
-                            .expect("couldn't read event subscriptions")
-                            .iter()
-                            .enumerate()
-                        {
-                            if s_aid == aid && s_iid == iid {
-                                let event = EventObject {
-                                    aid,
-                                    iid,
-                                    value: value.clone(),
-                                };
-                                let event_res = event_response(vec![event]).expect("couldn't create event response");
-                                if stream_outgoing.unbounded_send(event_res).is_err() {
-                                    dropped_subscriptions.push(i);
+            debug!("binding TCP listener on {}", &socket_addr);
+
+            let mut incoming = listener.incoming();
+
+            while let Some(stream) = incoming.next().await {
+                let stream = stream?;
+
+                debug!("incoming TCP stream from {}", stream.peer_addr()?);
+
+                let (encrypted_stream, stream_incoming, stream_outgoing, session_sender) = EncryptedStream::new(stream);
+                let stream_wrapper = StreamWrapper::new(stream_incoming, stream_outgoing.clone());
+                let event_subscriptions = Arc::new(Mutex::new(vec![]));
+
+                let api = Api::new(
+                    encrypted_stream.controller_id.clone(),
+                    event_subscriptions.clone(),
+                    config.clone(),
+                    storage.clone(),
+                    accessory_list.clone(),
+                    event_emitter.clone(),
+                    session_sender,
+                );
+
+                event_emitter
+                    .lock()
+                    .expect("couldn't add listener for characteristic value change events")
+                    .add_listener(Box::new(move |event| match *event {
+                        Event::CharacteristicValueChanged { aid, iid, ref value } => {
+                            let mut dropped_subscriptions = vec![];
+                            for (i, &(s_aid, s_iid)) in event_subscriptions
+                                .lock()
+                                .expect("couldn't read event subscriptions")
+                                .iter()
+                                .enumerate()
+                            {
+                                if s_aid == aid && s_iid == iid {
+                                    let event = EventObject {
+                                        aid,
+                                        iid,
+                                        value: value.clone(),
+                                    };
+                                    let event_res =
+                                        event_response(vec![event]).expect("couldn't create event response");
+                                    if stream_outgoing.unbounded_send(event_res).is_err() {
+                                        dropped_subscriptions.push(i);
+                                    }
                                 }
                             }
-                        }
-                        let mut ev = event_subscriptions.lock().expect("couldn't modify event subscriptions");
-                        for s in dropped_subscriptions {
-                            ev.remove(s);
-                        }
-                    },
-                    _ => {},
-                }));
+                            let mut ev = event_subscriptions.lock().expect("couldn't modify event subscriptions");
+                            for s in dropped_subscriptions {
+                                ev.remove(s);
+                            }
+                        },
+                        _ => {},
+                    }));
 
-            encrypted_stream
-                .map_err(|e| error!("{}", e))
-                .join(http.serve_connection(stream_wrapper, api).map_err(|e| error!("{}", e)))
-                .map(|_| ())
-                .then(|_| Ok(()))
-        })
-        .map_err(|e| error!("{}", e));
+                let http = Http::new();
 
-    tokio::run(server);
+                // future::join(encrypted_stream, http.serve_connection(stream_wrapper, api)).await;
 
-    Ok(())
+                // encrypted_stream
+                //     .map_err(|e| error!("{}", e))
+                //     .join(http.serve_connection(stream_wrapper, api).map_err(|e| error!("{}", e)))
+                //     .map(|_| ())
+                //     .then(|_| Ok(()))
+
+                future::join(
+                    encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()),
+                    http.serve_connection(stream_wrapper, api)
+                        .map_err(|e| error!("{:?}", e))
+                        .map(|_| ()),
+                )
+                .await;
+            }
+
+            Ok(())
+        }
+        .boxed()
+    }
 }

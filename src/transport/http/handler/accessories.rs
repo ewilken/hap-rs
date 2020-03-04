@@ -1,11 +1,11 @@
+use std::ops::Deref;
+
+use futures::future::{BoxFuture, FutureExt};
 use hyper::{Body, Response, StatusCode, Uri};
 
 use crate::{
-    config::ConfigPtr,
-    db::{AccessoryList, DatabasePtr},
-    event::EventEmitterPtr,
-    protocol::IdPtr,
-    transport::http::{handler::JsonHandler, json_response, server::EventSubscriptions},
+    pointer,
+    transport::http::{handler::JsonHandlerExt, json_response},
     Result,
 };
 
@@ -15,19 +15,23 @@ impl Accessories {
     pub fn new() -> Accessories { Accessories }
 }
 
-impl JsonHandler for Accessories {
+impl JsonHandlerExt for Accessories {
     fn handle(
         &mut self,
         _: Uri,
-        _: Vec<u8>,
-        _: &IdPtr,
-        _: &EventSubscriptions,
-        _: &ConfigPtr,
-        _: &DatabasePtr,
-        accessories: &AccessoryList,
-        _: &EventEmitterPtr,
-    ) -> Result<Response<Body>> {
-        let resp_body = serde_json::to_vec(accessories)?;
-        json_response(resp_body, StatusCode::OK)
+        _: Body,
+        _: pointer::ControllerId,
+        _: pointer::EventSubscriptions,
+        _: pointer::Config,
+        _: pointer::Storage,
+        accessory_list: pointer::AccessoryList,
+        _: pointer::EventEmitter,
+    ) -> BoxFuture<Result<Response<Body>>> {
+        async move {
+            let accessory_list = accessory_list.lock().expect("couldn't access accessory list");
+            let resp_body = serde_json::to_vec(&accessory_list.deref())?;
+            json_response(resp_body, StatusCode::OK)
+        }
+        .boxed()
     }
 }
