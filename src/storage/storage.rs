@@ -2,8 +2,7 @@ use uuid::Uuid;
 
 use crate::{pairing::Pairing, Config, Result};
 
-/// `Storage` is implemented by the data storage methods HAP supports. Currently, that's just
-/// `FileStorage`.
+/// `Storage` is implemented by the data storage methods HAP supports. Currently, that's just `FileStorage`.
 pub trait Storage {
     /// Loads the `Config` from the `Storage`.
     fn load_config(&self) -> Result<Config>;

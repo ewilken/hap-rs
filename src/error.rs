@@ -15,6 +15,8 @@ pub enum ErrorKind {
     Http(#[cause] hyper::http::Error),
     #[fail(display = "Hyper Error {}", _0)]
     Hyper(#[cause] hyper::error::Error),
+    #[fail(display = "Task Join Error {}", _0)]
+    TaskJoin(#[cause] tokio::task::JoinError),
     // #[fail(display = "AEAD Error {}", _0)]
     #[fail(display = "AEAD Error")]
     Aead, /* (#[cause] aead::Error) */
@@ -95,6 +97,10 @@ impl From<hyper::http::Error> for Error {
 
 impl From<hyper::error::Error> for Error {
     fn from(err: hyper::error::Error) -> Self { ErrorKind::Hyper(err).into() }
+}
+
+impl From<tokio::task::JoinError> for Error {
+    fn from(err: tokio::task::JoinError) -> Self { ErrorKind::TaskJoin(err).into() }
 }
 
 impl From<aead::Error> for Error {

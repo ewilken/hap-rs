@@ -23,9 +23,9 @@ pub trait HapService {
     /// Sets the primary value of a Service.
     fn set_primary(&mut self, primary: bool);
     /// Returns references to the Characteristics of a Service.
-    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic>;
+    fn get_characteristics(&self) -> Vec<&(dyn HapCharacteristic + Send + Sync)>;
     /// Returns mutable references to the Characteristics of a Service.
-    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic>;
+    fn get_mut_characteristics(&mut self) -> Vec<&mut (dyn HapCharacteristic + Send + Sync)>;
 }
 
 /// A Service. Services group functionality in order to provide context. They are comprised of
@@ -34,6 +34,14 @@ pub trait HapService {
 pub struct Service<T: HapService> {
     pub inner: T,
 }
+
+// impl<T: HapService> Service<T> {
+//     /// Consumes self into a serializable helper type.
+//     async fn to_serializable(self) -> SerializableService<T> {
+//         let inner = self.inner.lock().await.deref();
+//         SerializableService { inner: *inner }
+//     }
+// }
 
 impl<T: HapService> Service<T> {
     /// Creates a new `Service`.
@@ -68,7 +76,9 @@ impl<T: HapService> HapService for Service<T> {
 
     fn set_primary(&mut self, primary: bool) { self.inner.set_primary(primary) }
 
-    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> { self.inner.get_characteristics() }
+    fn get_characteristics(&self) -> Vec<&(dyn HapCharacteristic + Send + Sync)> { self.inner.get_characteristics() }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> { self.inner.get_mut_characteristics() }
+    fn get_mut_characteristics(&mut self) -> Vec<&mut (dyn HapCharacteristic + Send + Sync)> {
+        self.inner.get_mut_characteristics()
+    }
 }

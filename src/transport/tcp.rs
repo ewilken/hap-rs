@@ -3,7 +3,7 @@ use std::{
     future::Future,
     io::{self, ErrorKind},
     pin::Pin,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
     task::{Context, Poll},
 };
 
@@ -18,7 +18,7 @@ use futures::{
     },
     io::Error,
 };
-use log::{debug, error};
+use log::debug;
 use ring::{digest, hkdf, hmac};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
@@ -127,7 +127,7 @@ pub struct EncryptedStream {
     incoming_sender: UnboundedSender<Vec<u8>>,
     outgoing_receiver: UnboundedReceiver<Vec<u8>>,
     session_receiver: oneshot::Receiver<Session>,
-    pub controller_id: Arc<Mutex<Option<Uuid>>>,
+    pub controller_id: Arc<RwLock<Option<Uuid>>>,
     shared_secret: Option<[u8; 32]>,
     decrypt_count: u64,
     encrypt_count: u64,
@@ -159,7 +159,7 @@ impl EncryptedStream {
                 incoming_sender,
                 outgoing_receiver,
                 session_receiver: receiver,
-                controller_id: Arc::new(Mutex::new(None)),
+                controller_id: Arc::new(RwLock::new(None)),
                 shared_secret: None,
                 decrypt_count: 0,
                 encrypt_count: 0,
@@ -379,10 +379,8 @@ impl AsyncRead for EncryptedStream {
         if encrypted_stream.shared_secret.is_none() {
             match encrypted_stream.session_receiver.try_recv() {
                 Ok(Some(session)) => {
-                    *encrypted_stream
-                        .controller_id
-                        .lock()
-                        .expect("couldn't access controller_id") = Some(session.controller_id);
+                    *encrypted_stream.controller_id.write().expect("setting controller_id") =
+                        Some(session.controller_id);
                     encrypted_stream.shared_secret = Some(session.shared_secret);
                 },
                 _ => {

@@ -19,7 +19,6 @@ use srp::{
     types::SrpGroup,
 };
 use uuid::Uuid;
-use x25519_dalek::PublicKey;
 
 use crate::{
     event::Event,
@@ -182,11 +181,7 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
     csprng.fill_bytes(&mut salt);
     csprng.fill_bytes(&mut b);
 
-    let private_key = srp_private_key::<Sha512>(
-        b"Pair-Setup",
-        config.lock().expect("couldn't access config").pin.as_bytes(),
-        &salt,
-    ); // x = H(s | H(I | ":" | P))
+    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", config.lock().await.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
     let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
     let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
 
@@ -196,18 +191,13 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
         verifier: &verifier,
     };
     let srp_server = SrpServer::<Sha512>::new(&user, b"foo", &b, &G_3072)?;
-    let b_pub_bytes = srp_server.get_b_pub();
-
-    let mut b_pub = [0; 32];
-    let bytes = &b_pub_bytes[..b_pub.len()]; // panics if not enough data
-    b_pub.copy_from_slice(bytes);
-    let b_pub = PublicKey::from(b_pub);
+    let b_pub = srp_server.get_b_pub();
 
     handler.session = Some(Session {
         salt,
         verifier,
         b,
-        b_pub: b_pub_bytes.clone(),
+        b_pub: b_pub.clone(),
         shared_secret: None,
     });
 
@@ -215,8 +205,7 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
 
     Ok(vec![
         Value::State(StepNumber::StartRes as u8),
-        // Value::X25519PublicKey(b_pub),
-        Value::PublicKey(b_pub_bytes),
+        Value::PublicKey(b_pub),
         Value::Salt(salt),
     ])
 }
@@ -230,17 +219,13 @@ async fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) ->
             salt: &session.salt,
             verifier: &session.verifier,
         };
-        let srp_server = SrpServer::<Sha512>::new(&user, &a_pub, &session.b, &G_3072)?;
+        let srp_server = SrpServer::<Sha512>::new(&user, a_pub, &session.b, &G_3072)?;
         let shared_secret = srp_server.get_key();
-        session.shared_secret = Some(shared_secret.as_slice().to_vec());
-        let b_proof = verify_client_proof::<Sha512>(
-            &session.b_pub,
-            a_pub,
-            a_proof,
-            &session.salt,
-            &shared_secret.as_slice().to_vec(),
-            &G_3072,
-        )?;
+
+        session.shared_secret = Some(shared_secret.to_vec());
+
+        let b_proof =
+            verify_client_proof::<Sha512>(&session.b_pub, a_pub, a_proof, &session.salt, &shared_secret, &G_3072)?;
 
         info!("pair setup M4: sending SRP verify response");
 
@@ -260,7 +245,7 @@ async fn handle_exchange(
     info!("pair setup M5: received SRP exchange request");
 
     if let Some(ref mut session) = handler.session {
-        if let Some(ref mut shared_secret) = session.shared_secret {
+        if let Some(ref shared_secret) = session.shared_secret {
             let encrypted_data = Vec::from(&data[..data.len() - 16]);
             let auth_tag = Vec::from(&data[data.len() - 16..]);
 
@@ -300,9 +285,6 @@ async fn handle_exchange(
             device_info.extend(device_pairing_id);
             device_info.extend(device_ltpk.as_bytes());
 
-            // if !ed25519::verify(&device_info, &device_ltpk, &device_signature) {
-            //     return Err(tlv::Error::Authentication);
-            // }
             if device_ltpk.verify(&device_info, &device_signature).is_err() {
                 return Err(tlv::Error::Authentication);
             }
@@ -312,17 +294,14 @@ async fn handle_exchange(
             let mut pairing_ltpk = [0; 32];
             pairing_ltpk[..32].clone_from_slice(&device_ltpk.as_bytes()[..32]);
 
-            if let Some(max_peers) = config.lock().expect("couldn't access config").max_peers {
-                if storage.lock().expect("couldn't access storage").count_pairings()? + 1 > max_peers {
+            if let Some(max_peers) = config.lock().await.max_peers {
+                if storage.lock().await.count_pairings()? + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
             }
 
             let pairing = Pairing::new(pairing_uuid, Permissions::Admin, device_ltpk);
-            storage
-                .lock()
-                .expect("couldn't access storage")
-                .insert_pairing(&pairing)?;
+            storage.lock().await.insert_pairing(&pairing)?;
 
             let mut accessory_x = [0; 32];
             let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
@@ -333,7 +312,7 @@ async fn handle_exchange(
                 &mut accessory_x,
             );
 
-            let config = config.lock().expect("couldn't access config");
+            let config = config.lock().await;
             let device_id = config.device_id.to_hex_string();
 
             let mut accessory_info: Vec<u8> = Vec::new();
@@ -344,7 +323,7 @@ async fn handle_exchange(
 
             let encoded_sub_tlv = vec![
                 Value::Identifier(device_id),
-                Value::Ed25519PublicKey(config.device_ed25519_keypair.public),
+                Value::PublicKey(config.device_ed25519_keypair.public.as_bytes().to_vec()),
                 Value::Signature(accessory_signature),
             ]
             .encode();
@@ -358,10 +337,7 @@ async fn handle_exchange(
                 aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &[], &mut encrypted_data)?;
             encrypted_data.extend(&auth_tag);
 
-            event_emitter
-                .lock()
-                .expect("couldn't access event_emitter")
-                .emit(&Event::DevicePaired);
+            event_emitter.lock().await.emit(&Event::DevicePaired).await;
 
             info!("pair setup M6: sending SRP exchange response");
 

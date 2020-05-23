@@ -1,6 +1,10 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-use futures::future::{self, BoxFuture, FutureExt};
+use async_trait::async_trait;
+use futures::{
+    future::{self, BoxFuture, FutureExt},
+    lock::Mutex,
+};
 
 use crate::{
     config::Config,
@@ -70,31 +74,36 @@ impl IpServer {
     ///
     /// //ip_transport.start().unwrap();
     /// ```
-    pub fn new<S: Storage + Send + 'static>(config: Config, storage: S) -> Result<Self> {
+    pub fn new<S: Storage + Send + Sync + 'static>(config: Config, storage: S) -> Result<Self> {
         let config = Arc::new(Mutex::new(config));
         let storage: pointer::Storage = Arc::new(Mutex::new(Box::new(storage)));
 
         let config_ = config.clone();
         let storage_ = storage.clone();
         let mut event_emitter = EventEmitter::new();
-        event_emitter.add_listener(Box::new(move |event| match *event {
-            Event::DevicePaired => {
-                if let Ok(count) = storage_.lock().expect("couldn't access storage").count_pairings() {
-                    if count > 0 {
-                        let mut c = config_.lock().expect("couldn't access config");
-                        c.status_flag = BonjourStatusFlag::Zero;
-                    }
+        event_emitter.add_listener(Box::new(move |event| {
+            let config_ = config_.clone();
+            let storage_ = storage_.clone();
+            async move {
+                match *event {
+                    Event::DevicePaired =>
+                        if let Ok(count) = storage_.lock().await.count_pairings() {
+                            if count > 0 {
+                                let mut c = config_.lock().await;
+                                c.status_flag = BonjourStatusFlag::Zero;
+                            }
+                        },
+                    Event::DeviceUnpaired =>
+                        if let Ok(count) = storage_.lock().await.count_pairings() {
+                            if count == 0 {
+                                let mut c = config_.lock().await;
+                                c.status_flag = BonjourStatusFlag::NotPaired;
+                            }
+                        },
+                    _ => {},
                 }
-            },
-            Event::DeviceUnpaired => {
-                if let Ok(count) = storage_.lock().expect("couldn't access storage").count_pairings() {
-                    if count == 0 {
-                        let mut c = config_.lock().expect("couldn't access config");
-                        c.status_flag = BonjourStatusFlag::NotPaired;
-                    }
-                }
-            },
-            _ => {},
+            }
+            .boxed()
         }));
         let event_emitter = Arc::new(Mutex::new(event_emitter));
         let accessory_list = Arc::new(Mutex::new(AccessoryList::new(event_emitter.clone())));
@@ -120,6 +129,7 @@ impl IpServer {
     }
 }
 
+#[async_trait]
 impl Server for IpServer {
     fn run_handle(&self) -> BoxFuture<()> {
         let http_handle = self.http_server.run_handle();
@@ -132,29 +142,27 @@ impl Server for IpServer {
 
     fn storage_pointer(&self) -> pointer::Storage { self.storage.clone() }
 
-    fn add_accessory<A: 'static + AccessoryListMember + Send>(
+    async fn add_accessory<A: 'static + AccessoryListMember + Send + Sync>(
         &mut self,
         accessory: A,
     ) -> Result<pointer::AccessoryListMember> {
         let accessory = self
             .accessory_list
             .lock()
-            .expect("couldn't access accessory list")
-            .add_accessory(Box::new(accessory))?;
+            .await
+            .add_accessory(Box::new(accessory))
+            .await?;
 
-        let mut config = self.config.lock().expect("couldn't access config");
+        let mut config = self.config.lock().await;
         config.configuration_number += 1;
 
         Ok(accessory)
     }
 
-    fn remove_accessory(&mut self, accessory: &pointer::AccessoryListMember) -> Result<()> {
-        self.accessory_list
-            .lock()
-            .expect("couldn't access accessory list")
-            .remove_accessory(accessory)?;
+    async fn remove_accessory(&mut self, accessory: &pointer::AccessoryListMember) -> Result<()> {
+        self.accessory_list.lock().await.remove_accessory(&accessory).await?;
 
-        let mut config = self.config.lock().expect("couldn't access config");
+        let mut config = self.config.lock().await;
         config.configuration_number += 1;
 
         Ok(())

@@ -69,8 +69,9 @@ impl JsonHandlerExt for GetCharacteristics {
 
                     let res_object = match accessory_list
                         .lock()
-                        .expect("couldn't access accessory list")
+                        .await
                         .read_characteristic(aid, iid, f_meta, f_perms, f_type, f_ev)
+                        .await
                     {
                         Ok(mut res_object) => {
                             if res_object.status != Some(0) {
@@ -159,8 +160,9 @@ impl JsonHandlerExt for UpdateCharacteristics {
                 let aid = c.aid;
                 let res_object = match accessories
                     .lock()
-                    .expect("couldn't access accessory list")
+                    .await
                     .write_characteristic(c, &event_subscriptions)
+                    .await
                 {
                     Ok(res_object) => {
                         if res_object.status != 0 {

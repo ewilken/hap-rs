@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use futures::future::{BoxFuture, FutureExt};
 use hyper::{Body, Response, StatusCode, Uri};
 
@@ -28,8 +26,8 @@ impl JsonHandlerExt for Accessories {
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         async move {
-            let accessory_list = accessory_list.lock().expect("couldn't access accessory list");
-            let resp_body = serde_json::to_vec(&accessory_list.deref())?;
+            let resp_body = accessory_list.lock().await.as_serialized_json().await?;
+            // let resp_body = serde_json::to_vec(&accessory_list)?;
             json_response(resp_body, StatusCode::OK)
         }
         .boxed()

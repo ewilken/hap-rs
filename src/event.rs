@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use futures::future::BoxFuture;
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -11,17 +12,19 @@ pub enum Event {
 
 #[derive(Default)]
 pub struct EventEmitter {
-    listeners: Vec<Box<dyn Fn(&Event) + Send>>,
+    listeners: Vec<Box<dyn (Fn(&Event) -> BoxFuture<()>) + Send + Sync>>,
 }
 
 impl EventEmitter {
     pub fn new() -> EventEmitter { EventEmitter { listeners: vec![] } }
 
-    pub fn add_listener(&mut self, listener: Box<dyn Fn(&Event) + Send>) { self.listeners.push(listener); }
+    pub fn add_listener(&mut self, listener: Box<dyn (Fn(&Event) -> BoxFuture<()>) + Send + Sync>) {
+        self.listeners.push(listener);
+    }
 
-    pub fn emit(&self, event: &Event) {
+    pub async fn emit(&self, event: &Event) {
         for listener in &self.listeners {
-            listener(&event);
+            listener(&event).await;
         }
     }
 }

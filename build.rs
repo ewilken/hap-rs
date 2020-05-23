@@ -527,8 +527,8 @@ impl HapService for {{trim service.Name}}Inner {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
-        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
+    fn get_characteristics(&self) -> Vec<&(dyn HapCharacteristic + Send + Sync)> {
+        let mut characteristics: Vec<&(dyn HapCharacteristic + Send + Sync)> = vec![
 {{#each required_characteristics as |r|}}\
 \t\t\t&self.{{characteristic_file_name r.Name}},
 {{/each}}\
@@ -541,8 +541,8 @@ impl HapService for {{trim service.Name}}Inner {
         \t\tcharacteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
-        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut (dyn HapCharacteristic + Send + Sync)> {
+        let mut characteristics: Vec<&mut (dyn HapCharacteristic + Send + Sync)> = vec![
 {{#each required_characteristics as |r|}}\
 \t\t\t&mut self.{{characteristic_file_name r.Name}},
 {{/each}}\
@@ -604,14 +604,14 @@ impl HapAccessory for {{trim service.Name}}Inner {
         self.id = id;
     }
 
-    fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
+    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> {
         vec![
             &self.accessory_information,
             &self.{{snake_case service.Name}},
         ]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
+    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
         vec![
             &mut self.accessory_information,
             &mut self.{{snake_case service.Name}},
@@ -628,9 +628,9 @@ impl HapAccessory for {{trim service.Name}}Inner {
             service.set_id(next_iid);
             next_iid += 1;
             for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid)?;
-                characteristic.set_accessory_id(accessory_id)?;
-                characteristic.set_event_emitter(Some(event_emitter.clone()))?;
+                characteristic.set_id(next_iid);
+                characteristic.set_accessory_id(accessory_id);
+                characteristic.set_event_emitter(Some(event_emitter.clone()));
                 next_iid += 1;
             }
         }

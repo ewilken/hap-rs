@@ -1,4 +1,4 @@
-use std::str;
+use std::{ops::Deref, str};
 
 use futures::{
     future::{BoxFuture, FutureExt},
@@ -121,8 +121,8 @@ impl TlvHandlerExt for Pairings {
                     config,
                     storage,
                     event_emitter,
-                    &pairing_id,
-                    &ltpk,
+                    pairing_id,
+                    ltpk,
                     permissions,
                 )
                 .await
@@ -131,7 +131,7 @@ impl TlvHandlerExt for Pairings {
                     Err(err) => Err(tlv::ErrorContainer::new(StepNumber::Res as u8, err)),
                 },
                 HandlerType::Remove { pairing_id } => {
-                    match handle_remove(controller_id, storage, event_emitter, &pairing_id).await {
+                    match handle_remove(controller_id, storage, event_emitter, pairing_id).await {
                         Ok(res) => Ok(res),
                         Err(err) => Err(tlv::ErrorContainer::new(StepNumber::Res as u8, err)),
                     }
@@ -151,34 +151,31 @@ async fn handle_add(
     config: pointer::Config,
     storage: pointer::Storage,
     event_emitter: pointer::EventEmitter,
-    pairing_id: &[u8],
-    ltpk: &[u8],
+    pairing_id: Vec<u8>,
+    ltpk: Vec<u8>,
     permissions: Permissions,
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("M1: Got Add Pairing Request");
 
-    check_admin(&controller_id, &storage)?;
+    check_admin(&controller_id, &storage).await?;
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
 
-    let mut s = storage.lock().expect("couldn't access storage");
+    let mut s = storage.lock().await;
     match s.select_pairing(&pairing_uuid) {
         Ok(mut pairing) => {
-            if pairing.public_key != ed25519_dalek::PublicKey::from_bytes(ltpk)? {
+            if pairing.public_key != ed25519_dalek::PublicKey::from_bytes(&ltpk)? {
                 return Err(tlv::Error::Unknown);
             }
             pairing.permissions = permissions;
             s.insert_pairing(&pairing)?;
             drop(s);
 
-            event_emitter
-                .lock()
-                .expect("couldn't access event_emitter")
-                .emit(&Event::DevicePaired);
+            event_emitter.lock().await.emit(&Event::DevicePaired).await;
         },
         Err(_) => {
-            if let Some(max_peers) = config.lock().expect("couldn't access config").max_peers {
+            if let Some(max_peers) = config.lock().await.max_peers {
                 if s.count_pairings()? + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
@@ -195,10 +192,7 @@ async fn handle_add(
             s.insert_pairing(&pairing)?;
             drop(s);
 
-            event_emitter
-                .lock()
-                .expect("couldn't access event_emitter")
-                .emit(&Event::DevicePaired);
+            event_emitter.lock().await.emit(&Event::DevicePaired).await;
         },
     }
 
@@ -211,28 +205,18 @@ async fn handle_remove(
     controller_id: pointer::ControllerId,
     storage: pointer::Storage,
     event_emitter: pointer::EventEmitter,
-    pairing_id: &[u8],
+    pairing_id: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("M1: Got Remove Pairing Request");
 
-    check_admin(&controller_id, &storage)?;
+    check_admin(&controller_id, &storage).await?;
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
-    let pairing_id = storage
-        .lock()
-        .expect("couldn't access storage")
-        .select_pairing(&pairing_uuid)?
-        .id;
-    storage
-        .lock()
-        .expect("couldn't access storage")
-        .delete_pairing(&pairing_id)?;
+    let pairing_id = storage.lock().await.select_pairing(&pairing_uuid)?.id;
+    storage.lock().await.delete_pairing(&pairing_id)?;
 
-    event_emitter
-        .lock()
-        .expect("couldn't access event_emitter")
-        .emit(&Event::DeviceUnpaired);
+    event_emitter.lock().await.emit(&Event::DeviceUnpaired).await;
 
     debug!("M2: Sending Remove Pairing Response");
 
@@ -245,13 +229,13 @@ async fn handle_list(
 ) -> Result<tlv::Container, tlv::Error> {
     debug!("M1: Got List Pairings Request");
 
-    check_admin(&controller_id, &storage)?;
+    check_admin(&controller_id, &storage).await?;
 
-    let pairings = storage.lock().expect("couldn't access storage").list_pairings()?;
+    let pairings = storage.lock().await.list_pairings()?;
     let mut list = vec![Value::State(StepNumber::Res as u8)];
     for (i, pairing) in pairings.iter().enumerate() {
         list.push(Value::Identifier(pairing.id.to_hyphenated().to_string()));
-        list.push(Value::Ed25519PublicKey(pairing.public_key));
+        list.push(Value::PublicKey(pairing.public_key.as_bytes().to_vec()));
         list.push(Value::Permissions(pairing.permissions.clone()));
         if i < pairings.len() {
             list.push(Value::Separator);
@@ -263,18 +247,17 @@ async fn handle_list(
     Ok(list)
 }
 
-fn check_admin(controller_id: &pointer::ControllerId, storage: &pointer::Storage) -> Result<(), tlv::Error> {
-    let err = tlv::Error::Authentication;
-    match storage.lock().expect("couldn't access storage").select_pairing(
-        &controller_id
-            .lock()
-            .expect("couldn't access controller_id")
-            .ok_or(err)?,
-    ) {
-        Err(_) => Err(err),
+async fn check_admin(controller_id: &pointer::ControllerId, storage: &pointer::Storage) -> Result<(), tlv::Error> {
+    let controller_id: Uuid = controller_id
+        .read()
+        .unwrap()
+        .deref()
+        .ok_or(tlv::Error::Authentication)?;
+    match storage.lock().await.select_pairing(&controller_id) {
+        Err(_) => Err(tlv::Error::Authentication),
         Ok(controller) => match controller.permissions {
             Permissions::Admin => Ok(()),
-            _ => Err(err),
+            _ => Err(tlv::Error::Authentication),
         },
     }
 }

@@ -27,11 +27,11 @@ impl HapAccessory for TelevisionInner {
 
     fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&dyn HapAccessoryService> {
+    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> {
         vec![&self.accessory_information, &self.television, &self.speaker]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> {
+    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
         vec![&mut self.accessory_information, &mut self.television, &mut self.speaker]
     }
 
@@ -43,9 +43,9 @@ impl HapAccessory for TelevisionInner {
             service.set_id(next_iid);
             next_iid += 1;
             for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid)?;
-                characteristic.set_accessory_id(accessory_id)?;
-                characteristic.set_event_emitter(Some(event_emitter.clone()))?;
+                characteristic.set_id(next_iid);
+                characteristic.set_accessory_id(accessory_id);
+                characteristic.set_event_emitter(Some(event_emitter.clone()));
                 next_iid += 1;
             }
         }

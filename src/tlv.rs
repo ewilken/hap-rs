@@ -108,8 +108,6 @@ pub enum Value {
     Identifier(String),
     Salt([u8; 16]),
     PublicKey(Vec<u8>),
-    Ed25519PublicKey(ed25519_dalek::PublicKey),
-    X25519PublicKey(x25519_dalek::PublicKey),
     Proof(Vec<u8>),
     EncryptedData(Vec<u8>),
     State(u8),
@@ -131,8 +129,6 @@ impl Value {
             Value::Identifier(identifier) => (Type::Identifier as u8, identifier.into_bytes()),
             Value::Salt(salt) => (Type::Salt as u8, salt.to_vec()),
             Value::PublicKey(public_key) => (Type::PublicKey as u8, public_key),
-            Value::Ed25519PublicKey(public_key) => (Type::PublicKey as u8, public_key.as_bytes().to_vec()),
-            Value::X25519PublicKey(public_key) => (Type::PublicKey as u8, public_key.as_bytes().to_vec()),
             Value::Proof(proof) => (Type::Proof as u8, proof),
             Value::EncryptedData(data) => (Type::EncryptedData as u8, data),
             Value::State(state) => (Type::State as u8, vec![state]),
@@ -205,6 +201,13 @@ impl From<cell::BorrowError> for Error {
 
 impl From<cell::BorrowMutError> for Error {
     fn from(err: cell::BorrowMutError) -> Error {
+        error!("{:?}", err);
+        Error::Unknown
+    }
+}
+
+impl From<tokio::task::JoinError> for Error {
+    fn from(err: tokio::task::JoinError) -> Self {
         error!("{:?}", err);
         Error::Unknown
     }

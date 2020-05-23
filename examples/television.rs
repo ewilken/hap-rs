@@ -41,7 +41,7 @@ async fn main() {
     let storage = FileStorage::current_dir().unwrap();
 
     let mut server = IpServer::new(config, storage).unwrap();
-    server.add_accessory(television).unwrap();
+    server.add_accessory(television).await.unwrap();
 
     let handle = server.run_handle();
 

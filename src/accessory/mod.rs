@@ -1,4 +1,4 @@
-use erased_serde::{self, serialize_trait_object};
+use erased_serde::serialize_trait_object;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
@@ -31,9 +31,9 @@ pub trait HapAccessory {
     /// Sets the ID of an Accessory.
     fn set_id(&mut self, id: u64);
     /// Returns references to all Services of an Accessory.
-    fn get_services(&self) -> Vec<&dyn HapAccessoryService>;
+    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)>;
     /// Returns mutable references to the Services of an Accessory.
-    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService>;
+    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)>;
     /// Returns a mutable reference to the Accessory Information Service of an Accessory.
     fn get_mut_information(&mut self) -> &mut AccessoryInformation;
     /// Initializes the Service and Characteristic instance IDs of an Accessory. Service and
@@ -69,9 +69,11 @@ impl<T: HapAccessory> HapAccessory for Accessory<T> {
 
     fn set_id(&mut self, id: u64) { self.inner.set_id(id) }
 
-    fn get_services(&self) -> Vec<&dyn HapAccessoryService> { self.inner.get_services() }
+    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> { self.inner.get_services() }
 
-    fn get_mut_services(&mut self) -> Vec<&mut dyn HapAccessoryService> { self.inner.get_mut_services() }
+    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
+        self.inner.get_mut_services()
+    }
 
     fn get_mut_information(&mut self) -> &mut AccessoryInformation { self.inner.get_mut_information() }
 
@@ -149,20 +151,20 @@ impl Information {
     /// Converts the `Information` struct to an Accessory Information Service.
     pub fn to_service(self) -> Result<AccessoryInformation> {
         let mut i = accessory_information::new();
-        i.inner.identify.set_value(self.identify)?;
-        i.inner.manufacturer.set_value(self.manufacturer)?;
-        i.inner.model.set_value(self.model)?;
-        i.inner.name.set_value(self.name)?;
-        i.inner.serial_number.set_value(self.serial_number)?;
-        i.inner.firmware_revision.set_value(self.firmware_revision)?;
+        i.inner.identify.set_value(self.identify);
+        i.inner.manufacturer.set_value(self.manufacturer);
+        i.inner.model.set_value(self.model);
+        i.inner.name.set_value(self.name);
+        i.inner.serial_number.set_value(self.serial_number);
+        i.inner.firmware_revision.set_value(self.firmware_revision);
         if let Some(v) = self.hardware_revision {
             let mut hr = hardware_revision::new();
-            hr.set_value(v)?;
+            hr.set_value(v);
             i.inner.hardware_revision = Some(hr);
         }
         if let Some(v) = self.accessory_flags {
             let mut af = accessory_flags::new();
-            af.set_value(v)?;
+            af.set_value(v);
             i.inner.accessory_flags = Some(af);
         }
         Ok(i)

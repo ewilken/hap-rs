@@ -9,7 +9,7 @@ use futures::{
 };
 use hyper::Body;
 use log::{debug, info};
-use rand::{self, rngs::OsRng};
+use rand::rngs::OsRng;
 use ring::{digest, hkdf, hmac};
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
@@ -147,7 +147,7 @@ async fn handle_start(
     let b_pub = PublicKey::from(&b);
     let shared_secret = b.diffie_hellman(&a_pub);
 
-    let config = config.lock().expect("couldn't access config");
+    let config = config.lock().await;
     let device_id = config.device_id.to_hex_string();
 
     let mut accessory_info: Vec<u8> = Vec::new();
@@ -188,7 +188,7 @@ async fn handle_start(
 
     Ok(vec![
         Value::State(StepNumber::StartRes as u8),
-        Value::X25519PublicKey(b_pub),
+        Value::PublicKey(b_pub.as_bytes().to_vec()),
         Value::EncryptedData(encrypted_data),
     ])
 }
@@ -225,10 +225,7 @@ async fn handle_finish(
 
         let uuid_str = str::from_utf8(device_pairing_id)?;
         let pairing_uuid = Uuid::parse_str(uuid_str)?;
-        let pairing = storage
-            .lock()
-            .expect("couldn't access storage")
-            .select_pairing(&pairing_uuid)?;
+        let pairing = storage.lock().await.select_pairing(&pairing_uuid)?;
 
         let mut device_info: Vec<u8> = Vec::new();
         device_info.extend(session.a_pub.as_bytes());

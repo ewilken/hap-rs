@@ -30,26 +30,20 @@ impl JsonHandlerExt for Identify {
         let accessory_list = accessory_list.clone();
 
         async move {
-            if storage.lock().expect("couldn't access storage").count_pairings()? > 0 {
+            if storage.lock().await.count_pairings()? > 0 {
                 let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
                 return json_response(body, StatusCode::BAD_REQUEST);
             }
 
-            for accessory in accessory_list
-                .lock()
-                .expect("couldn't access accessory_list")
-                .accessories
-                .lock()
-                .expect("couldn't access accessory_list")
-                .iter_mut()
-            {
+            for accessory in accessory_list.lock().await.accessories.iter_mut() {
                 accessory
                     .lock()
-                    .expect("couldn't access accessory")
+                    .await
                     .get_mut_information()
                     .inner
                     .identify
-                    .set_value(true)?;
+                    .set_value(true)
+                    .await?;
             }
 
             status_response(StatusCode::NO_CONTENT)

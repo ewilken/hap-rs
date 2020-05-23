@@ -1,13 +1,13 @@
 use std::{
     pin::Pin,
-    sync::{Arc, Mutex},
+    sync::Arc,
     task::{Context, Poll},
 };
 
 use futures::{
     channel::oneshot,
     future::{self, BoxFuture, Future, FutureExt, TryFutureExt},
-    lock::Mutex as FutureMutex,
+    lock::Mutex,
     stream::StreamExt,
 };
 use hyper::{server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
@@ -41,13 +41,13 @@ use crate::{
 };
 
 struct Handlers {
-    pub pair_setup: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
-    pub pair_verify: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
-    pub accessories: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
-    pub get_characteristics: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
-    pub put_characteristics: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
-    pub pairings: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
-    pub identify: Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub pair_setup: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub pair_verify: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub accessories: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub get_characteristics: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub put_characteristics: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub pairings: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
+    pub identify: Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>,
 }
 
 struct Api {
@@ -78,17 +78,13 @@ impl Api {
             accessory_list,
             event_emitter,
             handlers: Handlers {
-                pair_setup: Arc::new(FutureMutex::new(Box::new(TlvHandler::from(PairSetup::new())))),
-                pair_verify: Arc::new(FutureMutex::new(Box::new(TlvHandler::from(PairVerify::new(
-                    session_sender,
-                ))))),
-                accessories: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(Accessories::new())))),
-                get_characteristics: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(GetCharacteristics::new())))),
-                put_characteristics: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(
-                    UpdateCharacteristics::new(),
-                )))),
-                pairings: Arc::new(FutureMutex::new(Box::new(TlvHandler::from(Pairings::new())))),
-                identify: Arc::new(FutureMutex::new(Box::new(JsonHandler::from(Identify::new())))),
+                pair_setup: Arc::new(Mutex::new(Box::new(TlvHandler::from(PairSetup::new())))),
+                pair_verify: Arc::new(Mutex::new(Box::new(TlvHandler::from(PairVerify::new(session_sender))))),
+                accessories: Arc::new(Mutex::new(Box::new(JsonHandler::from(Accessories::new())))),
+                get_characteristics: Arc::new(Mutex::new(Box::new(JsonHandler::from(GetCharacteristics::new())))),
+                put_characteristics: Arc::new(Mutex::new(Box::new(JsonHandler::from(UpdateCharacteristics::new())))),
+                pairings: Arc::new(Mutex::new(Box::new(TlvHandler::from(Pairings::new())))),
+                identify: Arc::new(Mutex::new(Box::new(JsonHandler::from(Identify::new())))),
             },
         }
     }
@@ -109,7 +105,7 @@ impl Service<Request<Body>> for Api {
         let method = parts.method;
         let uri = parts.uri;
 
-        let mut handler: Option<Arc<FutureMutex<Box<dyn HandlerExt + Send + Sync>>>> = match (method, uri.path()) {
+        let mut handler: Option<Arc<Mutex<Box<dyn HandlerExt + Send + Sync>>>> = match (method, uri.path()) {
             (Method::POST, "/pair-setup") => Some(self.handlers.pair_setup.clone()),
             (Method::POST, "/pair-verify") => Some(self.handlers.pair_verify.clone()),
             (Method::GET, "/accessories") => Some(self.handlers.accessories.clone()),
@@ -183,7 +179,7 @@ impl Server {
         let event_emitter = self.event_emitter.clone();
 
         async move {
-            let socket_addr = config.lock().expect("accessing config").socket_addr;
+            let socket_addr = config.lock().await.socket_addr;
             let mut listener = TcpListener::bind(socket_addr).await?;
 
             debug!("binding TCP listener on {}", &socket_addr);
@@ -209,38 +205,37 @@ impl Server {
                     session_sender,
                 );
 
-                event_emitter
-                    .lock()
-                    .expect("couldn't add listener for characteristic value change events")
-                    .add_listener(Box::new(move |event| match *event {
-                        Event::CharacteristicValueChanged { aid, iid, ref value } => {
-                            let mut dropped_subscriptions = vec![];
-                            for (i, &(s_aid, s_iid)) in event_subscriptions
-                                .lock()
-                                .expect("couldn't read event subscriptions")
-                                .iter()
-                                .enumerate()
-                            {
-                                if s_aid == aid && s_iid == iid {
-                                    let event = EventObject {
-                                        aid,
-                                        iid,
-                                        value: value.clone(),
-                                    };
-                                    let event_res =
-                                        event_response(vec![event]).expect("couldn't create event response");
-                                    if stream_outgoing.unbounded_send(event_res).is_err() {
-                                        dropped_subscriptions.push(i);
+                event_emitter.lock().await.add_listener(Box::new(move |event| {
+                    let event_subscriptions_ = event_subscriptions.clone();
+                    let stream_outgoing_ = stream_outgoing.clone();
+                    async move {
+                        match *event {
+                            Event::CharacteristicValueChanged { aid, iid, ref value } => {
+                                let mut dropped_subscriptions = vec![];
+                                for (i, &(s_aid, s_iid)) in event_subscriptions_.lock().await.iter().enumerate() {
+                                    if s_aid == aid && s_iid == iid {
+                                        let event = EventObject {
+                                            aid,
+                                            iid,
+                                            value: value.clone(),
+                                        };
+                                        let event_res =
+                                            event_response(vec![event]).expect("couldn't create event response");
+                                        if stream_outgoing_.unbounded_send(event_res).is_err() {
+                                            dropped_subscriptions.push(i);
+                                        }
                                     }
                                 }
-                            }
-                            let mut ev = event_subscriptions.lock().expect("couldn't modify event subscriptions");
-                            for s in dropped_subscriptions {
-                                ev.remove(s);
-                            }
-                        },
-                        _ => {},
-                    }));
+                                let mut ev = event_subscriptions_.lock().await;
+                                for s in dropped_subscriptions {
+                                    ev.remove(s);
+                                }
+                            },
+                            _ => {},
+                        }
+                    }
+                    .boxed()
+                }));
 
                 let http = Http::new();
 
