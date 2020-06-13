@@ -163,33 +163,36 @@ async fn handle_add(
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
 
     let mut s = storage.lock().await;
-    match s.select_pairing(&pairing_uuid) {
+    match s.load_pairing(&pairing_uuid).await {
         Ok(mut pairing) => {
-            if pairing.public_key != ed25519_dalek::PublicKey::from_bytes(&ltpk)? {
+            if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
+                != ed25519_dalek::PublicKey::from_bytes(&ltpk)?
+            {
                 return Err(tlv::Error::Unknown);
             }
             pairing.permissions = permissions;
-            s.insert_pairing(&pairing)?;
+            s.save_pairing(&pairing).await?;
+
             drop(s);
 
             event_emitter.lock().await.emit(&Event::DevicePaired).await;
         },
         Err(_) => {
             if let Some(max_peers) = config.lock().await.max_peers {
-                if s.count_pairings()? + 1 > max_peers {
+                if s.count_pairings().await? + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
             }
 
             let mut public_key = [0; 32];
             public_key.clone_from_slice(&ltpk);
-            let public_key = ed25519_dalek::PublicKey::from_bytes(&public_key)?;
             let pairing = Pairing {
                 id: pairing_uuid,
                 permissions,
                 public_key,
             };
-            s.insert_pairing(&pairing)?;
+            s.save_pairing(&pairing).await?;
+
             drop(s);
 
             event_emitter.lock().await.emit(&Event::DevicePaired).await;
@@ -213,8 +216,8 @@ async fn handle_remove(
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
-    let pairing_id = storage.lock().await.select_pairing(&pairing_uuid)?.id;
-    storage.lock().await.delete_pairing(&pairing_id)?;
+    let pairing_id = storage.lock().await.load_pairing(&pairing_uuid).await?.id;
+    storage.lock().await.delete_pairing(&pairing_id).await?;
 
     event_emitter.lock().await.emit(&Event::DeviceUnpaired).await;
 
@@ -231,11 +234,11 @@ async fn handle_list(
 
     check_admin(&controller_id, &storage).await?;
 
-    let pairings = storage.lock().await.list_pairings()?;
+    let pairings = storage.lock().await.list_pairings().await?;
     let mut list = vec![Value::State(StepNumber::Res as u8)];
     for (i, pairing) in pairings.iter().enumerate() {
         list.push(Value::Identifier(pairing.id.to_hyphenated().to_string()));
-        list.push(Value::PublicKey(pairing.public_key.as_bytes().to_vec()));
+        list.push(Value::PublicKey(pairing.public_key.to_vec()));
         list.push(Value::Permissions(pairing.permissions.clone()));
         if i < pairings.len() {
             list.push(Value::Separator);
@@ -253,7 +256,7 @@ async fn check_admin(controller_id: &pointer::ControllerId, storage: &pointer::S
         .unwrap()
         .deref()
         .ok_or(tlv::Error::Authentication)?;
-    match storage.lock().await.select_pairing(&controller_id) {
+    match storage.lock().await.load_pairing(&controller_id).await {
         Err(_) => Err(tlv::Error::Authentication),
         Ok(controller) => match controller.permissions {
             Permissions::Admin => Ok(()),

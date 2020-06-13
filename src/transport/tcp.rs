@@ -7,10 +7,10 @@ use std::{
     task::{Context, Poll},
 };
 
-use aead::{generic_array::GenericArray, Aead, NewAead};
+use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
 use byteorder::{ByteOrder, LittleEndian};
 use bytes::{Buf, BytesMut};
-use chacha20poly1305::ChaCha20Poly1305;
+use chacha20poly1305::{ChaCha20Poly1305, Nonce, Tag};
 use futures::{
     channel::{
         mpsc::{self, UnboundedReceiver, UnboundedSender},
@@ -153,6 +153,10 @@ impl EncryptedStream {
         let (sender, receiver) = oneshot::channel();
         let (incoming_sender, incoming_receiver) = mpsc::unbounded();
         let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
+        let mut encrypted_buf = BytesMut::new();
+        encrypted_buf.resize(1042, 0);
+        let mut decrypted_buf = BytesMut::new();
+        decrypted_buf.resize(1024, 0);
         (
             EncryptedStream {
                 stream,
@@ -163,8 +167,8 @@ impl EncryptedStream {
                 shared_secret: None,
                 decrypt_count: 0,
                 encrypt_count: 0,
-                encrypted_buf: BytesMut::with_capacity(1042),
-                decrypted_buf: BytesMut::with_capacity(1024),
+                encrypted_buf,
+                decrypted_buf,
                 packet_len: 0,
                 already_copied: 0,
                 already_read: 0,
@@ -451,7 +455,7 @@ fn decrypt_chunk(
     count: &mut u64,
 ) -> Result<Vec<u8>> {
     let read_key = compute_read_key(shared_secret);
-    let aead = ChaCha20Poly1305::new(read_key.into());
+    let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&read_key));
 
     let mut nonce = vec![0; 4];
     let mut suffix = vec![0; 8];
@@ -461,14 +465,14 @@ fn decrypt_chunk(
 
     let mut buffer = Vec::new();
     buffer.extend_from_slice(data);
-    aead.decrypt_in_place(GenericArray::from_slice(&nonce), aad, &mut buffer)?;
+    aead.decrypt_in_place_detached(Nonce::from_slice(&nonce), aad, &mut buffer, Tag::from_slice(&auth_tag))?;
 
     Ok(buffer)
 }
 
 fn encrypt_chunk(shared_secret: &[u8; 32], data: &[u8], count: &mut u64) -> Result<([u8; 2], Vec<u8>, [u8; 16])> {
     let write_key = compute_write_key(shared_secret);
-    let aead = ChaCha20Poly1305::new(write_key.into());
+    let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&write_key));
 
     let mut nonce = vec![0; 4];
     let mut suffix = vec![0; 8];
@@ -481,7 +485,7 @@ fn encrypt_chunk(shared_secret: &[u8; 32], data: &[u8], count: &mut u64) -> Resu
 
     let mut buffer = Vec::new();
     buffer.extend_from_slice(data);
-    let auth_tag = aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &aad, &mut buffer)?;
+    let auth_tag = aead.encrypt_in_place_detached(Nonce::from_slice(&nonce), &aad, &mut buffer)?;
 
     Ok((aad, buffer, auth_tag.into()))
 }

@@ -1,6 +1,6 @@
 use std::str;
 
-use aead::{generic_array::GenericArray, Aead, NewAead};
+use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
 use chacha20poly1305::ChaCha20Poly1305;
 use futures::{
     channel::oneshot,
@@ -156,6 +156,8 @@ async fn handle_start(
     accessory_info.extend(a_pub.as_bytes());
     let accessory_signature = config.device_ed25519_keypair.sign(&accessory_info);
 
+    drop(config);
+
     let encoded_sub_tlv = vec![Value::Identifier(device_id), Value::Signature(accessory_signature)].encode();
 
     let mut session_key = [0; 32];
@@ -177,7 +179,7 @@ async fn handle_start(
     let mut nonce = vec![0; 4];
     nonce.extend(b"PV-Msg02");
 
-    let aead = ChaCha20Poly1305::new(session_key.into());
+    let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&session_key));
 
     let mut encrypted_data = Vec::new();
     encrypted_data.extend_from_slice(&encoded_sub_tlv);
@@ -207,7 +209,7 @@ async fn handle_finish(
         let mut nonce = vec![0; 4];
         nonce.extend(b"PV-Msg03");
 
-        let aead = ChaCha20Poly1305::new(session.session_key.into());
+        let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&session.session_key));
 
         let mut decrypted_data = Vec::new();
         decrypted_data.extend_from_slice(&encrypted_data);
@@ -225,7 +227,7 @@ async fn handle_finish(
 
         let uuid_str = str::from_utf8(device_pairing_id)?;
         let pairing_uuid = Uuid::parse_str(uuid_str)?;
-        let pairing = storage.lock().await.select_pairing(&pairing_uuid)?;
+        let pairing = storage.lock().await.load_pairing(&pairing_uuid).await?;
 
         let mut device_info: Vec<u8> = Vec::new();
         device_info.extend(session.a_pub.as_bytes());
@@ -235,7 +237,10 @@ async fn handle_finish(
         // if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
         //     return Err(tlv::Error::Authentication);
         // }
-        if pairing.public_key.verify(&device_info, &device_signature).is_err() {
+        if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
+            .verify(&device_info, &device_signature)
+            .is_err()
+        {
             return Err(tlv::Error::Authentication);
         }
 

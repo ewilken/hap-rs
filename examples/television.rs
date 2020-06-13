@@ -38,7 +38,7 @@ async fn main() {
         category: Category::Television,
         ..Default::default()
     };
-    let storage = FileStorage::current_dir().unwrap();
+    let storage = FileStorage::current_dir().await.unwrap();
 
     let mut server = IpServer::new(config, storage).unwrap();
     server.add_accessory(television).await.unwrap();

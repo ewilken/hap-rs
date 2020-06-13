@@ -11,7 +11,7 @@ use futures::{
     stream::StreamExt,
 };
 use hyper::{server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
-use log::{debug, error};
+use log::{debug, error, info};
 use tokio::net::TcpListener;
 
 use crate::{
@@ -91,7 +91,6 @@ impl Api {
 }
 
 impl Service<Request<Body>> for Api {
-    // type Error = http::Error;
     type Error = Error;
     type Future = Pin<Box<dyn Future<Output = std::result::Result<Self::Response, Self::Error>> + Send>>;
     type Response = Response<Body>;
@@ -182,7 +181,7 @@ impl Server {
             let socket_addr = config.lock().await.socket_addr;
             let mut listener = TcpListener::bind(socket_addr).await?;
 
-            debug!("binding TCP listener on {}", &socket_addr);
+            info!("binding TCP listener on {}", &socket_addr);
 
             let mut incoming = listener.incoming();
 
@@ -238,14 +237,6 @@ impl Server {
                 }));
 
                 let http = Http::new();
-
-                // future::join(encrypted_stream, http.serve_connection(stream_wrapper, api)).await;
-
-                // encrypted_stream
-                //     .map_err(|e| error!("{}", e))
-                //     .join(http.serve_connection(stream_wrapper, api).map_err(|e| error!("{}", e)))
-                //     .map(|_| ())
-                //     .then(|_| Ok(()))
 
                 future::join(
                     encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()),

@@ -30,7 +30,7 @@ impl JsonHandlerExt for Identify {
         let accessory_list = accessory_list.clone();
 
         async move {
-            if storage.lock().await.count_pairings()? > 0 {
+            if storage.lock().await.count_pairings().await? > 0 {
                 let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
                 return json_response(body, StatusCode::BAD_REQUEST);
             }

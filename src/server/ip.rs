@@ -87,14 +87,14 @@ impl IpServer {
             async move {
                 match *event {
                     Event::DevicePaired =>
-                        if let Ok(count) = storage_.lock().await.count_pairings() {
+                        if let Ok(count) = storage_.lock().await.count_pairings().await {
                             if count > 0 {
                                 let mut c = config_.lock().await;
                                 c.status_flag = BonjourStatusFlag::Zero;
                             }
                         },
                     Event::DeviceUnpaired =>
-                        if let Ok(count) = storage_.lock().await.count_pairings() {
+                        if let Ok(count) = storage_.lock().await.count_pairings().await {
                             if count == 0 {
                                 let mut c = config_.lock().await;
                                 c.status_flag = BonjourStatusFlag::NotPaired;

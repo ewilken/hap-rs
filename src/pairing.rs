@@ -1,20 +1,19 @@
-use ed25519_dalek::PublicKey;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{Error, Result};
 
 /// `Pairing` represents paired controllers.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Pairing {
     pub id: Uuid,
     pub permissions: Permissions,
-    pub public_key: PublicKey,
+    pub public_key: [u8; 32],
 }
 
 impl Pairing {
     /// Creates a new `Pairing`.
-    pub fn new(id: Uuid, permissions: Permissions, public_key: PublicKey) -> Pairing {
+    pub fn new(id: Uuid, permissions: Permissions, public_key: [u8; 32]) -> Pairing {
         Pairing {
             id,
             permissions,
@@ -32,6 +31,43 @@ impl Pairing {
     pub fn as_bytes(&self) -> Result<Vec<u8>> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pairing_from_bytes() {
+        let pairing = Pairing {
+            id: Uuid::parse_str("bc158b86-cabf-432d-aee4-422ef0e3f1d5").unwrap(),
+            permissions: Permissions::Admin,
+            public_key: [
+                215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166,
+                35, 37, 175, 2, 26, 104, 247, 7, 81, 26,
+            ],
+        };
+        assert_eq!(
+            Pairing::from_bytes(&b"{\"id\":\"bc158b86-cabf-432d-aee4-422ef0e3f1d5\",\"permissions\":\"0x01\",\"public_key\":[215,90,152,1,130,177,10,183,213,75,254,211,201,100,7,58,14,225,114,243,218,166,35,37,175,2,26,104,247,7,81,26]}".to_vec()).unwrap(),
+            pairing
+        );
+    }
+
+    #[test]
+    fn test_pairing_to_bytes() {
+        let pairing = Pairing {
+            id: Uuid::parse_str("bc158b86-cabf-432d-aee4-422ef0e3f1d5").unwrap(),
+            permissions: Permissions::User,
+            public_key: [
+                215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166,
+                35, 37, 175, 2, 26, 104, 247, 7, 81, 26,
+            ],
+        };
+        assert_eq!(
+            pairing.as_bytes().unwrap(),
+            b"{\"id\":\"bc158b86-cabf-432d-aee4-422ef0e3f1d5\",\"permissions\":\"0x00\",\"public_key\":[215,90,152,1,130,177,10,183,213,75,254,211,201,100,7,58,14,225,114,243,218,166,35,37,175,2,26,104,247,7,81,26]}".to_vec()
+        );
     }
 }
 

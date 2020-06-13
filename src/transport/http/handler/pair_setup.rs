@@ -1,6 +1,6 @@
 use std::{ops::BitXor, str};
 
-use aead::{generic_array::GenericArray, Aead, NewAead};
+use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
 use chacha20poly1305::ChaCha20Poly1305;
 use futures::{
     future::{BoxFuture, FutureExt},
@@ -256,7 +256,7 @@ async fn handle_exchange(
             let mut nonce = vec![0; 4];
             nonce.extend(b"PS-Msg05");
 
-            let aead = ChaCha20Poly1305::new(encryption_key.into());
+            let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&encryption_key));
 
             let mut decrypted_data = Vec::new();
             decrypted_data.extend_from_slice(&encrypted_data);
@@ -295,13 +295,13 @@ async fn handle_exchange(
             pairing_ltpk[..32].clone_from_slice(&device_ltpk.as_bytes()[..32]);
 
             if let Some(max_peers) = config.lock().await.max_peers {
-                if storage.lock().await.count_pairings()? + 1 > max_peers {
+                if storage.lock().await.count_pairings().await? + 1 > max_peers {
                     return Err(tlv::Error::MaxPeers);
                 }
             }
 
-            let pairing = Pairing::new(pairing_uuid, Permissions::Admin, device_ltpk);
-            storage.lock().await.insert_pairing(&pairing)?;
+            let pairing = Pairing::new(pairing_uuid, Permissions::Admin, device_ltpk.to_bytes());
+            storage.lock().await.save_pairing(&pairing).await?;
 
             let mut accessory_x = [0; 32];
             let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
@@ -327,6 +327,8 @@ async fn handle_exchange(
                 Value::Signature(accessory_signature),
             ]
             .encode();
+
+            drop(config);
 
             let mut nonce = vec![0; 4];
             nonce.extend(b"PS-Msg06");
