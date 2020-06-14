@@ -30,10 +30,10 @@ impl JsonHandlerExt for Identify {
         let accessory_list = accessory_list.clone();
 
         async move {
-            if storage.lock().await.count_pairings().await? > 0 {
-                let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
-                return json_response(body, StatusCode::BAD_REQUEST);
-            }
+            // if storage.lock().await.count_pairings().await? > 0 {
+            //     let body = serde_json::to_vec(&json!({ "status": Status::InsufficientPrivileges as i32 }))?;
+            //     return json_response(body, StatusCode::BAD_REQUEST);
+            // }
 
             for accessory in accessory_list.lock().await.accessories.iter_mut() {
                 accessory
@@ -45,6 +45,8 @@ impl JsonHandlerExt for Identify {
                     .set_value(true)
                     .await?;
             }
+
+            // TODO: defer setting them all back to false after a few secs
 
             status_response(StatusCode::NO_CONTENT)
         }

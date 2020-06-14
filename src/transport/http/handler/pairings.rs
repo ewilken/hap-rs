@@ -175,7 +175,11 @@ async fn handle_add(
 
             drop(s);
 
-            event_emitter.lock().await.emit(&Event::DevicePaired).await;
+            event_emitter
+                .lock()
+                .await
+                .emit(&Event::ControllerPaired { id: pairing.id })
+                .await;
         },
         Err(_) => {
             if let Some(max_peers) = config.lock().await.max_peers {
@@ -195,7 +199,11 @@ async fn handle_add(
 
             drop(s);
 
-            event_emitter.lock().await.emit(&Event::DevicePaired).await;
+            event_emitter
+                .lock()
+                .await
+                .emit(&Event::ControllerPaired { id: pairing.id })
+                .await;
         },
     }
 
@@ -216,10 +224,15 @@ async fn handle_remove(
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
-    let pairing_id = storage.lock().await.load_pairing(&pairing_uuid).await?.id;
-    storage.lock().await.delete_pairing(&pairing_id).await?;
+    // let pairing_id = storage.lock().await.load_pairing(&pairing_uuid).await?.id;
+    // storage.lock().await.delete_pairing(&pairing_id).await?;
+    storage.lock().await.delete_pairing(&pairing_uuid).await?;
 
-    event_emitter.lock().await.emit(&Event::DeviceUnpaired).await;
+    event_emitter
+        .lock()
+        .await
+        .emit(&Event::ControllerUnpaired { id: pairing_uuid })
+        .await;
 
     debug!("M2: Sending Remove Pairing Response");
 

@@ -2,11 +2,12 @@ use std::fmt::Debug;
 
 use futures::future::BoxFuture;
 use serde_json::Value;
+use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum Event {
-    DevicePaired,
-    DeviceUnpaired,
+    ControllerPaired { id: Uuid },
+    ControllerUnpaired { id: Uuid },
     CharacteristicValueChanged { aid: u64, iid: u64, value: Value },
 }
 

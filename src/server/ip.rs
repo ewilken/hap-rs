@@ -5,6 +5,7 @@ use futures::{
     future::{self, BoxFuture, FutureExt},
     lock::Mutex,
 };
+use log::info;
 
 use crate::{
     config::Config,
@@ -81,30 +82,44 @@ impl IpServer {
         let config_ = config.clone();
         let storage_ = storage.clone();
         let mut event_emitter = EventEmitter::new();
+
+        // TODO: count pairings & override `config.status_flag`
+
         event_emitter.add_listener(Box::new(move |event| {
             let config_ = config_.clone();
             let storage_ = storage_.clone();
             async move {
                 match *event {
-                    Event::DevicePaired =>
+                    Event::ControllerPaired { id } => {
+                        info!("controller {} paired", id);
+
                         if let Ok(count) = storage_.lock().await.count_pairings().await {
                             if count > 0 {
+                                info!("1 or more controllers paired; setting Bonjour status flag to `Zero`");
+
                                 let mut c = config_.lock().await;
                                 c.status_flag = BonjourStatusFlag::Zero;
                             }
-                        },
-                    Event::DeviceUnpaired =>
+                        }
+                    },
+                    Event::ControllerUnpaired { id } => {
+                        info!("controller {} unpaired", id);
+
                         if let Ok(count) = storage_.lock().await.count_pairings().await {
                             if count == 0 {
+                                info!("0 controllers paired; setting Bonjour status flag to `Not Paired`");
+
                                 let mut c = config_.lock().await;
                                 c.status_flag = BonjourStatusFlag::NotPaired;
                             }
-                        },
+                        }
+                    },
                     _ => {},
                 }
             }
             .boxed()
         }));
+
         let event_emitter = Arc::new(Mutex::new(event_emitter));
         let accessory_list = Arc::new(Mutex::new(AccessoryList::new(event_emitter.clone())));
 

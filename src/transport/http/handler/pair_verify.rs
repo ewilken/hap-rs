@@ -158,7 +158,11 @@ async fn handle_start(
 
     drop(config);
 
-    let encoded_sub_tlv = vec![Value::Identifier(device_id), Value::Signature(accessory_signature)].encode();
+    let encoded_sub_tlv = vec![
+        Value::Identifier(device_id),
+        Value::Signature(accessory_signature.to_bytes().to_vec()),
+    ]
+    .encode();
 
     let mut session_key = [0; 32];
     let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Verify-Encrypt-Salt");
@@ -202,62 +206,64 @@ async fn handle_finish(
 ) -> Result<tlv::Container, tlv::Error> {
     info!("pair verify M3: received verify finish request");
 
-    if let Some(ref mut session) = handler.session {
-        let encrypted_data = Vec::from(&data[..data.len() - 16]);
-        let auth_tag = Vec::from(&data[data.len() - 16..]);
+    match handler.session {
+        None => Err(tlv::Error::Unknown),
+        Some(ref mut session) => {
+            let encrypted_data = Vec::from(&data[..data.len() - 16]);
+            let auth_tag = Vec::from(&data[data.len() - 16..]);
 
-        let mut nonce = vec![0; 4];
-        nonce.extend(b"PV-Msg03");
+            let mut nonce = vec![0; 4];
+            nonce.extend(b"PV-Msg03");
 
-        let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&session.session_key));
+            let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&session.session_key));
 
-        let mut decrypted_data = Vec::new();
-        decrypted_data.extend_from_slice(&encrypted_data);
-        aead.decrypt_in_place_detached(
-            GenericArray::from_slice(&nonce),
-            &[],
-            &mut decrypted_data,
-            GenericArray::from_slice(&auth_tag),
-        )?;
+            let mut decrypted_data = Vec::new();
+            decrypted_data.extend_from_slice(&encrypted_data);
+            aead.decrypt_in_place_detached(
+                GenericArray::from_slice(&nonce),
+                &[],
+                &mut decrypted_data,
+                GenericArray::from_slice(&auth_tag),
+            )?;
 
-        let sub_tlv = tlv::decode(decrypted_data);
-        let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
-        let device_signature =
-            ed25519_dalek::Signature::from_bytes(sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?)?;
+            let sub_tlv = tlv::decode(decrypted_data);
+            let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
+            let device_signature = ed25519_dalek::Signature::from_bytes(
+                sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
+            )?;
 
-        let uuid_str = str::from_utf8(device_pairing_id)?;
-        let pairing_uuid = Uuid::parse_str(uuid_str)?;
-        let pairing = storage.lock().await.load_pairing(&pairing_uuid).await?;
+            let uuid_str = str::from_utf8(device_pairing_id)?;
+            let pairing_uuid = Uuid::parse_str(uuid_str)?;
+            let pairing = storage.lock().await.load_pairing(&pairing_uuid).await?;
 
-        let mut device_info: Vec<u8> = Vec::new();
-        device_info.extend(session.a_pub.as_bytes());
-        device_info.extend(device_pairing_id);
-        device_info.extend(session.b_pub.as_bytes());
+            let mut device_info: Vec<u8> = Vec::new();
+            device_info.extend(session.a_pub.as_bytes());
+            device_info.extend(device_pairing_id);
+            device_info.extend(session.b_pub.as_bytes());
 
-        // if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
-        //     return Err(tlv::Error::Authentication);
-        // }
-        if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
-            .verify(&device_info, &device_signature)
-            .is_err()
-        {
-            return Err(tlv::Error::Authentication);
-        }
+            // if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
+            //     return Err(tlv::Error::Authentication);
+            // }
+            if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
+                .verify(&device_info, &device_signature)
+                .is_err()
+            {
+                return Err(tlv::Error::Authentication);
+            }
 
-        if let Some(sender) = handler.session_sender.take() {
-            let encrypted_session = tcp::Session {
-                controller_id: pairing_uuid,
-                shared_secret: session.shared_secret,
-            };
-            let _session = sender.send(encrypted_session);
-        } else {
-            return Err(tlv::Error::Unknown);
-        }
+            if let Some(sender) = handler.session_sender.take() {
+                let encrypted_session = tcp::Session {
+                    controller_id: pairing_uuid,
+                    shared_secret: session.shared_secret,
+                };
+                let _session = sender.send(encrypted_session);
+            } else {
+                return Err(tlv::Error::Unknown);
+            }
 
-        info!("pair verify M4: sending verify finish response");
+            info!("pair verify M4: sending verify finish response");
 
-        Ok(vec![Value::State(StepNumber::FinishRes as u8)])
-    } else {
-        Err(tlv::Error::Unknown)
+            Ok(vec![Value::State(StepNumber::FinishRes as u8)])
+        },
     }
 }

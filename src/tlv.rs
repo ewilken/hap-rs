@@ -114,7 +114,7 @@ pub enum Value {
     Error(Error),
     RetryDelay(usize),
     Certificate(Vec<u8>),
-    Signature(Signature),
+    Signature(Vec<u8>),
     Permissions(Permissions),
     FragmentData(Vec<u8>),
     FragmentLast(Vec<u8>),
@@ -125,7 +125,7 @@ impl Value {
     /// Converts a variant of `Value` to a `(u8, Vec<u8>)` tuple in the format `(Type, Value)`.
     pub fn as_tlv(self) -> (u8, Vec<u8>) {
         match self {
-            Value::Method(method_kind) => (Type::Method as u8, vec![method_kind as u8]),
+            Value::Method(method) => (Type::Method as u8, vec![method as u8]),
             Value::Identifier(identifier) => (Type::Identifier as u8, identifier.into_bytes()),
             Value::Salt(salt) => (Type::Salt as u8, salt.to_vec()),
             Value::PublicKey(public_key) => (Type::PublicKey as u8, public_key),
@@ -140,7 +140,7 @@ impl Value {
                 (Type::RetryDelay as u8, vec)
             },
             Value::Certificate(certificate) => (Type::Certificate as u8, certificate),
-            Value::Signature(signature) => (Type::Signature as u8, signature.to_bytes().to_vec()),
+            Value::Signature(signature) => (Type::Signature as u8, signature),
             Value::Permissions(permissions) => (Type::Permissions as u8, vec![permissions.as_byte()]),
             Value::FragmentData(fragment_data) => (Type::FragmentData as u8, fragment_data),
             Value::FragmentLast(fragment_last) => (Type::FragmentLast as u8, fragment_last),

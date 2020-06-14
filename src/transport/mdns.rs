@@ -47,24 +47,24 @@ impl MdnsResponder {
             rt.block_on(async move {
                 let responder = libmdns::Responder::new().expect("couldn't create mDNS responder");
 
-                let config = config.lock().await;
+                // let config = config.lock().await;
 
-                let name = config.name.clone();
-                let port = config.socket_addr.port();
-                let tr = config.txt_records();
-                let status_flag = config.status_flag;
+                // let name = config.name.clone();
+                // let port = config.socket_addr.port();
+                // let tr = config.txt_records();
+                // let status_flag = config.status_flag;
 
-                drop(config);
+                // drop(config);
 
                 loop {
-                    // let config = config.lock().await;
+                    let config = config.lock().await;
 
-                    // let name = config.name.clone();
-                    // let port = config.socket_addr.port();
-                    // let tr = config.txt_records();
-                    // let status_flag = config.status_flag;
+                    let name = config.name.clone();
+                    let port = config.socket_addr.port();
+                    let tr = config.txt_records();
+                    let status_flag = config.status_flag;
 
-                    // drop(config);
+                    drop(config);
 
                     let name = name.clone();
 
@@ -74,7 +74,8 @@ impl MdnsResponder {
                     debug!("announcing mDNS: {:?}", &tr);
 
                     time::delay_for(Duration::from_millis(match status_flag {
-                        crate::transport::bonjour::BonjourStatusFlag::NotPaired => 200,
+                        // crate::transport::bonjour::BonjourStatusFlag::NotPaired => 200,
+                        crate::transport::bonjour::BonjourStatusFlag::NotPaired => 1000,
                         _ => 20_000,
                     }))
                     .await;

@@ -163,20 +163,20 @@ impl Storage for FileStorage {
     }
 
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing> {
-        let key = format!("{}.json", id.to_simple().to_string());
+        let key = format!("{}.json", id.to_string());
         let pairing_bytes = self.read_bytes(&key).await?;
 
         Pairing::from_bytes(&pairing_bytes)
     }
 
     async fn save_pairing(&mut self, pairing: &Pairing) -> Result<()> {
-        let key = format!("{}.json", pairing.id.to_simple().to_string());
+        let key = format!("{}.json", pairing.id.to_string());
         let pairing_bytes = pairing.as_bytes()?;
         self.write_bytes(&key, pairing_bytes).await
     }
 
     async fn delete_pairing(&mut self, id: &Uuid) -> Result<()> {
-        let key = format!("{}.json", id.to_simple().to_string());
+        let key = format!("{}.json", id.to_string());
         self.remove_file(&key).await
     }
 

@@ -1,7 +1,7 @@
 use std::net::{IpAddr, SocketAddr};
 
 use hap::{
-    accessory::{television, Category, Information},
+    accessory::{lightbulb, Category, Information},
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
@@ -25,8 +25,8 @@ async fn main() {
         None
     };
 
-    let television = television::new(Information {
-        name: "TV".into(),
+    let lightbulb = lightbulb::new(Information {
+        name: "Lightbulb".into(),
         ..Default::default()
     })
     .unwrap();
@@ -34,14 +34,14 @@ async fn main() {
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::from_str("11122333").unwrap(),
-        name: "TV".into(),
-        category: Category::Television,
+        name: "Lightbulb".into(),
+        category: Category::Lightbulb,
         ..Default::default()
     };
     let storage = FileStorage::current_dir().await.unwrap();
 
     let mut server = IpServer::new(config, storage).unwrap();
-    server.add_accessory(television).await.unwrap();
+    server.add_accessory(lightbulb).await.unwrap();
 
     let handle = server.run_handle();
 

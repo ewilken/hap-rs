@@ -213,25 +213,26 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
 async fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) -> Result<tlv::Container, tlv::Error> {
     info!("pair setup M3: received SRP verify request");
 
-    if let Some(ref mut session) = handler.session {
-        let user = UserRecord {
-            username: b"Pair-Setup",
-            salt: &session.salt,
-            verifier: &session.verifier,
-        };
-        let srp_server = SrpServer::<Sha512>::new(&user, a_pub, &session.b, &G_3072)?;
-        let shared_secret = srp_server.get_key();
+    match handler.session {
+        None => Err(tlv::Error::Unknown),
+        Some(ref mut session) => {
+            let user = UserRecord {
+                username: b"Pair-Setup",
+                salt: &session.salt,
+                verifier: &session.verifier,
+            };
+            let srp_server = SrpServer::<Sha512>::new(&user, a_pub, &session.b, &G_3072)?;
+            let shared_secret = srp_server.get_key();
 
-        session.shared_secret = Some(shared_secret.to_vec());
+            session.shared_secret = Some(shared_secret.to_vec());
 
-        let b_proof =
-            verify_client_proof::<Sha512>(&session.b_pub, a_pub, a_proof, &session.salt, &shared_secret, &G_3072)?;
+            let b_proof =
+                verify_client_proof::<Sha512>(&session.b_pub, a_pub, a_proof, &session.salt, &shared_secret, &G_3072)?;
 
-        info!("pair setup M4: sending SRP verify response");
+            info!("pair setup M4: sending SRP verify response");
 
-        Ok(vec![Value::State(StepNumber::VerifyRes as u8), Value::Proof(b_proof)])
-    } else {
-        Err(tlv::Error::Unknown)
+            Ok(vec![Value::State(StepNumber::VerifyRes as u8), Value::Proof(b_proof)])
+        },
     }
 }
 
@@ -244,114 +245,120 @@ async fn handle_exchange(
 ) -> Result<tlv::Container, tlv::Error> {
     info!("pair setup M5: received SRP exchange request");
 
-    if let Some(ref mut session) = handler.session {
-        if let Some(ref shared_secret) = session.shared_secret {
-            let encrypted_data = Vec::from(&data[..data.len() - 16]);
-            let auth_tag = Vec::from(&data[data.len() - 16..]);
+    match handler.session {
+        None => Err(tlv::Error::Unknown),
+        Some(ref mut session) => match session.shared_secret {
+            None => Err(tlv::Error::Unknown),
+            Some(ref shared_secret) => {
+                let encrypted_data = Vec::from(&data[..data.len() - 16]);
+                let auth_tag = Vec::from(&data[data.len() - 16..]);
 
-            let mut encryption_key = [0; 32];
-            let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
-            hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
+                let mut encryption_key = [0; 32];
+                let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
+                hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
 
-            let mut nonce = vec![0; 4];
-            nonce.extend(b"PS-Msg05");
+                let mut nonce = vec![0; 4];
+                nonce.extend(b"PS-Msg05");
 
-            let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&encryption_key));
+                let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&encryption_key));
 
-            let mut decrypted_data = Vec::new();
-            decrypted_data.extend_from_slice(&encrypted_data);
-            aead.decrypt_in_place_detached(
-                GenericArray::from_slice(&nonce),
-                &[],
-                &mut decrypted_data,
-                GenericArray::from_slice(&auth_tag),
-            )?;
+                let mut decrypted_data = Vec::new();
+                decrypted_data.extend_from_slice(&encrypted_data);
+                aead.decrypt_in_place_detached(
+                    GenericArray::from_slice(&nonce),
+                    &[],
+                    &mut decrypted_data,
+                    GenericArray::from_slice(&auth_tag),
+                )?;
 
-            let sub_tlv = tlv::decode(decrypted_data);
-            let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
-            let device_ltpk = ed25519_dalek::PublicKey::from_bytes(
-                sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?,
-            )?;
-            let device_signature = ed25519_dalek::Signature::from_bytes(
-                sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
-            )?;
+                let sub_tlv = tlv::decode(decrypted_data);
+                let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
+                let device_ltpk = ed25519_dalek::PublicKey::from_bytes(
+                    sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?,
+                )?;
+                let device_signature = ed25519_dalek::Signature::from_bytes(
+                    sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
+                )?;
 
-            let mut device_x = [0; 32];
-            let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
-            hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut device_x);
+                let mut device_x = [0; 32];
+                let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
+                hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut device_x);
 
-            let mut device_info: Vec<u8> = Vec::new();
-            device_info.extend(&device_x);
-            device_info.extend(device_pairing_id);
-            device_info.extend(device_ltpk.as_bytes());
+                let mut device_info: Vec<u8> = Vec::new();
+                device_info.extend(&device_x);
+                device_info.extend(device_pairing_id);
+                device_info.extend(device_ltpk.as_bytes());
 
-            if device_ltpk.verify(&device_info, &device_signature).is_err() {
-                return Err(tlv::Error::Authentication);
-            }
-
-            let uuid_str = str::from_utf8(device_pairing_id)?;
-            let pairing_uuid = Uuid::parse_str(uuid_str)?;
-            let mut pairing_ltpk = [0; 32];
-            pairing_ltpk[..32].clone_from_slice(&device_ltpk.as_bytes()[..32]);
-
-            if let Some(max_peers) = config.lock().await.max_peers {
-                if storage.lock().await.count_pairings().await? + 1 > max_peers {
-                    return Err(tlv::Error::MaxPeers);
+                if device_ltpk.verify(&device_info, &device_signature).is_err() {
+                    return Err(tlv::Error::Authentication);
                 }
-            }
 
-            let pairing = Pairing::new(pairing_uuid, Permissions::Admin, device_ltpk.to_bytes());
-            storage.lock().await.save_pairing(&pairing).await?;
+                let uuid_str = str::from_utf8(device_pairing_id)?;
+                let pairing_uuid = Uuid::parse_str(uuid_str)?;
+                let mut pairing_ltpk = [0; 32];
+                pairing_ltpk[..32].clone_from_slice(&device_ltpk.as_bytes()[..32]);
 
-            let mut accessory_x = [0; 32];
-            let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
-            hkdf::extract_and_expand(
-                &salt,
-                &shared_secret,
-                b"Pair-Setup-Accessory-Sign-Info",
-                &mut accessory_x,
-            );
+                if let Some(max_peers) = config.lock().await.max_peers {
+                    if storage.lock().await.count_pairings().await? + 1 > max_peers {
+                        return Err(tlv::Error::MaxPeers);
+                    }
+                }
 
-            let config = config.lock().await;
-            let device_id = config.device_id.to_hex_string();
+                let pairing = Pairing::new(pairing_uuid, Permissions::Admin, device_ltpk.to_bytes());
+                storage.lock().await.save_pairing(&pairing).await?;
 
-            let mut accessory_info: Vec<u8> = Vec::new();
-            accessory_info.extend(&accessory_x);
-            accessory_info.extend(device_id.as_bytes());
-            accessory_info.extend(config.device_ed25519_keypair.public.as_bytes());
-            let accessory_signature = config.device_ed25519_keypair.sign(&accessory_info);
+                debug!("pairing: {:?}", &pairing);
 
-            let encoded_sub_tlv = vec![
-                Value::Identifier(device_id),
-                Value::PublicKey(config.device_ed25519_keypair.public.as_bytes().to_vec()),
-                Value::Signature(accessory_signature),
-            ]
-            .encode();
+                let mut accessory_x = [0; 32];
+                let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
+                hkdf::extract_and_expand(
+                    &salt,
+                    &shared_secret,
+                    b"Pair-Setup-Accessory-Sign-Info",
+                    &mut accessory_x,
+                );
 
-            drop(config);
+                let config = config.lock().await;
+                let device_id = config.device_id.to_hex_string();
 
-            let mut nonce = vec![0; 4];
-            nonce.extend(b"PS-Msg06");
+                let mut accessory_info: Vec<u8> = Vec::new();
+                accessory_info.extend(&accessory_x);
+                accessory_info.extend(device_id.as_bytes());
+                accessory_info.extend(config.device_ed25519_keypair.public.as_bytes());
+                let accessory_signature = config.device_ed25519_keypair.sign(&accessory_info);
 
-            let mut encrypted_data = Vec::new();
-            encrypted_data.extend_from_slice(&encoded_sub_tlv);
-            let auth_tag =
-                aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &[], &mut encrypted_data)?;
-            encrypted_data.extend(&auth_tag);
+                let encoded_sub_tlv = vec![
+                    Value::Identifier(device_id),
+                    Value::PublicKey(config.device_ed25519_keypair.public.as_bytes().to_vec()),
+                    Value::Signature(accessory_signature.to_bytes().to_vec()),
+                ]
+                .encode();
 
-            event_emitter.lock().await.emit(&Event::DevicePaired).await;
+                drop(config);
 
-            info!("pair setup M6: sending SRP exchange response");
+                let mut nonce = vec![0; 4];
+                nonce.extend(b"PS-Msg06");
 
-            Ok(vec![
-                Value::State(StepNumber::ExchangeRes as u8),
-                Value::EncryptedData(encrypted_data),
-            ])
-        } else {
-            Err(tlv::Error::Unknown)
-        }
-    } else {
-        Err(tlv::Error::Unknown)
+                let mut encrypted_data = Vec::new();
+                encrypted_data.extend_from_slice(&encoded_sub_tlv);
+                let auth_tag =
+                    aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &[], &mut encrypted_data)?;
+                encrypted_data.extend(&auth_tag);
+
+                event_emitter
+                    .lock()
+                    .await
+                    .emit(&Event::ControllerPaired { id: pairing.id })
+                    .await;
+
+                info!("pair setup M6: sending SRP exchange response");
+
+                Ok(vec![
+                    Value::State(StepNumber::ExchangeRes as u8),
+                    Value::EncryptedData(encrypted_data),
+                ])
+            },
+        },
     }
 }
 
