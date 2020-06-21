@@ -1,4 +1,5 @@
 use erased_serde::serialize_trait_object;
+use futures::executor;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
@@ -151,20 +152,20 @@ impl Information {
     /// Converts the `Information` struct to an Accessory Information Service.
     pub fn to_service(self) -> Result<AccessoryInformation> {
         let mut i = accessory_information::new();
-        i.inner.identify.set_value(self.identify);
-        i.inner.manufacturer.set_value(self.manufacturer);
-        i.inner.model.set_value(self.model);
-        i.inner.name.set_value(self.name);
-        i.inner.serial_number.set_value(self.serial_number);
-        i.inner.firmware_revision.set_value(self.firmware_revision);
+        executor::block_on(i.inner.identify.set_value(self.identify)).unwrap();
+        executor::block_on(i.inner.manufacturer.set_value(self.manufacturer)).unwrap();
+        executor::block_on(i.inner.model.set_value(self.model)).unwrap();
+        executor::block_on(i.inner.name.set_value(self.name)).unwrap();
+        executor::block_on(i.inner.serial_number.set_value(self.serial_number)).unwrap();
+        executor::block_on(i.inner.firmware_revision.set_value(self.firmware_revision)).unwrap();
         if let Some(v) = self.hardware_revision {
             let mut hr = hardware_revision::new();
-            hr.set_value(v);
+            executor::block_on(hr.set_value(v)).unwrap();
             i.inner.hardware_revision = Some(hr);
         }
         if let Some(v) = self.accessory_flags {
             let mut af = accessory_flags::new();
-            af.set_value(v);
+            executor::block_on(af.set_value(v)).unwrap();
             i.inner.accessory_flags = Some(af);
         }
         Ok(i)

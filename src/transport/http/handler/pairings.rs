@@ -5,7 +5,7 @@ use futures::{
     stream::StreamExt,
 };
 use hyper::Body;
-use log::debug;
+use log::{debug, info};
 use uuid::Uuid;
 
 use crate::{
@@ -155,7 +155,7 @@ async fn handle_add(
     ltpk: Vec<u8>,
     permissions: Permissions,
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("M1: Got Add Pairing Request");
+    info!("pairings M1: received add pairing request");
 
     check_admin(&controller_id, &storage).await?;
 
@@ -207,7 +207,7 @@ async fn handle_add(
         },
     }
 
-    debug!("M2: Sending Add Pairing Response");
+    info!("pairings M2: sending add pairing response");
 
     Ok(vec![Value::State(StepNumber::Res as u8)])
 }
@@ -218,7 +218,7 @@ async fn handle_remove(
     event_emitter: pointer::EventEmitter,
     pairing_id: Vec<u8>,
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("M1: Got Remove Pairing Request");
+    info!("pairings M1: received remove pairing request");
 
     check_admin(&controller_id, &storage).await?;
 
@@ -234,7 +234,7 @@ async fn handle_remove(
         .emit(&Event::ControllerUnpaired { id: pairing_uuid })
         .await;
 
-    debug!("M2: Sending Remove Pairing Response");
+    info!("pairings M2: sending remove pairing response");
 
     Ok(vec![Value::State(StepNumber::Res as u8)])
 }
@@ -243,7 +243,7 @@ async fn handle_list(
     controller_id: pointer::ControllerId,
     storage: pointer::Storage,
 ) -> Result<tlv::Container, tlv::Error> {
-    debug!("M1: Got List Pairings Request");
+    info!("pairings M1: received list pairings request");
 
     check_admin(&controller_id, &storage).await?;
 
@@ -258,7 +258,7 @@ async fn handle_list(
         }
     }
 
-    debug!("M2: Sending List Pairings Response");
+    info!("pairings M2: sending list pairings response");
 
     Ok(list)
 }

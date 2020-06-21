@@ -5,6 +5,7 @@ use futures::{
     future::{BoxFuture, FutureExt},
     lock::Mutex,
 };
+use log::debug;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde_json::json;
 
@@ -189,13 +190,15 @@ impl AccessoryList {
     }
 
     pub(crate) async fn as_serialized_json(&self) -> Result<Vec<u8>> {
-        let mut accessory_strings = Vec::new();
+        let mut accessory_values = Vec::new();
         for accessory in &self.accessories {
             let a = accessory.lock().await;
-            accessory_strings.push(serde_json::to_string(&*a)?);
+            accessory_values.push(serde_json::to_value(&*a)?);
         }
 
-        Ok(serde_json::to_vec(&json!({ "accessories": accessory_strings }))?)
+        debug!("accessory list JSON: {}", &json!({ "accessories": accessory_values }));
+
+        Ok(serde_json::to_vec(&json!({ "accessories": accessory_values }))?)
     }
 }
 

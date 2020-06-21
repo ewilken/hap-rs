@@ -1,5 +1,6 @@
 use futures::future::{BoxFuture, FutureExt};
 use hyper::{Body, Response, StatusCode, Uri};
+use log::{debug, info};
 
 use crate::{
     pointer,
@@ -25,6 +26,7 @@ impl JsonHandlerExt for Accessories {
         accessory_list: pointer::AccessoryList,
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
+        info!("received list accessories request");
         async move {
             let resp_body = accessory_list.lock().await.as_serialized_json().await?;
             // let resp_body = serde_json::to_vec(&accessory_list)?;
