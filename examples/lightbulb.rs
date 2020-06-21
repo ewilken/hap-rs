@@ -35,6 +35,7 @@ async fn main() {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::from_str("11122333").unwrap(),
         name: "Lightbulb".into(),
+        device_id: eui48::MacAddress::new([20, 50, 31, 40, 60, 72]),
         category: Category::Lightbulb,
         ..Default::default()
     };

@@ -3,8 +3,8 @@ use std::{
     future::Future,
     io::{self, ErrorKind},
     pin::Pin,
-    sync::{Arc, RwLock},
-    task::{Context, Poll},
+    sync::{Arc, Mutex, RwLock},
+    task::{Context, Poll, Waker},
 };
 
 use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
@@ -32,6 +32,8 @@ use crate::Result;
 pub struct StreamWrapper {
     incoming_receiver: UnboundedReceiver<Vec<u8>>,
     outgoing_sender: UnboundedSender<Vec<u8>>,
+    incoming_waker: Arc<Mutex<Option<Waker>>>,
+    outgoing_waker: Arc<Mutex<Option<Waker>>>,
     incoming_buf: BytesMut,
 }
 
@@ -39,10 +41,14 @@ impl StreamWrapper {
     pub fn new(
         incoming_receiver: UnboundedReceiver<Vec<u8>>,
         outgoing_sender: UnboundedSender<Vec<u8>>,
+        incoming_waker: Arc<Mutex<Option<Waker>>>,
+        outgoing_waker: Arc<Mutex<Option<Waker>>>,
     ) -> StreamWrapper {
         StreamWrapper {
             incoming_receiver,
             outgoing_sender,
+            incoming_waker,
+            outgoing_waker,
             incoming_buf: BytesMut::new(),
         }
     }
@@ -80,6 +86,15 @@ impl AsyncRead for StreamWrapper {
                 buf[..r_len].copy_from_slice(&stream_wrapper.incoming_buf[..r_len]);
                 stream_wrapper.incoming_buf.advance(r_len);
 
+                if let Some(waker) = stream_wrapper
+                    .outgoing_waker
+                    .lock()
+                    .expect("accessing incoming_waker")
+                    .take()
+                {
+                    waker.wake()
+                }
+
                 Poll::Ready(Ok(r_len))
             },
         }
@@ -96,6 +111,15 @@ impl AsyncWrite for StreamWrapper {
             .outgoing_sender
             .unbounded_send(buf.to_vec())
             .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't write"))?;
+
+        if let Some(waker) = stream_wrapper
+            .incoming_waker
+            .lock()
+            .expect("accessing outgoing_waker")
+            .take()
+        {
+            waker.wake()
+        }
 
         let w_len = buf.len();
 
@@ -126,6 +150,8 @@ pub struct EncryptedStream {
     stream: TcpStream,
     incoming_sender: UnboundedSender<Vec<u8>>,
     outgoing_receiver: UnboundedReceiver<Vec<u8>>,
+    incoming_waker: Arc<Mutex<Option<Waker>>>,
+    outgoing_waker: Arc<Mutex<Option<Waker>>>,
     session_receiver: oneshot::Receiver<Session>,
     pub controller_id: Arc<RwLock<Option<Uuid>>>,
     shared_secret: Option<[u8; 32]>,
@@ -149,10 +175,14 @@ impl EncryptedStream {
         UnboundedReceiver<Vec<u8>>,
         UnboundedSender<Vec<u8>>,
         oneshot::Sender<Session>,
+        Arc<Mutex<Option<Waker>>>,
+        Arc<Mutex<Option<Waker>>>,
     ) {
         let (sender, receiver) = oneshot::channel();
         let (incoming_sender, incoming_receiver) = mpsc::unbounded();
         let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
+        let incoming_waker = Arc::new(Mutex::new(None));
+        let outgoing_waker = Arc::new(Mutex::new(None));
         let mut encrypted_buf = BytesMut::new();
         encrypted_buf.resize(1042, 0);
         let mut decrypted_buf = BytesMut::new();
@@ -162,6 +192,8 @@ impl EncryptedStream {
                 stream,
                 incoming_sender,
                 outgoing_receiver,
+                incoming_waker: incoming_waker.clone(),
+                outgoing_waker: outgoing_waker.clone(),
                 session_receiver: receiver,
                 controller_id: Arc::new(RwLock::new(None)),
                 shared_secret: None,
@@ -179,6 +211,8 @@ impl EncryptedStream {
             incoming_receiver,
             outgoing_sender,
             sender,
+            incoming_waker,
+            outgoing_waker,
         )
     }
 
@@ -304,6 +338,7 @@ impl EncryptedStream {
                 Err(_) => {
                     debug!("EncryptedStream: outgoing_receiver: would block");
 
+                    *encrypted_stream.outgoing_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
                 },
                 Ok(Some(data)) => {
@@ -312,6 +347,10 @@ impl EncryptedStream {
                     match AsyncWrite::poll_write(Pin::new(encrypted_stream), cx, &data) {
                         Poll::Pending => {},
                         Poll::Ready(Err(e)) => {
+                            log::error!(
+                                "EncryptedStream: outgoing_receiver: error writing to outgoing stream: {}",
+                                e
+                            );
                             return Poll::Ready(Err(e));
                         },
                         Poll::Ready(Ok(w_len)) => {
@@ -337,10 +376,13 @@ impl EncryptedStream {
         loop {
             match AsyncRead::poll_read(Pin::new(encrypted_stream), cx, &mut data) {
                 Poll::Pending => {
+                    *encrypted_stream.incoming_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
                 },
                 Poll::Ready(Err(e)) => match e.kind() {
                     ErrorKind::WouldBlock => {
+                        *encrypted_stream.incoming_waker.lock().expect("setting outgoing_waker") =
+                            Some(cx.waker().clone());
                         return Poll::Pending;
                     },
                     _ => {
@@ -417,9 +459,12 @@ impl AsyncWrite for EncryptedStream {
                     encrypt_chunk(&shared_secret, &write_buf[..1024], &mut encrypted_stream.encrypt_count)
                         .map_err(|_| io::Error::new(io::ErrorKind::Other, "encryption failed"))?;
 
-                AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &aad)?;
-                AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &chunk)?;
-                AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &auth_tag)?;
+                // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &aad)?;
+                // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &chunk)?;
+                // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &auth_tag)?;
+
+                let data = [&aad[..], &chunk[..], &auth_tag[..]].concat();
+                AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &data)?;
 
                 write_buf.advance(1024);
             }
@@ -427,9 +472,12 @@ impl AsyncWrite for EncryptedStream {
             let (aad, chunk, auth_tag) = encrypt_chunk(&shared_secret, &write_buf, &mut encrypted_stream.encrypt_count)
                 .map_err(|_| io::Error::new(io::ErrorKind::Other, "encryption failed"))?;
 
-            AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &aad)?;
-            AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &chunk)?;
-            AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &auth_tag)?;
+            // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &aad)?;
+            // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &chunk)?;
+            // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &auth_tag)?;
+
+            let data = [&aad[..], &chunk[..], &auth_tag[..]].concat();
+            AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &data)?;
 
             Poll::Ready(Ok(buf.len()))
         } else {
