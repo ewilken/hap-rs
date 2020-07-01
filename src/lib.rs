@@ -25,4 +25,6 @@ pub use crate::{
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+pub use ed25519_dalek::Keypair as Ed25519Keypair;
+pub use eui48::MacAddress;
 pub use tokio;

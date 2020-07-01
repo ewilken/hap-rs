@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use erased_serde::serialize_trait_object;
-use futures::future::{BoxFuture, FutureExt};
 use serde::{
     ser::{SerializeStruct, Serializer},
     Deserialize,

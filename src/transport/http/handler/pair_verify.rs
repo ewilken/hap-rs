@@ -1,6 +1,6 @@
 use std::str;
 
-use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
+use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
 use chacha20poly1305::ChaCha20Poly1305;
 use futures::{
     channel::oneshot,

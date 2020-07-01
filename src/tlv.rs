@@ -1,7 +1,6 @@
 use std::{cell, collections::HashMap, io, str};
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use ed25519_dalek::Signature;
 use failure::Fail;
 use log::error;
 use srp::types::SrpAuthError;

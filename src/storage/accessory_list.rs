@@ -1,12 +1,8 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use erased_serde::{self, serialize_trait_object};
-use futures::{
-    future::{BoxFuture, FutureExt},
-    lock::Mutex,
-};
+use futures::lock::Mutex;
 use log::debug;
-use serde::ser::{Serialize, SerializeStruct, Serializer};
 use serde_json::json;
 
 use crate::{
@@ -201,19 +197,6 @@ impl AccessoryList {
         Ok(serde_json::to_vec(&json!({ "accessories": accessory_values }))?)
     }
 }
-
-// /// `AccessoryList` is a wrapper type holding a list of Accessories.
-// struct SerializableAccessoryList {
-//     pub accessories: Vec<Box<dyn AccessoryListMember + Send + Sync>>,
-// }
-//
-// impl Serialize for SerializableAccessoryList {
-//     fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
-//         let mut state = serializer.serialize_struct("AccessoryList", 1)?;
-//         state.serialize_field("accessories", &self.accessories)?;
-//         state.end()
-//     }
-// }
 
 /// `AccessoryListMember` is implemented by members of an `AccessoryList`.
 pub trait AccessoryListMember: HapAccessory + erased_serde::Serialize {}

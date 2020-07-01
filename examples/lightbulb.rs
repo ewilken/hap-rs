@@ -33,7 +33,7 @@ async fn main() {
 
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
-        pin: Pin::from_str("11122333").unwrap(),
+        pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
         name: "Lightbulb".into(),
         device_id: eui48::MacAddress::new([1, 2, 3, 4, 5, 6]),
         category: Category::Lightbulb,

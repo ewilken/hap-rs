@@ -1,6 +1,6 @@
 use futures::future::{BoxFuture, FutureExt};
 use hyper::{Body, Response, StatusCode, Uri};
-use log::{debug, info};
+use log::info;
 
 use crate::{
     pointer,

@@ -7,7 +7,7 @@ use std::{
     task::{Context, Poll, Waker},
 };
 
-use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
+use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
 use byteorder::{ByteOrder, LittleEndian};
 use bytes::{Buf, BytesMut};
 use chacha20poly1305::{ChaCha20Poly1305, Nonce, Tag};
@@ -89,6 +89,14 @@ impl AsyncRead for StreamWrapper {
                 if let Some(waker) = stream_wrapper
                     .outgoing_waker
                     .lock()
+                    .expect("accessing outgoing_waker")
+                    .take()
+                {
+                    waker.wake()
+                }
+                if let Some(waker) = stream_wrapper
+                    .incoming_waker
+                    .lock()
                     .expect("accessing incoming_waker")
                     .take()
                 {
@@ -113,9 +121,17 @@ impl AsyncWrite for StreamWrapper {
             .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't write"))?;
 
         if let Some(waker) = stream_wrapper
-            .incoming_waker
+            .outgoing_waker
             .lock()
             .expect("accessing outgoing_waker")
+            .take()
+        {
+            waker.wake()
+        }
+        if let Some(waker) = stream_wrapper
+            .incoming_waker
+            .lock()
+            .expect("accessing incoming_waker")
             .take()
         {
             waker.wake()

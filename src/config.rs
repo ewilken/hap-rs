@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use ed25519_dalek::Keypair;
+use ed25519_dalek::Keypair as Ed25519Keypair;
 use eui48::MacAddress;
 use rand::{rngs::OsRng, Rng};
 use serde::{Deserialize, Serialize};
@@ -44,25 +44,22 @@ pub struct Config {
     pub pin: Pin,
     /// Model name of the accessory.
     pub name: String,
-    /// Device ID of the accessory. Generated randomly if not specified. This value is also used as
-    /// the accessory's Pairing Identifier.
+    /// Device ID of the accessory. Generated randomly if not specified. This value is also used as the accessory's
+    /// Pairing Identifier.
     pub device_id: MacAddress, // id
     ///
-    pub device_ed25519_keypair: Keypair,
-    /// Current configuration number. Is updated when an accessory, service, or characteristic is
-    /// added or removed on the accessory server. Accessories must increment the config number after
-    /// a firmware update.
+    pub device_ed25519_keypair: Ed25519Keypair,
+    /// Current configuration number. Is updated when an accessory, service, or characteristic is added or removed on
+    /// the accessory server. Accessories must increment the config number after a firmware update.
     pub configuration_number: u64, // c#
     /// Current state number. This must have a value of `1`.
     pub state_number: u8, // s#
-    /// Accessory Category. Indicates the category that best describes the primary function of the
-    /// accessory.
+    /// Accessory Category. Indicates the category that best describes the primary function of the accessory.
     pub category: Category, // ci
-    /// Protocol version string `<major>.<minor>` (e.g. `"1.0"`). Defaults to `"1.0"` Required if value
-    /// is not `"1.0"`.
+    /// Protocol version string `<major>.<minor>` (e.g. `"1.0"`). Defaults to `"1.0"` Required if value is not `"1.0"`.
     pub protocol_version: String, // pv
-    /// Bonjour Status Flag. Defaults to `StatusFlag::NotPaired` and is changed to
-    /// `StatusFlag::Zero` after a successful pairing.
+    /// Bonjour Status Flag. Defaults to `StatusFlag::NotPaired` and is changed to `StatusFlag::Zero` after a
+    /// successful pairing.
     pub status_flag: BonjourStatusFlag, // sf
     /// Bonjour Feature Flag. Currently only used to indicate MFi compliance.
     pub feature_flag: BonjourFeatureFlag, // ff
@@ -89,7 +86,7 @@ impl Default for Config {
     fn default() -> Config {
         Config {
             socket_addr: SocketAddr::from(([127, 0, 0, 1], 32000)),
-            pin: Pin::from_str("11122333").unwrap(),
+            pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
             name: "Accessory".into(),
             device_id: generate_random_mac_address(),
             device_ed25519_keypair: generate_ed25519_keypair(),
@@ -110,7 +107,7 @@ fn generate_random_mac_address() -> MacAddress {
     MacAddress::new(eui)
 }
 
-fn generate_ed25519_keypair() -> Keypair {
+fn generate_ed25519_keypair() -> Ed25519Keypair {
     let mut csprng = OsRng {};
-    Keypair::generate(&mut csprng)
+    Ed25519Keypair::generate(&mut csprng)
 }

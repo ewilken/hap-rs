@@ -1,6 +1,6 @@
 use std::{ops::BitXor, str};
 
-use aead::{generic_array::GenericArray, Aead, AeadInPlace, NewAead};
+use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
 use chacha20poly1305::ChaCha20Poly1305;
 use futures::{
     future::{BoxFuture, FutureExt},
@@ -181,7 +181,7 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
     csprng.fill_bytes(&mut salt);
     csprng.fill_bytes(&mut b);
 
-    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", config.lock().await.pin.as_bytes(), &salt); // x = H(s | H(I | ":" | P))
+    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", &config.lock().await.pin.to_string().as_bytes(), &salt); // x = H(s | H(I | ":" | P))
     let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
     let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
 

@@ -246,29 +246,16 @@ impl Server {
 
                 let http = Http::new();
 
-                // std::thread::spawn(|| {
-                //     let mut rt = tokio::runtime::Runtime::new().expect("creating tokio runtime");
-                //     rt.block_on(encrypted_stream).expect("starting runtime");
-                // });
-
-                // http.serve_connection(stream_wrapper, api)
-                //     .map_err(|e| error!("{:?}", e))
-                //     .await;
-
-                // future::join(
-                //     encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()),
-                //     http.serve_connection(stream_wrapper, api)
-                //         .map_err(|e| error!("{:?}", e))
-                //         .map(|_| ()),
-                // )
-                // .await;
-
-                // encrypted_stream
-                //     .map_err(|e| error!("{}", e))
-                //     .join(http.serve_connection(stream_wrapper, api).map_err(|e| error!("{}", e)))
-                //     .map(|_| ())
-                //     .then(|_| Ok(()))
-                //     .await;
+                // futures::try_join!(
+                //     encrypted_stream.map_err(|e| {
+                //         error!("{:?}", e);
+                //         Error::from(e)
+                //     }),
+                //     http.serve_connection(stream_wrapper, api).map_err(|e| {
+                //         error!("{:?}", e);
+                //         Error::from(e)
+                //     }),
+                // )?;
 
                 futures::join!(
                     encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()),

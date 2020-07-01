@@ -33,7 +33,7 @@ async fn main() {
 
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
-        pin: Pin::from_str("11122333").unwrap(),
+        pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
         name: "TV".into(),
         category: Category::Television,
         ..Default::default()
