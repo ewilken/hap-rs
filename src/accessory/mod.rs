@@ -1,22 +1,21 @@
 use erased_serde::serialize_trait_object;
 use futures::executor;
-use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
-    characteristic::{accessory_flags, hardware_revision},
-    pointer,
-    service::{
-        accessory_information::{self, AccessoryInformation},
-        HapService,
+    characteristic::{
+        accessory_flags::AccessoryFlagsCharacteristic,
+        hardware_revision::HardwareRevisionCharacteristic,
+        HapCharacteristic,
     },
+    service::{accessory_information::AccessoryInformationService, HapService},
     Result,
 };
 
 mod category;
-mod defined;
+// mod defined;
 mod generated;
 
-pub use crate::accessory::{category::Category, defined::*, generated::*};
+pub use crate::accessory::{category::Category, generated::*};
 
 /// `HapAccessoryService` is implemented by every `Service` inside of an `Accessory`.
 pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
@@ -36,55 +35,11 @@ pub trait HapAccessory {
     /// Returns mutable references to the Services of an Accessory.
     fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)>;
     /// Returns a mutable reference to the Accessory Information Service of an Accessory.
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation;
-    /// Initializes the Service and Characteristic instance IDs of an Accessory. Service and
-    /// Characteristic instance IDs, "iid", are assigned from the same number pool that is unique
-    /// within each Accessory object. For example, if the first Service object has an instance ID of
-    /// "1" then no other Service or Characteristic objects can have an instance ID of "1" within
-    /// the parent Accessory object.
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()>;
+    fn get_mut_information(&mut self) -> &mut AccessoryInformationService;
 }
 
-/// An Accessory. Accessories are the outermost data type defined by the HAP. They are comprised of
-/// services and characteristics.
-pub struct Accessory<T: HapAccessory> {
-    pub inner: T,
-}
-
-impl<T: HapAccessory> Accessory<T> {
-    /// Creates a new `Accessory`.
-    fn new(inner: T) -> Accessory<T> { Accessory { inner } }
-}
-
-impl<T: HapAccessory> Serialize for Accessory<T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
-        let mut state = serializer.serialize_struct("HapAccessory", 2)?;
-        state.serialize_field("aid", &self.get_id())?;
-        state.serialize_field("services", &self.get_services())?;
-        state.end()
-    }
-}
-
-impl<T: HapAccessory> HapAccessory for Accessory<T> {
-    fn get_id(&self) -> u64 { self.inner.get_id() }
-
-    fn set_id(&mut self, id: u64) { self.inner.set_id(id) }
-
-    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> { self.inner.get_services() }
-
-    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
-        self.inner.get_mut_services()
-    }
-
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation { self.inner.get_mut_information() }
-
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
-        self.inner.init_iids(accessory_id, event_emitter)
-    }
-}
-
-/// The `Information` struct is used to store metadata about an `Accessory` and is converted to the
-/// Accessory Information Service of the `Accessory` it is passed to on its creation.
+/// The `Information` struct is used to store metadata about an `Accessory` and is converted to the Accessory
+/// Information Service of the `Accessory` it is passed to on its creation.
 ///
 /// # Examples
 ///
@@ -150,31 +105,34 @@ pub struct Information {
 
 impl Information {
     /// Converts the `Information` struct to an Accessory Information Service.
-    pub fn to_service(self) -> Result<AccessoryInformation> {
-        let mut i = accessory_information::new();
-        executor::block_on(i.inner.identify.set_value(self.identify)).unwrap();
-        executor::block_on(i.inner.manufacturer.set_value(self.manufacturer)).unwrap();
-        executor::block_on(i.inner.model.set_value(self.model)).unwrap();
-        executor::block_on(i.inner.name.set_value(self.name)).unwrap();
-        executor::block_on(i.inner.serial_number.set_value(self.serial_number)).unwrap();
-        executor::block_on(i.inner.firmware_revision.set_value(self.firmware_revision)).unwrap();
+    pub fn to_service(self, accessory_id: u64) -> Result<AccessoryInformationService> {
+        let mut i = AccessoryInformationService::new(1, accessory_id);
+        executor::block_on(i.identify.set_value(serde_json::Value::Bool(self.identify)))?;
+        executor::block_on(i.manufacturer.set_value(serde_json::Value::String(self.manufacturer)))?;
+        executor::block_on(i.model.set_value(serde_json::Value::String(self.model)))?;
+        executor::block_on(i.name.set_value(serde_json::Value::String(self.name)))?;
+        executor::block_on(i.serial_number.set_value(serde_json::Value::String(self.serial_number)))?;
+        executor::block_on(
+            i.firmware_revision
+                .set_value(serde_json::Value::String(self.firmware_revision)),
+        )?;
         if let Some(v) = self.hardware_revision {
-            let mut hr = hardware_revision::new();
-            executor::block_on(hr.set_value(v)).unwrap();
-            i.inner.hardware_revision = Some(hr);
+            let mut hr = HardwareRevisionCharacteristic::new(7, accessory_id);
+            executor::block_on(hr.set_value(serde_json::Value::String(v)))?;
+            i.hardware_revision = Some(hr);
         }
         if let Some(v) = self.accessory_flags {
-            let mut af = accessory_flags::new();
-            executor::block_on(af.set_value(v)).unwrap();
-            i.inner.accessory_flags = Some(af);
+            let mut af = AccessoryFlagsCharacteristic::new(8, accessory_id);
+            executor::block_on(af.set_value(serde_json::Value::Number(v.into())))?;
+            i.accessory_flags = Some(af);
         }
         Ok(i)
     }
 }
 
 impl Default for Information {
-    fn default() -> Information {
-        Information {
+    fn default() -> Self {
+        Self {
             identify: false,
             manufacturer: "undefined".into(),
             model: "undefined".into(),

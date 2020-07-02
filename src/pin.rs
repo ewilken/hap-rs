@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, Result};
+use crate::{ErrorKind, Result};
 
 const INVALID_PINS: [[u8; 8]; 12] = [
     [1, 2, 3, 4, 5, 6, 7, 8],
@@ -25,11 +25,11 @@ pub struct Pin {
 impl Pin {
     pub fn new(pin: [u8; 8]) -> Result<Self> {
         if INVALID_PINS.contains(&pin) {
-            return Err(Error::from_str("pin is too easy"));
+            return Err(ErrorKind::PinTooEasy.into());
         }
         for digit in &pin {
             if digit > &9 {
-                return Err(Error::from_str("pin must only contain numbers from 0 to 9"));
+                return Err(ErrorKind::InvalidPin.into());
             }
         }
 
@@ -69,6 +69,12 @@ impl Pin {
 
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_invalid_pin() {
+        let too_easy_pin = Pin::new([1, 2, 3, 4, 5, 6, 7, 8]);
+        let pin_with_invalid_number = Pin::new([0, 0, 0, 0, 0, 0, 0, 123]);
+    }
 
     #[test]
     fn test_to_string() {

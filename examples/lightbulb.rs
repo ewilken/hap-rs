@@ -1,7 +1,7 @@
 use std::net::{IpAddr, SocketAddr};
 
 use hap::{
-    accessory::{lightbulb, Category, Information},
+    accessory::{lightbulb::LightbulbAccessory, Category, Information},
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
@@ -25,7 +25,7 @@ async fn main() {
         None
     };
 
-    let lightbulb = lightbulb::new(Information {
+    let lightbulb = LightbulbAccessory::new(1, Information {
         name: "Lightbulb".into(),
         ..Default::default()
     })
@@ -35,7 +35,7 @@ async fn main() {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
         name: "Lightbulb".into(),
-        device_id: eui48::MacAddress::new([1, 2, 3, 4, 5, 6]),
+        device_id: eui48::MacAddress::new([5, 2, 3, 4, 5, 6]),
         category: Category::Lightbulb,
         ..Default::default()
     };

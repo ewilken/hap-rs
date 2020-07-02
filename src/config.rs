@@ -26,23 +26,23 @@ use crate::{accessory::Category, BonjourFeatureFlag, BonjourStatusFlag, Pin};
 pub struct Config {
     /// Socket address to serve on.
     pub socket_addr: SocketAddr,
-    /// 8 digit pin used for pairing. Defaults to `"11122333"`.
+    /// 8 digit pin used for pairing. Defaults to `11122333`.
     ///
     /// The following pins are considered too easy and are therefore not allowed:
-    /// - `"12345678"`
-    /// - `"87654321"`
-    /// - `"00000000"`
-    /// - `"11111111"`
-    /// - `"22222222"`
-    /// - `"33333333"`
-    /// - `"44444444"`
-    /// - `"55555555"`
-    /// - `"66666666"`
-    /// - `"77777777"`
-    /// - `"88888888"`
-    /// - `"99999999"`
+    /// - `12345678`
+    /// - `87654321`
+    /// - `00000000`
+    /// - `11111111`
+    /// - `22222222`
+    /// - `33333333`
+    /// - `44444444`
+    /// - `55555555`
+    /// - `66666666`
+    /// - `77777777`
+    /// - `88888888`
+    /// - `99999999`
     pub pin: Pin,
-    /// Model name of the accessory.
+    /// Model name of the accessory. E.g. "Acme Lightbulb".
     pub name: String,
     /// Device ID of the accessory. Generated randomly if not specified. This value is also used as the accessory's
     /// Pairing Identifier.

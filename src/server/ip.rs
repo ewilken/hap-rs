@@ -161,12 +161,7 @@ impl Server for IpServer {
         &mut self,
         accessory: A,
     ) -> Result<pointer::AccessoryListMember> {
-        let accessory = self
-            .accessory_list
-            .lock()
-            .await
-            .add_accessory(Box::new(accessory))
-            .await?;
+        let accessory = self.accessory_list.lock().await.add_accessory(Box::new(accessory))?;
 
         let mut config = self.config.lock().await;
         config.configuration_number += 1;

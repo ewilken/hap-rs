@@ -3,6 +3,7 @@ use hyper::{Body, Response, StatusCode, Uri};
 use serde_json::json;
 
 use crate::{
+    characteristic::HapCharacteristic,
     pointer,
     transport::http::{handler::JsonHandlerExt, json_response, status_response, Status},
     Result,
@@ -40,9 +41,8 @@ impl JsonHandlerExt for Identify {
                     .lock()
                     .await
                     .get_mut_information()
-                    .inner
                     .identify
-                    .set_value(true)
+                    .set_value(serde_json::Value::Bool(true))
                     .await?;
             }
 

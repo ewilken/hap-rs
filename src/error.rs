@@ -5,6 +5,14 @@ use failure::{self, err_msg, Context, Fail};
 /// ErrorKind wrapper type.
 #[derive(Debug, Fail)]
 pub enum ErrorKind {
+    #[fail(display = "The PIN is too easy. The following PINs are not allowed: []")]
+    PinTooEasy,
+    #[fail(display = "The PIN contains invalid digits. You may only use numbers from 0 to 9.")]
+    InvalidPin,
+    #[fail(display = "The selected service is not present on the accessory.")]
+    ServiceNotPresent,
+    #[fail(display = "The selected characteristic is not present on the service.")]
+    CharacteristicNotPresent,
     #[fail(display = "IO Error {}", _0)]
     Io(#[cause] io::Error),
     #[fail(display = "JSON Error {}", _0)]

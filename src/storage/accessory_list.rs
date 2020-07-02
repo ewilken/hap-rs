@@ -18,7 +18,6 @@ use crate::{
 pub struct AccessoryList {
     pub accessories: Vec<pointer::AccessoryListMember>,
     event_emitter: pointer::EventEmitter,
-    id_count: u64, // TODO: create the IDs elsewhere; e.g. inside of accessories when adding them
 }
 
 impl AccessoryList {
@@ -27,21 +26,17 @@ impl AccessoryList {
         AccessoryList {
             accessories: Vec::new(),
             event_emitter,
-            id_count: 1,
         }
     }
 
     /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
-    pub async fn add_accessory(
+    pub fn add_accessory(
         &mut self,
         accessory: Box<dyn AccessoryListMember + Send + Sync>,
     ) -> Result<pointer::AccessoryListMember> {
-        let mut a = accessory;
-        a.set_id(self.id_count);
-        a.init_iids(self.id_count, self.event_emitter.clone())?;
-        let a_ptr = Arc::new(Mutex::new(a));
+        let a_ptr = Arc::new(Mutex::new(accessory));
         self.accessories.push(a_ptr.clone());
-        self.id_count += 1;
+        // TODO: some error handling here?
 
         Ok(a_ptr)
     }
