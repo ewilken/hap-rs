@@ -388,7 +388,7 @@ static HAP_TYPE: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use serde::ser::{Serialize, Serializer};
 
 /// HAP Service and Characteristic type.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum HapType {
     Unknown,
 {{#each Characteristics as |c|}}\
@@ -436,6 +436,7 @@ use crate::{
         CharacteristicCallbacks,
         Format,
         HapCharacteristic,
+        HapCharacteristicSetup,
         HapType,
         OnReadFn,
         OnUpdateFn,
@@ -449,59 +450,55 @@ use crate::{
 
 /// {{characteristic.Name}} Characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct {{trim characteristic.Name}}Characteristic {
-    pub characteristic: Characteristic<{{type characteristic.Format}}>,
-}
+pub struct {{trim characteristic.Name}}Characteristic(Characteristic<{{type characteristic.Format}}>);
 
 impl {{trim characteristic.Name}}Characteristic {
     /// Creates a new {{characteristic.Name}} Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self {
-            characteristic: Characteristic::<{{type characteristic.Format}}> {
-                id,
-                accessory_id,
-                hap_type: HapType::{{trim characteristic.Name}},
-                format: {{format characteristic.Format}},
-                perms: vec![{{perms characteristic.Properties}}
-                ],\
-                {{#if characteristic.Unit}}\n\t\t\t\tunit: Some({{unit characteristic.Unit}}),{{/if}}\
-                {{#if characteristic.Constraints.MaximumValue includeZero=true}}\n\t\t\t\tmax_value: Some({{characteristic.Constraints.MaximumValue}}{{float characteristic.Format}}),{{/if}}\
-                {{#if characteristic.Constraints.MinimumValue includeZero=true}}\n\t\t\t\tmin_value: Some({{characteristic.Constraints.MinimumValue}}{{float characteristic.Format}}),{{/if}}\
-                {{#if characteristic.Constraints.StepValue includeZero=true}}\n\t\t\t\tstep_value: Some({{characteristic.Constraints.StepValue}}{{float characteristic.Format}}),{{/if}}\
-                {{#if characteristic.Constraints.MaximumLength includeZero=true}}\n\t\t\t\tmax_len: Some({{characteristic.Constraints.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
-                {{#if characteristic.Constraints.MaximumDataLength includeZero=true}}\n\t\t\t\tmax_data_len: Some({{characteristic.Constraints.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
-                {{#if characteristic.Constraints.ValidValues includeZero=true}}\n\t\t\t\tvalid_values: Some({{valid_values characteristic.Constraints.ValidValues}}),{{/if}}
-                ..Default::default()
-            },
-        }
+        Self(Characteristic::<{{type characteristic.Format}}> {
+            id,
+            accessory_id,
+            hap_type: HapType::{{trim characteristic.Name}},
+            format: {{format characteristic.Format}},
+            perms: vec![{{perms characteristic.Properties}}
+            ],\
+            {{#if characteristic.Unit}}\n\t\t\t\tunit: Some({{unit characteristic.Unit}}),{{/if}}\
+            {{#if characteristic.Constraints.MaximumValue includeZero=true}}\n\t\t\t\tmax_value: Some({{characteristic.Constraints.MaximumValue}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.Constraints.MinimumValue includeZero=true}}\n\t\t\t\tmin_value: Some({{characteristic.Constraints.MinimumValue}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.Constraints.StepValue includeZero=true}}\n\t\t\t\tstep_value: Some({{characteristic.Constraints.StepValue}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.Constraints.MaximumLength includeZero=true}}\n\t\t\t\tmax_len: Some({{characteristic.Constraints.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.Constraints.MaximumDataLength includeZero=true}}\n\t\t\t\tmax_data_len: Some({{characteristic.Constraints.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.Constraints.ValidValues includeZero=true}}\n\t\t\t\tvalid_values: Some({{valid_values characteristic.Constraints.ValidValues}}),{{/if}}
+            ..Default::default()
+        })
     }
 }
 
 #[async_trait]
 impl HapCharacteristic for {{trim characteristic.Name}}Characteristic {
-    fn get_id(&self) -> u64 { self.characteristic.get_id() }
+    fn get_id(&self) -> u64 { self.0.get_id() }
 
-    fn get_type(&self) -> HapType { self.characteristic.get_type() }
+    fn get_type(&self) -> HapType { self.0.get_type() }
 
-    fn get_format(&self) -> Format { self.characteristic.get_format() }
+    fn get_format(&self) -> Format { self.0.get_format() }
 
-    fn get_perms(&self) -> Vec<Perm> { self.characteristic.get_perms() }
+    fn get_perms(&self) -> Vec<Perm> { self.0.get_perms() }
 
-    fn get_event_notifications(&self) -> Option<bool> { self.characteristic.get_event_notifications() }
+    fn get_event_notifications(&self) -> Option<bool> { self.0.get_event_notifications() }
 
     fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
-        self.characteristic.set_event_notifications(event_notifications)
+        self.0.set_event_notifications(event_notifications)
     }
 
     async fn get_value(&mut self) -> Result<serde_json::Value> {
-        let value = self.characteristic.get_value().await?;
+        let value = self.0.get_value().await?;
         Ok(json!(value))
     }
 
     async fn set_value(&mut self, value: serde_json::Value) -> Result<()> {
         let v;
         // for whatever reason, the controller is setting boolean values either as a boolean or as an integer
-        if self.characteristic.format == Format::Bool && value.is_number() {
+        if self.0.format == Format::Bool && value.is_number() {
             let num_v: u8 = serde_json::from_value(value)?;
             if num_v == 0 {
                 v = serde_json::from_value(json!(false))?;
@@ -514,24 +511,30 @@ impl HapCharacteristic for {{trim characteristic.Name}}Characteristic {
         } else {
             v = serde_json::from_value(value)?;
         }
-        self.characteristic.set_value(v).await
+        self.0.set_value(v).await
     }
 
-    fn get_unit(&self) -> Option<Unit> { self.characteristic.get_unit() }
+    fn get_unit(&self) -> Option<Unit> { self.0.get_unit() }
 
-    fn get_max_value(&self) -> Option<serde_json::Value> { self.characteristic.get_max_value().map(|v| json!(v)) }
+    fn get_max_value(&self) -> Option<serde_json::Value> { self.0.get_max_value().map(|v| json!(v)) }
 
-    fn get_min_value(&self) -> Option<serde_json::Value> { self.characteristic.get_min_value().map(|v| json!(v)) }
+    fn get_min_value(&self) -> Option<serde_json::Value> { self.0.get_min_value().map(|v| json!(v)) }
 
-    fn get_step_value(&self) -> Option<serde_json::Value> { self.characteristic.get_step_value().map(|v| json!(v)) }
+    fn get_step_value(&self) -> Option<serde_json::Value> { self.0.get_step_value().map(|v| json!(v)) }
 
-    fn get_max_len(&self) -> Option<u16> { self.characteristic.get_max_len() }
+    fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
+}
+
+impl HapCharacteristicSetup for {{trim characteristic.Name}}Characteristic {
+    fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
+        self.0.set_event_emitter(event_emitter)
+    }
 }
 
 impl CharacteristicCallbacks<{{type characteristic.Format}}> for {{trim characteristic.Name}}Characteristic {
-    fn on_read(&mut self, f: impl OnReadFn<{{type characteristic.Format}}>) { self.characteristic.on_read(f) }
+    fn on_read(&mut self, f: impl OnReadFn<{{type characteristic.Format}}>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: impl OnUpdateFn<{{type characteristic.Format}}>) { self.characteristic.on_update(f) }
+    fn on_update(&mut self, f: impl OnUpdateFn<{{type characteristic.Format}}>) { self.0.on_update(f) }
 }
 ";
 
@@ -569,11 +572,11 @@ pub struct {{trim service.Name}}Service {
     primary: bool,
 
 {{#each required_characteristics as |r|}}\
-\t/// {{r.Name}} Characteristic.
+\t/// {{r.Name}} Characteristic (required).
 \tpub {{characteristic_file_name r.Name}}: {{characteristic_name r.Name}}Characteristic,
 {{/each}}\
 \n{{#each optional_characteristics as |r|}}\
-\t/// {{r.Name}} Characteristic.
+\t/// {{r.Name}} Characteristic (optional).
 \tpub {{characteristic_file_name r.Name}}: Option<{{characteristic_name r.Name}}Characteristic>,
 {{/each}}\
 }
@@ -585,7 +588,7 @@ impl {{trim service.Name}}Service {
             id,
             hap_type: HapType::{{trim service.Name}},
 {{#each required_characteristics as |r|}}\
-\t\t\t{{characteristic_file_name r.Name}}: {{characteristic_name r.Name}}Characteristic::new(id, accessory_id),
+\t\t\t{{characteristic_file_name r.Name}}: {{characteristic_name r.Name}}Characteristic::new(id + 1 + {{@index}}, accessory_id),
 {{/each}}\
         \t\t\t..Default::default()
         }
@@ -617,8 +620,26 @@ impl HapService for {{trim service.Name}}Service {
         self.primary = primary;
     }
 
-    fn get_characteristics(&self) -> Vec<&(dyn HapCharacteristic + Send + Sync)> {
-        let mut characteristics: Vec<&(dyn HapCharacteristic + Send + Sync)> = vec![
+    fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic> {
+        for characteristic in self.get_characteristics() {
+            if characteristic.get_type() == hap_type {
+                return Some(characteristic);
+            }
+        }
+        None
+    }
+
+    fn get_mut_characteristic(&mut self, hap_type: HapType) -> Option<&mut dyn HapCharacteristic> {
+        for characteristic in self.get_mut_characteristics() {
+            if characteristic.get_type() == hap_type {
+                return Some(characteristic);
+            }
+        }
+        None
+    }
+
+    fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 {{#each required_characteristics as |r|}}\
 \t\t\t&self.{{characteristic_file_name r.Name}},
 {{/each}}\
@@ -631,8 +652,8 @@ impl HapService for {{trim service.Name}}Service {
         \t\tcharacteristics
     }
 
-    fn get_mut_characteristics(&mut self) -> Vec<&mut (dyn HapCharacteristic + Send + Sync)> {
-        let mut characteristics: Vec<&mut (dyn HapCharacteristic + Send + Sync)> = vec![
+    fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 {{#each required_characteristics as |r|}}\
 \t\t\t&mut self.{{characteristic_file_name r.Name}},
 {{/each}}\
@@ -668,8 +689,9 @@ static ACCESSORY: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
-\taccessory::{HapAccessory, HapAccessoryService, Information},
+\taccessory::{HapAccessory, Information},
 \tservice::{HapService, accessory_information::AccessoryInformationService, {{snake_case service.Name}}::{{trim service.Name}}Service},
+\tHapType,
 \tResult,
 };
 
@@ -688,12 +710,14 @@ pub struct {{trim service.Name}}Accessory {
 impl {{trim service.Name}}Accessory {
     /// Creates a new {{service.Name}} Accessory.
     pub fn new(id: u64, information: Information) -> Result<Self> {
-        let mut {{snake_case service.Name}} = {{trim service.Name}}Service::new(2, id);
+        let accessory_information = information.to_service(1, id)?;
+        let {{snake_case service.Name}}_id = accessory_information.get_characteristics().len() as u64;
+        let mut {{snake_case service.Name}} = {{trim service.Name}}Service::new(1 + {{snake_case service.Name}}_id + 1, id);
         {{snake_case service.Name}}.set_primary(true);
 
         Ok(Self {
             id,
-            accessory_information: information.to_service(id)?,
+            accessory_information,
             {{snake_case service.Name}},
         })
     }
@@ -708,22 +732,36 @@ impl HapAccessory for {{trim service.Name}}Accessory {
         self.id = id;
     }
 
-    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> {
+    fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService> {
+        for service in self.get_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_mut_service(&mut self, hap_type: HapType) -> Option<&mut dyn HapService> {
+        for service in self.get_mut_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_services(&self) -> Vec<&dyn HapService> {
         vec![
             &self.accessory_information,
             &self.{{snake_case service.Name}},
         ]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> {
         vec![
             &mut self.accessory_information,
             &mut self.{{snake_case service.Name}},
         ]
-    }
-
-    fn get_mut_information(&mut self) -> &mut AccessoryInformationService {
-        &mut self.accessory_information
     }
 }
 
@@ -742,7 +780,7 @@ static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 ";
 
 fn main() {
-    let metadata_file = File::open("default.metadata.json").unwrap();
+    let metadata_file = File::open("gen/default.metadata.json").unwrap();
     let mut metadata_ex = MetadataEx {
         metadata: serde_json::from_reader(&metadata_file).unwrap(),
         characteristics: std::collections::HashMap::new(),
@@ -905,5 +943,5 @@ fn main() {
     let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
     accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
 
-    println!("cargo:rerun-if-changed=default.metadata.json");
+    println!("cargo:rerun-if-changed=gen/default.metadata.json");
 }

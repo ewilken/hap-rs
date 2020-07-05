@@ -9,10 +9,12 @@ pub enum ErrorKind {
     PinTooEasy,
     #[fail(display = "The PIN contains invalid digits. You may only use numbers from 0 to 9.")]
     InvalidPin,
-    #[fail(display = "The selected service is not present on the accessory.")]
-    ServiceNotPresent,
-    #[fail(display = "The selected characteristic is not present on the service.")]
-    CharacteristicNotPresent,
+    #[fail(display = "The value is below the `min_value` of the characteristic.")]
+    ValueBelowMinValue,
+    #[fail(display = "The value is above the `max_value` of the characteristic.")]
+    ValueAboveMaxValue,
+    #[fail(display = "The selected accessory is not present on the server.")]
+    AccessoryNotFound,
     #[fail(display = "IO Error {}", _0)]
     Io(#[cause] io::Error),
     #[fail(display = "JSON Error {}", _0)]
@@ -31,7 +33,7 @@ pub enum ErrorKind {
     #[fail(display = "UTF-8 Error {}", _0)]
     Utf8(#[cause] str::Utf8Error),
     #[fail(display = "MAC Address Parse Error {}", _0)]
-    MacAddressParse(#[cause] eui48::ParseError),
+    ParseEui48(#[cause] eui48::ParseError),
     #[fail(display = "Parse Int Error {}", _0)]
     ParseInt(#[cause] num::ParseIntError),
     #[fail(display = "MPSC Send Error {}", _0)]
@@ -88,7 +90,7 @@ impl From<io::Error> for Error {
     fn from(err: io::Error) -> Error { ErrorKind::Io(err).into() }
 }
 
-// TODO - fix it
+// TODO: fix it
 // impl Into<io::Error> for Error {
 //     fn into(self) -> io::Error {
 //         io::Error::new(io::ErrorKind::Other, self.cause().into())
@@ -121,7 +123,7 @@ impl From<str::Utf8Error> for Error {
 }
 
 impl From<eui48::ParseError> for Error {
-    fn from(err: eui48::ParseError) -> Self { ErrorKind::MacAddressParse(err).into() }
+    fn from(err: eui48::ParseError) -> Self { ErrorKind::ParseEui48(err).into() }
 }
 
 impl From<num::ParseIntError> for Error {

@@ -5,7 +5,7 @@ use crate::{pairing::Pairing, Config, Result};
 
 /// `Storage` is implemented by the data storage methods HAP supports. Currently, that's just `FileStorage`.
 #[async_trait]
-pub trait Storage {
+pub trait Storage: Send + Sync {
     /// Loads the `Config` from the `Storage`.
     async fn load_config(&self) -> Result<Config>;
     /// Saves the `Config` into the `Storage`.

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use futures::future::BoxFuture;
 
-use crate::{pointer, storage::accessory_list::AccessoryListMember, Result};
+use crate::{accessory::HapAccessory, pointer, Result};
 
 mod ip;
 
@@ -17,10 +17,7 @@ pub trait Server {
     /// Returns a pointer to the `Storage` of the server.
     fn storage_pointer(&self) -> pointer::Storage;
     /// Adds an Accessory to the server and returns a pointer to the added Accessory.
-    async fn add_accessory<A: 'static + AccessoryListMember + Send + Sync>(
-        &mut self,
-        accessory: A,
-    ) -> Result<pointer::AccessoryListMember>;
+    async fn add_accessory<A: HapAccessory + 'static>(&mut self, accessory: A) -> Result<pointer::Accessory>;
     /// Takes a pointer to an Accessory by reference and removes the Accessory from the server.
-    async fn remove_accessory(&mut self, accessory: &pointer::AccessoryListMember) -> Result<()>;
+    async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()>;
 }

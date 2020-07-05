@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use futures::future::{join_all, BoxFuture};
+use log::debug;
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -23,5 +24,9 @@ impl EventEmitter {
         self.listeners.push(listener);
     }
 
-    pub async fn emit(&self, event: &Event) { join_all(self.listeners.iter().map(|listener| listener(&event))).await; }
+    pub async fn emit(&self, event: &Event) {
+        debug!("emitting event: {:?}", event);
+
+        join_all(self.listeners.iter().map(|listener| listener(&event))).await;
+    }
 }

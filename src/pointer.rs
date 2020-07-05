@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use futures::lock::Mutex;
 use uuid::Uuid;
 
-use crate::{event, storage};
+use crate::{accessory, event, storage};
 
 pub type ControllerId = Arc<RwLock<Option<Uuid>>>;
 
@@ -13,8 +13,8 @@ pub type EventSubscriptions = Arc<Mutex<Vec<(u64, u64)>>>;
 
 pub type AccessoryList = Arc<Mutex<storage::accessory_list::AccessoryList>>;
 
-pub type AccessoryListMember = Arc<Mutex<Box<dyn storage::accessory_list::AccessoryListMember + Send + Sync>>>;
+pub type Accessory = Arc<Mutex<Box<dyn accessory::HapAccessory>>>;
 
-pub type Storage = Arc<Mutex<Box<dyn storage::Storage + Send + Sync>>>;
+pub type Storage = Arc<Mutex<Box<dyn storage::Storage>>>;
 
 pub type Config = Arc<Mutex<crate::Config>>;

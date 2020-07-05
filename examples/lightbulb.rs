@@ -2,6 +2,7 @@ use std::net::{IpAddr, SocketAddr};
 
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, Category, Information},
+    characteristic::CharacteristicCallbacks,
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
@@ -25,17 +26,25 @@ async fn main() {
         None
     };
 
-    let lightbulb = LightbulbAccessory::new(1, Information {
+    let mut lightbulb = LightbulbAccessory::new(1, Information {
         name: "Lightbulb".into(),
         ..Default::default()
     })
     .unwrap();
 
+    lightbulb.lightbulb.on.on_read(|| {
+        println!("on characteristic read");
+        None
+    });
+    lightbulb.lightbulb.on.on_update(|old_val: &bool, new_val: &bool| {
+        println!("on characteristic updated from {} to {}", old_val, new_val);
+    });
+
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
-        name: "Lightbulb".into(),
-        device_id: eui48::MacAddress::new([5, 2, 3, 4, 5, 6]),
+        name: "Acme Lightbulb".into(),
+        device_id: eui48::MacAddress::new([1, 2, 3, 4, 5, 6]),
         category: Category::Lightbulb,
         ..Default::default()
     };

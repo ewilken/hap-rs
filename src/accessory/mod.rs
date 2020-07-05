@@ -7,7 +7,9 @@ use crate::{
         hardware_revision::HardwareRevisionCharacteristic,
         HapCharacteristic,
     },
+    pointer,
     service::{accessory_information::AccessoryInformationService, HapService},
+    HapType,
     Result,
 };
 
@@ -17,25 +19,40 @@ mod generated;
 
 pub use crate::accessory::{category::Category, generated::*};
 
-/// `HapAccessoryService` is implemented by every `Service` inside of an `Accessory`.
-pub trait HapAccessoryService: HapService + erased_serde::Serialize {}
-
-impl<T: HapService + erased_serde::Serialize> HapAccessoryService for T {}
-
-serialize_trait_object!(HapAccessoryService);
-
 /// `HapAccessory` is implemented by the inner type of every `Accessory`.
-pub trait HapAccessory {
-    /// Returns the ID of an Accessory.
+pub trait HapAccessory: HapAccessorySetup + erased_serde::Serialize + Send + Sync {
+    /// Returns the ID of the Accessory.
     fn get_id(&self) -> u64;
-    /// Sets the ID of an Accessory.
+    /// Sets the ID of the Accessory.
     fn set_id(&mut self, id: u64);
-    /// Returns references to all Services of an Accessory.
-    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)>;
-    /// Returns mutable references to the Services of an Accessory.
-    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)>;
-    /// Returns a mutable reference to the Accessory Information Service of an Accessory.
-    fn get_mut_information(&mut self) -> &mut AccessoryInformationService;
+    /// Returns a reference to a specific Service of the Accessory if it's present on it.
+    fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService>;
+    /// Returns a mutable reference to a specific Service of the Accessory if it's present on it.
+    fn get_mut_service(&mut self, hap_type: HapType) -> Option<&mut dyn HapService>;
+    /// Returns references to all Services of the Accessory.
+    fn get_services(&self) -> Vec<&dyn HapService>;
+    /// Returns mutable references to the Services of the Accessory.
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapService>;
+}
+
+serialize_trait_object!(HapAccessory);
+
+pub trait HapAccessorySetup {
+    /// Sets a `hap::event::pointer::EventEmitter` on all Characteristics of the Accessory.
+    fn set_event_emitter_on_characteristics(&mut self, event_emitter: Option<pointer::EventEmitter>);
+}
+
+impl<H> HapAccessorySetup for H
+where
+    H: HapAccessory,
+{
+    fn set_event_emitter_on_characteristics(&mut self, event_emitter: Option<pointer::EventEmitter>) {
+        for service in self.get_mut_services() {
+            for characteristic in service.get_mut_characteristics() {
+                characteristic.set_event_emitter(event_emitter.clone());
+            }
+        }
+    }
 }
 
 /// The `Information` struct is used to store metadata about an `Accessory` and is converted to the Accessory
@@ -58,8 +75,6 @@ pub trait HapAccessory {
 /// ```
 #[derive(Debug)]
 pub struct Information {
-    /// Used to cause the `Accessory` to run its identify routine.
-    pub identify: bool,
     /// Contains the name of the company whose brand will appear on the `Accessory`, e.g., "Acme".
     pub manufacturer: String,
     /// Contains the manufacturer-specific model of the `Accessory`, e.g. "A1234".
@@ -105,9 +120,9 @@ pub struct Information {
 
 impl Information {
     /// Converts the `Information` struct to an Accessory Information Service.
-    pub fn to_service(self, accessory_id: u64) -> Result<AccessoryInformationService> {
-        let mut i = AccessoryInformationService::new(1, accessory_id);
-        executor::block_on(i.identify.set_value(serde_json::Value::Bool(self.identify)))?;
+    pub(crate) fn to_service(self, id: u64, accessory_id: u64) -> Result<AccessoryInformationService> {
+        let mut i = AccessoryInformationService::new(id, accessory_id);
+        executor::block_on(i.identify.set_value(serde_json::Value::Bool(false)))?;
         executor::block_on(i.manufacturer.set_value(serde_json::Value::String(self.manufacturer)))?;
         executor::block_on(i.model.set_value(serde_json::Value::String(self.model)))?;
         executor::block_on(i.name.set_value(serde_json::Value::String(self.name)))?;
@@ -133,7 +148,6 @@ impl Information {
 impl Default for Information {
     fn default() -> Self {
         Self {
-            identify: false,
             manufacturer: "undefined".into(),
             model: "undefined".into(),
             name: "undefined".into(),

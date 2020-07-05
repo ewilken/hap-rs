@@ -8,14 +8,12 @@ use futures::{
 use log::info;
 
 use crate::{
+    accessory::HapAccessory,
     config::Config,
     event::{Event, EventEmitter},
     pointer,
     server::Server,
-    storage::{
-        accessory_list::{AccessoryList, AccessoryListMember},
-        Storage,
-    },
+    storage::{accessory_list::AccessoryList, Storage},
     transport::{http::server::Server as HttpServer, mdns::MdnsResponder},
     BonjourStatusFlag,
     Result,
@@ -157,10 +155,7 @@ impl Server for IpServer {
 
     fn storage_pointer(&self) -> pointer::Storage { self.storage.clone() }
 
-    async fn add_accessory<A: 'static + AccessoryListMember + Send + Sync>(
-        &mut self,
-        accessory: A,
-    ) -> Result<pointer::AccessoryListMember> {
+    async fn add_accessory<A: HapAccessory + 'static>(&mut self, accessory: A) -> Result<pointer::Accessory> {
         let accessory = self.accessory_list.lock().await.add_accessory(Box::new(accessory))?;
 
         let mut config = self.config.lock().await;
@@ -169,7 +164,7 @@ impl Server for IpServer {
         Ok(accessory)
     }
 
-    async fn remove_accessory(&mut self, accessory: &pointer::AccessoryListMember) -> Result<()> {
+    async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()> {
         self.accessory_list.lock().await.remove_accessory(&accessory).await?;
 
         let mut config = self.config.lock().await;

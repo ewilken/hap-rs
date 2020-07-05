@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use erased_serde::{self, serialize_trait_object};
 use futures::lock::Mutex;
 use log::debug;
 use serde_json::json;
@@ -14,9 +13,10 @@ use crate::{
     Result,
 };
 
+// TODO: rename to AccessoryDatabase?
 /// `AccessoryList` is a wrapper type holding a list of Accessories.
 pub struct AccessoryList {
-    pub accessories: Vec<pointer::AccessoryListMember>,
+    pub accessories: Vec<pointer::Accessory>,
     event_emitter: pointer::EventEmitter,
 }
 
@@ -30,24 +30,26 @@ impl AccessoryList {
     }
 
     /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
-    pub fn add_accessory(
-        &mut self,
-        accessory: Box<dyn AccessoryListMember + Send + Sync>,
-    ) -> Result<pointer::AccessoryListMember> {
-        let a_ptr = Arc::new(Mutex::new(accessory));
-        self.accessories.push(a_ptr.clone());
+    pub fn add_accessory(&mut self, accessory: Box<dyn HapAccessory>) -> Result<pointer::Accessory> {
+        let mut accessory = accessory;
+        accessory.set_event_emitter_on_characteristics(Some(self.event_emitter.clone()));
+
+        let accessory = Arc::new(Mutex::new(accessory));
+        self.accessories.push(accessory.clone());
         // TODO: some error handling here?
 
-        Ok(a_ptr)
+        Ok(accessory)
     }
 
     /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryList`.
-    pub async fn remove_accessory(&mut self, accessory: &pointer::AccessoryListMember) -> Result<()> {
+    pub async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()> {
         let accessory = accessory.lock().await;
         let mut remove = None;
 
-        for (i, a) in self.accessories.iter().enumerate() {
+        for (i, a) in self.accessories.iter_mut().enumerate() {
             if a.lock().await.get_id() == accessory.get_id() {
+                a.lock().await.set_event_emitter_on_characteristics(None);
+
                 remove = Some(i);
                 break;
             }
@@ -187,18 +189,13 @@ impl AccessoryList {
             accessory_values.push(serde_json::to_value(&*a)?);
         }
 
-        debug!("accessory list JSON: {}", &json!({ "accessories": accessory_values }));
+        let json = json!({ "accessories": accessory_values });
 
-        Ok(serde_json::to_vec(&json!({ "accessories": accessory_values }))?)
+        debug!("accessory list JSON: {}", &json);
+
+        Ok(serde_json::to_vec(&json)?)
     }
 }
-
-/// `AccessoryListMember` is implemented by members of an `AccessoryList`.
-pub trait AccessoryListMember: HapAccessory + erased_serde::Serialize {}
-
-impl<T: HapAccessory + erased_serde::Serialize> AccessoryListMember for T {}
-
-serialize_trait_object!(AccessoryListMember);
 
 #[cfg(test)]
 mod tests {

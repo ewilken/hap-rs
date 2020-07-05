@@ -208,23 +208,6 @@ impl<T: Default + Clone + Serialize + Send + Sync> Serialize for Characteristic<
     }
 }
 
-pub trait OnReadFn<T: Default + Clone + Serialize + Send + Sync>: Fn() -> Option<T> + 'static + Send + Sync {}
-impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFn<T> for F where
-    F: Fn() -> Option<T> + 'static + Send + Sync
-{
-}
-
-impl<T: Default + Clone + Serialize + Send + Sync> fmt::Debug for dyn OnReadFn<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "OnReadFn") }
-}
-
-pub trait OnUpdateFn<T: Default + Clone + Serialize + Send + Sync>: Fn(&T, &T) + 'static + Send + Sync {}
-impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFn<T> for F where F: Fn(&T, &T) + 'static + Send + Sync {}
-
-impl<T: Default + Clone + Serialize + Send + Sync> fmt::Debug for dyn OnUpdateFn<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "OnUpdateFn") }
-}
-
 /// Permission of a `Characteristic`.
 #[derive(Debug, Copy, Clone, Serialize, PartialEq)]
 pub enum Perm {
@@ -286,9 +269,9 @@ impl Default for Format {
     fn default() -> Format { Format::String }
 }
 
-/// `HapCharacteristic` is implemented by the inner type of every `Characteristic`.
+/// `HapCharacteristic` is implemented by every `Characteristic`.
 #[async_trait]
-pub trait HapCharacteristic: erased_serde::Serialize {
+pub trait HapCharacteristic: HapCharacteristicSetup + erased_serde::Serialize + Send + Sync {
     /// Returns the ID of a Characteristic.
     fn get_id(&self) -> u64;
     /// Returns the `HapType` of a Characteristic.
@@ -319,9 +302,26 @@ pub trait HapCharacteristic: erased_serde::Serialize {
 
 serialize_trait_object!(HapCharacteristic);
 
-pub(crate) trait HapCharacteristicSetup {
+pub trait HapCharacteristicSetup {
     /// Sets a `hap::event::pointer::EventEmitter` on the Characteristic.
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>);
+}
+
+pub trait OnReadFn<T: Default + Clone + Serialize + Send + Sync>: Fn() -> Option<T> + 'static + Send + Sync {}
+impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFn<T> for F where
+    F: Fn() -> Option<T> + 'static + Send + Sync
+{
+}
+
+impl<T: Default + Clone + Serialize + Send + Sync> fmt::Debug for dyn OnReadFn<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "OnReadFn") }
+}
+
+pub trait OnUpdateFn<T: Default + Clone + Serialize + Send + Sync>: Fn(&T, &T) + 'static + Send + Sync {}
+impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFn<T> for F where F: Fn(&T, &T) + 'static + Send + Sync {}
+
+impl<T: Default + Clone + Serialize + Send + Sync> fmt::Debug for dyn OnUpdateFn<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "OnUpdateFn") }
 }
 
 pub trait CharacteristicCallbacks<T: Default + Clone + Serialize + Send + Sync> {
@@ -333,4 +333,40 @@ pub trait CharacteristicCallbacks<T: Default + Clone + Serialize + Send + Sync> 
     /// `Characteristic`. `old_val` is a reference to the current value of the `Characteristic` and `new_val` is a
     /// reference to the value the Controller attempts to change the `Characteristic`'s to.
     fn on_update(&mut self, f: impl OnUpdateFn<T>);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_json_serialization() {
+        let characteristic = Characteristic::<u16> {
+            id: 1,
+            accessory_id: 1,
+            hap_type: HapType::CurrentTiltAngle,
+            format: Format::UInt16,
+            perms: vec![Perm::PairedRead, Perm::Events],
+            description: Some("Acme Tilt Angle".into()),
+            event_notifications: Some(true),
+
+            value: 123,
+            unit: Some(Unit::ArcDegrees),
+
+            max_value: Some(360),
+            min_value: Some(0),
+            step_value: Some(1),
+            max_len: None,
+            max_data_len: None,
+            valid_values: None,
+            valid_values_range: Some([0, 360]),
+
+            on_read: None,
+            on_update: None,
+
+            event_emitter: None,
+        };
+        let json = serde_json::to_string(&characteristic).unwrap();
+        assert_eq!(json, "{\"iid\":1,\"type\":\"C1\",\"format\":\"uint16\",\"perms\":[\"pr\",\"ev\"],\"description\":\"Acme Tilt Angle\",\"ev\":true,\"value\":123,\"unit\":\"arcdegrees\",\"maxValue\":360,\"minValue\":0,\"minStep\":1,\"valid-values-range\":[0,360]}".to_string());
+    }
 }

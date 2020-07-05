@@ -3,9 +3,9 @@ use hyper::{Body, Response, StatusCode, Uri};
 use serde_json::json;
 
 use crate::{
-    characteristic::HapCharacteristic,
     pointer,
     transport::http::{handler::JsonHandlerExt, json_response, status_response, Status},
+    HapType,
     Result,
 };
 
@@ -40,8 +40,10 @@ impl JsonHandlerExt for Identify {
                 accessory
                     .lock()
                     .await
-                    .get_mut_information()
-                    .identify
+                    .get_mut_service(HapType::AccessoryInformation)
+                    .expect("missing Accessory Information Service") // every accessory needs to have it, so this should never panic
+                    .get_mut_characteristic(HapType::Identify)
+                    .expect("missing Identify Characteristic on Accessory Information Service")
                     .set_value(serde_json::Value::Bool(true))
                     .await?;
             }

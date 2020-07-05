@@ -7,16 +7,15 @@
 
 Rust implementation of the Apple HomeKit Accessory Protocol (HAP).
 
-This crate supports all HomeKit Services and Characteristics currently implemented by Apple and provides the ability to create custom Characteristics, Services and Accessories.
+This crate supports all HomeKit services and characteristics currently implemented by Apple and provides the ability to create custom characteristics, services and accessories.
 
 The HomeKit Accessory Protocol supports transports over IP and Bluetooth LE. Currently only the transport over IP is implemented in this crate. Accessories are exposed by the implemented HAP Accessory HTTP server and announced via built-in mDNS.
 
-
 ## HomeKit Data Model
 
-The HAP defines HomeKit enabled devices as virtual `Accessories` that are composed of `Services` that are composed of `Characteristics`.
+The HAP defines HomeKit enabled devices as virtual `accessories` that are composed of `services` that are composed of `characteristics`.
 
-Characteristics hold values of various data types as well as optional metadata like max/min values or units. Services group Characteristics and represent features of the Accessory. Every Accessory consist of at least one `Accessory Information Service` and any number of additional Services. For example a custom ceiling fan Accessory may consist of an `Accessory Information Service`, a `Fan Service` and a `Lightbulb Service`.
+Characteristics hold values of various data types as well as optional metadata like max/min values or units. Services group characteristics and represent features of the accessory. Every accessory consists of at least one `accessory information service` and any number of additional services. For example a custom ceiling fan accessory may consist of an `accessory information Service`, a `fan service` and a `lightbulb service`.
 
 ```
 Ceiling Fan Accessory
@@ -27,7 +26,7 @@ Ceiling Fan Accessory
 |   |-- Model Characteristic
 |   |-- Name Characteristic
 |   |-- Serial Characteristic
-|   
+|
 |-- Fan Service
 |   |-- On Characteristic
 |   |-- Rotation Direction Characteristic
@@ -43,7 +42,6 @@ Ceiling Fan Accessory
 This crate provides a pre-built Accessory for every Service predefined by Apple. Custom Characteristics and Services can be created, assembled and used alongside the predefined ones.
 
 For a full list of the predefined Characteristics, Services and Accessories, see the [docs](https://docs.rs/hap/) or [Apple's official specification](https://developer.apple.com/homekit/).
-
 
 ## Usage Examples
 
@@ -114,7 +112,6 @@ fn main() {
 
     ip_transport.start().unwrap();
 }
-
 ```
 
 Using the `Readable` and `Updatable` traits to react to remote value reads and updates:
