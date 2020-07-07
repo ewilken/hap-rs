@@ -17,7 +17,7 @@ pub mod storage;
 
 pub use crate::{
     config::Config,
-    error::{Error, ErrorKind},
+    error::Error,
     hap_type::HapType,
     pin::Pin,
     transport::bonjour::{BonjourFeatureFlag, BonjourStatusFlag},

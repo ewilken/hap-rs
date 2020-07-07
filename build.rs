@@ -508,11 +508,10 @@ impl HapCharacteristic for {{trim characteristic.Name}}Characteristic {
             } else if num_v == 1 {
                 v = serde_json::from_value(json!(true))?;
             } else {
-                // TODO: replace with proper error
-                return Err(Error::from_str(\"invalid value for bool characteristic\"));
+                return Err(Error::InvalidValue(self.get_format()));
             }
         } else {
-            v = serde_json::from_value(value)?;
+            v = serde_json::from_value(value).map_err(|_| Error::InvalidValue(self.get_format()))?;
         }
         self.0.set_value(v).await
     }

@@ -5,7 +5,7 @@ use crate::{
     pointer,
     tlv::{self, Encodable},
     transport::http::{status_response, tlv_response},
-    ErrorKind,
+    Error,
     Result,
 };
 
@@ -127,8 +127,8 @@ impl<T: JsonHandlerExt + Send + Sync> HandlerExt for JsonHandler<T> {
                 .await
             {
                 Ok(res) => Ok(res),
-                Err(e) => match e.kind() {
-                    &ErrorKind::HttpStatus(status) => status_response(status),
+                Err(e) => match e {
+                    Error::HttpStatus(status) => status_response(status),
                     _ => status_response(StatusCode::INTERNAL_SERVER_ERROR),
                 },
             }

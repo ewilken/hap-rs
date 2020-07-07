@@ -61,7 +61,7 @@ impl AccessoryList {
             return Ok(());
         }
 
-        Err(Error::from_str("couldn't find the Accessory to remove"))
+        Err(Error::AccessoryNotFound)
     }
 
     pub(crate) async fn read_characteristic(

@@ -1,9 +1,9 @@
 use std::{cell, collections::HashMap, io, str};
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use failure::Fail;
 use log::error;
 use srp::types::SrpAuthError;
+use thiserror::Error;
 use uuid;
 
 use crate::{error, pairing::Permissions};
@@ -159,21 +159,21 @@ pub enum Method {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Copy, Clone, Fail)]
+#[derive(Debug, Copy, Clone, Error)]
 pub enum Error {
-    #[fail(display = "Unknown error")]
+    #[error("Unknown error.")]
     Unknown = 0x01,
-    #[fail(display = "Setup code or signature verification failed")]
+    #[error("Setup code or signature verification failed.")]
     Authentication = 0x02,
-    #[fail(display = "Client must look at the retry delay TLV item and wait that many seconds before retrying")]
+    #[error("Client must look at the retry delay TLV item and wait that many seconds before retrying.")]
     Backoff = 0x03,
-    #[fail(display = "Server cannot accept any more pairings")]
+    #[error("Server cannot accept any more pairings.")]
     MaxPeers = 0x04,
-    #[fail(display = "Server reached its maximum number of authentication attempts")]
+    #[error("Server reached its maximum number of authentication attempts.")]
     MaxTries = 0x05,
-    #[fail(display = "Server pairing method is unavailable")]
+    #[error("Server pairing method is unavailable.")]
     Unavailable = 0x06,
-    #[fail(display = "Server is busy and cannot accept a pairing request at this time")]
+    #[error("Server is busy and cannot accept a pairing request at this time.")]
     Busy = 0x07,
 }
 

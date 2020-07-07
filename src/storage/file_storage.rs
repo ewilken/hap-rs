@@ -2,7 +2,7 @@ use std::{
     env,
     ffi::OsStr,
     fs,
-    io::{BufReader, BufWriter, Read, Write},
+    io::{self, BufReader, BufWriter, ErrorKind, Read, Write},
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     str,
@@ -128,10 +128,10 @@ impl FileStorage {
                 if path.extension() == extension {
                     let key = path
                         .file_stem()
-                        .ok_or(Error::from_str("invalid file name"))?
+                        .ok_or(Error::from(io::Error::from(ErrorKind::NotFound)))?
                         .to_os_string()
                         .into_string()
-                        .or(Err(Error::from_str("invalid file name")))?;
+                        .or(Err(Error::from(io::Error::from(ErrorKind::NotFound))))?;
                     keys.push(key);
                 }
             }

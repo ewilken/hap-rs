@@ -20,7 +20,6 @@ use crate::{
         WriteResponseObject,
     },
     Error,
-    ErrorKind,
     Result,
 };
 
@@ -54,14 +53,12 @@ impl JsonHandlerExt for GetCharacteristics {
                     queries.insert(key.into(), val.into());
                 }
                 let (f_meta, f_perms, f_type, f_ev) = check_flags(&queries);
-                let q_id = queries
-                    .get("id")
-                    .ok_or(Error::new(ErrorKind::HttpStatus(StatusCode::BAD_REQUEST)))?;
+                let q_id = queries.get("id").ok_or(Error::HttpStatus(StatusCode::BAD_REQUEST))?;
                 let ids = q_id.split(',').collect::<Vec<&str>>();
                 for id in ids {
                     let id_pair = id.split('.').collect::<Vec<&str>>();
                     if id_pair.len() != 2 {
-                        return Err(ErrorKind::HttpStatus(StatusCode::BAD_REQUEST).into());
+                        return Err(Error::HttpStatus(StatusCode::BAD_REQUEST));
                     }
                     let aid = id_pair[0].parse::<u64>()?;
                     let iid = id_pair[1].parse::<u64>()?;
@@ -143,7 +140,7 @@ impl JsonHandlerExt for UpdateCharacteristics {
             let mut body = body;
             let mut concatenated_body = Vec::new();
             while let Some(chunk) = body.next().await {
-                let bytes = chunk.map_err(|_| Error::new(ErrorKind::HttpStatus(StatusCode::BAD_REQUEST)))?;
+                let bytes = chunk.map_err(|_| Error::HttpStatus(StatusCode::BAD_REQUEST))?;
                 concatenated_body.extend(&bytes[..]);
             }
 

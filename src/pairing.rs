@@ -86,7 +86,7 @@ impl Permissions {
         match byte {
             0x00 => Ok(Permissions::User),
             0x01 => Ok(Permissions::Admin),
-            _ => Err(Error::from_str("invalid permission Byte")),
+            _ => Err(Error::InvalidPairingPermission(byte)),
         }
     }
 
