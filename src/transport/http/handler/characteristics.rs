@@ -49,7 +49,6 @@ impl JsonHandlerExt for GetCharacteristics {
                 };
                 let mut some_err = false;
 
-                // TODO - using a String seems ugly
                 let mut queries: HashMap<String, String> = HashMap::new();
                 for (key, val) in form_urlencoded::parse(query.as_bytes()) {
                     queries.insert(key.into(), val.into());

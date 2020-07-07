@@ -2,11 +2,13 @@ use std::net::{IpAddr, SocketAddr};
 
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, Category, Information},
-    characteristic::CharacteristicCallbacks,
+    characteristic::{AsyncCharacteristicCallbacks, CharacteristicCallbacks},
+    futures::future::FutureExt,
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
     Config,
+    MacAddress,
     Pin,
 };
 
@@ -27,24 +29,44 @@ async fn main() {
     };
 
     let mut lightbulb = LightbulbAccessory::new(1, Information {
-        name: "Lightbulb".into(),
+        name: "Acme Lightbulb".into(),
         ..Default::default()
     })
     .unwrap();
 
-    lightbulb.lightbulb.on.on_read(|| {
+    lightbulb.lightbulb.on.on_read(Some(|| {
         println!("on characteristic read");
         None
-    });
-    lightbulb.lightbulb.on.on_update(|old_val: &bool, new_val: &bool| {
-        println!("on characteristic updated from {} to {}", old_val, new_val);
-    });
+    }));
+    lightbulb
+        .lightbulb
+        .on
+        .on_update(Some(|current_val: &bool, new_val: &bool| {
+            println!("on characteristic updated from {} to {}", current_val, new_val);
+        }));
+
+    lightbulb.lightbulb.on.on_read_async(Some(|| {
+        async {
+            println!("on characteristic read (async)");
+            None
+        }
+        .boxed()
+    }));
+    lightbulb
+        .lightbulb
+        .on
+        .on_update_async(Some(|current_val: bool, new_val: bool| {
+            async move {
+                println!("on characteristic updated from {} to {} (async)", current_val, new_val);
+            }
+            .boxed()
+        }));
 
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
         name: "Acme Lightbulb".into(),
-        device_id: eui48::MacAddress::new([1, 2, 3, 4, 5, 6]),
+        device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
         category: Category::Lightbulb,
         ..Default::default()
     };

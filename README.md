@@ -39,235 +39,116 @@ Ceiling Fan Accessory
 |   |-- Saturation Characteristic
 ```
 
-This crate provides a pre-built Accessory for every Service predefined by Apple. Custom Characteristics and Services can be created, assembled and used alongside the predefined ones.
+This crate provides a pre-built accessory for every service predefined by Apple in the HomeKit Accessory Simulator as well as others like Television. Custom characteristics and services can be created, assembled and used alongside the predefined ones.
 
-For a full list of the predefined Characteristics, Services and Accessories, see the [docs](https://docs.rs/hap/) or [Apple's official specification](https://developer.apple.com/homekit/).
+For a full list of the predefined characteristics, services and accessories, see the [docs](https://docs.rs/hap/) or [Apple's official specification](https://developer.apple.com/homekit/).
 
 ## Usage Examples
 
-Creating a simple outlet Accessory and starting the IP transport:
+Creating a simple lightbulb accessory and starting the IP server:
 
 ```rust
-use hap::{
-    transport::{Transport, IpTransport},
-    accessory::{Category, Information, outlet},
-    Config,
-};
-
-fn main() {
-    let info = Information {
-        name: "Outlet".into(),
-        ..Default::default()
-    };
-
-    let outlet = outlet::new(info).unwrap();
-
-    let config = Config {
-        name: "Outlet".into(),
-        category: Category::Outlet,
-        ..Default::default()
-    };
-
-    let mut ip_transport = IpTransport::new(config).unwrap();
-    ip_transport.add_accessory(outlet).unwrap();
-    ip_transport.start().unwrap();
-}
-```
-
-Dynamically adding and removing Accessories:
-
-```rust
-use hap::{
-    transport::{Transport, IpTransport},
-    accessory::{Category, Information, bridge, outlet},
-    Config,
-};
-
-fn main() {
-  let bridge = bridge::new(Information {
-        name: "Acme Bridge".into(),
-        ..Default::default()
-    }).unwrap();
-
-    let first_outlet = outlet::new(Information {
-        name: "Outlet 1".into(),
-        ..Default::default()
-    }).unwrap();
-
-    let second_outlet = outlet::new(Information {
-        name: "Outlet 2".into(),
-        ..Default::default()
-    }).unwrap();
-
-    let mut ip_transport = IpTransport::new(Config {
-        name: "Acme".into(),
-        category: Category::Outlet,
-        ..Default::default()
-    }).unwrap();
-
-    let _bridge = ip_transport.add_accessory(bridge).unwrap();
-    let _first_outlet = ip_transport.add_accessory(first_outlet).unwrap();
-    let second_outlet = ip_transport.add_accessory(second_outlet).unwrap();
-    ip_transport.remove_accessory(&second_outlet).unwrap();
-
-    ip_transport.start().unwrap();
-}
-```
-
-Using the `Readable` and `Updatable` traits to react to remote value reads and updates:
-
-```rust
-use hap::{
-    transport::{Transport, IpTransport},
-    accessory::{Category, Information, outlet},
-    characteristic::{Readable, Updatable},
-    Config,
-    HapType,
-};
-
-#[derive(Clone)]
-pub struct VirtualOutlet {
-    on: bool,
-}
-
-impl Readable<bool> for VirtualOutlet {
-    fn on_read(&mut self, _: HapType) -> Option<bool> {
-        println!("On read.");
-        Some(self.on)
-    }
-}
-
-impl Updatable<bool> for VirtualOutlet {
-    fn on_update(&mut self, old_val: &bool, new_val: &bool, _: HapType) {
-        println!("On updated from {} to {}.", old_val, new_val);
-        if new_val != old_val { self.on = *new_val; }
-    }
-}
-
-fn main() {
-    let info = Information {
-        name: "Outlet".into(),
-        ..Default::default()
-    };
-
-    let mut outlet = outlet::new(info).unwrap();
-
-    let virtual_outlet = VirtualOutlet { on: false };
-    outlet.inner.outlet.inner.on.set_readable(virtual_outlet.clone()).unwrap();
-    outlet.inner.outlet.inner.on.set_updatable(virtual_outlet).unwrap();
-
-    let config = Config {
-        name: "Outlet".into(),
-        category: Category::Outlet,
-        ..Default::default()
-    };
-
-    let mut ip_transport = IpTransport::new(config).unwrap();
-    ip_transport.add_accessory(outlet).unwrap();
-    ip_transport.start().unwrap();
-}
-```
-
-Setting a Characteristic value directly:
-
-```rust
-outlet.inner.outlet.inner.on.set_value(true).unwrap();
-```
-
-Change dependent Characteristics on value changes:
-
-```rust
-use std::{rc::Rc, cell::RefCell};
+use std::net::{IpAddr, SocketAddr};
 
 use hap::{
-    transport::{Transport, IpTransport},
-    accessory::{Category, Information, door},
-    characteristic::{Characteristic, Readable, Updatable},
+    accessory::{lightbulb::LightbulbAccessory, Category, Information},
+    server::{IpServer, Server},
+    storage::FileStorage,
+    tokio,
     Config,
-    HapType,
+    MacAddress,
+    Pin,
 };
 
-pub struct VirtualDoorInner {
-    current_position: u8,
-    target_position: u8,
-}
-
-#[derive(Clone)]
-pub struct VirtualDoor {
-    inner: Arc<Mutex<VirtualDoorInner>>,
-    current_position: Characteristic<u8>,
-}
-
-impl VirtualDoor {
-    pub fn new(inner: VirtualDoorInner, current_position: Characteristic<u8>) -> VirtualDoor {
-        VirtualDoor { inner: Arc::new(Mutex::new(inner)), current_position }
-    }
-}
-
-impl Readable<u8> for VirtualDoor {
-    fn on_read(&mut self, hap_type: HapType) -> Option<u8> {
-        match hap_type {
-            HapType::CurrentPosition => {
-                println!("Current position read.");
-                Some(self.inner.borrow().current_position)
-            },
-            HapType::TargetPosition => {
-                println!("Target position read.");
-                Some(self.inner.borrow().target_position)
-            },
-            _ => None,
-        }
-    }
-}
-
-impl Updatable<u8> for VirtualDoor {
-    fn on_update(&mut self, old_val: &u8, new_val: &u8, hap_type: HapType) {
-        match hap_type {
-            HapType::CurrentPosition => {
-                println!("Current position updated from {} to {}.", old_val, new_val);
-                if new_val != old_val {
-                    self.inner.borrow_mut().current_position = *new_val;
-                }
-            },
-            HapType::TargetPosition => {
-                println!("Target position updated from {} to {}.", old_val, new_val);
-                if new_val != old_val {
-                    {
-                        let mut inner = self.inner.borrow_mut();
-                        inner.target_position = *new_val;
-                        inner.current_position = *new_val;
+#[tokio::main]
+async fn main() {
+    let current_ipv4 = || -> Option<IpAddr> {
+        for iface in pnet::datalink::interfaces() {
+            for ip_network in iface.ips {
+                if ip_network.is_ipv4() {
+                    let ip = ip_network.ip();
+                    if !ip.is_loopback() {
+                        return Some(ip);
                     }
-                    self.current_position.set_value(*new_val).unwrap();
                 }
-            },
-            _ => {},
+            }
         }
-    }
-}
+        None
+    };
 
-fn main() {
-    let mut door = door::new(Information {
-        name: "Door".into(),
+    let lightbulb = LightbulbAccessory::new(1, Information {
+        name: "Acme Lightbulb".into(),
         ..Default::default()
-    }).unwrap();
-    let virtual_door = VirtualDoor::new(
-        VirtualDoorInner { current_position: 0, target_position: 0 },
-        door.inner.door.inner.current_position.clone(),
-    );
-    door.inner.door.inner.current_position.set_readable(virtual_door.clone()).unwrap();
-    door.inner.door.inner.current_position.set_updatable(virtual_door.clone()).unwrap();
-    door.inner.door.inner.target_position.set_readable(virtual_door.clone()).unwrap();
-    door.inner.door.inner.target_position.set_updatable(virtual_door).unwrap();
+    })
+    .unwrap();
 
     let config = Config {
-        name: "Door".into(),
-        category: Category::Door,
+        socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
+        pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+        name: "Acme Lightbulb".into(),
+        device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+        category: Category::Lightbulb,
         ..Default::default()
     };
-    let mut ip_transport = IpTransport::new(config).unwrap();
-    ip_transport.add_accessory(door).unwrap();
-    ip_transport.start().unwrap();
+    let storage = FileStorage::current_dir().await.unwrap();
+
+    let mut server = IpServer::new(config, storage).unwrap();
+    server.add_accessory(lightbulb).await.unwrap();
+
+    let handle = server.run_handle();
+
+    std::env::set_var("RUST_LOG", "hap=debug");
+    env_logger::init();
+
+    handle.await;
 }
+```
+
+Setting sync callbacks to react to remote value reads and updates:
+
+```rust
+use hap::characteristic::CharacteristicCallbacks;
+
+lightbulb.lightbulb.on.on_read(Some(|| {
+    println!("on characteristic read");
+    None
+}));
+
+lightbulb.lightbulb.on.on_update(Some(|current_val: &bool, new_val: &bool| {
+    println!("on characteristic updated from {} to {}", current_val, new_val);
+}));
+```
+
+Setting async callbacks to react to remote value reads and updates:
+
+```rust
+use hap::characteristic::AsyncCharacteristicCallbacks;
+
+lightbulb.lightbulb.on.on_read_async(Some(|| {
+    async {
+        println!("on characteristic read (async)");
+        None
+    }
+    .boxed()
+}));
+
+lightbulb.lightbulb.on.on_update_async(Some(|current_val: bool, new_val: bool| {
+    async move {
+        println!("on characteristic updated from {} to {} (async)", current_val, new_val);
+    }
+    .boxed()
+}));
+```
+
+Setting a characteristic value directly:
+
+```rust
+use hap::{
+    characteristic::HapCharacteristic,
+    serde_json::Value,
+};
+
+lightbulb.lightbulb.on.set_value(Value::Bool(true)).await.unwrap();
 ```
 
 ## License

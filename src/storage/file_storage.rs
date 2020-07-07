@@ -183,7 +183,7 @@ impl Storage for FileStorage {
     async fn list_pairings(&self) -> Result<Vec<Pairing>> {
         let mut pairings = Vec::new();
         for key in self.keys_with_suffix("json").await? {
-            if &key != "device" {
+            if &key != "config" {
                 let pairing_bytes = self.read_bytes(&key).await?;
                 let pairing = Pairing::from_bytes(&pairing_bytes)?;
                 pairings.push(pairing);

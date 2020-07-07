@@ -432,6 +432,7 @@ use serde_json::json;
 
 use crate::{
     characteristic::{
+        AsyncCharacteristicCallbacks,
         Characteristic,
         CharacteristicCallbacks,
         Format,
@@ -439,7 +440,9 @@ use crate::{
         HapCharacteristicSetup,
         HapType,
         OnReadFn,
+        OnReadFuture,
         OnUpdateFn,
+        OnUpdateFuture,
         Perm,
         Unit,
     },
@@ -532,9 +535,15 @@ impl HapCharacteristicSetup for {{trim characteristic.Name}}Characteristic {
 }
 
 impl CharacteristicCallbacks<{{type characteristic.Format}}> for {{trim characteristic.Name}}Characteristic {
-    fn on_read(&mut self, f: impl OnReadFn<{{type characteristic.Format}}>) { self.0.on_read(f) }
+    fn on_read(&mut self, f: Option<impl OnReadFn<{{type characteristic.Format}}>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: impl OnUpdateFn<{{type characteristic.Format}}>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<{{type characteristic.Format}}>>) { self.0.on_update(f) }
+}
+
+impl AsyncCharacteristicCallbacks<{{type characteristic.Format}}> for {{trim characteristic.Name}}Characteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<{{type characteristic.Format}}>>) { self.0.on_read_async(f) }
+
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<{{type characteristic.Format}}>>) { self.0.on_update_async(f) }
 }
 ";
 
