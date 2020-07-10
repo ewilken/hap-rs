@@ -113,7 +113,7 @@ impl AsyncWrite for StreamWrapper {
     fn poll_write(self: Pin<&mut Self>, _cx: &mut Context, buf: &[u8]) -> Poll<std::result::Result<usize, io::Error>> {
         let stream_wrapper = Pin::into_inner(self);
 
-        debug!("writing to outgoing TCP stream sender");
+        debug!("writing {} Bytes to outgoing TCP stream sender", buf.len());
 
         stream_wrapper
             .outgoing_sender
@@ -139,7 +139,7 @@ impl AsyncWrite for StreamWrapper {
 
         let w_len = buf.len();
 
-        debug!("wrote {} bytes to outgoing TCP stream sender", &w_len);
+        debug!("wrote {} Bytes to outgoing TCP stream sender", &w_len);
 
         Poll::Ready(Ok(w_len))
     }
@@ -233,7 +233,7 @@ impl EncryptedStream {
     }
 
     fn read_decrypted(&mut self, buf: &mut [u8]) -> Poll<std::result::Result<usize, io::Error>> {
-        debug!("EncryptedStream: reading decrypted");
+        debug!("reading from decrypted buffer");
 
         if self.decrypted_ready {
             let len = min(buf.len(), self.packet_len - 16);
@@ -251,7 +251,7 @@ impl EncryptedStream {
     }
 
     fn read_encrypted(&mut self, buf: &mut [u8]) -> Poll<std::result::Result<usize, io::Error>> {
-        debug!("EncryptedStream: reading encrypted");
+        debug!("reading from encrypted buffer");
 
         if self.missing_data_for_decrypted_buf {
             let decrypted = decrypt_chunk(
@@ -273,10 +273,9 @@ impl EncryptedStream {
     }
 
     fn read_stream(&mut self, cx: &mut Context, buf: &mut [u8]) -> Poll<std::result::Result<usize, io::Error>> {
-        debug!("EncryptedStream: reading stream");
+        debug!("reading from TCP stream");
 
         if self.missing_data_for_encrypted_buf {
-            // let r_len = executor::block_on(self.stream.read(&mut self.encrypted_buf[self.already_read..]))?;
             let r_len = AsyncRead::poll_read(
                 Pin::new(&mut self.stream),
                 cx,
@@ -298,7 +297,6 @@ impl EncryptedStream {
                 },
             }
         } else {
-            // let r_len = executor::block_on(self.stream.read(&mut self.encrypted_buf[self.already_read..2]))?;
             let r_len = AsyncRead::poll_read(
                 Pin::new(&mut self.stream),
                 cx,
@@ -314,8 +312,6 @@ impl EncryptedStream {
                         self.packet_len = LittleEndian::read_u16(&self.encrypted_buf) as usize + 16;
                         self.missing_data_for_encrypted_buf = true;
 
-                        // let r_len = executor::block_on(self.stream.read(&mut
-                        // self.encrypted_buf[self.already_read..]))?;
                         let r_len = AsyncRead::poll_read(
                             Pin::new(&mut self.stream),
                             cx,
@@ -346,39 +342,29 @@ impl EncryptedStream {
     }
 
     fn poll_outgoing(self: Pin<&mut Self>, cx: &mut Context) -> Poll<std::result::Result<(), io::Error>> {
-        debug!("EncryptedStream: polling outgoing_receiver to outgoing stream");
-
         let encrypted_stream = Pin::into_inner(self);
         loop {
             match encrypted_stream.outgoing_receiver.try_next() {
                 Err(_) => {
-                    debug!("EncryptedStream: outgoing_receiver: would block");
-
                     *encrypted_stream.outgoing_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
                 },
                 Ok(Some(data)) => {
-                    debug!("EncryptedStream: outgoing_receiver: writing data to outgoing stream");
+                    debug!("writing {} Bytes to outgoing TCP stream", data.len());
 
                     match AsyncWrite::poll_write(Pin::new(encrypted_stream), cx, &data) {
                         Poll::Pending => {},
                         Poll::Ready(Err(e)) => {
-                            log::error!(
-                                "EncryptedStream: outgoing_receiver: error writing to outgoing stream: {}",
-                                e
-                            );
+                            log::error!("error writing to outgoing stream: {}", e);
                             return Poll::Ready(Err(e));
                         },
                         Poll::Ready(Ok(w_len)) => {
-                            debug!(
-                                "EncryptedStream: outgoing_receiver: wrote {} bytes to outgoing stream",
-                                w_len
-                            );
+                            debug!("wrote {} Bytes to outgoing TCP stream", w_len);
                         },
                     };
                 },
                 Ok(None) => {
-                    debug!("EncryptedStream: outgoing_receiver: outgoing stream ended");
+                    debug!("outgoing TCP stream ended");
 
                     return Poll::Ready(Ok(()));
                 },
@@ -475,10 +461,6 @@ impl AsyncWrite for EncryptedStream {
                     encrypt_chunk(&shared_secret, &write_buf[..1024], &mut encrypted_stream.encrypt_count)
                         .map_err(|_| io::Error::new(io::ErrorKind::Other, "encryption failed"))?;
 
-                // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &aad)?;
-                // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &chunk)?;
-                // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &auth_tag)?;
-
                 let data = [&aad[..], &chunk[..], &auth_tag[..]].concat();
                 AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &data)?;
 
@@ -487,10 +469,6 @@ impl AsyncWrite for EncryptedStream {
 
             let (aad, chunk, auth_tag) = encrypt_chunk(&shared_secret, &write_buf, &mut encrypted_stream.encrypt_count)
                 .map_err(|_| io::Error::new(io::ErrorKind::Other, "encryption failed"))?;
-
-            // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &aad)?;
-            // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &chunk)?;
-            // AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &auth_tag)?;
 
             let data = [&aad[..], &chunk[..], &auth_tag[..]].concat();
             AsyncWrite::poll_write(Pin::new(&mut encrypted_stream.stream), cx, &data)?;

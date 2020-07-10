@@ -51,7 +51,7 @@ Creating a simple lightbulb accessory and starting the IP server:
 use std::net::{IpAddr, SocketAddr};
 
 use hap::{
-    accessory::{lightbulb::LightbulbAccessory, Category, Information},
+    accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
@@ -76,7 +76,7 @@ async fn main() {
         None
     };
 
-    let lightbulb = LightbulbAccessory::new(1, Information {
+    let lightbulb = LightbulbAccessory::new(1, AccessoryInformation {
         name: "Acme Lightbulb".into(),
         ..Default::default()
     })
@@ -87,7 +87,7 @@ async fn main() {
         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
         name: "Acme Lightbulb".into(),
         device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-        category: Category::Lightbulb,
+        category: AccessoryCategory::Lightbulb,
         ..Default::default()
     };
     let storage = FileStorage::current_dir().await.unwrap();

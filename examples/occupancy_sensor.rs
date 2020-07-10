@@ -1,7 +1,7 @@
 use std::net::{IpAddr, SocketAddr};
 
 use hap::{
-    accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{occupancy_sensor::OccupancySensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
@@ -26,8 +26,8 @@ async fn main() {
         None
     };
 
-    let lightbulb = LightbulbAccessory::new(1, AccessoryInformation {
-        name: "Acme Lightbulb".into(),
+    let lightbulb = OccupancySensorAccessory::new(1, AccessoryInformation {
+        name: "Acme Occupancy Sensor".into(),
         ..Default::default()
     })
     .unwrap();
@@ -35,9 +35,9 @@ async fn main() {
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
-        name: "Acme Lightbulb".into(),
+        name: "Acme Occupancy Sensor".into(),
         device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-        category: AccessoryCategory::Lightbulb,
+        category: AccessoryCategory::Sensor,
         ..Default::default()
     };
     let storage = FileStorage::current_dir().await.unwrap();

@@ -333,32 +333,6 @@ fn shorten_uuid(id: &str) -> String {
         .to_owned()
 }
 
-fn characteristic_name_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _: &mut RenderContext,
-    out: &mut dyn Output,
-) -> Result<(), RenderError> {
-    let arg_name = h.param(0).unwrap().value().as_str().unwrap();
-    let name = arg_name.replace(" ", "").replace(".", "_");
-    out.write(&name)?;
-    Ok(())
-}
-
-fn characteristic_file_name_helper(
-    h: &Helper,
-    _: &Handlebars,
-    _: &Context,
-    _: &mut RenderContext,
-    out: &mut dyn Output,
-) -> Result<(), RenderError> {
-    let arg_name = h.param(0).unwrap().value().as_str().unwrap();
-    let name = arg_name.replace(" ", "_").replace(".", "_").to_lowercase();
-    out.write(&name)?;
-    Ok(())
-}
-
 fn snake_case_helper(
     h: &Helper,
     _: &Handlebars,
@@ -372,14 +346,37 @@ fn snake_case_helper(
     Ok(())
 }
 
+fn pascal_case_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value().as_str().unwrap();
+    let name = param
+        .to_lowercase()
+        .split(" ")
+        .into_iter()
+        .map(|word| {
+            let mut c = word.chars().collect::<Vec<char>>();
+            c[0] = c[0].to_uppercase().nth(0).unwrap();
+            c.into_iter().collect::<String>()
+        })
+        .collect::<String>();
+    let name = name.replace(" ", "").replace(".", "_");
+    out.write(&name)?;
+    Ok(())
+}
+
 static CATEGORIES: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use serde::{Deserialize, Serialize};
 
 /// HAP Accessory category.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum Category {
+pub enum AccessoryCategory {
 {{#each Categories as |c|}}\
-\t{{trim c.Name}} = {{c.Category}},
+\t{{pascal_case c.Name}} = {{c.Category}},
 {{/each}}\
 }
 ";
@@ -392,10 +389,10 @@ use serde::ser::{Serialize, Serializer};
 pub enum HapType {
     Unknown,
 {{#each Characteristics as |c|}}\
-\t{{trim c.Name}},
+\t{{pascal_case c.Name}},
 {{/each}}\
 {{#each Services as |s|}}\
-\t{{trim s.Name}},
+\t{{pascal_case s.Name}},
 {{/each}}\
 }
 
@@ -405,10 +402,10 @@ impl HapType {
         match self {
             HapType::Unknown => \"unknown\".into(),
 {{#each Characteristics as |c|}}\
-\t\t\tHapType::{{trim c.Name}} => \"{{uuid c.UUID}}\".into(),
+\t\t\tHapType::{{pascal_case c.Name}} => \"{{uuid c.UUID}}\".into(),
 {{/each}}\
 {{#each Services as |s|}}\
-\t\t\tHapType::{{trim s.Name}} => \"{{uuid s.UUID}}\".into(),
+\t\t\tHapType::{{pascal_case s.Name}} => \"{{uuid s.UUID}}\".into(),
 {{/each}}\
 \t\t}
     }
@@ -453,15 +450,15 @@ use crate::{
 
 /// {{characteristic.Name}} Characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct {{trim characteristic.Name}}Characteristic(Characteristic<{{type characteristic.Format}}>);
+pub struct {{pascal_case characteristic.Name}}Characteristic(Characteristic<{{type characteristic.Format}}>);
 
-impl {{trim characteristic.Name}}Characteristic {
+impl {{pascal_case characteristic.Name}}Characteristic {
     /// Creates a new {{characteristic.Name}} Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<{{type characteristic.Format}}> {
             id,
             accessory_id,
-            hap_type: HapType::{{trim characteristic.Name}},
+            hap_type: HapType::{{pascal_case characteristic.Name}},
             format: {{format characteristic.Format}},
             perms: vec![{{perms characteristic.Properties}}
             ],\
@@ -478,7 +475,7 @@ impl {{trim characteristic.Name}}Characteristic {
 }
 
 #[async_trait]
-impl HapCharacteristic for {{trim characteristic.Name}}Characteristic {
+impl HapCharacteristic for {{pascal_case characteristic.Name}}Characteristic {
     fn get_id(&self) -> u64 { self.0.get_id() }
 
     fn get_type(&self) -> HapType { self.0.get_type() }
@@ -527,19 +524,19 @@ impl HapCharacteristic for {{trim characteristic.Name}}Characteristic {
     fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
 }
 
-impl HapCharacteristicSetup for {{trim characteristic.Name}}Characteristic {
+impl HapCharacteristicSetup for {{pascal_case characteristic.Name}}Characteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.0.set_event_emitter(event_emitter)
     }
 }
 
-impl CharacteristicCallbacks<{{type characteristic.Format}}> for {{trim characteristic.Name}}Characteristic {
+impl CharacteristicCallbacks<{{type characteristic.Format}}> for {{pascal_case characteristic.Name}}Characteristic {
     fn on_read(&mut self, f: Option<impl OnReadFn<{{type characteristic.Format}}>>) { self.0.on_read(f) }
 
     fn on_update(&mut self, f: Option<impl OnUpdateFn<{{type characteristic.Format}}>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<{{type characteristic.Format}}> for {{trim characteristic.Name}}Characteristic {
+impl AsyncCharacteristicCallbacks<{{type characteristic.Format}}> for {{pascal_case characteristic.Name}}Characteristic {
     fn on_read_async(&mut self, f: Option<impl OnReadFuture<{{type characteristic.Format}}>>) { self.0.on_read_async(f) }
 
     fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<{{type characteristic.Format}}>>) { self.0.on_update_async(f) }
@@ -558,10 +555,10 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 {{#each required_characteristics as |r|}}\
-\t\t{{characteristic_file_name r.Name}}::{{characteristic_name r.Name}}Characteristic,
+\t\t{{snake_case r.Name}}::{{pascal_case r.Name}}Characteristic,
 {{/each}}\
 {{#each optional_characteristics as |r|}}\
-\t\t{{characteristic_file_name r.Name}}::{{characteristic_name r.Name}}Characteristic,
+\t\t{{snake_case r.Name}}::{{pascal_case r.Name}}Characteristic,
 {{/each}}\
 \t},
     HapType,
@@ -569,7 +566,7 @@ use crate::{
 
 /// {{service.Name}} Service.
 #[derive(Debug, Default)]
-pub struct {{trim service.Name}}Service {
+pub struct {{pascal_case service.Name}}Service {
     /// ID of the {{service.Name}} Service.
     id: u64,
     /// `HapType` of the {{service.Name}} Service.
@@ -581,29 +578,29 @@ pub struct {{trim service.Name}}Service {
 
 {{#each required_characteristics as |r|}}\
 \t/// {{r.Name}} Characteristic (required).
-\tpub {{characteristic_file_name r.Name}}: {{characteristic_name r.Name}}Characteristic,
+\tpub {{snake_case r.Name}}: {{pascal_case r.Name}}Characteristic,
 {{/each}}\
 \n{{#each optional_characteristics as |r|}}\
 \t/// {{r.Name}} Characteristic (optional).
-\tpub {{characteristic_file_name r.Name}}: Option<{{characteristic_name r.Name}}Characteristic>,
+\tpub {{snake_case r.Name}}: Option<{{pascal_case r.Name}}Characteristic>,
 {{/each}}\
 }
 
-impl {{trim service.Name}}Service {
+impl {{pascal_case service.Name}}Service {
     /// Creates a new {{service.Name}} Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::{{trim service.Name}},
+            hap_type: HapType::{{pascal_case service.Name}},
 {{#each required_characteristics as |r|}}\
-\t\t\t{{characteristic_file_name r.Name}}: {{characteristic_name r.Name}}Characteristic::new(id + 1 + {{@index}}, accessory_id),
+\t\t\t{{snake_case r.Name}}: {{pascal_case r.Name}}Characteristic::new(id + 1 + {{@index}}, accessory_id),
 {{/each}}\
         \t\t\t..Default::default()
         }
     }
 }
 
-impl HapService for {{trim service.Name}}Service {
+impl HapService for {{pascal_case service.Name}}Service {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -649,11 +646,11 @@ impl HapService for {{trim service.Name}}Service {
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 {{#each required_characteristics as |r|}}\
-\t\t\t&self.{{characteristic_file_name r.Name}},
+\t\t\t&self.{{snake_case r.Name}},
 {{/each}}\
         \t\t];
 {{#each optional_characteristics as |r|}}\
-\t\tif let Some(c) = &self.{{characteristic_file_name r.Name}} {
+\t\tif let Some(c) = &self.{{snake_case r.Name}} {
 \t\t    characteristics.push(c);
 \t\t}
 {{/each}}\
@@ -663,11 +660,11 @@ impl HapService for {{trim service.Name}}Service {
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 {{#each required_characteristics as |r|}}\
-\t\t\t&mut self.{{characteristic_file_name r.Name}},
+\t\t\t&mut self.{{snake_case r.Name}},
 {{/each}}\
         \t\t];
 {{#each optional_characteristics as |r|}}\
-\t\tif let Some(c) = &mut self.{{characteristic_file_name r.Name}} {
+\t\tif let Some(c) = &mut self.{{snake_case r.Name}} {
 \t\t    characteristics.push(c);
 \t\t}
 {{/each}}\
@@ -675,7 +672,7 @@ impl HapService for {{trim service.Name}}Service {
     }
 }
 
-impl Serialize for {{trim service.Name}}Service {
+impl Serialize for {{pascal_case service.Name}}Service {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct(\"HapService\", 5)?;
         state.serialize_field(\"iid\", &self.get_id())?;
@@ -697,30 +694,30 @@ static ACCESSORY: &'static str = "// THIS FILE IS AUTO-GENERATED\n
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
-\taccessory::{HapAccessory, Information},
-\tservice::{HapService, accessory_information::AccessoryInformationService, {{snake_case service.Name}}::{{trim service.Name}}Service},
+\taccessory::{AccessoryInformation, HapAccessory},
+\tservice::{HapService, accessory_information::AccessoryInformationService, {{snake_case service.Name}}::{{pascal_case service.Name}}Service},
 \tHapType,
 \tResult,
 };
 
 /// {{service.Name}} Accessory.
 #[derive(Debug, Default)]
-pub struct {{trim service.Name}}Accessory {
+pub struct {{pascal_case service.Name}}Accessory {
     /// ID of the {{service.Name}} Accessory.
     id: u64,
 
     /// Accessory Information Service.
     pub accessory_information: AccessoryInformationService,
     /// {{service.Name}} Service.
-    pub {{snake_case service.Name}}: {{trim service.Name}}Service,
+    pub {{snake_case service.Name}}: {{pascal_case service.Name}}Service,
 }
 
-impl {{trim service.Name}}Accessory {
+impl {{pascal_case service.Name}}Accessory {
     /// Creates a new {{service.Name}} Accessory.
-    pub fn new(id: u64, information: Information) -> Result<Self> {
+    pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let {{snake_case service.Name}}_id = accessory_information.get_characteristics().len() as u64;
-        let mut {{snake_case service.Name}} = {{trim service.Name}}Service::new(1 + {{snake_case service.Name}}_id + 1, id);
+        let mut {{snake_case service.Name}} = {{pascal_case service.Name}}Service::new(1 + {{snake_case service.Name}}_id + 1, id);
         {{snake_case service.Name}}.set_primary(true);
 
         Ok(Self {
@@ -731,7 +728,7 @@ impl {{trim service.Name}}Accessory {
     }
 }
 
-impl HapAccessory for {{trim service.Name}}Accessory {
+impl HapAccessory for {{pascal_case service.Name}}Accessory {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -773,7 +770,7 @@ impl HapAccessory for {{trim service.Name}}Accessory {
     }
 }
 
-impl Serialize for {{trim service.Name}}Accessory {
+impl Serialize for {{pascal_case service.Name}}Accessory {
     fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct(\"HapAccessory\", 2)?;
         state.serialize_field(\"aid\", &self.get_id())?;
@@ -786,6 +783,63 @@ impl Serialize for {{trim service.Name}}Accessory {
 static ACCESSORY_MOD: &'static str = "// THIS FILE IS AUTO-GENERATED
 {{#each accessories as |a|}}\npub mod {{a}};{{/each}}
 ";
+
+// static EXAMPLE: &'static str = "\
+// use std::net::{IpAddr, SocketAddr};
+
+// use hap::{
+//     accessory::{ {{~snake_case service.Name~}} ::{{pascal_case service.Name}}Accessory, AccessoryCategory,
+// AccessoryInformation},     server::{IpServer, Server},
+//     storage::FileStorage,
+//     tokio,
+//     Config,
+//     MacAddress,
+//     Pin,
+// };
+
+// #[tokio::main]
+// async fn main() {
+//     let current_ipv4 = || -> Option<IpAddr> {
+//         for iface in pnet::datalink::interfaces() {
+//             for ip_network in iface.ips {
+//                 if ip_network.is_ipv4() {
+//                     let ip = ip_network.ip();
+//                     if !ip.is_loopback() {
+//                         return Some(ip);
+//                     }
+//                 }
+//             }
+//         }
+//         None
+//     };
+
+//     let lightbulb = {{pascal_case service.Name}}Accessory::new(1, AccessoryInformation {
+//         name: \"Acme {{service.Name}}\".into(),
+//         ..Default::default()
+//     })
+//     .unwrap();
+
+//     let config = Config {
+//         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
+//         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+//         name: \"Acme {{service.Name}}\".into(),
+//         device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+//         category: AccessoryCategory::{{pascal_case service.Name}},
+//         ..Default::default()
+//     };
+//     let storage = FileStorage::current_dir().await.unwrap();
+
+//     let mut server = IpServer::new(config, storage).unwrap();
+//     server.add_accessory(lightbulb).await.unwrap();
+
+//     let handle = server.run_handle();
+
+//     std::env::set_var(\"RUST_LOG\", \"hap=info\");
+//     env_logger::init();
+
+//     handle.await;
+// }
+// ";
 
 fn main() {
     let metadata_file = File::open("gen/default.metadata.json").unwrap();
@@ -811,9 +865,8 @@ fn main() {
     handlebars.register_helper("valid_values", Box::new(valid_values_helper));
     handlebars.register_helper("perms", Box::new(perms_helper));
     handlebars.register_helper("float", Box::new(float_helper));
-    handlebars.register_helper("characteristic_name", Box::new(characteristic_name_helper));
-    handlebars.register_helper("characteristic_file_name", Box::new(characteristic_file_name_helper));
     handlebars.register_helper("snake_case", Box::new(snake_case_helper));
+    handlebars.register_helper("pascal_case", Box::new(pascal_case_helper));
     handlebars.register_template_string("categories", CATEGORIES).unwrap();
     handlebars.register_template_string("hap_type", HAP_TYPE).unwrap();
     handlebars
@@ -828,6 +881,7 @@ fn main() {
     handlebars
         .register_template_string("accessory_mod", ACCESSORY_MOD)
         .unwrap();
+    // handlebars.register_template_string("example", EXAMPLE).unwrap();
 
     let categories = handlebars.render("categories", &metadata).unwrap();
     let categories_path = "src/accessory/category.rs".to_owned();
@@ -839,18 +893,18 @@ fn main() {
     let mut hap_type_file = File::create(&hap_type_path).unwrap();
     hap_type_file.write_all(hap_type.as_bytes()).unwrap();
 
-    let characteristics_base_path = "src/characteristic/generated/";
-    if std::path::Path::new(&characteristics_base_path).exists() {
-        fs::remove_dir_all(&characteristics_base_path).unwrap();
+    let characteristic_base_path = "src/characteristic/generated/";
+    if std::path::Path::new(&characteristic_base_path).exists() {
+        fs::remove_dir_all(&characteristic_base_path).unwrap();
     }
-    fs::create_dir_all(&characteristics_base_path).unwrap();
+    fs::create_dir_all(&characteristic_base_path).unwrap();
     let mut characteristsic_names = vec![];
     for c in &metadata.characteristics {
         let characteristic = handlebars
             .render("characteristic", &json!({ "characteristic": c }))
             .unwrap();
         let characteristic_file_name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
-        let mut characteristic_path = String::from(characteristics_base_path);
+        let mut characteristic_path = String::from(characteristic_base_path);
         characteristic_path.push_str(&characteristic_file_name);
         characteristic_path.push_str(".rs");
         let mut characteristic_file = File::create(&characteristic_path).unwrap();
@@ -863,20 +917,20 @@ fn main() {
             &json!({ "characteristics": characteristsic_names }),
         )
         .unwrap();
-    let mut characteristic_mod_file = File::create(&format!("{}mod.rs", characteristics_base_path)).unwrap();
+    let mut characteristic_mod_file = File::create(&format!("{}mod.rs", characteristic_base_path)).unwrap();
     characteristic_mod_file
         .write_all(characteristic_mod.as_bytes())
         .unwrap();
 
-    let services_base_path = "src/service/generated/";
+    let service_base_path = "src/service/generated/";
     let accessory_base_path = "src/accessory/generated/";
-    if std::path::Path::new(&services_base_path).exists() {
-        fs::remove_dir_all(&services_base_path).unwrap();
+    if std::path::Path::new(&service_base_path).exists() {
+        fs::remove_dir_all(&service_base_path).unwrap();
     }
-    if std::path::Path::new(&services_base_path).exists() {
+    if std::path::Path::new(&accessory_base_path).exists() {
         fs::remove_dir_all(&accessory_base_path).unwrap();
     }
-    fs::create_dir_all(&services_base_path).unwrap();
+    fs::create_dir_all(&service_base_path).unwrap();
     fs::create_dir_all(&accessory_base_path).unwrap();
     let mut service_names = vec![];
     let mut accessory_names = vec![];
@@ -904,7 +958,7 @@ fn main() {
             .unwrap();
 
         let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
-        let mut service_path = String::from(services_base_path);
+        let mut service_path = String::from(service_base_path);
         service_path.push_str(&service_file_name);
         service_path.push_str(".rs");
         let mut service_file = File::create(&service_path).unwrap();
@@ -925,6 +979,7 @@ fn main() {
             && s.name != "Slat"
             && s.name != "Speaker"
             && s.name != "Television"
+            && s.name != "Input Source"
         {
             let accessory = handlebars
                 .render(
@@ -943,7 +998,7 @@ fn main() {
     let service_mod = handlebars
         .render("service_mod", &json!({ "services": service_names }))
         .unwrap();
-    let mut service_mod_file = File::create(&format!("{}mod.rs", services_base_path)).unwrap();
+    let mut service_mod_file = File::create(&format!("{}mod.rs", service_base_path)).unwrap();
     service_mod_file.write_all(service_mod.as_bytes()).unwrap();
     let accessory_mod = handlebars
         .render("accessory_mod", &json!({ "accessories": accessory_names }))

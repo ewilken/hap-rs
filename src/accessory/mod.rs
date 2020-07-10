@@ -17,7 +17,7 @@ mod category;
 // mod defined;
 mod generated;
 
-pub use crate::accessory::{category::Category, generated::*};
+pub use crate::accessory::{category::AccessoryCategory, generated::*};
 
 /// `HapAccessory` is implemented by the inner type of every `Accessory`.
 pub trait HapAccessory: HapAccessorySetup + erased_serde::Serialize + Send + Sync {
@@ -55,26 +55,26 @@ where
     }
 }
 
-/// The `Information` struct is used to store metadata about an `Accessory` and is converted to the Accessory
-/// Information Service of the `Accessory` it is passed to on its creation.
+/// The `AccessoryInformationInformation` struct is used to store metadata about an `Accessory` and is converted to the
+/// Accessory Information Service of the `Accessory` it is passed to on its creation.
 ///
 /// # Examples
 ///
 /// ```
-/// use hap::accessory::{outlet, Information};
+/// use hap::accessory::{AccessoryInformation, OutletAccessory};
 ///
-/// let info = Information {
+/// let information = AccessoryInformation {
 ///     manufacturer: "Acme".into(),
 ///     model: "A1234".into(),
 ///     name: "Acme Outlet".into(),
-///     serial_number: "11122333".into(),
+///     serial_number: "1A2B3C4D5E6F".into(),
 ///     ..Default::default()
 /// };
 ///
-/// let outlet = outlet::new(info).unwrap();
+/// let outlet = OutletAccessory::new(1, information).unwrap();
 /// ```
 #[derive(Debug)]
-pub struct Information {
+pub struct AccessoryInformation {
     /// Contains the name of the company whose brand will appear on the `Accessory`, e.g., "Acme".
     pub manufacturer: String,
     /// Contains the manufacturer-specific model of the `Accessory`, e.g. "A1234".
@@ -118,7 +118,7 @@ pub struct Information {
     pub accessory_flags: Option<u32>,
 }
 
-impl Information {
+impl AccessoryInformation {
     /// Converts the `Information` struct to an Accessory Information Service.
     pub(crate) fn to_service(self, id: u64, accessory_id: u64) -> Result<AccessoryInformationService> {
         let mut i = AccessoryInformationService::new(id, accessory_id);
@@ -145,7 +145,7 @@ impl Information {
     }
 }
 
-impl Default for Information {
+impl Default for AccessoryInformation {
     fn default() -> Self {
         Self {
             manufacturer: "undefined".into(),

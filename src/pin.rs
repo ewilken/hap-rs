@@ -68,13 +68,14 @@ impl Pin {
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
 
-    #[test]
-    fn test_invalid_pin() {
-        let too_easy_pin = Pin::new([1, 2, 3, 4, 5, 6, 7, 8]);
-        let pin_with_invalid_number = Pin::new([0, 0, 0, 0, 0, 0, 0, 123]);
-    }
+    // #[test]
+    // fn test_invalid_pin() {
+    //     let too_easy_pin = Pin::new([1, 2, 3, 4, 5, 6, 7, 8]);
+    //     let pin_with_invalid_number = Pin::new([0, 0, 0, 0, 0, 0, 0, 123]);
+    // }
 
     #[test]
     fn test_to_string() {

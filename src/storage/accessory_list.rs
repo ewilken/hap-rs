@@ -197,10 +197,10 @@ impl AccessoryList {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn test_json_serialization() {} // TODO: test it
-}
+//     #[test]
+//     fn test_json_serialization() {} // TODO: test it
+// }

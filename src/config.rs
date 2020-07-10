@@ -5,19 +5,19 @@ use eui48::MacAddress;
 use rand::{rngs::OsRng, Rng};
 use serde::{Deserialize, Serialize};
 
-use crate::{accessory::Category, BonjourFeatureFlag, BonjourStatusFlag, Pin};
+use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag, Pin};
 
 /// The `Config` struct is used to store configuration options for the HomeKit Accessory Server.
 ///
 /// # Examples
 ///
 /// ```
-/// use hap::{accessory::Category, Config};
+/// use hap::{accessory::AccessoryCategory, Config};
 ///
 /// let config = Config {
 ///     pin: Pin::from_str("11122333").unwrap(),
 ///     name: "Acme Outlet".into(),
-///     category: Category::Outlet,
+///     category: AccessoryCategory::Outlet,
 ///     max_peers: Some(32),
 ///     ..Default::default()
 /// };
@@ -54,8 +54,8 @@ pub struct Config {
     pub configuration_number: u64, // c#
     /// Current state number. This must have a value of `1`.
     pub state_number: u8, // s#
-    /// Accessory Category. Indicates the category that best describes the primary function of the accessory.
-    pub category: Category, // ci
+    /// Accessory category. Indicates the category that best describes the primary function of the accessory.
+    pub category: AccessoryCategory, // ci
     /// Protocol version string `<major>.<minor>` (e.g. `"1.0"`). Defaults to `"1.0"` Required if value is not `"1.0"`.
     pub protocol_version: String, // pv
     /// Bonjour Status Flag. Defaults to `StatusFlag::NotPaired` and is changed to `StatusFlag::Zero` after a
@@ -92,7 +92,7 @@ impl Default for Config {
             device_ed25519_keypair: generate_ed25519_keypair(),
             configuration_number: 1,
             state_number: 1,
-            category: Category::Unknown,
+            category: AccessoryCategory::Unknown,
             protocol_version: "1.0".into(),
             status_flag: BonjourStatusFlag::NotPaired,
             feature_flag: BonjourFeatureFlag::Zero,

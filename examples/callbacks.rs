@@ -2,6 +2,8 @@ use std::net::{IpAddr, SocketAddr};
 
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
+    characteristic::AsyncCharacteristicCallbacks,
+    futures::future::FutureExt,
     server::{IpServer, Server},
     storage::FileStorage,
     tokio,
@@ -26,11 +28,28 @@ async fn main() {
         None
     };
 
-    let lightbulb = LightbulbAccessory::new(1, AccessoryInformation {
+    let mut lightbulb = LightbulbAccessory::new(1, AccessoryInformation {
         name: "Acme Lightbulb".into(),
         ..Default::default()
     })
     .unwrap();
+
+    lightbulb.lightbulb.on.on_read_async(Some(|| {
+        async {
+            println!("on characteristic read");
+            None
+        }
+        .boxed()
+    }));
+    lightbulb
+        .lightbulb
+        .on
+        .on_update_async(Some(|current_val: bool, new_val: bool| {
+            async move {
+                println!("on characteristic updated from {} to {}", current_val, new_val);
+            }
+            .boxed()
+        }));
 
     let config = Config {
         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
@@ -47,7 +66,7 @@ async fn main() {
 
     let handle = server.run_handle();
 
-    std::env::set_var("RUST_LOG", "hap=info");
+    std::env::set_var("RUST_LOG", "hap=debug");
     env_logger::init();
 
     handle.await;
