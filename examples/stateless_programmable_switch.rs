@@ -7,7 +7,7 @@ use hap::{
         AccessoryInformation,
     },
     server::{IpServer, Server},
-    storage::FileStorage,
+    storage::{FileStorage, Storage},
     tokio,
     Config,
     MacAddress,
@@ -30,24 +30,32 @@ async fn main() {
         None
     };
 
-    let lightbulb = StatelessProgrammableSwitchAccessory::new(1, AccessoryInformation {
+    let stateless_programmable_switch = StatelessProgrammableSwitchAccessory::new(1, AccessoryInformation {
         name: "Acme Stateless Programmable Switch".into(),
         ..Default::default()
     })
     .unwrap();
 
-    let config = Config {
-        socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
-        pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
-        name: "Acme Stateless Programmable Switch".into(),
-        device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-        category: AccessoryCategory::Switch,
-        ..Default::default()
+    let mut storage = FileStorage::current_dir().await.unwrap();
+
+    let config = match storage.load_config().await {
+        Ok(config) => config,
+        Err(_) => {
+            let config = Config {
+                socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
+                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+                name: "Acme Stateless Programmable Switch".into(),
+                device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+                category: AccessoryCategory::Switch,
+                ..Default::default()
+            };
+            storage.save_config(&config).await.unwrap();
+            config
+        },
     };
-    let storage = FileStorage::current_dir().await.unwrap();
 
     let mut server = IpServer::new(config, storage).unwrap();
-    server.add_accessory(lightbulb).await.unwrap();
+    server.add_accessory(stateless_programmable_switch).await.unwrap();
 
     let handle = server.run_handle();
 
