@@ -57,7 +57,10 @@ impl StreamWrapper {
         debug!("polling incoming TCP stream receiver");
 
         match self.incoming_receiver.try_next() {
-            Err(_) => Poll::Pending,
+            Err(e) => {
+                debug!("incoming TCP stream error: {}", e);
+                Poll::Pending
+            }
             Ok(Some(incoming)) => {
                 self.incoming_buf.extend_from_slice(&incoming);
                 let r_len = incoming.len();
@@ -65,8 +68,11 @@ impl StreamWrapper {
                 debug!("received {} Bytes on incoming TCP stream receiver", &r_len);
 
                 Poll::Ready(r_len)
-            },
-            Ok(None) => Poll::Ready(0),
+            }
+            Ok(None) => {
+                debug!("received 0 Bytes on incoming TCP stream receiver");
+                Poll::Ready(0)
+            }
         }
     }
 }
@@ -104,7 +110,7 @@ impl AsyncRead for StreamWrapper {
                 }
 
                 Poll::Ready(Ok(r_len))
-            },
+            }
         }
     }
 }
@@ -294,7 +300,7 @@ impl EncryptedStream {
                     }
 
                     Poll::Pending
-                },
+                }
             }
         } else {
             let r_len = AsyncRead::poll_read(
@@ -320,7 +326,7 @@ impl EncryptedStream {
 
                         match r_len {
                             Poll::Pending => Poll::Pending,
-                            Poll::Ready(r_len) =>
+                            Poll::Ready(r_len) => {
                                 if r_len == self.packet_len {
                                     self.already_read = 0;
                                     self.missing_data_for_encrypted_buf = false;
@@ -331,12 +337,13 @@ impl EncryptedStream {
                                     self.already_read += r_len;
 
                                     Poll::Pending
-                                },
+                                }
+                            }
                         }
                     } else {
                         Poll::Pending
                     }
-                },
+                }
             }
         }
     }
@@ -348,26 +355,26 @@ impl EncryptedStream {
                 Err(_) => {
                     *encrypted_stream.outgoing_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
-                },
+                }
                 Ok(Some(data)) => {
                     debug!("writing {} Bytes to outgoing TCP stream", data.len());
 
                     match AsyncWrite::poll_write(Pin::new(encrypted_stream), cx, &data) {
-                        Poll::Pending => {},
+                        Poll::Pending => {}
                         Poll::Ready(Err(e)) => {
                             log::error!("error writing to outgoing stream: {}", e);
                             return Poll::Ready(Err(e));
-                        },
+                        }
                         Poll::Ready(Ok(w_len)) => {
                             debug!("wrote {} Bytes to outgoing TCP stream", w_len);
-                        },
+                        }
                     };
-                },
+                }
                 Ok(None) => {
                     debug!("outgoing TCP stream ended");
 
                     return Poll::Ready(Ok(()));
-                },
+                }
             }
         }
     }
@@ -380,16 +387,16 @@ impl EncryptedStream {
                 Poll::Pending => {
                     *encrypted_stream.incoming_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
-                },
+                }
                 Poll::Ready(Err(e)) => match e.kind() {
                     ErrorKind::WouldBlock => {
                         *encrypted_stream.incoming_waker.lock().expect("setting outgoing_waker") =
                             Some(cx.waker().clone());
                         return Poll::Pending;
-                    },
+                    }
                     _ => {
                         return Poll::Ready(Err(e));
-                    },
+                    }
                 },
                 Poll::Ready(Ok(r_len)) => {
                     if r_len == 0 {
@@ -400,7 +407,7 @@ impl EncryptedStream {
                         .incoming_sender
                         .unbounded_send(data[..r_len].to_vec())
                         .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't send incoming data"))?;
-                },
+                }
             }
         }
     }
@@ -430,10 +437,10 @@ impl AsyncRead for EncryptedStream {
                     *encrypted_stream.controller_id.write().expect("setting controller_id") =
                         Some(session.controller_id);
                     encrypted_stream.shared_secret = Some(session.shared_secret);
-                },
+                }
                 _ => {
                     return AsyncRead::poll_read(Pin::new(&mut encrypted_stream.stream), cx, buf);
-                },
+                }
             }
         }
 

@@ -20,6 +20,12 @@ use crate::{
     transport::{http::handler::TlvHandlerExt, tcp},
 };
 
+use signature::{
+    Signature,
+    Verifier,
+    Signer,
+};
+
 struct Session {
     b_pub: PublicKey,
     a_pub: PublicKey,
