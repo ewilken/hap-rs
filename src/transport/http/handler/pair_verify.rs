@@ -11,6 +11,7 @@ use hyper::Body;
 use log::{debug, info};
 use rand::rngs::OsRng;
 use ring::{digest, hkdf, hmac};
+use signature::{Signature, Signer, Verifier};
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
 
@@ -18,12 +19,6 @@ use crate::{
     pointer,
     tlv::{self, Encodable, Type, Value},
     transport::{http::handler::TlvHandlerExt, tcp},
-};
-
-use signature::{
-    Signature,
-    Verifier,
-    Signer,
 };
 
 struct Session {

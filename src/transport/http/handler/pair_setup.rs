@@ -12,6 +12,7 @@ use num::BigUint;
 use rand::{rngs::OsRng, RngCore};
 use ring::{digest, hkdf, hmac};
 use sha2::{Digest, Sha512};
+use signature::{Signature, Signer, Verifier};
 use srp::{
     client::{srp_private_key, SrpClient},
     groups::G_3072,
@@ -26,12 +27,6 @@ use crate::{
     pointer,
     tlv::{self, Encodable, Type, Value},
     transport::http::handler::TlvHandlerExt,
-};
-
-use signature::{
-    Signature,
-    Verifier,
-    Signer,
 };
 
 struct Session {
@@ -282,7 +277,6 @@ async fn handle_exchange(
                 let device_ltpk = ed25519_dalek::PublicKey::from_bytes(
                     sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?,
                 )?;
-
                 let device_signature = ed25519_dalek::Signature::from_bytes(
                     sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
                 )?;
