@@ -28,6 +28,12 @@ use crate::{
     transport::http::handler::TlvHandlerExt,
 };
 
+use signature::{
+    Signature,
+    Verifier,
+    Signer,
+};
+
 struct Session {
     salt: [u8; 16],
     verifier: Vec<u8>,
@@ -276,6 +282,7 @@ async fn handle_exchange(
                 let device_ltpk = ed25519_dalek::PublicKey::from_bytes(
                     sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?,
                 )?;
+
                 let device_signature = ed25519_dalek::Signature::from_bytes(
                     sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
                 )?;
