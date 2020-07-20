@@ -1,66 +1,91 @@
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+
 use crate::{
-    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    pointer,
-    service::{accessory_information::AccessoryInformation, speaker, television, HapService},
+    accessory::{AccessoryInformation, HapAccessory},
+    service::{
+        accessory_information::AccessoryInformationService,
+        speaker::SpeakerService,
+        television::TelevisionService,
+        HapService,
+    },
+    HapType,
     Result,
 };
 
 /// Television Accessory.
-pub type Television = Accessory<TelevisionInner>;
-
-/// Inner type of the Television Accessory.
 #[derive(Default)]
-pub struct TelevisionInner {
+pub struct TelevisionAccessory {
     /// ID of the Television Accessory.
     id: u64,
 
     /// Accessory Information Service.
-    pub accessory_information: AccessoryInformation,
+    pub accessory_information: AccessoryInformationService,
     /// Television Service.
-    pub television: television::Television,
+    pub television: TelevisionService,
     /// Speaker Service.
-    pub speaker: speaker::Speaker,
+    pub speaker: SpeakerService,
 }
 
-impl HapAccessory for TelevisionInner {
+impl TelevisionAccessory {
+    /// Creates a new Television Accessory.
+    pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
+        let accessory_information = information.to_service(1, id)?;
+
+        let television_id = accessory_information.get_characteristics().len() as u64;
+        let mut television = TelevisionService::new(1 + television_id + 1, id);
+        television.set_primary(true);
+
+        // TODO: check if this is correct
+        let speaker_id = television_id + television.get_characteristics().len() as u64;
+        let mut speaker = SpeakerService::new(1 + speaker_id + 1, id);
+        speaker.set_primary(true);
+
+        Ok(Self {
+            id,
+            accessory_information,
+            television,
+            speaker,
+        })
+    }
+}
+
+impl HapAccessory for TelevisionAccessory {
     fn get_id(&self) -> u64 { self.id }
 
     fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> {
+    fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService> {
+        for service in self.get_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_mut_service(&mut self, hap_type: HapType) -> Option<&mut dyn HapService> {
+        for service in self.get_mut_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_services(&self) -> Vec<&dyn HapService> {
         vec![&self.accessory_information, &self.television, &self.speaker]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> {
         vec![&mut self.accessory_information, &mut self.television, &mut self.speaker]
-    }
-
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
-
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
-        let mut next_iid = 1;
-        for service in self.get_mut_services() {
-            service.set_id(next_iid);
-            next_iid += 1;
-            for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid);
-                characteristic.set_accessory_id(accessory_id);
-                characteristic.set_event_emitter(Some(event_emitter.clone()));
-                next_iid += 1;
-            }
-        }
-        Ok(())
     }
 }
 
-/// Creates a new Television Accessory.
-pub fn new(information: Information) -> Result<Television> {
-    let mut television = television::new();
-    television.set_primary(true);
-    Ok(Television::new(TelevisionInner {
-        accessory_information: information.to_service()?,
-        television,
-        speaker: speaker::new(),
-        ..Default::default()
-    }))
+impl Serialize for TelevisionAccessory {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_struct("HapAccessory", 2)?;
+        state.serialize_field("aid", &self.get_id())?;
+        state.serialize_field("services", &self.get_services())?;
+        state.end()
+    }
 }

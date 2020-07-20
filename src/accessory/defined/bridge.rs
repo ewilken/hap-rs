@@ -1,56 +1,67 @@
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+
 use crate::{
-    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    pointer,
-    service::accessory_information::AccessoryInformation,
+    accessory::{AccessoryInformation, HapAccessory},
+    service::{accessory_information::AccessoryInformationService, HapService},
+    HapType,
     Result,
 };
 
 /// Bridge Accessory.
-pub type Bridge = Accessory<BridgeInner>;
-
-/// Inner type of the Bridge Accessory.
-#[derive(Default)]
-pub struct BridgeInner {
+#[derive(Debug, Default)]
+pub struct BridgeAccessory {
     /// ID of the Bridge Accessory.
     id: u64,
 
     /// Accessory Information Service.
-    pub accessory_information: AccessoryInformation,
+    pub accessory_information: AccessoryInformationService,
 }
 
-impl HapAccessory for BridgeInner {
+impl BridgeAccessory {
+    /// Creates a new Bridge Accessory.
+    pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
+        let accessory_information = information.to_service(1, id)?;
+
+        Ok(Self {
+            id,
+            accessory_information,
+        })
+    }
+}
+
+impl HapAccessory for BridgeAccessory {
     fn get_id(&self) -> u64 { self.id }
 
     fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> { vec![&self.accessory_information] }
-
-    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
-        vec![&mut self.accessory_information]
-    }
-
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
-
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
-        let mut next_iid = 1;
-        for service in self.get_mut_services() {
-            service.set_id(next_iid);
-            next_iid += 1;
-            for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid);
-                characteristic.set_accessory_id(accessory_id);
-                characteristic.set_event_emitter(Some(event_emitter.clone()));
-                next_iid += 1;
+    fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService> {
+        for service in self.get_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
             }
         }
-        Ok(())
+        None
     }
+
+    fn get_mut_service(&mut self, hap_type: HapType) -> Option<&mut dyn HapService> {
+        for service in self.get_mut_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_services(&self) -> Vec<&dyn HapService> { vec![&self.accessory_information] }
+
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> { vec![&mut self.accessory_information] }
 }
 
-/// Creates a new Bridge Accessory.
-pub fn new(information: Information) -> Result<Bridge> {
-    Ok(Bridge::new(BridgeInner {
-        accessory_information: information.to_service()?,
-        ..Default::default()
-    }))
+impl Serialize for BridgeAccessory {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_struct("HapAccessory", 2)?;
+        state.serialize_field("aid", &self.get_id())?;
+        state.serialize_field("services", &self.get_services())?;
+        state.end()
+    }
 }

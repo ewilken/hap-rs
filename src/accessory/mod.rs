@@ -14,10 +14,10 @@ use crate::{
 };
 
 mod category;
-// mod defined;
+mod defined;
 mod generated;
 
-pub use crate::accessory::{category::AccessoryCategory, generated::*};
+pub use crate::accessory::{category::AccessoryCategory, defined::*, generated::*};
 
 /// `HapAccessory` is implemented by the inner type of every `Accessory`.
 pub trait HapAccessory: HapAccessorySetup + erased_serde::Serialize + Send + Sync {

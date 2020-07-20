@@ -1,70 +1,95 @@
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+
 use crate::{
-    accessory::{Accessory, HapAccessory, HapAccessoryService, Information},
-    pointer,
-    service::{accessory_information::AccessoryInformation, lock_management, lock_mechanism, HapService},
+    accessory::{AccessoryInformation, HapAccessory},
+    service::{
+        accessory_information::AccessoryInformationService,
+        lock_management::LockManagementService,
+        lock_mechanism::LockMechanismService,
+        HapService,
+    },
+    HapType,
     Result,
 };
 
 /// Lock Accessory.
-pub type Lock = Accessory<LockInner>;
-
-/// Inner type of the Lock Accessory.
 #[derive(Default)]
-pub struct LockInner {
+pub struct LockAccessory {
     /// ID of the Lock Accessory.
     id: u64,
 
     /// Accessory Information Service.
-    pub accessory_information: AccessoryInformation,
+    pub accessory_information: AccessoryInformationService,
     /// Lock Mechanism Service.
-    pub lock_mechanism: lock_mechanism::LockMechanism,
+    pub lock_mechanism: LockMechanismService,
     /// Lock Management Service.
-    pub lock_management: lock_management::LockManagement,
+    pub lock_management: LockManagementService,
 }
 
-impl HapAccessory for LockInner {
+impl LockAccessory {
+    /// Creates a new Lock Accessory.
+    pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
+        let accessory_information = information.to_service(1, id)?;
+
+        let lock_mechanism_id = accessory_information.get_characteristics().len() as u64;
+        let mut lock_mechanism = LockMechanismService::new(1 + lock_mechanism_id + 1, id);
+        lock_mechanism.set_primary(true);
+
+        // TODO: check if this is correct
+        let lock_management_id = lock_mechanism_id + lock_mechanism.get_characteristics().len() as u64;
+        let mut lock_management = LockManagementService::new(1 + lock_management_id + 1, id);
+        lock_management.set_primary(true);
+
+        Ok(Self {
+            id,
+            accessory_information,
+            lock_mechanism,
+            lock_management,
+        })
+    }
+}
+
+impl HapAccessory for LockAccessory {
     fn get_id(&self) -> u64 { self.id }
 
     fn set_id(&mut self, id: u64) { self.id = id; }
 
-    fn get_services(&self) -> Vec<&(dyn HapAccessoryService + Send + Sync)> {
+    fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService> {
+        for service in self.get_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_mut_service(&mut self, hap_type: HapType) -> Option<&mut dyn HapService> {
+        for service in self.get_mut_services() {
+            if service.get_type() == hap_type {
+                return Some(service);
+            }
+        }
+        None
+    }
+
+    fn get_services(&self) -> Vec<&dyn HapService> {
         vec![&self.accessory_information, &self.lock_mechanism, &self.lock_management]
     }
 
-    fn get_mut_services(&mut self) -> Vec<&mut (dyn HapAccessoryService + Send + Sync)> {
+    fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> {
         vec![
             &mut self.accessory_information,
             &mut self.lock_mechanism,
             &mut self.lock_management,
         ]
     }
-
-    fn get_mut_information(&mut self) -> &mut AccessoryInformation { &mut self.accessory_information }
-
-    fn init_iids(&mut self, accessory_id: u64, event_emitter: pointer::EventEmitter) -> Result<()> {
-        let mut next_iid = 1;
-        for service in self.get_mut_services() {
-            service.set_id(next_iid);
-            next_iid += 1;
-            for characteristic in service.get_mut_characteristics() {
-                characteristic.set_id(next_iid);
-                characteristic.set_accessory_id(accessory_id);
-                characteristic.set_event_emitter(Some(event_emitter.clone()));
-                next_iid += 1;
-            }
-        }
-        Ok(())
-    }
 }
 
-/// Creates a new Lock Accessory.
-pub fn new(information: Information) -> Result<Lock> {
-    let mut lock_mechanism = lock_mechanism::new();
-    lock_mechanism.set_primary(true);
-    Ok(Lock::new(LockInner {
-        accessory_information: information.to_service()?,
-        lock_mechanism,
-        lock_management: lock_management::new(),
-        ..Default::default()
-    }))
+impl Serialize for LockAccessory {
+    fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
+        let mut state = serializer.serialize_struct("HapAccessory", 2)?;
+        state.serialize_field("aid", &self.get_id())?;
+        state.serialize_field("services", &self.get_services())?;
+        state.end()
+    }
 }

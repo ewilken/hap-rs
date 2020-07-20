@@ -2,8 +2,7 @@ use std::net::{IpAddr, SocketAddr};
 
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
-    characteristic::AsyncCharacteristicCallbacks,
-    futures::future::FutureExt,
+    characteristic::CharacteristicCallbacks,
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -34,21 +33,15 @@ async fn main() {
     })
     .unwrap();
 
-    lightbulb.lightbulb.on.on_read_async(Some(|| {
-        async {
-            println!("on characteristic read");
-            None
-        }
-        .boxed()
+    lightbulb.lightbulb.on.on_read(Some(|| {
+        println!("on characteristic read");
+        None
     }));
     lightbulb
         .lightbulb
         .on
-        .on_update_async(Some(|current_val: bool, new_val: bool| {
-            async move {
-                println!("on characteristic updated from {} to {}", current_val, new_val);
-            }
-            .boxed()
+        .on_update(Some(|current_val: &bool, new_val: &bool| {
+            println!("on characteristic updated from {} to {}", current_val, new_val);
         }));
 
     let mut storage = FileStorage::current_dir().await.unwrap();
@@ -74,7 +67,7 @@ async fn main() {
 
     let handle = server.run_handle();
 
-    std::env::set_var("RUST_LOG", "hap=debug");
+    std::env::set_var("RUST_LOG", "hap=info");
     env_logger::init();
 
     handle.await;
