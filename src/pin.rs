@@ -17,12 +17,30 @@ const INVALID_PINS: [[u8; 8]; 12] = [
     [9, 9, 9, 9, 9, 9, 9, 9],
 ];
 
+/// The `Pin` struct represents the server's 8 digit pin used for pairing.
+///
+/// The pin consists of eight digits between 0 and 9 and defaults to `11122333`.
+///
+/// The following pins are considered too easy and are therefore not allowed:
+/// - `12345678`
+/// - `87654321`
+/// - `00000000`
+/// - `11111111`
+/// - `22222222`
+/// - `33333333`
+/// - `44444444`
+/// - `55555555`
+/// - `66666666`
+/// - `77777777`
+/// - `88888888`
+/// - `99999999`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pin {
     pin: [u8; 8],
 }
 
 impl Pin {
+    /// Creates a new `Pin`.
     pub fn new(pin: [u8; 8]) -> Result<Self> {
         if INVALID_PINS.contains(&pin) {
             return Err(Error::PinTooEasy);
@@ -34,20 +52,6 @@ impl Pin {
         }
 
         Ok(Pin { pin })
-    }
-
-    pub fn to_string(&self) -> String {
-        format!(
-            "{}{}{}-{}{}-{}{}{}",
-            &self.pin[0],
-            &self.pin[1],
-            &self.pin[2],
-            &self.pin[3],
-            &self.pin[4],
-            &self.pin[5],
-            &self.pin[6],
-            &self.pin[7],
-        )
     }
 
     // TODO: fix UTF-8 encoding here
@@ -65,6 +69,22 @@ impl Pin {
     //         self.pin[7],
     //     ]
     // }
+}
+
+impl ToString for Pin {
+    fn to_string(&self) -> String {
+        format!(
+            "{}{}{}-{}{}-{}{}{}",
+            &self.pin[0],
+            &self.pin[1],
+            &self.pin[2],
+            &self.pin[3],
+            &self.pin[4],
+            &self.pin[5],
+            &self.pin[6],
+            &self.pin[7],
+        )
+    }
 }
 
 mod tests {

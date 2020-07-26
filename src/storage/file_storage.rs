@@ -12,7 +12,7 @@ use async_trait::async_trait;
 use tokio::task::spawn_blocking;
 use uuid::Uuid;
 
-use crate::{pairing::Pairing, storage::Storage, Config, Error, Result};
+use crate::{pairing::Pairing, server::ServerPersistence, storage::Storage, Config, Error, Result};
 
 /// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 #[derive(Debug)]
@@ -162,6 +162,23 @@ impl Storage for FileStorage {
         self.remove_file(&key).await
     }
 
+    async fn load_server_persistence(&self) -> Result<ServerPersistence> {
+        let server_persistence_bytes = self.read_bytes("server_persistence.json").await?;
+        let server_persistence = serde_json::from_slice(&server_persistence_bytes)?;
+        Ok(server_persistence)
+    }
+
+    async fn save_server_persistence(&mut self, server_persistence: &ServerPersistence) -> Result<()> {
+        let server_persistence_bytes = serde_json::to_vec(&server_persistence)?;
+        self.write_bytes("server_persistence.json", server_persistence_bytes)
+            .await
+    }
+
+    async fn delete_server_persistence(&mut self) -> Result<()> {
+        let key = format!("server_persistence.json");
+        self.remove_file(&key).await
+    }
+
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing> {
         let key = format!("{}.json", id.to_string());
         let pairing_bytes = self.read_bytes(&key).await?;
@@ -183,7 +200,7 @@ impl Storage for FileStorage {
     async fn list_pairings(&self) -> Result<Vec<Pairing>> {
         let mut pairings = Vec::new();
         for key in self.keys_with_suffix("json").await? {
-            if &key != "config" {
+            if &key != "config" && &key != "server_persistence" {
                 let pairing_bytes = self.read_bytes(&key).await?;
                 let pairing = Pairing::from_bytes(&pairing_bytes)?;
                 pairings.push(pairing);
@@ -196,7 +213,7 @@ impl Storage for FileStorage {
     async fn count_pairings(&self) -> Result<usize> {
         let mut count = 0;
         for key in self.keys_with_suffix("json").await? {
-            if &key != "device" {
+            if &key != "config" && &key != "server_persistence" {
                 count += 1;
             }
         }

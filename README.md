@@ -151,6 +151,17 @@ use hap::{
 lightbulb.lightbulb.on.set_value(Value::Bool(true)).await.unwrap();
 ```
 
+## TODOs
+
+- [x] IP Transport
+- [x] Default Accessories
+- [x] Lock Accessory
+- [x] Television Accessory
+- [ ] Camera Streams
+  - [ ] IP Camera Accessory
+  - [ ] Video Doorbell Accessory
+- [ ] BLE Transport
+
 ## License
 
 HAP is licensed under either of

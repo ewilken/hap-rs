@@ -61,7 +61,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use hap::accessory::{AccessoryInformation, OutletAccessory};
+/// use hap::accessory::{outlet::OutletAccessory, AccessoryInformation};
 ///
 /// let information = AccessoryInformation {
 ///     manufacturer: "Acme".into(),

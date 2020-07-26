@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::characteristic::Format;
 
-/// HAP error type.
+/// HAP error representation.
 #[derive(Debug, Error)]
 pub enum Error {
     // custom errors

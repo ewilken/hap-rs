@@ -7,6 +7,8 @@ use futures::{
 };
 use log::info;
 
+use crate::server::ServerPersistence;
+
 use crate::{
     accessory::HapAccessory,
     config::Config,
@@ -28,50 +30,77 @@ pub struct IpServer {
     event_emitter: pointer::EventEmitter,
     http_server: HttpServer,
     mdns_responder: MdnsResponder,
+    persistence: ServerPersistence,
 }
 
 impl IpServer {
-    /// Creates a new `IpTransport`.
+    /// Creates a new `IpServer`.
     ///
     /// # Examples
     ///
     /// ```
+    /// use std::net::{IpAddr, SocketAddr};
+    ///
     /// use hap::{
-    ///     accessory::{bridge, lightbulb, Category, Information},
-    ///     transport::{IpTransport, Transport},
+    ///     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
+    ///     server::{IpServer, Server},
+    ///     storage::{FileStorage, Storage},
+    ///     tokio,
     ///     Config,
+    ///     MacAddress,
+    ///     Pin,
     /// };
     ///
-    /// let config = Config {
-    ///     pin: "11122333".into(),
-    ///     name: "Acme Lighting".into(),
-    ///     category: Category::Bridge,
-    ///     ..Default::default()
-    /// };
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let current_ipv4 = || -> Option<IpAddr> {
+    ///         for iface in pnet::datalink::interfaces() {
+    ///             for ip_network in iface.ips {
+    ///                 if ip_network.is_ipv4() {
+    ///                     let ip = ip_network.ip();
+    ///                     if !ip.is_loopback() {
+    ///                         return Some(ip);
+    ///                     }
+    ///                 }
+    ///             }
+    ///         }
+    ///         None
+    ///     };
     ///
-    /// let bridge_info = Information {
-    ///     name: "Bridge".into(),
-    ///     ..Default::default()
-    /// };
-    /// let first_bulb_info = Information {
-    ///     name: "Bulb 1".into(),
-    ///     ..Default::default()
-    /// };
-    /// let second_bulb_info = Information {
-    ///     name: "Bulb 2".into(),
-    ///     ..Default::default()
-    /// };
+    ///     let lightbulb = LightbulbAccessory::new(1, AccessoryInformation {
+    ///         name: "Acme Lightbulb".into(),
+    ///         ..Default::default()
+    ///     })
+    ///     .unwrap();
     ///
-    /// let bridge = bridge::new(bridge_info).unwrap();
-    /// let first_bulb = lightbulb::new(first_bulb_info).unwrap();
-    /// let second_bulb = lightbulb::new(second_bulb_info).unwrap();
+    ///     let mut storage = FileStorage::current_dir().await.unwrap();
     ///
-    /// let mut ip_transport = IpTransport::new(config).unwrap();
-    /// ip_transport.add_accessory(bridge).unwrap();
-    /// ip_transport.add_accessory(first_bulb).unwrap();
-    /// ip_transport.add_accessory(second_bulb).unwrap();
+    ///     let config = match storage.load_config().await {
+    ///         Ok(config) => config,
+    ///         Err(_) => {
+    ///             let config = Config {
+    ///                 socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
+    ///                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+    ///                 name: "Acme Lightbulb".into(),
+    ///                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+    ///                 category: AccessoryCategory::Lightbulb,
+    ///                 ..Default::default()
+    ///             };
+    ///             storage.save_config(&config).await.unwrap();
+    ///             config
+    ///         },
+    ///     };
     ///
-    /// //ip_transport.start().unwrap();
+    ///     let mut server = IpServer::new(config, storage).unwrap();
+    ///     server.add_accessory(lightbulb).await.unwrap();
+    ///
+    ///     let handle = server.run_handle();
+    ///
+    ///     std::env::set_var("RUST_LOG", "hap=info");
+    ///     env_logger::init();
+    ///
+    ///     handle.await;
+    /// }
     /// ```
     pub fn new<S: Storage + Send + Sync + 'static>(config: Config, storage: S) -> Result<Self> {
         let config = Arc::new(Mutex::new(config));
@@ -129,6 +158,10 @@ impl IpServer {
         );
         let mdns_responder = MdnsResponder::new(config.clone());
 
+        let persistence = ServerPersistence {
+            added_accessory_ids: Vec::new(),
+        };
+
         let server = IpServer {
             config,
             storage,
@@ -136,6 +169,7 @@ impl IpServer {
             event_emitter,
             http_server,
             mdns_responder,
+            persistence,
         };
 
         Ok(server)
@@ -160,6 +194,7 @@ impl Server for IpServer {
 
         let mut config = self.config.lock().await;
         config.configuration_number += 1;
+        self.storage.lock().await.save_config(&config).await?;
 
         Ok(accessory)
     }

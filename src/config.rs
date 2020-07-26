@@ -12,13 +12,16 @@ use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag,
 /// # Examples
 ///
 /// ```
-/// use hap::{accessory::AccessoryCategory, Config};
+/// use std::net::{IpAddr, SocketAddr};
+///
+/// use hap::{accessory::AccessoryCategory, Config, MacAddress, Pin};
 ///
 /// let config = Config {
-///     pin: Pin::from_str("11122333").unwrap(),
-///     name: "Acme Outlet".into(),
-///     category: AccessoryCategory::Outlet,
-///     max_peers: Some(32),
+///     socket_addr: SocketAddr::new([127, 0, 0, 1].into(), 32000),
+///     pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+///     name: "Acme Lightbulb".into(),
+///     device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+///     category: AccessoryCategory::Lightbulb,
 ///     ..Default::default()
 /// };
 /// ```

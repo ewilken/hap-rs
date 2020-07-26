@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::{pairing::Pairing, Config, Result};
+use crate::{pairing::Pairing, server::ServerPersistence, Config, Result};
 
 /// `Storage` is implemented by the data storage methods HAP supports. Currently, that's just `FileStorage`.
 #[async_trait]
@@ -12,6 +12,12 @@ pub trait Storage: Send + Sync {
     async fn save_config(&mut self, config: &Config) -> Result<()>;
     /// Deletes the `Config` from the `Storage`.
     async fn delete_config(&mut self) -> Result<()>;
+    /// Loads the `ServerPersistence` from the `Storage`.
+    async fn load_server_persistence(&self) -> Result<ServerPersistence>;
+    /// Saves the `ServerPersistence` into the `Storage`.
+    async fn save_server_persistence(&mut self, server_persistence: &ServerPersistence) -> Result<()>;
+    /// Deletes the `ServerPersistence` from the `Storage`.
+    async fn delete_server_persistence(&mut self) -> Result<()>;
     /// Loads a `Pairing` from the `Storage`.
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing>;
     /// Inserts a `Pairing` into the `Storage`.

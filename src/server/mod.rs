@@ -1,5 +1,7 @@
 use async_trait::async_trait;
 use futures::future::BoxFuture;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{accessory::HapAccessory, pointer, Result};
 
@@ -20,4 +22,9 @@ pub trait Server {
     async fn add_accessory<A: HapAccessory + 'static>(&mut self, accessory: A) -> Result<pointer::Accessory>;
     /// Takes a pointer to an Accessory by reference and removes the Accessory from the server.
     async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()>;
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ServerPersistence {
+    pub added_accessory_ids: Vec<Uuid>,
 }

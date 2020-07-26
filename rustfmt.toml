@@ -17,3 +17,11 @@ reorder_impl_items = true
 use_field_init_shorthand = true
 use_try_shorthand = true
 wrap_comments = true
+
+ignore = [
+  "src/accessory/generated/*",
+  "src/accessory/category.rs",
+  "src/characteristic/generated/*",
+  "src/service/generated/*",
+  "src/hap_type.rs",
+]

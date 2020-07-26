@@ -23,6 +23,7 @@ pub use crate::{
     transport::bonjour::{BonjourFeatureFlag, BonjourStatusFlag},
 };
 
+/// `Result` type redefinition.
 pub type Result<T> = std::result::Result<T, Error>;
 
 pub use ed25519_dalek::Keypair as Ed25519Keypair;
