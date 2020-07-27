@@ -3,7 +3,6 @@ use std::{
     ffi::OsStr,
     fs,
     io::{self, BufReader, BufWriter, ErrorKind, Read, Write},
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
     str,
 };
@@ -26,10 +25,6 @@ impl FileStorage {
         let dir_path = Path::new(dir).to_path_buf();
         let dir_path = spawn_blocking(move || -> Result<PathBuf> {
             fs::create_dir_all(&dir_path)?;
-
-            let mut perms = fs::metadata(&dir_path)?.permissions();
-            perms.set_mode(0o777);
-            fs::set_permissions(&dir_path, perms)?;
 
             Ok(dir_path)
         })
