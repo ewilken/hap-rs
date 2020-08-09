@@ -12,12 +12,9 @@ use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag,
 /// # Examples
 ///
 /// ```
-/// use std::net::{IpAddr, SocketAddr};
-///
 /// use hap::{accessory::AccessoryCategory, Config, MacAddress, Pin};
 ///
 /// let config = Config {
-///     socket_addr: SocketAddr::new([127, 0, 0, 1].into(), 32000),
 ///     pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
 ///     name: "Acme Lightbulb".into(),
 ///     device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
