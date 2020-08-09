@@ -85,7 +85,7 @@ impl Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            socket_addr: SocketAddr::from(([127, 0, 0, 1], 32000)),
+            socket_addr: get_current_ipv4(),
             pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
             name: "Accessory".into(),
             device_id: generate_random_mac_address(),
@@ -110,4 +110,21 @@ fn generate_random_mac_address() -> MacAddress {
 fn generate_ed25519_keypair() -> Ed25519Keypair {
     let mut csprng = OsRng {};
     Ed25519Keypair::generate(&mut csprng)
+}
+
+fn get_current_ipv4() -> SocketAddr {
+    let socket = match std::net::UdpSocket::bind("0.0.0.0:0") {
+        Ok(s) => s,
+        Err(_) => return SocketAddr::from(([127, 0, 0, 1], 32000)),
+    };
+
+    match socket.connect("8.8.8.8:80") {
+        Ok(_) => {},
+        Err(_) => return SocketAddr::from(([127, 0, 0, 1], 32000)),
+    }
+
+    match socket.local_addr() {
+        Ok(a) => SocketAddr::from((a.ip(), 32000)),
+        Err(_) => return SocketAddr::from(([127, 0, 0, 1], 32000)),
+    }
 }
