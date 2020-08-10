@@ -48,8 +48,6 @@ For a full list of the predefined characteristics, services and accessories, see
 Creating a simple lightbulb accessory and starting the IP server:
 
 ```rust
-use std::net::{IpAddr, SocketAddr};
-
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
@@ -62,20 +60,6 @@ use hap::{
 
 #[tokio::main]
 async fn main() {
-    let current_ipv4 = || -> Option<IpAddr> {
-        for iface in pnet::datalink::interfaces() {
-            for ip_network in iface.ips {
-                if ip_network.is_ipv4() {
-                    let ip = ip_network.ip();
-                    if !ip.is_loopback() {
-                        return Some(ip);
-                    }
-                }
-            }
-        }
-        None
-    };
-
     let lightbulb = LightbulbAccessory::new(1, AccessoryInformation {
         name: "Acme Lightbulb".into(),
         ..Default::default()
@@ -83,7 +67,6 @@ async fn main() {
     .unwrap();
 
     let config = Config {
-        socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
         name: "Acme Lightbulb".into(),
         device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
@@ -161,6 +144,12 @@ lightbulb.lightbulb.on.set_value(Value::Bool(true)).await.unwrap();
   - [ ] IP Camera Accessory
   - [ ] Video Doorbell Accessory
 - [ ] BLE Transport
+
+## Development
+
+Codegen is handled by the `codegen` crate in the workspace. Generated files are checked in. To run the code generation, do:
+
+    cargo run --package hap-codegen
 
 ## License
 

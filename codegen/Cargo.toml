@@ -1,0 +1,18 @@
+[package]
+authors = ["Elias Wilken <elias@wlkn.io>"]
+description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
+documentation = "https://docs.rs/hap"
+edition = "2018"
+keywords = ["apple", "homekit"]
+license = "MIT/Apache-2.0"
+name = "hap-codegen"
+publish = false
+readme = "README.md"
+repository = "https://github.com/ewilken/hap-rs"
+version = "0.1.0-pre.2"
+
+[dependencies]
+handlebars = "2.0"
+serde = {version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+uuid = {version = "0.8", features = ["v4", "serde"]}
