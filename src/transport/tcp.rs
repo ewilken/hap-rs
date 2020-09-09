@@ -19,7 +19,6 @@ use futures::{
     io::Error,
 };
 use log::{debug, error};
-use ring::{digest, hkdf, hmac};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::TcpStream,
@@ -546,9 +545,6 @@ fn compute_write_key(shared_secret: &[u8; 32]) -> [u8; 32] {
     compute_key(shared_secret, b"Control-Read-Encryption-Key")
 }
 
-fn compute_key(shared_secret: &[u8; 32], info: &[u8]) -> [u8; 32] {
-    let mut key = [0; 32];
-    let salt = hmac::SigningKey::new(&digest::SHA512, b"Control-Salt");
-    hkdf::extract_and_expand(&salt, shared_secret, &info, &mut key);
-    key
+fn compute_key(shared_secret: &[u8; 32], info: &[u8]) -> [u8; 32] {    
+    super::hkdf_extract_and_expand(b"Control-Salt", shared_secret, info)
 }

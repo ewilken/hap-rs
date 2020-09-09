@@ -10,7 +10,6 @@ use hyper::Body;
 use log::{debug, info};
 use num::BigUint;
 use rand::{rngs::OsRng, RngCore};
-use ring::{digest, hkdf, hmac};
 use sha2::{Digest, Sha512};
 use signature::{Signature, Signer, Verifier};
 use srp::{
@@ -26,7 +25,7 @@ use crate::{
     pairing::{Pairing, Permissions},
     pointer,
     tlv::{self, Encodable, Type, Value},
-    transport::http::handler::TlvHandlerExt,
+    transport::{hkdf_extract_and_expand, http::handler::TlvHandlerExt},
 };
 
 struct Session {
@@ -254,10 +253,9 @@ async fn handle_exchange(
                 let encrypted_data = Vec::from(&data[..data.len() - 16]);
                 let auth_tag = Vec::from(&data[data.len() - 16..]);
 
-                let mut encryption_key = [0; 32];
-                let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Encrypt-Salt");
-                hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Encrypt-Info", &mut encryption_key);
-
+                let encryption_key =
+                    hkdf_extract_and_expand(b"Pair-Setup-Encrypt-Salt", shared_secret, b"Pair-Setup-Encrypt-Info");
+            
                 let mut nonce = vec![0; 4];
                 nonce.extend(b"PS-Msg05");
 
@@ -281,9 +279,11 @@ async fn handle_exchange(
                     sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
                 )?;
 
-                let mut device_x = [0; 32];
-                let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Controller-Sign-Salt");
-                hkdf::extract_and_expand(&salt, &shared_secret, b"Pair-Setup-Controller-Sign-Info", &mut device_x);
+                let device_x = hkdf_extract_and_expand(
+                    b"Pair-Setup-Controller-Sign-Salt",
+                    shared_secret,
+                    b"Pair-Setup-Controller-Sign-Salt",
+                );
 
                 let mut device_info: Vec<u8> = Vec::new();
                 device_info.extend(&device_x);
@@ -310,13 +310,10 @@ async fn handle_exchange(
 
                 debug!("pairing: {:?}", &pairing);
 
-                let mut accessory_x = [0; 32];
-                let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Setup-Accessory-Sign-Salt");
-                hkdf::extract_and_expand(
-                    &salt,
-                    &shared_secret,
-                    b"Pair-Setup-Accessory-Sign-Info",
-                    &mut accessory_x,
+                let accessory_x = hkdf_extract_and_expand(
+                    b"Pair-Setup-Accessory-Sign-Salt",
+                    shared_secret,
+                    b"Pair-Setup-Accessory-Sign-Salt",
                 );
 
                 let config = config.lock().await;
