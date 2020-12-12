@@ -19,9 +19,9 @@ pub trait Server {
     /// Returns a pointer to the `Storage` of the server.
     fn storage_pointer(&self) -> pointer::Storage;
     /// Adds an Accessory to the server and returns a pointer to the added Accessory.
-    async fn add_accessory<A: HapAccessory + 'static>(&mut self, accessory: A) -> Result<pointer::Accessory>;
+    async fn add_accessory<A: HapAccessory + 'static>(&self, accessory: A) -> Result<pointer::Accessory>;
     /// Takes a pointer to an Accessory by reference and removes the Accessory from the server.
-    async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()>;
+    async fn remove_accessory(&self, accessory: &pointer::Accessory) -> Result<()>;
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
