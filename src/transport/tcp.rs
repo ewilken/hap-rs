@@ -19,7 +19,6 @@ use futures::{
     io::Error,
 };
 use log::{debug, error};
-use ring::{digest, hkdf, hmac};
 use tokio::{
     io::{AsyncRead, AsyncWrite},
     net::TcpStream,
@@ -502,7 +501,7 @@ fn decrypt_chunk(
     auth_tag: &[u8],
     count: &mut u64,
 ) -> Result<Vec<u8>> {
-    let read_key = compute_read_key(shared_secret);
+    let read_key = compute_read_key(shared_secret)?;
     let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&read_key));
 
     let mut nonce = vec![0; 4];
@@ -519,7 +518,7 @@ fn decrypt_chunk(
 }
 
 fn encrypt_chunk(shared_secret: &[u8; 32], data: &[u8], count: &mut u64) -> Result<([u8; 2], Vec<u8>, [u8; 16])> {
-    let write_key = compute_write_key(shared_secret);
+    let write_key = compute_write_key(shared_secret)?;
     let aead = ChaCha20Poly1305::new(GenericArray::from_slice(&write_key));
 
     let mut nonce = vec![0; 4];
@@ -538,17 +537,14 @@ fn encrypt_chunk(shared_secret: &[u8; 32], data: &[u8], count: &mut u64) -> Resu
     Ok((aad, buffer, auth_tag.into()))
 }
 
-fn compute_read_key(shared_secret: &[u8; 32]) -> [u8; 32] {
+fn compute_read_key(shared_secret: &[u8; 32]) -> Result<[u8; 32]> {
     compute_key(shared_secret, b"Control-Write-Encryption-Key")
 }
 
-fn compute_write_key(shared_secret: &[u8; 32]) -> [u8; 32] {
+fn compute_write_key(shared_secret: &[u8; 32]) -> Result<[u8; 32]> {
     compute_key(shared_secret, b"Control-Read-Encryption-Key")
 }
 
-fn compute_key(shared_secret: &[u8; 32], info: &[u8]) -> [u8; 32] {
-    let mut key = [0; 32];
-    let salt = hmac::SigningKey::new(&digest::SHA512, b"Control-Salt");
-    hkdf::extract_and_expand(&salt, shared_secret, &info, &mut key);
-    key
+fn compute_key(shared_secret: &[u8; 32], info: &[u8]) -> Result<[u8; 32]> {
+    super::hkdf_extract_and_expand(b"Control-Salt", shared_secret, info)
 }

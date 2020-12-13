@@ -37,12 +37,12 @@ async fn main() {
         },
     };
 
-    let mut server = IpServer::new(config, storage).unwrap();
+    let server = IpServer::new(config, storage).unwrap();
     server.add_accessory(stateless_programmable_switch).await.unwrap();
 
     let handle = server.run_handle();
 
-    std::env::set_var("RUST_LOG", "hap=info");
+    std::env::set_var("RUST_LOG", "hap=debug");
     env_logger::init();
 
     handle.await;

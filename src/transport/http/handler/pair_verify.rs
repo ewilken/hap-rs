@@ -10,7 +10,6 @@ use futures::{
 use hyper::Body;
 use log::{debug, info};
 use rand::rngs::OsRng;
-use ring::{digest, hkdf, hmac};
 use signature::{Signature, Signer, Verifier};
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
@@ -18,7 +17,7 @@ use x25519_dalek::{EphemeralSecret, PublicKey};
 use crate::{
     pointer,
     tlv::{self, Encodable, Type, Value},
-    transport::{http::handler::TlvHandlerExt, tcp},
+    transport::{hkdf_extract_and_expand, http::handler::TlvHandlerExt, tcp},
 };
 
 struct Session {
@@ -165,14 +164,11 @@ async fn handle_start(
     ]
     .encode();
 
-    let mut session_key = [0; 32];
-    let salt = hmac::SigningKey::new(&digest::SHA512, b"Pair-Verify-Encrypt-Salt");
-    hkdf::extract_and_expand(
-        &salt,
+    let session_key = hkdf_extract_and_expand(
+        b"Pair-Verify-Encrypt-Salt",
         shared_secret.as_bytes(),
         b"Pair-Verify-Encrypt-Info",
-        &mut session_key,
-    );
+    )?;
 
     handler.session = Some(Session {
         b_pub,

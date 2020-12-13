@@ -44,6 +44,8 @@ pub enum Error {
     TaskJoin(#[from] tokio::task::JoinError),
     #[error("AEAD Error")]
     Aead,
+    #[error("HKDF Invalid Length Error")]
+    HkdfInvalidLength,
     #[error("UTF-8 Error: {0}")]
     Utf8(#[from] str::Utf8Error),
     #[error("Parse EUI-48 Error: {0}")]
