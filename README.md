@@ -15,7 +15,7 @@ The HomeKit Accessory Protocol supports transports over IP and Bluetooth LE. Cur
 
 The HAP defines HomeKit enabled devices as virtual `accessories` that are composed of `services` that are composed of `characteristics`.
 
-Characteristics hold values of various data types as well as optional metadata like max/min values or units. Services group characteristics and represent features of the accessory. Every accessory consists of at least one `accessory information service` and any number of additional services. For example a custom ceiling fan accessory may consist of an `accessory information Service`, a `fan service` and a `lightbulb service`.
+Characteristics hold values of various data types as well as optional metadata like max/min values or units. Services group characteristics and represent features of the accessory. Every accessory consists of at least one `accessory information service` and any number of additional services. For example a custom ceiling fan accessory may consist of an `accessory information service`, a `fan service` and a `lightbulb service`.
 
 ```
 Ceiling Fan Accessory
@@ -45,7 +45,7 @@ For a full list of the predefined characteristics, services and accessories, see
 
 ## Usage Examples
 
-Creating a simple lightbulb accessory and starting the IP server:
+### Creating a simple lightbulb accessory and starting the IP server
 
 ```rust
 use hap::{
@@ -87,7 +87,7 @@ async fn main() {
 }
 ```
 
-Setting sync callbacks to react to remote value reads and updates:
+### Setting sync callbacks to react to remote value reads and updates
 
 ```rust
 use hap::characteristic::CharacteristicCallbacks;
@@ -102,7 +102,7 @@ lightbulb.lightbulb.on.on_update(Some(|current_val: &bool, new_val: &bool| {
 }));
 ```
 
-Setting async callbacks to react to remote value reads and updates:
+### Setting async callbacks to react to remote value reads and updates
 
 ```rust
 use hap::characteristic::AsyncCharacteristicCallbacks;
@@ -123,7 +123,7 @@ lightbulb.lightbulb.on.on_update_async(Some(|current_val: bool, new_val: bool| {
 }));
 ```
 
-Setting a characteristic value directly:
+### Setting a characteristic value directly
 
 ```rust
 use hap::{
@@ -133,6 +133,35 @@ use hap::{
 
 lightbulb.lightbulb.on.set_value(Value::Bool(true)).await.unwrap();
 ```
+
+### Interacting with accessories added to the server
+
+`Server::add_accessory` returns a pointer to the accessory that can be used like this:
+
+```rust
+async {
+    let accessory_ptr = server.add_accessory(accessory).await.unwrap();
+}
+```
+
+Accessories behind the pointer are represented by the `HapAccessory` trait. The `HapAccessory::get_service` and `HapAccessory::get_mut_service` methods provide access to the services of the accessory, represented by the `HapService` trait. The `HapService::get_characteristic` and `HapService::get_mut_characteristic` methods provide access to the characteristics of the service, represented by the `HapCharacteristic` trait. All services and characteristics are identified by their `HapType`.
+
+Accessing and changing the `on` characteristic of the `lightbulb` service of a `lightbulb` accessory would look like this:
+
+```rust
+use hap::{HapType, serde_json::Value};
+
+async {
+    let mut lightbulb_accessory = lightbulb_ptr.lock().await;
+
+    let lightbulb_service = lightbulb_accessory.get_mut_service(HapType::Lightbulb).unwrap();
+    let on_characteristic = lightbulb_service.get_mut_characteristic(HapType::On).unwrap();
+
+    on_characteristic.set_value(Value::Bool(true)).await.unwrap();
+}
+```
+
+A full working example can be found [here](https://github.com/ewilken/hap-rs/blob/master/examples/setting_values_after_server_start.rs).
 
 ## TODOs
 

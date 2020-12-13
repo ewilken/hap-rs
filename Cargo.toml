@@ -9,6 +9,16 @@ readme = "README.md"
 repository = "https://github.com/ewilken/hap-rs"
 license = "MIT/Apache-2.0"
 keywords = ["apple", "homekit"]
+exclude = [
+    ".github",
+    ".gitignore",
+    "examples",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "README.md",
+    "rls.toml",
+    "rustfmt.toml",
+]
 
 [dependencies]
 aead = "0.3"
