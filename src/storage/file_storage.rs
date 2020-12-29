@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use tokio::task::spawn_blocking;
 use uuid::Uuid;
 
-use crate::{pairing::Pairing, server::ServerPersistence, storage::Storage, BonjourStatusFlag, Config, Error, Result};
+use crate::{pairing::Pairing, server::ServerPersistence, storage::Storage, Config, Error, Result};
 
 /// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 #[derive(Debug)]
@@ -221,16 +221,25 @@ impl Storage for FileStorage {
     }
 }
 
-#[tokio::test]
-/// Ensure we can write a config, then a shorter one, without corrupting data.
-async fn test_shorten_config() {
-    let mut config = Default::default();
-    let mut storage = FileStorage::new(&std::env::temp_dir()).await.unwrap();
-    storage.save_config(&config).await.unwrap();
-    config.status_flag = BonjourStatusFlag::Zero;
-    storage.save_config(&config).await.unwrap();
-    assert_eq!(
-        storage.load_config().await.unwrap().status_flag,
-        BonjourStatusFlag::Zero
-    )
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::BonjourStatusFlag;
+
+    #[tokio::test]
+    /// Ensure we can write a config, then a shorter one, without corrupting data.
+    async fn test_shorten_config() {
+        let mut config = Default::default();
+        let mut storage = FileStorage::new(&std::env::temp_dir()).await.unwrap();
+
+        storage.save_config(&config).await.unwrap();
+        config.status_flag = BonjourStatusFlag::Zero;
+        storage.save_config(&config).await.unwrap();
+
+        assert_eq!(
+            storage.load_config().await.unwrap().status_flag,
+            BonjourStatusFlag::Zero
+        )
+    }
 }
