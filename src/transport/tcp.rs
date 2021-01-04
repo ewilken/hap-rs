@@ -17,6 +17,7 @@ use futures::{
         oneshot,
     },
     io::Error,
+    Stream,
 };
 use log::{debug, error};
 use tokio::{
@@ -52,15 +53,12 @@ impl StreamWrapper {
         }
     }
 
-    fn poll_receiver(&mut self) -> Poll<usize> {
+    fn poll_receiver(&mut self, cx: &mut Context) -> Poll<usize> {
         debug!("polling incoming TCP stream receiver");
 
-        match self.incoming_receiver.try_next() {
-            Err(e) => {
-                debug!("incoming TCP stream error: {}", e);
-                Poll::Pending
-            },
-            Ok(Some(incoming)) => {
+        match Stream::poll_next(Pin::new(&mut self.incoming_receiver), cx) {
+            Poll::Pending => Poll::Pending,
+            Poll::Ready(Some(incoming)) => {
                 self.incoming_buf.extend_from_slice(&incoming);
                 let r_len = incoming.len();
 
@@ -68,7 +66,7 @@ impl StreamWrapper {
 
                 Poll::Ready(r_len)
             },
-            Ok(None) => {
+            Poll::Ready(None) => {
                 debug!("received 0 Bytes on incoming TCP stream receiver");
                 Poll::Ready(0)
             },
@@ -79,12 +77,12 @@ impl StreamWrapper {
 impl AsyncRead for StreamWrapper {
     fn poll_read(
         self: Pin<&mut Self>,
-        _cx: &mut Context,
+        cx: &mut Context,
         buf: &mut [u8],
     ) -> Poll<std::result::Result<usize, io::Error>> {
         let stream_wrapper = Pin::into_inner(self);
 
-        match stream_wrapper.poll_receiver() {
+        match stream_wrapper.poll_receiver(cx) {
             Poll::Pending => Poll::Pending,
             Poll::Ready(_r_len) => {
                 let r_len = min(buf.len(), stream_wrapper.incoming_buf.len());
@@ -349,12 +347,12 @@ impl EncryptedStream {
     fn poll_outgoing(self: Pin<&mut Self>, cx: &mut Context) -> Poll<std::result::Result<(), io::Error>> {
         let encrypted_stream = Pin::into_inner(self);
         loop {
-            match encrypted_stream.outgoing_receiver.try_next() {
-                Err(_) => {
+            match Stream::poll_next(Pin::new(&mut encrypted_stream.outgoing_receiver), cx) {
+                Poll::Pending => {
                     *encrypted_stream.outgoing_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
                 },
-                Ok(Some(data)) => {
+                Poll::Ready(Some(data)) => {
                     debug!("writing {} Bytes to outgoing TCP stream", data.len());
 
                     match AsyncWrite::poll_write(Pin::new(encrypted_stream), cx, &data) {
@@ -368,7 +366,7 @@ impl EncryptedStream {
                         },
                     };
                 },
-                Ok(None) => {
+                Poll::Ready(None) => {
                     debug!("outgoing TCP stream ended");
 
                     return Poll::Ready(Ok(()));
