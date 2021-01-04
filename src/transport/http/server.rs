@@ -257,8 +257,8 @@ impl Server {
                 //     }),
                 // )?;
 
-                futures::join!(
-                    encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()),
+                tokio::spawn(encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()));
+                tokio::spawn(
                     http.serve_connection(stream_wrapper, api)
                         .map_err(|e| error!("{:?}", e))
                         .map(|_| ()),
