@@ -1,11 +1,7 @@
-use std::{ops::Deref, str};
-
-use futures::{
-    future::{BoxFuture, FutureExt},
-    stream::StreamExt,
-};
-use hyper::Body;
+use futures::future::{BoxFuture, FutureExt};
+use hyper::{body::Buf, Body};
 use log::{debug, info};
+use std::{ops::Deref, str};
 use uuid::Uuid;
 
 use crate::{
@@ -53,17 +49,13 @@ impl TlvHandlerExt for Pairings {
 
     fn parse(&self, body: Body) -> BoxFuture<Result<HandlerType, tlv::ErrorContainer>> {
         async {
-            let mut body = body;
-            let mut concatenated_body = Vec::new();
-            while let Some(chunk) = body.next().await {
-                let bytes =
-                    chunk.map_err(|_| tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown))?;
-                concatenated_body.extend(&bytes[..]);
-            }
+            let aggregated_body = hyper::body::aggregate(body)
+                .await
+                .map_err(|_| tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown))?;
 
-            debug!("received body: {:?}", &concatenated_body);
+            debug!("received body: {:?}", aggregated_body.chunk());
 
-            let mut decoded = tlv::decode(concatenated_body);
+            let mut decoded = tlv::decode(aggregated_body.chunk());
             if decoded.get(&(Type::State as u8)) != Some(&vec![1]) {
                 return Err(tlv::ErrorContainer::new(0, tlv::Error::Unknown));
             }

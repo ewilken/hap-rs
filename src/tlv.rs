@@ -43,8 +43,8 @@ pub fn encode(tlvs: Vec<(u8, Vec<u8>)>) -> Vec<u8> {
     vec
 }
 
-/// Decodes a `Vec<u8>` of concatenated TLVs to a `HashMap<u8, Vec<u8>>` in the format `<Type, Value>`.
-pub fn decode(tlv: Vec<u8>) -> HashMap<u8, Vec<u8>> {
+/// Decodes a slice of concatenated TLVs to a `HashMap<u8, Vec<u8>>` in the format `<Type, Value>`.
+pub fn decode(tlv: &[u8]) -> HashMap<u8, Vec<u8>> {
     let mut hm = HashMap::new();
     let mut buf: Vec<u8> = Vec::new();
     let mut p = 0;
