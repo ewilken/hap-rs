@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use tokio::task::spawn_blocking;
 use uuid::Uuid;
 
-use crate::{pairing::Pairing, server::ServerPersistence, storage::Storage, Config, Error, Result};
+use crate::{pairing::Pairing, server::IdentifierCache, storage::Storage, Config, Error, Result};
 
 /// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 #[derive(Debug)]
@@ -161,20 +161,19 @@ impl Storage for FileStorage {
         self.remove_file(&key).await
     }
 
-    async fn load_server_persistence(&self) -> Result<ServerPersistence> {
-        let server_persistence_bytes = self.read_bytes("server_persistence.json").await?;
-        let server_persistence = serde_json::from_slice(&server_persistence_bytes)?;
-        Ok(server_persistence)
+    async fn load_identifier_cache(&self) -> Result<IdentifierCache> {
+        let identifier_cache_bytes = self.read_bytes("identifier_cache.json").await?;
+        let identifier_cache = serde_json::from_slice(&identifier_cache_bytes)?;
+        Ok(identifier_cache)
     }
 
-    async fn save_server_persistence(&mut self, server_persistence: &ServerPersistence) -> Result<()> {
-        let server_persistence_bytes = serde_json::to_vec(&server_persistence)?;
-        self.write_bytes("server_persistence.json", server_persistence_bytes)
-            .await
+    async fn save_identifier_cache(&mut self, identifier_cache: &IdentifierCache) -> Result<()> {
+        let identifier_cache_bytes = serde_json::to_vec(&identifier_cache)?;
+        self.write_bytes("identifier_cache.json", identifier_cache_bytes).await
     }
 
-    async fn delete_server_persistence(&mut self) -> Result<()> {
-        let key = format!("server_persistence.json");
+    async fn delete_identifier_cache(&mut self) -> Result<()> {
+        let key = format!("identifier_cache.json");
         self.remove_file(&key).await
     }
 
@@ -199,7 +198,7 @@ impl Storage for FileStorage {
     async fn list_pairings(&self) -> Result<Vec<Pairing>> {
         let mut pairings = Vec::new();
         for key in self.keys_with_suffix("json").await? {
-            if &key != "config" && &key != "server_persistence" {
+            if &key != "config" && &key != "identifier_cache" {
                 let pairing_bytes = self.read_bytes(&key).await?;
                 let pairing = Pairing::from_bytes(&pairing_bytes)?;
                 pairings.push(pairing);
@@ -212,7 +211,7 @@ impl Storage for FileStorage {
     async fn count_pairings(&self) -> Result<usize> {
         let mut count = 0;
         for key in self.keys_with_suffix("json").await? {
-            if &key != "config" && &key != "server_persistence" {
+            if &key != "config" && &key != "identifier_cache" {
                 count += 1;
             }
         }

@@ -1,13 +1,12 @@
 use async_trait::async_trait;
 use futures::future::BoxFuture;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 use crate::{accessory::HapAccessory, pointer, Result};
-
-mod ip;
-
+pub use identifier_cache::IdentifierCache;
 pub use ip::IpServer;
+
+mod identifier_cache;
+mod ip;
 
 /// `Server` is implemented by the transport methods HAP supports. Currently, that's just `IpServer`.
 #[async_trait]
@@ -22,9 +21,4 @@ pub trait Server {
     async fn add_accessory<A: HapAccessory + 'static>(&self, accessory: A) -> Result<pointer::Accessory>;
     /// Takes a pointer to an Accessory by reference and removes the Accessory from the server.
     async fn remove_accessory(&self, accessory: &pointer::Accessory) -> Result<()>;
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct ServerPersistence {
-    pub added_accessory_ids: Vec<Uuid>,
 }
