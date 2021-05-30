@@ -43,7 +43,7 @@ async fn main() {
     let value_set_interval = async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(2));
 
-        tokio::time::delay_for(std::time::Duration::from_secs(60)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
 
         loop {
             interval.tick().await;
@@ -59,7 +59,7 @@ async fn main() {
                 .await
                 .unwrap();
 
-            tokio::time::delay_for(std::time::Duration::from_secs(1)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
             motion_detected_characteristic
                 .set_value(Value::Bool(false))

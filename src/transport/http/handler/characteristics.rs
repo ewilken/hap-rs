@@ -1,10 +1,6 @@
+use futures::future::{BoxFuture, FutureExt};
+use hyper::{body::Buf, Body, Response, StatusCode, Uri};
 use std::collections::HashMap;
-
-use futures::{
-    future::{BoxFuture, FutureExt},
-    stream::StreamExt,
-};
-use hyper::{Body, Response, StatusCode, Uri};
 use url::form_urlencoded;
 
 use crate::{
@@ -137,14 +133,9 @@ impl JsonHandlerExt for UpdateCharacteristics {
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         async move {
-            let mut body = body;
-            let mut concatenated_body = Vec::new();
-            while let Some(chunk) = body.next().await {
-                let bytes = chunk.map_err(|_| Error::HttpStatus(StatusCode::BAD_REQUEST))?;
-                concatenated_body.extend(&bytes[..]);
-            }
+            let aggregated_body = hyper::body::aggregate(body).await?;
 
-            let write_body: CharacteristicResponseBody<WriteObject> = serde_json::from_slice(&concatenated_body)?;
+            let write_body: CharacteristicResponseBody<WriteObject> = serde_json::from_slice(aggregated_body.chunk())?;
             let mut resp_body = CharacteristicResponseBody::<WriteResponseObject> {
                 characteristics: Vec::new(),
             };

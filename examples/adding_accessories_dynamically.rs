@@ -45,7 +45,7 @@ async fn main() {
     let handle = server.run_handle();
 
     let stream_of_new_accessories = async {
-        tokio::time::delay_for(std::time::Duration::from_secs(60)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
 
         for i in 0..20 {
             let lightbulb = LightbulbAccessory::new(i + 3, AccessoryInformation {
@@ -56,7 +56,7 @@ async fn main() {
 
             server.add_accessory(lightbulb).await.unwrap();
 
-            tokio::time::delay_for(std::time::Duration::from_secs(2)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         }
     };
 

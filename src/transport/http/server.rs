@@ -1,17 +1,15 @@
+use futures::{
+    channel::oneshot,
+    future::{self, BoxFuture, Future, FutureExt, TryFutureExt},
+    lock::Mutex,
+};
+use hyper::{server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
+use log::{debug, error, info};
 use std::{
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
 };
-
-use futures::{
-    channel::oneshot,
-    future::{self, BoxFuture, Future, FutureExt, TryFutureExt},
-    lock::Mutex,
-    stream::StreamExt,
-};
-use hyper::{server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
-use log::{debug, error, info};
 use tokio::net::TcpListener;
 
 use crate::{
@@ -179,14 +177,12 @@ impl Server {
 
         async move {
             let socket_addr = config.lock().await.socket_addr;
-            let mut listener = TcpListener::bind(socket_addr).await?;
+            let listener = TcpListener::bind(socket_addr).await?;
 
             info!("binding TCP listener on {}", &socket_addr);
 
-            let mut incoming = listener.incoming();
-
-            while let Some(stream) = incoming.next().await {
-                let stream = stream?;
+            loop {
+                let (stream, _socket_addr) = listener.accept().await?;
 
                 debug!("incoming TCP stream from {}", stream.peer_addr()?);
 
@@ -265,6 +261,7 @@ impl Server {
                 );
             }
 
+            #[allow(unreachable_code)]
             Ok(())
         }
         .boxed()

@@ -11,7 +11,7 @@ env:
 
 jobs:
   style:
-    name: Check Style
+    name: Check style
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,11 +44,11 @@ jobs:
           - macOS-latest
         include:
           - rust: stable
-            features: ""
+            features: ''
           - rust: beta
-            features: ""
+            features: ''
           - rust: nightly
-            features: ""
+            features: ''
             benches: true
     runs-on: ${{ matrix.os }}
     steps:

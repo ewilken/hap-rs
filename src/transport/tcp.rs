@@ -1,12 +1,3 @@
-use std::{
-    cmp::min,
-    future::Future,
-    io::{self, ErrorKind},
-    pin::Pin,
-    sync::{Arc, Mutex, RwLock},
-    task::{Context, Poll, Waker},
-};
-
 use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
 use byteorder::{ByteOrder, LittleEndian};
 use bytes::{Buf, BytesMut};
@@ -20,8 +11,16 @@ use futures::{
     Stream,
 };
 use log::{debug, error};
+use std::{
+    cmp::min,
+    future::Future,
+    io::{self, ErrorKind},
+    pin::Pin,
+    sync::{Arc, Mutex, RwLock},
+    task::{Context, Poll, Waker},
+};
 use tokio::{
-    io::{AsyncRead, AsyncWrite},
+    io::{AsyncRead, AsyncWrite, ReadBuf},
     net::TcpStream,
 };
 use uuid::Uuid;
@@ -78,15 +77,15 @@ impl AsyncRead for StreamWrapper {
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context,
-        buf: &mut [u8],
-    ) -> Poll<std::result::Result<usize, io::Error>> {
+        buf: &mut ReadBuf,
+    ) -> Poll<std::result::Result<(), io::Error>> {
         let stream_wrapper = Pin::into_inner(self);
 
         match stream_wrapper.poll_receiver(cx) {
             Poll::Pending => Poll::Pending,
             Poll::Ready(_r_len) => {
-                let r_len = min(buf.len(), stream_wrapper.incoming_buf.len());
-                buf[..r_len].copy_from_slice(&stream_wrapper.incoming_buf[..r_len]);
+                let r_len = min(buf.capacity(), stream_wrapper.incoming_buf.len());
+                buf.put_slice(&stream_wrapper.incoming_buf[..r_len]);
                 stream_wrapper.incoming_buf.advance(r_len);
 
                 if let Some(waker) = stream_wrapper
@@ -106,7 +105,7 @@ impl AsyncRead for StreamWrapper {
                     waker.wake()
                 }
 
-                Poll::Ready(Ok(r_len))
+                Poll::Ready(Ok(()))
             },
         }
     }
@@ -179,8 +178,6 @@ pub struct EncryptedStream {
     encrypted_buf: BytesMut,
     decrypted_buf: BytesMut,
     packet_len: usize,
-    already_copied: usize,
-    already_read: usize,
     decrypted_ready: bool,
     missing_data_for_decrypted_buf: bool,
     missing_data_for_encrypted_buf: bool,
@@ -202,10 +199,12 @@ impl EncryptedStream {
         let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
         let incoming_waker = Arc::new(Mutex::new(None));
         let outgoing_waker = Arc::new(Mutex::new(None));
+
         let mut encrypted_buf = BytesMut::new();
         encrypted_buf.resize(1042, 0);
         let mut decrypted_buf = BytesMut::new();
         decrypted_buf.resize(1024, 0);
+
         (
             EncryptedStream {
                 stream,
@@ -221,8 +220,6 @@ impl EncryptedStream {
                 encrypted_buf,
                 decrypted_buf,
                 packet_len: 0,
-                already_copied: 0,
-                already_read: 0,
                 decrypted_ready: false,
                 missing_data_for_decrypted_buf: false,
                 missing_data_for_encrypted_buf: false,
@@ -239,15 +236,17 @@ impl EncryptedStream {
         debug!("reading from decrypted buffer");
 
         if self.decrypted_ready {
-            let len = min(buf.len(), self.packet_len - 16);
-            buf[..len].copy_from_slice(&self.decrypted_buf[..len]);
-            self.already_copied = len;
-            if self.already_copied == (self.packet_len - 16) {
-                self.already_copied = 0;
+            let r_len = min(buf.len(), self.packet_len - 16);
+
+            buf[..r_len].copy_from_slice(&self.decrypted_buf[..r_len]);
+
+            self.decrypted_buf.advance(r_len);
+
+            if r_len == self.packet_len - 16 {
                 self.decrypted_ready = false;
             }
 
-            return Poll::Ready(Ok(len));
+            return Poll::Ready(Ok(r_len));
         }
 
         Poll::Pending
@@ -265,7 +264,11 @@ impl EncryptedStream {
                 &mut self.decrypt_count,
             )
             .map_err(|_| io::Error::new(io::ErrorKind::Other, "decryption failed"))?;
+
             self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
+
+            self.encrypted_buf.advance(self.packet_len + 2); // or is this + 16?
+
             self.missing_data_for_decrypted_buf = false;
             self.decrypted_ready = true;
 
@@ -279,17 +282,16 @@ impl EncryptedStream {
         debug!("reading from TCP stream");
 
         if self.missing_data_for_encrypted_buf {
-            let r_len = AsyncRead::poll_read(
+            let r = AsyncRead::poll_read(
                 Pin::new(&mut self.stream),
                 cx,
-                &mut self.encrypted_buf[self.already_read..],
+                &mut ReadBuf::new(&mut self.encrypted_buf),
             )?;
 
-            match r_len {
+            match r {
                 Poll::Pending => Poll::Pending,
-                Poll::Ready(r_len) => {
-                    if self.already_read + r_len == self.packet_len {
-                        self.already_read = 0;
+                Poll::Ready(()) => {
+                    if self.encrypted_buf.len() == self.packet_len {
                         self.missing_data_for_encrypted_buf = false;
                         self.missing_data_for_decrypted_buf = true;
 
@@ -300,46 +302,31 @@ impl EncryptedStream {
                 },
             }
         } else {
-            let r_len = AsyncRead::poll_read(
+            let r = AsyncRead::poll_read(
                 Pin::new(&mut self.stream),
                 cx,
-                &mut self.encrypted_buf[self.already_read..2],
+                &mut ReadBuf::new(&mut self.encrypted_buf),
             )?;
 
-            match r_len {
+            match r {
                 Poll::Pending => Poll::Pending,
-                Poll::Ready(r_len) => {
-                    self.already_read += r_len;
+                Poll::Ready(()) =>
+                    if self.encrypted_buf.len() >= 2 {
+                        self.packet_len = LittleEndian::read_u16(&self.encrypted_buf[..2]) as usize + 16;
 
-                    if self.already_read == 2 {
-                        self.packet_len = LittleEndian::read_u16(&self.encrypted_buf) as usize + 16;
-                        self.missing_data_for_encrypted_buf = true;
+                        if self.encrypted_buf.len() == self.packet_len {
+                            self.missing_data_for_encrypted_buf = false;
+                            self.missing_data_for_decrypted_buf = true;
 
-                        let r_len = AsyncRead::poll_read(
-                            Pin::new(&mut self.stream),
-                            cx,
-                            &mut self.encrypted_buf[self.already_read..],
-                        )?;
+                            self.read_encrypted(buf)
+                        } else {
+                            self.missing_data_for_encrypted_buf = true;
 
-                        match r_len {
-                            Poll::Pending => Poll::Pending,
-                            Poll::Ready(r_len) =>
-                                if r_len == self.packet_len {
-                                    self.already_read = 0;
-                                    self.missing_data_for_encrypted_buf = false;
-                                    self.missing_data_for_decrypted_buf = true;
-
-                                    self.read_encrypted(buf)
-                                } else {
-                                    self.already_read += r_len;
-
-                                    Poll::Pending
-                                },
+                            Poll::Pending
                         }
                     } else {
                         Poll::Pending
-                    }
-                },
+                    },
             }
         }
     }
@@ -377,7 +364,10 @@ impl EncryptedStream {
 
     fn poll_incoming(self: Pin<&mut Self>, cx: &mut Context) -> Poll<std::result::Result<(), io::Error>> {
         let encrypted_stream = Pin::into_inner(self);
-        let mut data = [0; 1536];
+
+        let mut data_inner = [0; 1536];
+        let mut data = ReadBuf::new(&mut data_inner);
+
         loop {
             match AsyncRead::poll_read(Pin::new(encrypted_stream), cx, &mut data) {
                 Poll::Pending => {
@@ -394,15 +384,19 @@ impl EncryptedStream {
                         return Poll::Ready(Err(e));
                     },
                 },
-                Poll::Ready(Ok(r_len)) => {
-                    if r_len == 0 {
+                Poll::Ready(Ok(())) => {
+                    let data_filled = data.filled();
+
+                    if data_filled.len() == 0 {
                         return Poll::Ready(Ok(()));
                     }
 
                     encrypted_stream
                         .incoming_sender
-                        .unbounded_send(data[..r_len].to_vec())
+                        .unbounded_send(data_filled.to_vec())
                         .map_err(|_| io::Error::new(io::ErrorKind::Other, "couldn't send incoming data"))?;
+
+                    data.clear();
                 },
             }
         }
@@ -412,6 +406,7 @@ impl EncryptedStream {
 impl Future for EncryptedStream {
     type Output = std::result::Result<(), io::Error>;
 
+    #[allow(unused_must_use)]
     fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
         let encrypted_stream = Pin::into_inner(self);
         EncryptedStream::poll_outgoing(Pin::new(encrypted_stream), cx)?;
@@ -423,8 +418,8 @@ impl AsyncRead for EncryptedStream {
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context,
-        buf: &mut [u8],
-    ) -> Poll<std::result::Result<usize, io::Error>> {
+        buf: &mut ReadBuf,
+    ) -> Poll<std::result::Result<(), io::Error>> {
         let mut encrypted_stream = Pin::into_inner(self);
 
         if encrypted_stream.shared_secret.is_none() {
@@ -440,19 +435,26 @@ impl AsyncRead for EncryptedStream {
             }
         }
 
+        let buf = buf.initialized_mut();
+
         match encrypted_stream.read_decrypted(buf) {
-            Poll::Ready(Ok(size)) => Poll::Ready(Ok(size)),
+            Poll::Ready(Ok(_size)) => Poll::Ready(Ok(())),
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
             Poll::Pending => match encrypted_stream.read_encrypted(buf) {
-                Poll::Ready(Ok(size)) => Poll::Ready(Ok(size)),
+                Poll::Ready(Ok(_size)) => Poll::Ready(Ok(())),
                 Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
-                Poll::Pending => encrypted_stream.read_stream(cx, buf),
+                Poll::Pending => match encrypted_stream.read_stream(cx, buf) {
+                    Poll::Ready(Ok(_size)) => Poll::Ready(Ok(())),
+                    Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
+                    Poll::Pending => Poll::Pending,
+                },
             },
         }
     }
 }
 
 impl AsyncWrite for EncryptedStream {
+    #[allow(unused_must_use)]
     fn poll_write(self: Pin<&mut Self>, cx: &mut Context, buf: &[u8]) -> Poll<std::result::Result<usize, Error>> {
         let encrypted_stream = Pin::into_inner(self);
 

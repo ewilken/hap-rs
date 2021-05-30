@@ -1,16 +1,14 @@
-use std::str;
-
 use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
 use chacha20poly1305::ChaCha20Poly1305;
 use futures::{
     channel::oneshot,
     future::{BoxFuture, FutureExt},
-    stream::StreamExt,
 };
-use hyper::Body;
+use hyper::{body::Buf, Body};
 use log::{debug, info};
 use rand::rngs::OsRng;
 use signature::{Signature, Signer, Verifier};
+use std::str;
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
 
@@ -62,17 +60,13 @@ impl TlvHandlerExt for PairVerify {
 
     fn parse(&self, body: Body) -> BoxFuture<Result<Step, tlv::ErrorContainer>> {
         async {
-            let mut body = body;
-            let mut concatenated_body = Vec::new();
-            while let Some(chunk) = body.next().await {
-                let bytes =
-                    chunk.map_err(|_| tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown))?;
-                concatenated_body.extend(&bytes[..]);
-            }
+            let aggregated_body = hyper::body::aggregate(body)
+                .await
+                .map_err(|_| tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown))?;
 
-            debug!("received body: {:?}", &concatenated_body);
+            debug!("received body: {:?}", aggregated_body.chunk());
 
-            let mut decoded = tlv::decode(concatenated_body);
+            let mut decoded = tlv::decode(aggregated_body.chunk());
             match decoded.get(&(Type::State as u8)) {
                 Some(method) => match method[0] {
                     x if x == StepNumber::StartReq as u8 => {
@@ -223,7 +217,7 @@ async fn handle_finish(
                 GenericArray::from_slice(&auth_tag),
             )?;
 
-            let sub_tlv = tlv::decode(decrypted_data);
+            let sub_tlv = tlv::decode(&decrypted_data);
             debug!("received sub-TLV: {:?}", &sub_tlv);
             let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
             debug!("raw device pairing ID: {:?}", &device_pairing_id);
@@ -243,9 +237,6 @@ async fn handle_finish(
             device_info.extend(device_pairing_id);
             device_info.extend(session.b_pub.as_bytes());
 
-            // if !ed25519::verify(&device_info, &pairing.public_key, &device_signature) {
-            //     return Err(tlv::Error::Authentication);
-            // }
             if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
                 .verify(&device_info, &device_signature)
                 .is_err()

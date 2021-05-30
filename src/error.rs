@@ -1,5 +1,4 @@
 use std::{io, num, str, sync::mpsc};
-
 use thiserror::Error;
 
 use crate::characteristic::Format;
@@ -28,6 +27,8 @@ pub enum Error {
         "The provided value has an invalid data type for the characteristic. The characteristic's format is {0:?}."
     )]
     InvalidValue(Format),
+    #[error("Invalid HapType string value: `{0}`.")]
+    InvalidHapTypeString(String),
 
     // converted errors
     #[error("IO Error: {0}")]
@@ -39,7 +40,7 @@ pub enum Error {
     #[error("Hyper HTTP Error: {0}")]
     Http(#[from] hyper::http::Error),
     #[error("Hyper Error: {0}")]
-    Hyper(#[from] hyper::error::Error),
+    Hyper(#[from] hyper::Error),
     #[error("Task Join Error: {0}")]
     TaskJoin(#[from] tokio::task::JoinError),
     #[error("AEAD Error")]
