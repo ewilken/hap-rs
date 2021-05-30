@@ -1,8 +1,7 @@
-use std::fmt::Debug;
-
 use futures::future::{join_all, BoxFuture};
 use log::debug;
 use serde_json::Value;
+use std::fmt::Debug;
 use uuid::Uuid;
 
 #[derive(Debug)]

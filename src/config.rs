@@ -1,9 +1,8 @@
-use std::net::SocketAddr;
-
 use ed25519_dalek::Keypair as Ed25519Keypair;
 use eui48::MacAddress;
 use rand::{rngs::OsRng, Rng};
 use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 
 use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag, Pin};
 

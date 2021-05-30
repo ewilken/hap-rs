@@ -1,20 +1,17 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use futures::{
     future::{self, BoxFuture, FutureExt},
     lock::Mutex,
 };
 use log::info;
-
-use crate::server::ServerPersistence;
+use std::sync::Arc;
 
 use crate::{
     accessory::HapAccessory,
     config::Config,
     event::{Event, EventEmitter},
     pointer,
-    server::Server,
+    server::{IdentifierCache, Server},
     storage::{accessory_list::AccessoryList, Storage},
     transport::{http::server::Server as HttpServer, mdns::MdnsResponder},
     BonjourStatusFlag,
@@ -30,7 +27,7 @@ pub struct IpServer {
     event_emitter: pointer::EventEmitter,
     http_server: HttpServer,
     mdns_responder: MdnsResponder,
-    persistence: ServerPersistence,
+    identifier_cache: IdentifierCache,
 }
 
 impl IpServer {
@@ -141,9 +138,7 @@ impl IpServer {
         );
         let mdns_responder = MdnsResponder::new(config.clone());
 
-        let persistence = ServerPersistence {
-            added_accessory_ids: Vec::new(),
-        };
+        let identifier_cache = IdentifierCache::new();
 
         let server = IpServer {
             config,
@@ -152,7 +147,7 @@ impl IpServer {
             event_emitter,
             http_server,
             mdns_responder,
-            persistence,
+            identifier_cache,
         };
 
         Ok(server)
