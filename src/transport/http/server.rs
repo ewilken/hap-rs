@@ -6,6 +6,7 @@ use futures::{
 use hyper::{server::conn::Http, service::Service, Body, Method, Request, Response, StatusCode};
 use log::{debug, error, info};
 use std::{
+    net::SocketAddr,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
@@ -176,10 +177,12 @@ impl Server {
         let event_emitter = self.event_emitter.clone();
 
         async move {
-            let socket_addr = config.lock().await.socket_addr;
-            let listener = TcpListener::bind(socket_addr).await?;
+            let config_lock = config.lock().await;
+            let socket_addr = SocketAddr::new(config_lock.host, config_lock.port);
+            drop(config_lock);
 
             info!("binding TCP listener on {}", &socket_addr);
+            let listener = TcpListener::bind(socket_addr).await?;
 
             loop {
                 let (stream, _socket_addr) = listener.accept().await?;
