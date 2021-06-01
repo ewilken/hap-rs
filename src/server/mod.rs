@@ -12,7 +12,7 @@ mod ip;
 #[async_trait]
 pub trait Server {
     /// Returns a boxed Future run handle to the server that can be passed to an executor.
-    fn run_handle(&self) -> BoxFuture<()>;
+    fn run_handle(&self) -> BoxFuture<Result<()>>;
     /// Returns a pointer to the `Config` of the server.
     fn config_pointer(&self) -> pointer::Config;
     /// Returns a pointer to the `Storage` of the server.

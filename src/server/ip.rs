@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use futures::{
-    future::{self, BoxFuture, FutureExt},
+    future::{BoxFuture, FutureExt},
     lock::Mutex,
 };
 use log::info;
@@ -156,11 +156,18 @@ impl IpServer {
 
 #[async_trait]
 impl Server for IpServer {
-    fn run_handle(&self) -> BoxFuture<()> {
+    fn run_handle(&self) -> BoxFuture<Result<()>> {
         let http_handle = self.http_server.run_handle();
         let mdns_handle = self.mdns_responder.run_handle();
 
-        Box::pin(future::join(http_handle, mdns_handle).map(|_| ()).boxed())
+        let handle = async {
+            futures::try_join!(http_handle, mdns_handle.map(|_| Ok(())))?;
+
+            Ok(())
+        }
+        .boxed();
+
+        Box::pin(handle)
     }
 
     fn config_pointer(&self) -> pointer::Config { self.config.clone() }

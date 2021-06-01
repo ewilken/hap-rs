@@ -163,6 +163,33 @@ async {
 
 A full working example can be found [here](https://github.com/ewilken/hap-rs/blob/master/examples/setting_values_after_server_start.rs).
 
+### (Re-)Determining the IP to bind on
+
+IP and port to serve on are set via the `host` and `port` fields of the `Config` struct. On config creation, if not explicitly set, the port defaults to `32000` and the IP is set to that of the first non-loopback network interface detected on the host. After config creation however, that IP isn't implicitly re-evaluated. To do so, an implementor has to explicitly call the `redetermine_local_ip()` method of the `Config` struct.
+
+An example of doing that on every program restart while reloading a saved config:
+
+```rust
+let config = match storage.load_config().await {
+    Ok(mut config) => {
+        config.redetermine_local_ip(); // on config reload, the IP has to be explicitly redetermined
+        storage.save_config(&config).await.unwrap();
+        config
+    },
+    Err(_) => {
+        let config = Config {
+            pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+            name: "Acme Outlet".into(),
+            device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+            category: AccessoryCategory::Outlet,
+            ..Default::default() // on config creation, the IP can be implicitly determined
+        };
+        storage.save_config(&config).await.unwrap();
+        config
+    },
+};
+```
+
 ## TODOs
 
 - [x] IP Transport

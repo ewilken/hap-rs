@@ -10,10 +10,11 @@ use hap::{
     Config,
     MacAddress,
     Pin,
+    Result,
 };
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let stateless_programmable_switch = StatelessProgrammableSwitchAccessory::new(1, AccessoryInformation {
         name: "Acme Stateless Programmable Switch".into(),
         ..Default::default()
@@ -23,7 +24,11 @@ async fn main() {
     let mut storage = FileStorage::current_dir().await.unwrap();
 
     let config = match storage.load_config().await {
-        Ok(config) => config,
+        Ok(mut config) => {
+            config.redetermine_local_ip();
+            storage.save_config(&config).await.unwrap();
+            config
+        },
         Err(_) => {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
@@ -45,5 +50,5 @@ async fn main() {
     std::env::set_var("RUST_LOG", "hap=debug");
     env_logger::init();
 
-    handle.await;
+    handle.await
 }

@@ -21,16 +21,13 @@ impl MdnsResponder {
     /// Returns a Future handle to the mDNS responder operation that can be passed to an executor.
     pub fn run_handle(&self) -> impl Future<Output = ()> + Send + '_ {
         let config = self.config.clone();
-        let (responder, responder_task) = libmdns::Responder::with_default_handle().expect(
-            "creating mDNS
-        responder",
-        );
+        let (responder, responder_task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
         let register_task = async move {
             loop {
                 let config = config.lock().await;
 
                 let name = config.name.clone();
-                let port = config.socket_addr.port();
+                let port = config.port;
                 let tr = config.txt_records();
                 let status_flag = config.status_flag;
 

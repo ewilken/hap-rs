@@ -2,7 +2,7 @@ use ed25519_dalek::Keypair as Ed25519Keypair;
 use eui48::MacAddress;
 use rand::{rngs::OsRng, Rng};
 use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
+use std::net::IpAddr;
 
 use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag, Pin};
 
@@ -23,8 +23,10 @@ use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag,
 /// ```
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    /// Socket address to serve on.
-    pub socket_addr: SocketAddr,
+    /// Socket IP address to serve on. Defaults to the IP of the system's first non-loopback network interface.
+    pub host: IpAddr,
+    /// Port to serve on. Defaults to `32000`.
+    pub port: u16,
     /// 8 digit pin used for pairing. Defaults to `11122333`.
     ///
     /// The following pins are considered too easy and are therefore not allowed:
@@ -67,6 +69,10 @@ pub struct Config {
 }
 
 impl Config {
+    /// Redetermines the `host` field to the IP of the system's first non-loopback network interface.
+    pub fn redetermine_local_ip(&mut self) { self.host = get_local_ip(); }
+
+    /// Derives mDNS TXT records from the `Config`.
     pub(crate) fn txt_records(&self) -> [String; 8] {
         [
             format!("md={}", self.name),
@@ -84,7 +90,8 @@ impl Config {
 impl Default for Config {
     fn default() -> Config {
         Config {
-            socket_addr: get_current_ipv4(),
+            host: get_local_ip(),
+            port: 32000,
             pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
             name: "Accessory".into(),
             device_id: generate_random_mac_address(),
@@ -100,30 +107,25 @@ impl Default for Config {
     }
 }
 
+// Generates a random MAC address.
 fn generate_random_mac_address() -> MacAddress {
     let mut csprng = OsRng {};
     let eui = csprng.gen::<[u8; 6]>();
     MacAddress::new(eui)
 }
 
+// Generates an Ed25519 keypair.
 fn generate_ed25519_keypair() -> Ed25519Keypair {
     let mut csprng = OsRng {};
     Ed25519Keypair::generate(&mut csprng)
 }
 
-fn get_current_ipv4() -> SocketAddr {
-    let socket = match std::net::UdpSocket::bind("0.0.0.0:0") {
-        Ok(s) => s,
-        Err(_) => return SocketAddr::from(([127, 0, 0, 1], 32000)),
-    };
-
-    match socket.connect("8.8.8.8:80") {
-        Ok(_) => {},
-        Err(_) => return SocketAddr::from(([127, 0, 0, 1], 32000)),
+/// Returns the IP of the system's first non-loopback network interface or defaults to `127.0.0.1`.
+fn get_local_ip() -> IpAddr {
+    for iface in get_if_addrs::get_if_addrs().unwrap() {
+        if !iface.is_loopback() {
+            return iface.ip();
+        }
     }
-
-    match socket.local_addr() {
-        Ok(a) => SocketAddr::from((a.ip(), 32000)),
-        Err(_) => return SocketAddr::from(([127, 0, 0, 1], 32000)),
-    }
+    "127.0.0.1".parse().unwrap()
 }
