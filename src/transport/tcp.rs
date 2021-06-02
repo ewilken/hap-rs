@@ -177,6 +177,8 @@ pub struct EncryptedStream {
     encrypt_count: u64,
     encrypted_buf: BytesMut,
     decrypted_buf: BytesMut,
+    encrypted_readbuf_inner: [u8; 1042],
+    decrypted_readbuf_inner: [u8; 1024],
     packet_len: usize,
     decrypted_ready: bool,
     missing_data_for_decrypted_buf: bool,
@@ -199,11 +201,8 @@ impl EncryptedStream {
         let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
         let incoming_waker = Arc::new(Mutex::new(None));
         let outgoing_waker = Arc::new(Mutex::new(None));
-
-        let mut encrypted_buf = BytesMut::new();
-        encrypted_buf.resize(1042, 0);
-        let mut decrypted_buf = BytesMut::new();
-        decrypted_buf.resize(1024, 0);
+        let encrypted_buf = BytesMut::with_capacity(1042);
+        let decrypted_buf = BytesMut::with_capacity(1024);
 
         (
             EncryptedStream {
@@ -219,6 +218,8 @@ impl EncryptedStream {
                 encrypt_count: 0,
                 encrypted_buf,
                 decrypted_buf,
+                encrypted_readbuf_inner: [0; 1042],
+                decrypted_readbuf_inner: [0; 1024],
                 packet_len: 0,
                 decrypted_ready: false,
                 missing_data_for_decrypted_buf: false,
@@ -243,6 +244,7 @@ impl EncryptedStream {
             self.decrypted_buf.advance(r_len);
 
             if r_len == self.packet_len - 16 {
+                self.decrypted_buf.clear();
                 self.decrypted_ready = false;
             }
 
@@ -265,9 +267,9 @@ impl EncryptedStream {
             )
             .map_err(|_| io::Error::new(io::ErrorKind::Other, "decryption failed"))?;
 
-            self.decrypted_buf[..decrypted.len()].copy_from_slice(&decrypted);
+            self.decrypted_buf.extend_from_slice(&decrypted);
 
-            self.encrypted_buf.advance(self.packet_len + 2); // or is this + 16?
+            self.encrypted_buf.advance(self.packet_len + 2);
 
             self.missing_data_for_decrypted_buf = false;
             self.decrypted_ready = true;
@@ -282,16 +284,15 @@ impl EncryptedStream {
         debug!("reading from TCP stream");
 
         if self.missing_data_for_encrypted_buf {
-            let r = AsyncRead::poll_read(
-                Pin::new(&mut self.stream),
-                cx,
-                &mut ReadBuf::new(&mut self.encrypted_buf),
-            )?;
+            let mut r_buf = ReadBuf::new(&mut self.encrypted_readbuf_inner);
+            let r = AsyncRead::poll_read(Pin::new(&mut self.stream), cx, &mut r_buf)?;
 
             match r {
                 Poll::Pending => Poll::Pending,
                 Poll::Ready(()) => {
-                    if self.encrypted_buf.len() == self.packet_len {
+                    self.encrypted_buf.extend_from_slice(r_buf.filled());
+
+                    if self.encrypted_buf.len() == self.packet_len + 2 {
                         self.missing_data_for_encrypted_buf = false;
                         self.missing_data_for_decrypted_buf = true;
 
@@ -302,19 +303,18 @@ impl EncryptedStream {
                 },
             }
         } else {
-            let r = AsyncRead::poll_read(
-                Pin::new(&mut self.stream),
-                cx,
-                &mut ReadBuf::new(&mut self.encrypted_buf),
-            )?;
+            let mut r_buf = ReadBuf::new(&mut self.encrypted_readbuf_inner);
+            let r = AsyncRead::poll_read(Pin::new(&mut self.stream), cx, &mut r_buf)?;
 
             match r {
                 Poll::Pending => Poll::Pending,
-                Poll::Ready(()) =>
+                Poll::Ready(()) => {
+                    self.encrypted_buf.extend_from_slice(r_buf.filled());
+
                     if self.encrypted_buf.len() >= 2 {
                         self.packet_len = LittleEndian::read_u16(&self.encrypted_buf[..2]) as usize + 16;
 
-                        if self.encrypted_buf.len() == self.packet_len {
+                        if self.encrypted_buf.len() == self.packet_len + 2 {
                             self.missing_data_for_encrypted_buf = false;
                             self.missing_data_for_decrypted_buf = true;
 
@@ -326,7 +326,8 @@ impl EncryptedStream {
                         }
                     } else {
                         Poll::Pending
-                    },
+                    }
+                },
             }
         }
     }
@@ -371,12 +372,12 @@ impl EncryptedStream {
         loop {
             match AsyncRead::poll_read(Pin::new(encrypted_stream), cx, &mut data) {
                 Poll::Pending => {
-                    *encrypted_stream.incoming_waker.lock().expect("setting outgoing_waker") = Some(cx.waker().clone());
+                    *encrypted_stream.incoming_waker.lock().expect("setting incoming_waker") = Some(cx.waker().clone());
                     return Poll::Pending;
                 },
                 Poll::Ready(Err(e)) => match e.kind() {
                     ErrorKind::WouldBlock => {
-                        *encrypted_stream.incoming_waker.lock().expect("setting outgoing_waker") =
+                        *encrypted_stream.incoming_waker.lock().expect("setting incoming_waker") =
                             Some(cx.waker().clone());
                         return Poll::Pending;
                     },
