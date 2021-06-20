@@ -41,7 +41,7 @@ impl MdnsResponder {
                 drop(service);
 
                 time::sleep(Duration::from_millis(match status_flag {
-                    crate::transport::bonjour::BonjourStatusFlag::NotPaired => 1000,
+                    crate::transport::bonjour::BonjourStatusFlag::NotPaired => 500,
                     _ => 20_000,
                 }))
                 .await;

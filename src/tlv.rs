@@ -96,6 +96,8 @@ pub enum Type {
     Permissions = 0x0B,
     FragmentData = 0x0C,
     FragmentLast = 0x0D,
+    /// Pairing Type Flags (32 bit unsigned integer).
+    Flags = 0x13,
     Separator = 0xFF,
 }
 
@@ -117,6 +119,7 @@ pub enum Value {
     Permissions(Permissions),
     FragmentData(Vec<u8>),
     FragmentLast(Vec<u8>),
+    Flags(u32),
     Separator,
 }
 
@@ -143,6 +146,11 @@ impl Value {
             Value::Permissions(permissions) => (Type::Permissions as u8, vec![permissions.as_byte()]),
             Value::FragmentData(fragment_data) => (Type::FragmentData as u8, fragment_data),
             Value::FragmentLast(fragment_last) => (Type::FragmentLast as u8, fragment_last),
+            Value::Flags(flags) => {
+                let mut vec: Vec<u8> = Vec::new();
+                vec.write_u32::<LittleEndian>(flags).unwrap();
+                (Type::Flags as u8, vec)
+            },
             Value::Separator => (Type::Separator as u8, vec![0x00]),
         }
     }
@@ -161,7 +169,7 @@ pub enum Method {
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, Error)]
 pub enum Error {
-    #[error("Unknown error.")]
+    #[error("Generic error to handle unexpected errors.")]
     Unknown = 0x01,
     #[error("Setup code or signature verification failed.")]
     Authentication = 0x02,
