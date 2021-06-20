@@ -243,7 +243,11 @@ impl Server {
                     .boxed()
                 }));
 
-                let http = Http::new();
+                let mut http = Http::new();
+                http.http1_only(true);
+                http.http1_half_close(true);
+                http.http1_keep_alive(true);
+                http.http1_preserve_header_case(true);
 
                 // futures::try_join!(
                 //     encrypted_stream.map_err(|e| {

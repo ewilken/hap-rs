@@ -11,7 +11,10 @@ pub enum BonjourFeatureFlag {
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BonjourStatusFlag {
     Zero = 0,
-    NotPaired = 1,
-    WifiNotConfigured = 2,
-    ProblemDetected = 3,
+    /// Accessory has not been paired with any controllers.
+    NotPaired = 0x01,
+    /// Accessory has not been configured to join a Wi-Fi network.
+    WifiNotConfigured = 0x02,
+    /// A problem has been detected on the accessory.
+    ProblemDetected = 0x04,
 }
