@@ -23,13 +23,13 @@ impl JsonHandlerExt for Accessories {
         _: pointer::EventSubscriptions,
         _: pointer::Config,
         _: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         info!("received list accessories request");
         async move {
-            let resp_body = accessory_list.lock().await.as_serialized_json().await?;
-            // let resp_body = serde_json::to_vec(&accessory_list)?;
+            let resp_body = accessory_database.lock().await.as_serialized_json().await?;
+            // let resp_body = serde_json::to_vec(&accessory_database)?;
             json_response(resp_body, StatusCode::OK)
         }
         .boxed()

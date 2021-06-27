@@ -76,6 +76,8 @@ mod tests {
 pub enum Permissions {
     #[serde(rename = "0x00")]
     User,
+    /// Admins are pairings that have the admin bit set. Admins are exclusively authorized to add, remove, and list
+    /// pairings.
     #[serde(rename = "0x01")]
     Admin,
 }

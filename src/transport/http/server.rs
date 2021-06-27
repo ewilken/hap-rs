@@ -54,7 +54,7 @@ struct Api {
     event_subscriptions: pointer::EventSubscriptions,
     config: pointer::Config,
     storage: pointer::Storage,
-    accessory_list: pointer::AccessoryList,
+    accessory_database: pointer::AccessoryDatabase,
     event_emitter: pointer::EventEmitter,
     handlers: Handlers,
 }
@@ -65,7 +65,7 @@ impl Api {
         event_subscriptions: pointer::EventSubscriptions,
         config: pointer::Config,
         storage: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         event_emitter: pointer::EventEmitter,
         session_sender: oneshot::Sender<Session>,
     ) -> Self {
@@ -74,7 +74,7 @@ impl Api {
             event_subscriptions,
             config,
             storage,
-            accessory_list,
+            accessory_database,
             event_emitter,
             handlers: Handlers {
                 pair_setup: Arc::new(Mutex::new(Box::new(TlvHandler::from(PairSetup::new())))),
@@ -118,7 +118,7 @@ impl Service<Request<Body>> for Api {
         let event_subscriptions = self.event_subscriptions.clone();
         let config = self.config.clone();
         let storage = self.storage.clone();
-        let accessory_list = self.accessory_list.clone();
+        let accessory_database = self.accessory_database.clone();
         let event_emitter = self.event_emitter.clone();
 
         let fut = async move {
@@ -134,7 +134,7 @@ impl Service<Request<Body>> for Api {
                             event_subscriptions,
                             config,
                             storage,
-                            accessory_list,
+                            accessory_database,
                             event_emitter,
                         )
                         .await,
@@ -151,30 +151,34 @@ impl Service<Request<Body>> for Api {
 pub struct Server {
     config: pointer::Config,
     storage: pointer::Storage,
-    accessory_list: pointer::AccessoryList,
+    accessory_database: pointer::AccessoryDatabase,
     event_emitter: pointer::EventEmitter,
+    mdns_responder: pointer::MdnsResponder,
 }
 
 impl Server {
     pub fn new(
         config: pointer::Config,
         storage: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         event_emitter: pointer::EventEmitter,
+        mdns_responder: pointer::MdnsResponder,
     ) -> Self {
         Server {
             config,
             storage,
-            accessory_list,
+            accessory_database,
             event_emitter,
+            mdns_responder,
         }
     }
 
     pub fn run_handle(&self) -> BoxFuture<Result<()>> {
         let config = self.config.clone();
         let storage = self.storage.clone();
-        let accessory_list = self.accessory_list.clone();
+        let accessory_database = self.accessory_database.clone();
         let event_emitter = self.event_emitter.clone();
+        let mdns_responder = self.mdns_responder.clone();
 
         async move {
             let config_lock = config.lock().await;
@@ -183,6 +187,8 @@ impl Server {
 
             info!("binding TCP listener on {}", &socket_addr);
             let listener = TcpListener::bind(socket_addr).await?;
+
+            mdns_responder.lock().await.update_records().await;
 
             loop {
                 let (stream, _socket_addr) = listener.accept().await?;
@@ -206,7 +212,7 @@ impl Server {
                     event_subscriptions.clone(),
                     config.clone(),
                     storage.clone(),
-                    accessory_list.clone(),
+                    accessory_database.clone(),
                     event_emitter.clone(),
                     session_sender,
                 );
@@ -248,17 +254,6 @@ impl Server {
                 http.http1_half_close(true);
                 http.http1_keep_alive(true);
                 http.http1_preserve_header_case(true);
-
-                // futures::try_join!(
-                //     encrypted_stream.map_err(|e| {
-                //         error!("{:?}", e);
-                //         Error::from(e)
-                //     }),
-                //     http.serve_connection(stream_wrapper, api).map_err(|e| {
-                //         error!("{:?}", e);
-                //         Error::from(e)
-                //     }),
-                // )?;
 
                 tokio::spawn(encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()));
                 tokio::spawn(

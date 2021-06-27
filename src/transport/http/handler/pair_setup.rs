@@ -13,7 +13,8 @@ use srp::{
     server::{SrpServer, UserRecord},
     types::SrpGroup,
 };
-use std::{ops::BitXor, str};
+use std::{ops::BitXor, str, time::Duration};
+use tokio::time;
 use uuid::Uuid;
 
 use crate::{
@@ -49,12 +50,12 @@ impl PairSetup {
 #[derive(Debug, Clone)]
 enum StepNumber {
     Unknown = 0,
-    StartReq = 1,
-    StartRes = 2,
-    VerifyReq = 3,
-    VerifyRes = 4,
-    ExchangeReq = 5,
-    ExchangeRes = 6,
+    SrpStartRequest = 1,
+    SrpStartResponse = 2,
+    SrpVerifyRequest = 3,
+    SrpVerifyResponse = 4,
+    ExchangeRequest = 5,
+    ExchangeResponse = 6,
 }
 
 #[derive(Debug, Clone)]
@@ -79,25 +80,25 @@ impl TlvHandlerExt for PairSetup {
             let mut decoded = tlv::decode(aggregated_body.chunk());
             match decoded.get(&(Type::State as u8)) {
                 Some(method) => match method[0] {
-                    x if x == StepNumber::StartReq as u8 => Ok(Step::Start),
-                    x if x == StepNumber::VerifyReq as u8 => {
+                    x if x == StepNumber::SrpStartRequest as u8 => Ok(Step::Start),
+                    x if x == StepNumber::SrpVerifyRequest as u8 => {
                         let a_pub = decoded
                             .remove(&(Type::PublicKey as u8))
                             .ok_or(tlv::ErrorContainer::new(
-                                StepNumber::VerifyRes as u8,
+                                StepNumber::SrpVerifyResponse as u8,
                                 tlv::Error::Unknown,
                             ))?;
                         let a_proof = decoded.remove(&(Type::Proof as u8)).ok_or(tlv::ErrorContainer::new(
-                            StepNumber::VerifyRes as u8,
+                            StepNumber::SrpVerifyResponse as u8,
                             tlv::Error::Unknown,
                         ))?;
                         Ok(Step::Verify { a_pub, a_proof })
                     },
-                    x if x == StepNumber::ExchangeReq as u8 => {
+                    x if x == StepNumber::ExchangeRequest as u8 => {
                         let data = decoded
                             .remove(&(Type::EncryptedData as u8))
                             .ok_or(tlv::ErrorContainer::new(
-                                StepNumber::ExchangeRes as u8,
+                                StepNumber::ExchangeResponse as u8,
                                 tlv::Error::Unknown,
                             ))?;
                         Ok(Step::Exchange { data })
@@ -127,7 +128,7 @@ impl TlvHandlerExt for PairSetup {
                     },
                     Err(err) => {
                         self.unsuccessful_tries += 1;
-                        Err(tlv::ErrorContainer::new(StepNumber::StartRes as u8, err))
+                        Err(tlv::ErrorContainer::new(StepNumber::SrpStartResponse as u8, err))
                     },
                 },
                 Step::Verify { a_pub, a_proof } => match handle_verify(self, &a_pub, &a_proof).await {
@@ -137,7 +138,7 @@ impl TlvHandlerExt for PairSetup {
                     },
                     Err(err) => {
                         self.unsuccessful_tries += 1;
-                        Err(tlv::ErrorContainer::new(StepNumber::VerifyRes as u8, err))
+                        Err(tlv::ErrorContainer::new(StepNumber::SrpVerifyResponse as u8, err))
                     },
                 },
                 Step::Exchange { data } => match handle_exchange(self, config, storage, event_emitter, &data).await {
@@ -147,7 +148,7 @@ impl TlvHandlerExt for PairSetup {
                     },
                     Err(err) => {
                         self.unsuccessful_tries += 1;
-                        Err(tlv::ErrorContainer::new(StepNumber::ExchangeRes as u8, err))
+                        Err(tlv::ErrorContainer::new(StepNumber::ExchangeResponse as u8, err))
                     },
                 },
             }
@@ -159,19 +160,28 @@ impl TlvHandlerExt for PairSetup {
 async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Result<tlv::Container, tlv::Error> {
     info!("pair setup M1: received SRP start request");
 
-    if handler.unsuccessful_tries > 99 {
+    // TODO
+    // If the accessory is already paired, it must respond with the following TLV items:
+    // kTLVType_State <M2>
+    // kTLVType_Error <kTLVError_Unavailable>
+
+    if handler.unsuccessful_tries > 100 {
         return Err(tlv::Error::MaxTries);
     }
 
-    // let rng = rand::thread_rng();
-    // let salt = rng.sample_iter::<u8, Standard>(Standard).take(16).collect::<Vec<u8>>(); // s
-    // let b = rng.sample_iter::<u8, Standard>(Standard).take(64).collect::<Vec<u8>>();
+    // TODO
+    // If the accessory is currently performing a PairSetup procedure with a different controller, it must respond with
+    // the following TLV items:
+    // kTLVType_State <M2>
+    // kTLVType_Error <kTLVError_Busy>
 
     let mut csprng = OsRng {};
     let mut salt = [0; 16]; // s
     let mut b = [0; 64];
     csprng.fill_bytes(&mut salt);
     csprng.fill_bytes(&mut b);
+
+    // TODO - respect pairing flags (specification p. 35 - 7.) for split pair setup
 
     let private_key = srp_private_key::<Sha512>(b"Pair-Setup", &config.lock().await.pin.to_string().as_bytes(), &salt); // x = H(s | H(I | ":" | P))
     let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
@@ -196,7 +206,7 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
     info!("pair setup M2: sending SRP start response");
 
     Ok(vec![
-        Value::State(StepNumber::StartRes as u8),
+        Value::State(StepNumber::SrpStartResponse as u8),
         Value::PublicKey(b_pub),
         Value::Salt(salt),
     ])
@@ -223,7 +233,10 @@ async fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) ->
 
             info!("pair setup M4: sending SRP verify response");
 
-            Ok(vec![Value::State(StepNumber::VerifyRes as u8), Value::Proof(b_proof)])
+            Ok(vec![
+                Value::State(StepNumber::SrpVerifyResponse as u8),
+                Value::Proof(b_proof),
+            ])
         },
     }
 }
@@ -235,7 +248,7 @@ async fn handle_exchange(
     event_emitter: pointer::EventEmitter,
     data: &[u8],
 ) -> Result<tlv::Container, tlv::Error> {
-    info!("pair setup M5: received SRP exchange request");
+    info!("pair setup M5: received exchange request");
 
     match handler.session {
         None => Err(tlv::Error::Unknown),
@@ -289,7 +302,7 @@ async fn handle_exchange(
                 let uuid_str = str::from_utf8(device_pairing_id)?;
                 let pairing_uuid = Uuid::parse_str(uuid_str)?;
                 let mut pairing_ltpk = [0; 32];
-                pairing_ltpk[..32].clone_from_slice(&device_ltpk.as_bytes()[..32]);
+                pairing_ltpk[..32].copy_from_slice(&device_ltpk.as_bytes()[..32]);
 
                 if let Some(max_peers) = config.lock().await.max_peers {
                     if storage.lock().await.count_pairings().await? + 1 > max_peers {
@@ -335,16 +348,19 @@ async fn handle_exchange(
                     aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &[], &mut encrypted_data)?;
                 encrypted_data.extend(&auth_tag);
 
-                event_emitter
-                    .lock()
-                    .await
-                    .emit(&Event::ControllerPaired { id: pairing.id })
-                    .await;
+                let id = pairing.id;
+                tokio::spawn(async move {
+                    // not deferring this might make the iOS controller drop the connection if the Bonjour txt records
+                    // change before the end of PairSetup
+                    time::sleep(Duration::from_secs(5)).await;
 
-                info!("pair setup M6: sending SRP exchange response");
+                    event_emitter.lock().await.emit(&Event::ControllerPaired { id }).await;
+                });
+
+                info!("pair setup M6: sending exchange response");
 
                 Ok(vec![
-                    Value::State(StepNumber::ExchangeRes as u8),
+                    Value::State(StepNumber::ExchangeResponse as u8),
                     Value::EncryptedData(encrypted_data),
                 ])
             },

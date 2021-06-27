@@ -1,3 +1,5 @@
+use async_trait::async_trait;
+use log::debug;
 use std::{
     env,
     ffi::OsStr,
@@ -6,12 +8,10 @@ use std::{
     path::{Path, PathBuf},
     str,
 };
-
-use async_trait::async_trait;
 use tokio::task::spawn_blocking;
 use uuid::Uuid;
 
-use crate::{pairing::Pairing, server::IdentifierCache, storage::Storage, Config, Error, Result};
+use crate::{pairing::Pairing, storage::Storage, Config, Error, Result};
 
 /// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
 #[derive(Debug)]
@@ -148,6 +148,9 @@ impl Storage for FileStorage {
     async fn load_config(&self) -> Result<Config> {
         let config_bytes = self.read_bytes("config.json").await?;
         let config = serde_json::from_slice(&config_bytes)?;
+
+        debug!("loaded Config: {:?}", &config);
+
         Ok(config)
     }
 
@@ -161,19 +164,22 @@ impl Storage for FileStorage {
         self.remove_file(&key).await
     }
 
-    async fn load_identifier_cache(&self) -> Result<IdentifierCache> {
-        let identifier_cache_bytes = self.read_bytes("identifier_cache.json").await?;
-        let identifier_cache = serde_json::from_slice(&identifier_cache_bytes)?;
-        Ok(identifier_cache)
+    async fn load_aid_cache(&self) -> Result<Vec<u64>> {
+        let aid_cache_bytes = self.read_bytes("aid_cache.json").await?;
+        let aid_cache = serde_json::from_slice(&aid_cache_bytes)?;
+
+        debug!("loaded AID cache: {:?}", &aid_cache);
+
+        Ok(aid_cache)
     }
 
-    async fn save_identifier_cache(&mut self, identifier_cache: &IdentifierCache) -> Result<()> {
-        let identifier_cache_bytes = serde_json::to_vec(&identifier_cache)?;
-        self.write_bytes("identifier_cache.json", identifier_cache_bytes).await
+    async fn save_aid_cache(&mut self, aid_cache: &Vec<u64>) -> Result<()> {
+        let aid_cache_bytes = serde_json::to_vec(&aid_cache)?;
+        self.write_bytes("aid_cache.json", aid_cache_bytes).await
     }
 
-    async fn delete_identifier_cache(&mut self) -> Result<()> {
-        let key = format!("identifier_cache.json");
+    async fn delete_aid_cache(&mut self) -> Result<()> {
+        let key = format!("aid_cache.json");
         self.remove_file(&key).await
     }
 
@@ -181,7 +187,11 @@ impl Storage for FileStorage {
         let key = format!("{}.json", id.to_string());
         let pairing_bytes = self.read_bytes(&key).await?;
 
-        Pairing::from_bytes(&pairing_bytes)
+        let pairing = Pairing::from_bytes(&pairing_bytes)?;
+
+        debug!("loaded Pairing: {:?}", &pairing);
+
+        Ok(pairing)
     }
 
     async fn save_pairing(&mut self, pairing: &Pairing) -> Result<()> {

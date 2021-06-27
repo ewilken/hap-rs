@@ -46,24 +46,25 @@ pub struct Config {
     /// Model name of the accessory. E.g. "Acme Lightbulb".
     pub name: String,
     /// Device ID of the accessory. Generated randomly if not specified. This value is also used as the accessory's
-    /// Pairing Identifier.
-    pub device_id: MacAddress, // id
+    /// Pairing Identifier. Must be a unique random number generated at every factory reset and must persist across
+    /// reboots.
+    pub device_id: MacAddress, // Bonjour: id
     ///
     pub device_ed25519_keypair: Ed25519Keypair,
     /// Current configuration number. Is updated when an accessory, service, or characteristic is added or removed on
     /// the accessory server. Accessories must increment the config number after a firmware update.
-    pub configuration_number: u64, // c#
+    pub configuration_number: u64, // Bonjour: c#
     /// Current state number. This must have a value of `1`.
-    pub state_number: u8, // s#
+    pub state_number: u8, // Bonjour: s#
     /// Accessory category. Indicates the category that best describes the primary function of the accessory.
-    pub category: AccessoryCategory, // ci
+    pub category: AccessoryCategory, // Bonjour: ci
     /// Protocol version string `<major>.<minor>` (e.g. `"1.0"`). Defaults to `"1.0"` Required if value is not `"1.0"`.
-    pub protocol_version: String, // pv
+    pub protocol_version: String, // Bonjour: pv
     /// Bonjour Status Flag. Defaults to `StatusFlag::NotPaired` and is changed to `StatusFlag::Zero` after a
     /// successful pairing.
-    pub status_flag: BonjourStatusFlag, // sf
+    pub status_flag: BonjourStatusFlag, // Bonjour: sf
     /// Bonjour Feature Flag. Currently only used to indicate MFi compliance.
-    pub feature_flag: BonjourFeatureFlag, // ff
+    pub feature_flag: BonjourFeatureFlag, // Bonjour: ff
     /// Optional maximum number of paired controllers.
     pub max_peers: Option<usize>,
 }
@@ -75,14 +76,15 @@ impl Config {
     /// Derives mDNS TXT records from the `Config`.
     pub(crate) fn txt_records(&self) -> [String; 8] {
         [
-            format!("md={}", self.name),
-            format!("id={}", self.device_id.to_hex_string()),
             format!("c#={}", self.configuration_number),
-            format!("s#={}", self.state_number),
-            format!("ci={}", self.category as u8),
-            format!("pv={}", self.protocol_version),
-            format!("sf={}", self.status_flag as u8),
             format!("ff={}", self.feature_flag as u8),
+            format!("id={}", self.device_id.to_hex_string()),
+            format!("md={}", self.name),
+            format!("pv={}", self.protocol_version),
+            format!("s#={}", self.state_number),
+            format!("sf={}", self.status_flag as u8),
+            format!("ci={}", self.category as u8),
+            // format!("sh={}", self.setup_hash as u8), setup hash seems to be still undocumented
         ]
     }
 }
