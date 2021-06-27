@@ -1,55 +1,61 @@
-use futures::{
-    future::{self, Future},
-    FutureExt,
-};
+use libmdns::{Responder, Service};
 use log::debug;
-use std::time::Duration;
-use tokio::time;
 
 use crate::pointer;
 
 /// An mDNS Responder. Used to announce the Accessory's name and HAP TXT records to potential controllers.
-#[derive(Debug, Clone)]
 pub struct MdnsResponder {
     config: pointer::Config,
+    responder: Responder,
+    service: Option<Service>,
+    task: Option<Box<dyn futures::Future<Output = ()> + Unpin + std::marker::Send>>,
 }
 
 impl MdnsResponder {
     /// Creates a new mDNS Responder.
-    pub fn new(config: pointer::Config) -> Self { MdnsResponder { config } }
+    pub async fn new(config: pointer::Config) -> Self {
+        let (responder, task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
 
-    /// Returns a Future handle to the mDNS responder operation that can be passed to an executor.
-    pub fn run_handle(&self) -> impl Future<Output = ()> + Send + '_ {
-        let config = self.config.clone();
-        let (responder, responder_task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
-        let register_task = async move {
-            loop {
-                let config = config.lock().await;
+        MdnsResponder {
+            config,
+            responder,
+            service: None,
+            task: Some(task),
+        }
+    }
 
-                let name = config.name.clone();
-                let port = config.port;
-                let tr = config.txt_records();
-                let status_flag = config.status_flag;
+    /// Derives new mDNS TXT records from the server's `Config`.
+    pub async fn update_records(&mut self) {
+        debug!("attempting to set mDNS records");
 
-                drop(config);
+        self.service = None;
 
-                let service = responder.register("_hap._tcp".into(), name, port, &[
-                    &tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7],
-                ]);
-                debug!("announcing mDNS: {:?}", &tr);
+        let c = self.config.lock().await;
 
-                drop(service);
+        let name = c.name.clone();
+        let port = c.port;
+        let tr = c.txt_records();
 
-                time::sleep(Duration::from_millis(match status_flag {
-                    crate::transport::bonjour::BonjourStatusFlag::NotPaired => 500,
-                    _ => 20_000,
-                }))
-                .await;
-            }
-        };
+        drop(c);
 
-        let responder_handle = tokio::spawn(responder_task);
+        self.service = Some(self.responder.register("_hap._tcp".into(), name, port, &[
+            &tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7],
+        ]));
 
-        future::join(responder_handle, register_task).map(|_| ())
+        debug!("setting mDNS records: {:?}", &tr);
+    }
+
+    /// Returns the mDNS task to throw on a scheduler.
+    pub fn run_handle(&mut self) -> Box<dyn futures::Future<Output = ()> + Unpin + std::marker::Send> {
+        match self.task.take() {
+            Some(task) => task,
+            // if the task handle is gone, recreate the whole responder
+            None => {
+                let (responder, task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
+                self.responder = responder;
+
+                task
+            },
+        }
     }
 }

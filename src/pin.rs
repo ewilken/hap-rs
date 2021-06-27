@@ -3,8 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::{Error, Result};
 
 const INVALID_PINS: [[u8; 8]; 12] = [
-    [1, 2, 3, 4, 5, 6, 7, 8],
-    [8, 7, 6, 5, 4, 3, 2, 1],
     [0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1],
     [2, 2, 2, 2, 2, 2, 2, 2],
@@ -15,6 +13,8 @@ const INVALID_PINS: [[u8; 8]; 12] = [
     [7, 7, 7, 7, 7, 7, 7, 7],
     [8, 8, 8, 8, 8, 8, 8, 8],
     [9, 9, 9, 9, 9, 9, 9, 9],
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [8, 7, 6, 5, 4, 3, 2, 1],
 ];
 
 /// The `Pin` struct represents the server's 8 digit pin used for pairing.
@@ -22,8 +22,6 @@ const INVALID_PINS: [[u8; 8]; 12] = [
 /// The pin consists of eight digits between 0 and 9 and defaults to `11122333`.
 ///
 /// The following pins are considered too easy and are therefore not allowed:
-/// - `12345678`
-/// - `87654321`
 /// - `00000000`
 /// - `11111111`
 /// - `22222222`
@@ -34,6 +32,8 @@ const INVALID_PINS: [[u8; 8]; 12] = [
 /// - `77777777`
 /// - `88888888`
 /// - `99999999`
+/// - `12345678`
+/// - `87654321`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pin {
     pin: [u8; 8],

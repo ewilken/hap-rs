@@ -67,7 +67,7 @@ async fn main() {
     .unwrap();
 
     let config = Config {
-        pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+        pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
         name: "Acme Lightbulb".into(),
         device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
         category: AccessoryCategory::Lightbulb,
@@ -173,18 +173,18 @@ An example of doing that on every program restart while reloading a saved config
 let config = match storage.load_config().await {
     Ok(mut config) => {
         config.redetermine_local_ip(); // on config reload, the IP has to be explicitly redetermined
-        storage.save_config(&config).await.unwrap();
+        let mut storage = FileStorage::current_dir().await?;
         config
     },
     Err(_) => {
         let config = Config {
-            pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+            pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
             name: "Acme Outlet".into(),
             device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
             category: AccessoryCategory::Outlet,
             ..Default::default() // on config creation, the IP can be implicitly determined
         };
-        storage.save_config(&config).await.unwrap();
+        let mut storage = FileStorage::current_dir().await?;
         config
     },
 };

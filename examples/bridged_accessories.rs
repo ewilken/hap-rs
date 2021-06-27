@@ -15,23 +15,19 @@ async fn main() -> Result<()> {
     let bridge = BridgeAccessory::new(1, AccessoryInformation {
         name: "Acme Bridge".into(),
         ..Default::default()
-    })
-    .unwrap();
+    })?;
     let mut lightbulb_1 = LightbulbAccessory::new(2, AccessoryInformation {
         name: "Lightbulb 1".into(),
         ..Default::default()
-    })
-    .unwrap();
+    })?;
     let mut lightbulb_2 = LightbulbAccessory::new(3, AccessoryInformation {
         name: "Lightbulb 2".into(),
         ..Default::default()
-    })
-    .unwrap();
+    })?;
     let mut lightbulb_3 = LightbulbAccessory::new(4, AccessoryInformation {
         name: "Lightbulb 3".into(),
         ..Default::default()
-    })
-    .unwrap();
+    })?;
 
     lightbulb_1
         .lightbulb
@@ -61,32 +57,32 @@ async fn main() -> Result<()> {
             );
         }));
 
-    let mut storage = FileStorage::current_dir().await.unwrap();
+    let mut storage = FileStorage::current_dir().await?;
 
     let config = match storage.load_config().await {
         Ok(mut config) => {
             config.redetermine_local_ip();
-            storage.save_config(&config).await.unwrap();
+            storage.save_config(&config).await?;
             config
         },
         Err(_) => {
             let config = Config {
-                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
                 name: "Acme Bridge".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
                 category: AccessoryCategory::Bridge,
                 ..Default::default()
             };
-            storage.save_config(&config).await.unwrap();
+            storage.save_config(&config).await?;
             config
         },
     };
 
-    let server = IpServer::new(config, storage).unwrap();
-    server.add_accessory(bridge).await.unwrap();
-    server.add_accessory(lightbulb_1).await.unwrap();
-    server.add_accessory(lightbulb_2).await.unwrap();
-    server.add_accessory(lightbulb_3).await.unwrap();
+    let server = IpServer::new(config, storage).await?;
+    server.add_accessory(bridge).await?;
+    server.add_accessory(lightbulb_1).await?;
+    server.add_accessory(lightbulb_2).await?;
+    server.add_accessory(lightbulb_3).await?;
 
     let handle = server.run_handle();
 

@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BonjourFeatureFlag {
     Zero = 0,
-    MfiCompliant = 1,
+    SupportsHardwareAuthentication = 0x01,
+    SupportsSoftwareAuthentication = 0x02,
 }
 
 /// Bonjour Status Flag.

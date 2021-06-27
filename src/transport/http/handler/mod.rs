@@ -25,7 +25,7 @@ pub trait HandlerExt {
         event_subscriptions: pointer::EventSubscriptions,
         config: pointer::Config,
         storage: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         event_emitter: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>>;
 }
@@ -61,7 +61,7 @@ impl<T: TlvHandlerExt + Send + Sync> HandlerExt for TlvHandler<T> {
         _: pointer::EventSubscriptions,
         config: pointer::Config,
         storage: pointer::Storage,
-        _: pointer::AccessoryList,
+        _: pointer::AccessoryDatabase,
         event_emitter: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         async move {
@@ -87,7 +87,7 @@ pub trait JsonHandlerExt {
         event_subscriptions: pointer::EventSubscriptions,
         config: pointer::Config,
         storage: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         event_emitter: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>>;
 }
@@ -108,7 +108,7 @@ impl<T: JsonHandlerExt + Send + Sync> HandlerExt for JsonHandler<T> {
         event_subscriptions: pointer::EventSubscriptions,
         config: pointer::Config,
         storage: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         event_emitter: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         async move {
@@ -121,7 +121,7 @@ impl<T: JsonHandlerExt + Send + Sync> HandlerExt for JsonHandler<T> {
                     event_subscriptions,
                     config,
                     storage,
-                    accessory_list,
+                    accessory_database,
                     event_emitter,
                 )
                 .await

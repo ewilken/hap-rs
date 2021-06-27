@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::{pairing::Pairing, server::IdentifierCache, Config, Result};
+use crate::{pairing::Pairing, Config, Result};
 
 /// `Storage` is implemented by the data storage methods HAP supports. Currently, that's just `FileStorage`.
 #[async_trait]
@@ -12,12 +12,12 @@ pub trait Storage: Send + Sync {
     async fn save_config(&mut self, config: &Config) -> Result<()>;
     /// Deletes the `Config` from the `Storage`.
     async fn delete_config(&mut self) -> Result<()>;
-    /// Loads the `IdentifierCache` from the `Storage`.
-    async fn load_identifier_cache(&self) -> Result<IdentifierCache>;
-    /// Saves the `IdentifierCache` into the `Storage`.
-    async fn save_identifier_cache(&mut self, identifier_cache: &IdentifierCache) -> Result<()>;
-    /// Deletes the `IdentifierCache` from the `Storage`.
-    async fn delete_identifier_cache(&mut self) -> Result<()>;
+    /// Loads the AID cache from the `Storage`.
+    async fn load_aid_cache(&self) -> Result<Vec<u64>>;
+    /// Saves the AID cache into the `Storage`.
+    async fn save_aid_cache(&mut self, aid_cache: &Vec<u64>) -> Result<()>;
+    /// Deletes the AID cache from the `Storage`.
+    async fn delete_aid_cache(&mut self) -> Result<()>;
     /// Loads a `Pairing` from the `Storage`.
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing>;
     /// Inserts a `Pairing` into the `Storage`.

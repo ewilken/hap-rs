@@ -13,23 +13,22 @@ use crate::{
     Result,
 };
 
-// TODO: rename to AccessoryDatabase?
-/// `AccessoryList` is a wrapper type holding a list of Accessories.
-pub struct AccessoryList {
+/// `AccessoryDatabase` is a wrapper type holding a list of Accessories.
+pub struct AccessoryDatabase {
     pub accessories: Vec<pointer::Accessory>,
     event_emitter: pointer::EventEmitter,
 }
 
-impl AccessoryList {
-    /// Creates a new `AccessoryList`.
-    pub fn new(event_emitter: pointer::EventEmitter) -> AccessoryList {
-        AccessoryList {
+impl AccessoryDatabase {
+    /// Creates a new `AccessoryDatabase`.
+    pub fn new(event_emitter: pointer::EventEmitter) -> AccessoryDatabase {
+        AccessoryDatabase {
             accessories: Vec::new(),
             event_emitter,
         }
     }
 
-    /// Adds an Accessory to the `AccessoryList` and returns a pointer to the added Accessory.
+    /// Adds an Accessory to the `AccessoryDatabase` and returns a pointer to the added Accessory.
     pub fn add_accessory(&mut self, accessory: Box<dyn HapAccessory>) -> Result<pointer::Accessory> {
         let mut accessory = accessory;
         accessory.set_event_emitter_on_characteristics(Some(self.event_emitter.clone()));
@@ -41,7 +40,7 @@ impl AccessoryList {
         Ok(accessory)
     }
 
-    /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryList`.
+    /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryDatabase`.
     pub async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()> {
         let accessory = accessory.lock().await;
         let mut remove = None;
@@ -64,6 +63,7 @@ impl AccessoryList {
         Err(Error::AccessoryNotFound)
     }
 
+    /// Reads the value of a characteristic.
     pub(crate) async fn read_characteristic(
         &self,
         aid: u64,
@@ -128,6 +128,7 @@ impl AccessoryList {
         Ok(result_object)
     }
 
+    /// Writes the value of a characteristic.
     pub(crate) async fn write_characteristic(
         &mut self,
         write_object: WriteObject,

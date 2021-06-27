@@ -24,11 +24,11 @@ impl JsonHandlerExt for Identify {
         _: pointer::EventSubscriptions,
         _: pointer::Config,
         storage: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         let storage = storage.clone();
-        let accessory_list = accessory_list.clone();
+        let accessory_database = accessory_database.clone();
 
         async move {
             if storage.lock().await.count_pairings().await? > 0 {
@@ -36,7 +36,7 @@ impl JsonHandlerExt for Identify {
                 return json_response(body, StatusCode::BAD_REQUEST);
             }
 
-            for accessory in accessory_list.lock().await.accessories.iter_mut() {
+            for accessory in accessory_database.lock().await.accessories.iter_mut() {
                 accessory
                     .lock()
                     .await

@@ -2,10 +2,8 @@ use async_trait::async_trait;
 use futures::future::BoxFuture;
 
 use crate::{accessory::HapAccessory, pointer, Result};
-pub use identifier_cache::IdentifierCache;
 pub use ip::IpServer;
 
-mod identifier_cache;
 mod ip;
 
 /// `Server` is implemented by the transport methods HAP supports. Currently, that's just `IpServer`.
@@ -21,4 +19,7 @@ pub trait Server {
     async fn add_accessory<A: HapAccessory + 'static>(&self, accessory: A) -> Result<pointer::Accessory>;
     /// Takes a pointer to an Accessory by reference and removes the Accessory from the server.
     async fn remove_accessory(&self, accessory: &pointer::Accessory) -> Result<()>;
+    // /// Every accessory must support a manufacturer-defined mechanism to restore itself to a “factory reset” state
+    // where /// all pairing information is erased and restored to factory default settings. This method is doing
+    // just that. async fn factory_reset(&mut self) -> Result<()>;
 }

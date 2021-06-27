@@ -126,11 +126,6 @@ async fn handle_start(
 ) -> Result<tlv::Container, tlv::Error> {
     info!("pair verify M1: received verify start request");
 
-    // let mut rng = rand::thread_rng();
-    // let b = rng.gen::<[u8; 32]>();
-    // let b_pub = curve25519::curve25519_base(&b);
-    // let shared_secret = curve25519::curve25519(b, a_pub);
-
     let mut a_pub = [0; 32];
     let bytes = &a_pub_bytes[..a_pub.len()]; // panics if not enough data
     a_pub.copy_from_slice(bytes);

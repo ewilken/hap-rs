@@ -14,32 +14,31 @@ async fn main() -> Result<()> {
     let sprinkler = ValveAccessory::new(1, AccessoryInformation {
         name: "Acme Sprinkler".into(),
         ..Default::default()
-    })
-    .unwrap();
+    })?;
 
-    let mut storage = FileStorage::current_dir().await.unwrap();
+    let mut storage = FileStorage::current_dir().await?;
 
     let config = match storage.load_config().await {
         Ok(mut config) => {
             config.redetermine_local_ip();
-            storage.save_config(&config).await.unwrap();
+            storage.save_config(&config).await?;
             config
         },
         Err(_) => {
             let config = Config {
-                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
+                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
                 name: "Acme Sprinkler".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
                 category: AccessoryCategory::Sprinklers,
                 ..Default::default()
             };
-            storage.save_config(&config).await.unwrap();
+            storage.save_config(&config).await?;
             config
         },
     };
 
-    let server = IpServer::new(config, storage).unwrap();
-    server.add_accessory(sprinkler).await.unwrap();
+    let server = IpServer::new(config, storage).await?;
+    server.add_accessory(sprinkler).await?;
 
     let handle = server.run_handle();
 

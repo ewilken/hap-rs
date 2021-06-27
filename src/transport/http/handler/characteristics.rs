@@ -34,7 +34,7 @@ impl JsonHandlerExt for GetCharacteristics {
         _: pointer::EventSubscriptions,
         _: pointer::Config,
         _: pointer::Storage,
-        accessory_list: pointer::AccessoryList,
+        accessory_database: pointer::AccessoryDatabase,
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         async move {
@@ -59,7 +59,7 @@ impl JsonHandlerExt for GetCharacteristics {
                     let aid = id_pair[0].parse::<u64>()?;
                     let iid = id_pair[1].parse::<u64>()?;
 
-                    let res_object = match accessory_list
+                    let res_object = match accessory_database
                         .lock()
                         .await
                         .read_characteristic(aid, iid, f_meta, f_perms, f_type, f_ev)
@@ -129,7 +129,7 @@ impl JsonHandlerExt for UpdateCharacteristics {
         event_subscriptions: pointer::EventSubscriptions,
         _: pointer::Config,
         _: pointer::Storage,
-        accessories: pointer::AccessoryList,
+        accessories: pointer::AccessoryDatabase,
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         async move {
