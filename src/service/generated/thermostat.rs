@@ -66,6 +66,11 @@ impl ThermostatService {
 			current_temperature: CurrentTemperatureCharacteristic::new(id + 1 + 2, accessory_id),
 			target_temperature: TargetTemperatureCharacteristic::new(id + 1 + 3, accessory_id),
 			temperature_display_units: TemperatureDisplayUnitsCharacteristic::new(id + 1 + 4, accessory_id),
+			current_relative_humidity: Some(CurrentRelativeHumidityCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
+			target_relative_humidity: Some(TargetRelativeHumidityCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
+			cooling_threshold_temperature: Some(CoolingThresholdTemperatureCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
+			heating_threshold_temperature: Some(HeatingThresholdTemperatureCharacteristic::new(id + 1 + 3 + 5, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 4 + 5, accessory_id)),
 			..Default::default()
         }
     }

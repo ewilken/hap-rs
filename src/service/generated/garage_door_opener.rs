@@ -52,6 +52,9 @@ impl GarageDoorOpenerService {
 			current_door_state: CurrentDoorStateCharacteristic::new(id + 1 + 0, accessory_id),
 			target_door_state: TargetDoorStateCharacteristic::new(id + 1 + 1, accessory_id),
 			obstruction_detected: ObstructionDetectedCharacteristic::new(id + 1 + 2, accessory_id),
+			lock_current_state: Some(LockCurrentStateCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+			lock_target_state: Some(LockTargetStateCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
 			..Default::default()
         }
     }

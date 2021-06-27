@@ -41,6 +41,8 @@ impl StatelessProgrammableSwitchService {
             id,
             hap_type: HapType::StatelessProgrammableSwitch,
 			programmable_switch_event: ProgrammableSwitchEventCharacteristic::new(id + 1 + 0, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			service_label_index: Some(ServiceLabelIndexCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			..Default::default()
         }
     }

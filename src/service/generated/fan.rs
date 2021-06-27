@@ -44,6 +44,9 @@ impl FanService {
             id,
             hap_type: HapType::Fan,
 			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
+			rotation_direction: Some(RotationDirectionCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
 			..Default::default()
         }
     }

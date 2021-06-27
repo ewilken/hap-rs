@@ -46,6 +46,7 @@ impl BatteryServiceService {
 			battery_level: BatteryLevelCharacteristic::new(id + 1 + 0, accessory_id),
 			charging_state: ChargingStateCharacteristic::new(id + 1 + 1, accessory_id),
 			status_low_battery: StatusLowBatteryCharacteristic::new(id + 1 + 2, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
 			..Default::default()
         }
     }

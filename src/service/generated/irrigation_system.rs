@@ -52,6 +52,9 @@ impl IrrigationSystemService {
 			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
 			program_mode: ProgramModeCharacteristic::new(id + 1 + 1, accessory_id),
 			in_use: InUseCharacteristic::new(id + 1 + 2, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
 			..Default::default()
         }
     }

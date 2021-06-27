@@ -74,6 +74,19 @@ impl AirQualitySensorService {
             id,
             hap_type: HapType::AirQualitySensor,
 			air_quality: AirQualityCharacteristic::new(id + 1 + 0, accessory_id),
+			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
+			ozone_density: Some(OzoneDensityCharacteristic::new(id + 1 + 5 + 1, accessory_id)),
+			nitrogen_dioxide_density: Some(NitrogenDioxideDensityCharacteristic::new(id + 1 + 6 + 1, accessory_id)),
+			sulphur_dioxide_density: Some(SulphurDioxideDensityCharacteristic::new(id + 1 + 7 + 1, accessory_id)),
+			pm2_5_density: Some(Pm2_5DensityCharacteristic::new(id + 1 + 8 + 1, accessory_id)),
+			pm10_density: Some(Pm10DensityCharacteristic::new(id + 1 + 9 + 1, accessory_id)),
+			voc_density: Some(VocDensityCharacteristic::new(id + 1 + 10 + 1, accessory_id)),
+			carbon_monoxide_level: Some(CarbonMonoxideLevelCharacteristic::new(id + 1 + 11 + 1, accessory_id)),
+			carbon_dioxide_level: Some(CarbonDioxideLevelCharacteristic::new(id + 1 + 12 + 1, accessory_id)),
 			..Default::default()
         }
     }

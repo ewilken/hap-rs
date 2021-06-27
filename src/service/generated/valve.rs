@@ -61,6 +61,12 @@ impl ValveService {
 			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
 			in_use: InUseCharacteristic::new(id + 1 + 1, accessory_id),
 			valve_type: ValveTypeCharacteristic::new(id + 1 + 2, accessory_id),
+			set_duration: Some(SetDurationCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
+			is_configured: Some(IsConfiguredCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
+			service_label_index: Some(ServiceLabelIndexCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 4 + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 5 + 3, accessory_id)),
 			..Default::default()
         }
     }

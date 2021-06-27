@@ -58,6 +58,7 @@ impl CameraRtpStreamManagementService {
 			selected_rtp_stream_configuration: SelectedRtpStreamConfigurationCharacteristic::new(id + 1 + 3, accessory_id),
 			streaming_status: StreamingStatusCharacteristic::new(id + 1 + 4, accessory_id),
 			setup_endpoints: SetupEndpointsCharacteristic::new(id + 1 + 5, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 6, accessory_id)),
 			..Default::default()
         }
     }

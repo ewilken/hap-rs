@@ -61,6 +61,8 @@ impl AccessoryInformationService {
 			name: NameCharacteristic::new(id + 1 + 3, accessory_id),
 			serial_number: SerialNumberCharacteristic::new(id + 1 + 4, accessory_id),
 			firmware_revision: FirmwareRevisionCharacteristic::new(id + 1 + 5, accessory_id),
+			hardware_revision: Some(HardwareRevisionCharacteristic::new(id + 1 + 0 + 6, accessory_id)),
+			accessory_flags: Some(AccessoryFlagsCharacteristic::new(id + 1 + 1 + 6, accessory_id)),
 			..Default::default()
         }
     }

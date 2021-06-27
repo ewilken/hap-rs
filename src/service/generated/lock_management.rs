@@ -63,6 +63,14 @@ impl LockManagementService {
             hap_type: HapType::LockManagement,
 			lock_control_point: LockControlPointCharacteristic::new(id + 1 + 0, accessory_id),
 			version: VersionCharacteristic::new(id + 1 + 1, accessory_id),
+			logs: Some(LogsCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			audio_feedback: Some(AudioFeedbackCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
+			lock_management_auto_security_timeout: Some(LockManagementAutoSecurityTimeoutCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
+			administrator_only_access: Some(AdministratorOnlyAccessCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
+			lock_last_known_action: Some(LockLastKnownActionCharacteristic::new(id + 1 + 4 + 2, accessory_id)),
+			current_door_state: Some(CurrentDoorStateCharacteristic::new(id + 1 + 5 + 2, accessory_id)),
+			motion_detected: Some(MotionDetectedCharacteristic::new(id + 1 + 6 + 2, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 7 + 2, accessory_id)),
 			..Default::default()
         }
     }

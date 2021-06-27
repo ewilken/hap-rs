@@ -71,6 +71,14 @@ impl TelevisionService {
 			active_identifier: ActiveIdentifierCharacteristic::new(id + 1 + 1, accessory_id),
 			configured_name: ConfiguredNameCharacteristic::new(id + 1 + 2, accessory_id),
 			sleep_discovery_mode: SleepDiscoveryModeCharacteristic::new(id + 1 + 3, accessory_id),
+			brightness: Some(BrightnessCharacteristic::new(id + 1 + 0 + 4, accessory_id)),
+			closed_captions: Some(ClosedCaptionsCharacteristic::new(id + 1 + 1 + 4, accessory_id)),
+			display_order: Some(DisplayOrderCharacteristic::new(id + 1 + 2 + 4, accessory_id)),
+			current_media_state: Some(CurrentMediaStateCharacteristic::new(id + 1 + 3 + 4, accessory_id)),
+			target_media_state: Some(TargetMediaStateCharacteristic::new(id + 1 + 4 + 4, accessory_id)),
+			picture_mode: Some(PictureModeCharacteristic::new(id + 1 + 5 + 4, accessory_id)),
+			power_mode_selection: Some(PowerModeSelectionCharacteristic::new(id + 1 + 6 + 4, accessory_id)),
+			remote_key: Some(RemoteKeyCharacteristic::new(id + 1 + 7 + 4, accessory_id)),
 			..Default::default()
         }
     }
