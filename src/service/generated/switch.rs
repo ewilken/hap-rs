@@ -38,6 +38,7 @@ impl SwitchService {
             id,
             hap_type: HapType::Switch,
 			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
 			..Default::default()
         }
     }

@@ -59,6 +59,10 @@ impl InputSourceService {
 			input_source_type: InputSourceTypeCharacteristic::new(id + 1 + 1, accessory_id),
 			is_configured: IsConfiguredCharacteristic::new(id + 1 + 2, accessory_id),
 			current_visibility_state: CurrentVisibilityStateCharacteristic::new(id + 1 + 3, accessory_id),
+			identifier: Some(IdentifierCharacteristic::new(id + 1 + 0 + 4, accessory_id)),
+			input_device_type: Some(InputDeviceTypeCharacteristic::new(id + 1 + 1 + 4, accessory_id)),
+			target_visibility_state: Some(TargetVisibilityStateCharacteristic::new(id + 1 + 2 + 4, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 3 + 4, accessory_id)),
 			..Default::default()
         }
     }

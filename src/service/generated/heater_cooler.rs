@@ -68,6 +68,13 @@ impl HeaterCoolerService {
 			current_heater_cooler_state: CurrentHeaterCoolerStateCharacteristic::new(id + 1 + 1, accessory_id),
 			target_heater_cooler_state: TargetHeaterCoolerStateCharacteristic::new(id + 1 + 2, accessory_id),
 			current_temperature: CurrentTemperatureCharacteristic::new(id + 1 + 3, accessory_id),
+			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1 + 0 + 4, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1 + 4, accessory_id)),
+			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 2 + 4, accessory_id)),
+			cooling_threshold_temperature: Some(CoolingThresholdTemperatureCharacteristic::new(id + 1 + 3 + 4, accessory_id)),
+			heating_threshold_temperature: Some(HeatingThresholdTemperatureCharacteristic::new(id + 1 + 4 + 4, accessory_id)),
+			temperature_display_units: Some(TemperatureDisplayUnitsCharacteristic::new(id + 1 + 5 + 4, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 6 + 4, accessory_id)),
 			..Default::default()
         }
     }

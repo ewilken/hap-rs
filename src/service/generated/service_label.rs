@@ -38,6 +38,7 @@ impl ServiceLabelService {
             id,
             hap_type: HapType::ServiceLabel,
 			service_label_namespace: ServiceLabelNamespaceCharacteristic::new(id + 1 + 0, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
 			..Default::default()
         }
     }

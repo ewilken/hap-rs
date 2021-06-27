@@ -41,6 +41,8 @@ impl SpeakerService {
             id,
             hap_type: HapType::Speaker,
 			mute: MuteCharacteristic::new(id + 1 + 0, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			volume: Some(VolumeCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			..Default::default()
         }
     }

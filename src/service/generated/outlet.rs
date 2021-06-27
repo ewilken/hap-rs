@@ -42,6 +42,7 @@ impl OutletService {
             hap_type: HapType::Outlet,
 			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
 			outlet_in_use: OutletInUseCharacteristic::new(id + 1 + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
 			..Default::default()
         }
     }

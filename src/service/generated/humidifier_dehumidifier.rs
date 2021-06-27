@@ -68,6 +68,13 @@ impl HumidifierDehumidifierService {
 			current_humidifier_dehumidifier_state: CurrentHumidifierDehumidifierStateCharacteristic::new(id + 1 + 1, accessory_id),
 			target_humidifier_dehumidifier_state: TargetHumidifierDehumidifierStateCharacteristic::new(id + 1 + 2, accessory_id),
 			active: ActiveCharacteristic::new(id + 1 + 3, accessory_id),
+			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1 + 0 + 4, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1 + 4, accessory_id)),
+			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 2 + 4, accessory_id)),
+			water_level: Some(WaterLevelCharacteristic::new(id + 1 + 3 + 4, accessory_id)),
+			relative_humidity_dehumidifier_threshold: Some(RelativeHumidityDehumidifierThresholdCharacteristic::new(id + 1 + 4 + 4, accessory_id)),
+			relative_humidity_humidifier_threshold: Some(RelativeHumidityHumidifierThresholdCharacteristic::new(id + 1 + 5 + 4, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 6 + 4, accessory_id)),
 			..Default::default()
         }
     }

@@ -42,6 +42,7 @@ impl LockMechanismService {
             hap_type: HapType::LockMechanism,
 			lock_current_state: LockCurrentStateCharacteristic::new(id + 1 + 0, accessory_id),
 			lock_target_state: LockTargetStateCharacteristic::new(id + 1 + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
 			..Default::default()
         }
     }

@@ -47,6 +47,10 @@ impl LightbulbService {
             id,
             hap_type: HapType::Lightbulb,
 			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
+			brightness: Some(BrightnessCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			hue: Some(HueCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			saturation: Some(SaturationCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
 			..Default::default()
         }
     }

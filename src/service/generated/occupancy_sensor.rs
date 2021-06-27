@@ -50,6 +50,11 @@ impl OccupancySensorService {
             id,
             hap_type: HapType::OccupancySensor,
 			occupancy_detected: OccupancyDetectedCharacteristic::new(id + 1 + 0, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
 			..Default::default()
         }
     }
