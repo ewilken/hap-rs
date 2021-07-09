@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Set Duration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SetDurationCharacteristic(Characteristic<u32>);

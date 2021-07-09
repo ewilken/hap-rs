@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Obstruction Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ObstructionDetectedCharacteristic(Characteristic<bool>);

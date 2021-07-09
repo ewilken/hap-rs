@@ -7,11 +7,11 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 		current_temperature::CurrentTemperatureCharacteristic,
+		name::NameCharacteristic,
 		status_active::StatusActiveCharacteristic,
 		status_fault::StatusFaultCharacteristic,
 		status_low_battery::StatusLowBatteryCharacteristic,
 		status_tampered::StatusTamperedCharacteristic,
-		name::NameCharacteristic,
 	},
     HapType,
 };
@@ -33,6 +33,8 @@ pub struct TemperatureSensorService {
 	/// Current Temperature Characteristic (required).
 	pub current_temperature: CurrentTemperatureCharacteristic,
 
+	/// Name Characteristic (optional).
+	pub name: Option<NameCharacteristic>,
 	/// Status Active Characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
 	/// Status Fault Characteristic (optional).
@@ -41,8 +43,6 @@ pub struct TemperatureSensorService {
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
 	/// Status Tampered Characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
 impl TemperatureSensorService {
@@ -52,11 +52,11 @@ impl TemperatureSensorService {
             id,
             hap_type: HapType::TemperatureSensor,
 			current_temperature: CurrentTemperatureCharacteristic::new(id + 1 + 0, accessory_id),
-			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -114,9 +114,13 @@ impl HapService for TemperatureSensorService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.current_temperature,
 		];
+		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.status_active {
 		    characteristics.push(c);
 		}
@@ -129,16 +133,17 @@ impl HapService for TemperatureSensorService {
 		if let Some(c) = &self.status_tampered {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.current_temperature,
 		];
+		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &mut self.status_active {
 		    characteristics.push(c);
 		}
@@ -149,9 +154,6 @@ impl HapService for TemperatureSensorService {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.status_tampered {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		characteristics

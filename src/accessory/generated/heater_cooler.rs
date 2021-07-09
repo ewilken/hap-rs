@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Heater Cooler Accessory.
+/// Heater-Cooler Accessory.
 #[derive(Debug, Default)]
 pub struct HeaterCoolerAccessory {
-    /// ID of the Heater Cooler Accessory.
+    /// ID of the Heater-Cooler Accessory.
     id: u64,
 
     /// Accessory Information Service.
     pub accessory_information: AccessoryInformationService,
-    /// Heater Cooler Service.
+    /// Heater-Cooler Service.
     pub heater_cooler: HeaterCoolerService,
 }
 
 impl HeaterCoolerAccessory {
-    /// Creates a new Heater Cooler Accessory.
+    /// Creates a new Heater-Cooler Accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let heater_cooler_id = accessory_information.get_characteristics().len() as u64;

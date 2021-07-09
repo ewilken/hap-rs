@@ -8,7 +8,7 @@ use crate::{
         HapCharacteristic,
 		filter_change_indication::FilterChangeIndicationCharacteristic,
 		filter_life_level::FilterLifeLevelCharacteristic,
-		reset_filter_indication::ResetFilterIndicationCharacteristic,
+		filter_reset_change_indication::FilterResetChangeIndicationCharacteristic,
 		name::NameCharacteristic,
 	},
     HapType,
@@ -28,13 +28,13 @@ pub struct FilterMaintenanceService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Filter Change Indication Characteristic (required).
+	/// Filter Change indication Characteristic (required).
 	pub filter_change_indication: FilterChangeIndicationCharacteristic,
 
 	/// Filter Life Level Characteristic (optional).
 	pub filter_life_level: Option<FilterLifeLevelCharacteristic>,
-	/// Reset Filter Indication Characteristic (optional).
-	pub reset_filter_indication: Option<ResetFilterIndicationCharacteristic>,
+	/// Filter Reset Change Indication Characteristic (optional).
+	pub filter_reset_change_indication: Option<FilterResetChangeIndicationCharacteristic>,
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
@@ -47,7 +47,7 @@ impl FilterMaintenanceService {
             hap_type: HapType::FilterMaintenance,
 			filter_change_indication: FilterChangeIndicationCharacteristic::new(id + 1 + 0, accessory_id),
 			filter_life_level: Some(FilterLifeLevelCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			reset_filter_indication: Some(ResetFilterIndicationCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			filter_reset_change_indication: Some(FilterResetChangeIndicationCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			name: Some(NameCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
 			..Default::default()
         }
@@ -106,13 +106,14 @@ impl HapService for FilterMaintenanceService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.filter_change_indication,
 		];
 		if let Some(c) = &self.filter_life_level {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.reset_filter_indication {
+		if let Some(c) = &self.filter_reset_change_indication {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.name {
@@ -122,13 +123,14 @@ impl HapService for FilterMaintenanceService {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.filter_change_indication,
 		];
 		if let Some(c) = &mut self.filter_life_level {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.reset_filter_indication {
+		if let Some(c) = &mut self.filter_reset_change_indication {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.name {

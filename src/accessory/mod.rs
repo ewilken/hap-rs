@@ -4,6 +4,7 @@ use futures::executor;
 use crate::{
     characteristic::{
         accessory_flags::AccessoryFlagsCharacteristic,
+        firmware_revision::FirmwareRevisionCharacteristic,
         hardware_revision::HardwareRevisionCharacteristic,
         HapCharacteristic,
     },
@@ -75,6 +76,7 @@ where
 /// ```
 #[derive(Debug)]
 pub struct AccessoryInformation {
+    // TODO - include all possible fields of AccessoryInformationService
     /// Contains the name of the company whose brand will appear on the `Accessory`, e.g., "Acme".
     pub manufacturer: String,
     /// Contains the manufacturer-specific model of the `Accessory`, e.g. "A1234".
@@ -127,17 +129,17 @@ impl AccessoryInformation {
         executor::block_on(i.model.set_value(serde_json::Value::String(self.model)))?;
         executor::block_on(i.name.set_value(serde_json::Value::String(self.name)))?;
         executor::block_on(i.serial_number.set_value(serde_json::Value::String(self.serial_number)))?;
-        executor::block_on(
-            i.firmware_revision
-                .set_value(serde_json::Value::String(self.firmware_revision)),
-        )?;
+
+        let mut fr = FirmwareRevisionCharacteristic::new(id + 9, accessory_id);
+        executor::block_on(fr.set_value(serde_json::Value::String(self.firmware_revision)))?;
+        i.firmware_revision = Some(fr);
         if let Some(v) = self.hardware_revision {
-            let mut hr = HardwareRevisionCharacteristic::new(7, accessory_id);
+            let mut hr = HardwareRevisionCharacteristic::new(id + 10, accessory_id);
             executor::block_on(hr.set_value(serde_json::Value::String(v)))?;
             i.hardware_revision = Some(hr);
         }
         if let Some(v) = self.accessory_flags {
-            let mut af = AccessoryFlagsCharacteristic::new(8, accessory_id);
+            let mut af = AccessoryFlagsCharacteristic::new(id + 6, accessory_id);
             executor::block_on(af.set_value(serde_json::Value::Number(v.into())))?;
             i.accessory_flags = Some(af);
         }

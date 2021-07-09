@@ -102,6 +102,7 @@ impl HapService for LockMechanismService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.lock_current_state,
 			&self.lock_target_state,
@@ -113,6 +114,7 @@ impl HapService for LockMechanismService {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.lock_current_state,
 			&mut self.lock_target_state,

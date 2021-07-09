@@ -11,8 +11,8 @@ use crate::{
 		target_air_purifier_state::TargetAirPurifierStateCharacteristic,
 		lock_physical_controls::LockPhysicalControlsCharacteristic,
 		name::NameCharacteristic,
-		swing_mode::SwingModeCharacteristic,
 		rotation_speed::RotationSpeedCharacteristic,
+		swing_mode::SwingModeCharacteristic,
 	},
     HapType,
 };
@@ -42,10 +42,10 @@ pub struct AirPurifierService {
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Swing Mode Characteristic (optional).
-	pub swing_mode: Option<SwingModeCharacteristic>,
 	/// Rotation Speed Characteristic (optional).
 	pub rotation_speed: Option<RotationSpeedCharacteristic>,
+	/// Swing Mode Characteristic (optional).
+	pub swing_mode: Option<SwingModeCharacteristic>,
 }
 
 impl AirPurifierService {
@@ -59,8 +59,8 @@ impl AirPurifierService {
 			target_air_purifier_state: TargetAirPurifierStateCharacteristic::new(id + 1 + 2, accessory_id),
 			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
 			name: Some(NameCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
-			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
-			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
+			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
 			..Default::default()
         }
     }
@@ -118,6 +118,7 @@ impl HapService for AirPurifierService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.active,
 			&self.current_air_purifier_state,
@@ -129,16 +130,17 @@ impl HapService for AirPurifierService {
 		if let Some(c) = &self.name {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.swing_mode {
+		if let Some(c) = &self.rotation_speed {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.rotation_speed {
+		if let Some(c) = &self.swing_mode {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.active,
 			&mut self.current_air_purifier_state,
@@ -150,10 +152,10 @@ impl HapService for AirPurifierService {
 		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.swing_mode {
+		if let Some(c) = &mut self.rotation_speed {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.rotation_speed {
+		if let Some(c) = &mut self.swing_mode {
 		    characteristics.push(c);
 		}
 		characteristics

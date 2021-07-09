@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Wi-Fi Satellite Status Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct WiFiSatelliteStatusCharacteristic(Characteristic<u8>);

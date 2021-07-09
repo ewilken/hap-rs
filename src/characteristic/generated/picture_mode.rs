@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Picture Mode Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PictureModeCharacteristic(Characteristic<u8>);

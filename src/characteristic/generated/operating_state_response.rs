@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Operating State Response Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OperatingStateResponseCharacteristic(Characteristic<Vec<u8>>);

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Thread Node Capabilities Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ThreadNodeCapabilitiesCharacteristic(Characteristic<u16>);

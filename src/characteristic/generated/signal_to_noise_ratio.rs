@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Signal-to-noise Ratio Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SignalToNoiseRatioCharacteristic(Characteristic<i32>);

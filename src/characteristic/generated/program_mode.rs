@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Program Mode Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ProgramModeCharacteristic(Characteristic<u8>);

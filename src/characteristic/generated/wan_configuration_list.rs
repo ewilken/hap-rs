@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// WAN Configuration List Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct WanConfigurationListCharacteristic(Characteristic<Vec<u8>>);

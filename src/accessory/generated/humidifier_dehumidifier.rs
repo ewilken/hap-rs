@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Humidifier Dehumidifier Accessory.
+/// Humidifier-Dehumidifier Accessory.
 #[derive(Debug, Default)]
 pub struct HumidifierDehumidifierAccessory {
-    /// ID of the Humidifier Dehumidifier Accessory.
+    /// ID of the Humidifier-Dehumidifier Accessory.
     id: u64,
 
     /// Accessory Information Service.
     pub accessory_information: AccessoryInformationService,
-    /// Humidifier Dehumidifier Service.
+    /// Humidifier-Dehumidifier Service.
     pub humidifier_dehumidifier: HumidifierDehumidifierService,
 }
 
 impl HumidifierDehumidifierAccessory {
-    /// Creates a new Humidifier Dehumidifier Accessory.
+    /// Creates a new Humidifier-Dehumidifier Accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let humidifier_dehumidifier_id = accessory_information.get_characteristics().len() as u64;

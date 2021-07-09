@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Target Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedTargetConfigurationCharacteristic(Characteristic<Vec<u8>>);

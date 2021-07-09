@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Security System Alarm Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SecuritySystemAlarmTypeCharacteristic(Characteristic<u8>);

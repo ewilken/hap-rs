@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Pairing Features Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PairingFeaturesCharacteristic(Characteristic<u8>);

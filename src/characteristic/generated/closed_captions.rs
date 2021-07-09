@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Closed Captions Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ClosedCaptionsCharacteristic(Characteristic<u8>);

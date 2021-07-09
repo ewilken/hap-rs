@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{air_purifier::AirPurifierAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, air_purifier::AirPurifierAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

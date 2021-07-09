@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Target Relative Humidity Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetRelativeHumidityCharacteristic(Characteristic<f32>);

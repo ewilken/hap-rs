@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{window_covering::WindowCoveringAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, window_covering::WindowCoveringAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

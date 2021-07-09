@@ -25,10 +25,15 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Carbon dioxide Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CarbonDioxideDetectedCharacteristic(Characteristic<u8>);
+
+pub enum Value {
+	Abnormal = 1,
+	Normal = 0,
+}
 
 impl CarbonDioxideDetectedCharacteristic {
     /// Creates a new Carbon dioxide Detected Characteristic.
@@ -45,6 +50,10 @@ impl CarbonDioxideDetectedCharacteristic {
 			max_value: Some(1),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				1, // ABNORMAL
+				0, // NORMAL
+			]),
             ..Default::default()
         })
     }

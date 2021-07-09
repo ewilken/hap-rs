@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Wi-Fi Configuration Control Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct WiFiConfigurationControlCharacteristic(Characteristic<Vec<u8>>);

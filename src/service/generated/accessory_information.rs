@@ -11,9 +11,13 @@ use crate::{
 		model::ModelCharacteristic,
 		name::NameCharacteristic,
 		serial_number::SerialNumberCharacteristic,
+		accessory_flags::AccessoryFlagsCharacteristic,
+		application_matching_identifier::ApplicationMatchingIdentifierCharacteristic,
+		configured_name::ConfiguredNameCharacteristic,
 		firmware_revision::FirmwareRevisionCharacteristic,
 		hardware_revision::HardwareRevisionCharacteristic,
-		accessory_flags::AccessoryFlagsCharacteristic,
+		software_revision::SoftwareRevisionCharacteristic,
+		product_data::ProductDataCharacteristic,
 	},
     HapType,
 };
@@ -42,13 +46,21 @@ pub struct AccessoryInformationService {
 	pub name: NameCharacteristic,
 	/// Serial Number Characteristic (required).
 	pub serial_number: SerialNumberCharacteristic,
-	/// Firmware Revision Characteristic (required).
-	pub firmware_revision: FirmwareRevisionCharacteristic,
 
-	/// Hardware Revision Characteristic (optional).
-	pub hardware_revision: Option<HardwareRevisionCharacteristic>,
 	/// Accessory Flags Characteristic (optional).
 	pub accessory_flags: Option<AccessoryFlagsCharacteristic>,
+	/// Application Matching Identifier Characteristic (optional).
+	pub application_matching_identifier: Option<ApplicationMatchingIdentifierCharacteristic>,
+	/// Configured Name Characteristic (optional).
+	pub configured_name: Option<ConfiguredNameCharacteristic>,
+	/// Firmware Revision Characteristic (optional).
+	pub firmware_revision: Option<FirmwareRevisionCharacteristic>,
+	/// Hardware Revision Characteristic (optional).
+	pub hardware_revision: Option<HardwareRevisionCharacteristic>,
+	/// Software Revision Characteristic (optional).
+	pub software_revision: Option<SoftwareRevisionCharacteristic>,
+	/// Product Data Characteristic (optional).
+	pub product_data: Option<ProductDataCharacteristic>,
 }
 
 impl AccessoryInformationService {
@@ -62,9 +74,13 @@ impl AccessoryInformationService {
 			model: ModelCharacteristic::new(id + 1 + 2, accessory_id),
 			name: NameCharacteristic::new(id + 1 + 3, accessory_id),
 			serial_number: SerialNumberCharacteristic::new(id + 1 + 4, accessory_id),
-			firmware_revision: FirmwareRevisionCharacteristic::new(id + 1 + 5, accessory_id),
-			hardware_revision: Some(HardwareRevisionCharacteristic::new(id + 1 + 0 + 6, accessory_id)),
-			accessory_flags: Some(AccessoryFlagsCharacteristic::new(id + 1 + 1 + 6, accessory_id)),
+			accessory_flags: Some(AccessoryFlagsCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
+			application_matching_identifier: Some(ApplicationMatchingIdentifierCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
+			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
+			firmware_revision: Some(FirmwareRevisionCharacteristic::new(id + 1 + 3 + 5, accessory_id)),
+			hardware_revision: Some(HardwareRevisionCharacteristic::new(id + 1 + 4 + 5, accessory_id)),
+			software_revision: Some(SoftwareRevisionCharacteristic::new(id + 1 + 5 + 5, accessory_id)),
+			product_data: Some(ProductDataCharacteristic::new(id + 1 + 6 + 5, accessory_id)),
 			..Default::default()
         }
     }
@@ -122,36 +138,66 @@ impl HapService for AccessoryInformationService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.identify,
 			&self.manufacturer,
 			&self.model,
 			&self.name,
 			&self.serial_number,
-			&self.firmware_revision,
 		];
+		if let Some(c) = &self.accessory_flags {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.application_matching_identifier {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.configured_name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.firmware_revision {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.hardware_revision {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.accessory_flags {
+		if let Some(c) = &self.software_revision {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.product_data {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.identify,
 			&mut self.manufacturer,
 			&mut self.model,
 			&mut self.name,
 			&mut self.serial_number,
-			&mut self.firmware_revision,
 		];
+		if let Some(c) = &mut self.accessory_flags {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.application_matching_identifier {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.configured_name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.firmware_revision {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &mut self.hardware_revision {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.accessory_flags {
+		if let Some(c) = &mut self.software_revision {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.product_data {
 		    characteristics.push(c);
 		}
 		characteristics

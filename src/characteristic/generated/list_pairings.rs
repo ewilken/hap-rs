@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// List Pairings Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ListPairingsCharacteristic(Characteristic<Vec<u8>>);

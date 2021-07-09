@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Characteristic Value Transition Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedCharacteristicValueTransitionConfigurationCharacteristic(Characteristic<Vec<u8>>);

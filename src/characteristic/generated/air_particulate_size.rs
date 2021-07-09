@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Air Particulate Size Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AirParticulateSizeCharacteristic(Characteristic<u8>);

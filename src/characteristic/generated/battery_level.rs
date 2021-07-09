@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Battery Level Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct BatteryLevelCharacteristic(Characteristic<u8>);

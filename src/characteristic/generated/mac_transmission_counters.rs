@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// MAC Transmission Counters Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MacTransmissionCountersCharacteristic(Characteristic<Vec<u8>>);

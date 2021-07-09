@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Hue Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HueCharacteristic(Characteristic<f32>);

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Event Transmission Counters Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct EventTransmissionCountersCharacteristic(Characteristic<u32>);

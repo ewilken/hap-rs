@@ -6,11 +6,15 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		on::OnCharacteristic,
+		power_state::PowerStateCharacteristic,
 		brightness::BrightnessCharacteristic,
+		characteristic_value_active_transition_count::CharacteristicValueActiveTransitionCountCharacteristic,
+		characteristic_value_transition_control::CharacteristicValueTransitionControlCharacteristic,
+		color_temperature::ColorTemperatureCharacteristic,
 		hue::HueCharacteristic,
-		saturation::SaturationCharacteristic,
 		name::NameCharacteristic,
+		saturation::SaturationCharacteristic,
+		supported_characteristic_value_transition_configuration::SupportedCharacteristicValueTransitionConfigurationCharacteristic,
 	},
     HapType,
 };
@@ -29,17 +33,25 @@ pub struct LightbulbService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// On Characteristic (required).
-	pub on: OnCharacteristic,
+	/// Power State Characteristic (required).
+	pub power_state: PowerStateCharacteristic,
 
 	/// Brightness Characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
+	/// Characteristic Value Active Transition Count Characteristic (optional).
+	pub characteristic_value_active_transition_count: Option<CharacteristicValueActiveTransitionCountCharacteristic>,
+	/// Characteristic Value Transition Control Characteristic (optional).
+	pub characteristic_value_transition_control: Option<CharacteristicValueTransitionControlCharacteristic>,
+	/// Color Temperature Characteristic (optional).
+	pub color_temperature: Option<ColorTemperatureCharacteristic>,
 	/// Hue Characteristic (optional).
 	pub hue: Option<HueCharacteristic>,
-	/// Saturation Characteristic (optional).
-	pub saturation: Option<SaturationCharacteristic>,
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
+	/// Saturation Characteristic (optional).
+	pub saturation: Option<SaturationCharacteristic>,
+	/// Supported Characteristic Value Transition Configuration Characteristic (optional).
+	pub supported_characteristic_value_transition_configuration: Option<SupportedCharacteristicValueTransitionConfigurationCharacteristic>,
 }
 
 impl LightbulbService {
@@ -48,11 +60,15 @@ impl LightbulbService {
         Self {
             id,
             hap_type: HapType::Lightbulb,
-			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
+			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
 			brightness: Some(BrightnessCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			hue: Some(HueCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			saturation: Some(SaturationCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			characteristic_value_active_transition_count: Some(CharacteristicValueActiveTransitionCountCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			characteristic_value_transition_control: Some(CharacteristicValueTransitionControlCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			color_temperature: Some(ColorTemperatureCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			hue: Some(HueCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 5 + 1, accessory_id)),
+			saturation: Some(SaturationCharacteristic::new(id + 1 + 6 + 1, accessory_id)),
+			supported_characteristic_value_transition_configuration: Some(SupportedCharacteristicValueTransitionConfigurationCharacteristic::new(id + 1 + 7 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -110,38 +126,64 @@ impl HapService for LightbulbService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.on,
+			&self.power_state,
 		];
 		if let Some(c) = &self.brightness {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.characteristic_value_active_transition_count {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.characteristic_value_transition_control {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.color_temperature {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.hue {
 		    characteristics.push(c);
 		}
+		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.saturation {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.name {
+		if let Some(c) = &self.supported_characteristic_value_transition_configuration {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.on,
+			&mut self.power_state,
 		];
 		if let Some(c) = &mut self.brightness {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.characteristic_value_active_transition_count {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.characteristic_value_transition_control {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.color_temperature {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.hue {
 		    characteristics.push(c);
 		}
+		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &mut self.saturation {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.name {
+		if let Some(c) = &mut self.supported_characteristic_value_transition_configuration {
 		    characteristics.push(c);
 		}
 		characteristics

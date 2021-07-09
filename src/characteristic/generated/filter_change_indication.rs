@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Filter Change indication Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FilterChangeIndicationCharacteristic(Characteristic<u8>);

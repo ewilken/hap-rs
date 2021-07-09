@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, lightbulb::LightbulbAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

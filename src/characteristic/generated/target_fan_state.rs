@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Target Fan State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetFanStateCharacteristic(Characteristic<u8>);

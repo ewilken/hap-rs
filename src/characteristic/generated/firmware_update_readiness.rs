@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Firmware Update Readiness Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FirmwareUpdateReadinessCharacteristic(Characteristic<Vec<u8>>);

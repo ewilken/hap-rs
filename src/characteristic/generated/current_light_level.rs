@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Current Light Level Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentLightLevelCharacteristic(Characteristic<f32>);

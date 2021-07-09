@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Current Air Quality Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentAirQualityCharacteristic(Characteristic<u8>);

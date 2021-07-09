@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Slat Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SlatTypeCharacteristic(Characteristic<u8>);

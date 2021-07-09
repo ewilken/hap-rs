@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Cloud Relay Control Point Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CloudRelayControlPointCharacteristic(Characteristic<Vec<u8>>);

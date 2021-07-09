@@ -8,8 +8,10 @@ use crate::{
         HapCharacteristic,
 		programmable_switch_event::ProgrammableSwitchEventCharacteristic,
 		brightness::BrightnessCharacteristic,
-		volume::VolumeCharacteristic,
+		mute::MuteCharacteristic,
 		name::NameCharacteristic,
+		operating_state_response::OperatingStateResponseCharacteristic,
+		volume::VolumeCharacteristic,
 	},
     HapType,
 };
@@ -33,10 +35,14 @@ pub struct DoorbellService {
 
 	/// Brightness Characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
-	/// Volume Characteristic (optional).
-	pub volume: Option<VolumeCharacteristic>,
+	/// Mute Characteristic (optional).
+	pub mute: Option<MuteCharacteristic>,
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
+	/// Operating State Response Characteristic (optional).
+	pub operating_state_response: Option<OperatingStateResponseCharacteristic>,
+	/// Volume Characteristic (optional).
+	pub volume: Option<VolumeCharacteristic>,
 }
 
 impl DoorbellService {
@@ -47,8 +53,10 @@ impl DoorbellService {
             hap_type: HapType::Doorbell,
 			programmable_switch_event: ProgrammableSwitchEventCharacteristic::new(id + 1 + 0, accessory_id),
 			brightness: Some(BrightnessCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			volume: Some(VolumeCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			mute: Some(MuteCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			name: Some(NameCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			operating_state_response: Some(OperatingStateResponseCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			volume: Some(VolumeCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -106,32 +114,46 @@ impl HapService for DoorbellService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.programmable_switch_event,
 		];
 		if let Some(c) = &self.brightness {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.volume {
+		if let Some(c) = &self.mute {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.operating_state_response {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.volume {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.programmable_switch_event,
 		];
 		if let Some(c) = &mut self.brightness {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.volume {
+		if let Some(c) = &mut self.mute {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.operating_state_response {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.volume {
 		    characteristics.push(c);
 		}
 		characteristics

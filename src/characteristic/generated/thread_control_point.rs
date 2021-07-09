@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Thread Control Point Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ThreadControlPointCharacteristic(Characteristic<Vec<u8>>);

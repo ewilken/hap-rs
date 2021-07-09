@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Password Setting Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PasswordSettingCharacteristic(Characteristic<Vec<u8>>);

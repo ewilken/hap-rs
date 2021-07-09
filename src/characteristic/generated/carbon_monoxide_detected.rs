@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Carbon monoxide Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CarbonMonoxideDetectedCharacteristic(Characteristic<u8>);

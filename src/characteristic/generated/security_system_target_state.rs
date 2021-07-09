@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Security System Target State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SecuritySystemTargetStateCharacteristic(Characteristic<u8>);

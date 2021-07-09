@@ -7,11 +7,11 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 		motion_detected::MotionDetectedCharacteristic,
+		name::NameCharacteristic,
 		status_active::StatusActiveCharacteristic,
 		status_fault::StatusFaultCharacteristic,
-		status_tampered::StatusTamperedCharacteristic,
 		status_low_battery::StatusLowBatteryCharacteristic,
-		name::NameCharacteristic,
+		status_tampered::StatusTamperedCharacteristic,
 	},
     HapType,
 };
@@ -33,16 +33,16 @@ pub struct MotionSensorService {
 	/// Motion Detected Characteristic (required).
 	pub motion_detected: MotionDetectedCharacteristic,
 
+	/// Name Characteristic (optional).
+	pub name: Option<NameCharacteristic>,
 	/// Status Active Characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
 	/// Status Fault Characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Tampered Characteristic (optional).
-	pub status_tampered: Option<StatusTamperedCharacteristic>,
 	/// Status Low Battery Characteristic (optional).
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
+	/// Status Tampered Characteristic (optional).
+	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl MotionSensorService {
@@ -52,11 +52,11 @@ impl MotionSensorService {
             id,
             hap_type: HapType::MotionSensor,
 			motion_detected: MotionDetectedCharacteristic::new(id + 1 + 0, accessory_id),
-			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
 			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -114,44 +114,46 @@ impl HapService for MotionSensorService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.motion_detected,
 		];
+		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.status_active {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.status_fault {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.status_tampered {
-		    characteristics.push(c);
-		}
 		if let Some(c) = &self.status_low_battery {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.name {
+		if let Some(c) = &self.status_tampered {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.motion_detected,
 		];
+		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &mut self.status_active {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.status_fault {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.status_tampered {
-		    characteristics.push(c);
-		}
 		if let Some(c) = &mut self.status_low_battery {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.name {
+		if let Some(c) = &mut self.status_tampered {
 		    characteristics.push(c);
 		}
 		characteristics

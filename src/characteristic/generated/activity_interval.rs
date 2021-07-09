@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Activity Interval Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ActivityIntervalCharacteristic(Characteristic<u32>);

@@ -27,8 +27,8 @@ struct SystemPlistDictionary {
     pub homekit: HomeKit,
     #[serde(rename = "HAP")]
     pub hap: Hap,
-    /* #[serde(rename = "Assistant")]
-     * pub assistant: Assistant, */
+    #[serde(rename = "Assistant")]
+    pub assistant: Assistant,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,6 +108,28 @@ struct HapProperty {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct Assistant {
+    #[serde(rename = "Characteristics")]
+    pub characteristics: HashMap<String, AssistantCharacteristic>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AssistantCharacteristic {
+    #[serde(rename = "Format")]
+    pub format: String,
+    #[serde(rename = "Read")]
+    pub read: Option<String>,
+    #[serde(rename = "Write")]
+    pub write: Option<String>,
+    #[serde(rename = "ReadWrite")]
+    pub read_write: Option<String>,
+    #[serde(rename = "Values")]
+    pub values: Option<HashMap<String, Value>>,
+    #[serde(rename = "OutValues")]
+    pub out_values: Option<HashMap<String, Value>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct RenderMetadata {
     pub categories: HashMap<String, HomeKitCategory>,
     pub sorted_categories: Vec<HomeKitCategory>,
@@ -116,11 +138,20 @@ struct RenderMetadata {
     pub services: HashMap<String, HapService>,
     pub sorted_services: Vec<HapService>,
     pub properties: HashMap<String, HapProperty>,
+    pub assistant_characteristics: HashMap<String, AssistantCharacteristic>,
 }
 
 impl From<SystemMetadata> for RenderMetadata {
     fn from(v: SystemMetadata) -> Self {
-        let m = v.plist_dictionary;
+        let mut m = v.plist_dictionary;
+
+        // rename mislabeled services
+        let mut accessory_information_service = m.hap.services.get_mut("accessory-information").unwrap();
+        accessory_information_service.name = "Accessory Information".to_string();
+        let mut fan_v2_service = m.hap.services.get_mut("fanv2").unwrap();
+        fan_v2_service.name = "Fan v2".to_string();
+        let mut smart_speaker_service = m.hap.services.get_mut("smart-speaker").unwrap();
+        smart_speaker_service.name = "Smart Speaker".to_string();
 
         let mut sorted_categories = m.homekit.categories.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
         sorted_categories.sort_by(|a, b| a.number.partial_cmp(&b.number).unwrap());
@@ -139,6 +170,7 @@ impl From<SystemMetadata> for RenderMetadata {
             services: m.hap.services,
             sorted_services,
             properties: m.hap.properties,
+            assistant_characteristics: m.assistant.characteristics,
         }
     }
 }
@@ -301,29 +333,103 @@ fn unit_helper(
     let param = h.param(0).unwrap().value();
     if let Some(s) = param.as_str() {
         match s {
+            "celsius" => {
+                out.write("Unit::Celsius")?;
+            },
+            "fahrenheit" => {
+                out.write("Unit::Celsius")?;
+            },
             "percentage" => {
                 out.write("Unit::Percentage")?;
             },
             "arcdegrees" => {
                 out.write("Unit::ArcDegrees")?;
             },
-            "celsius" => {
-                out.write("Unit::Celsius")?;
-            },
+
             "lux" => {
                 out.write("Unit::Lux")?;
             },
             "seconds" => {
                 out.write("Unit::Seconds")?;
             },
-            _ => {
-                out.write("Unit::Percentage")?; // TODO - do this properly
+            "ppm" => {
+                out.write("Unit::PartsPerMillion")?;
             },
-            /* _ => {
-             *     return Err(RenderError::new("Unknown Characteristic unit"));
-             * }, */
+            "micrograms/m^3" => {
+                out.write("Unit::MicrogramsPerCubicMeter")?;
+            },
+            _ => {
+                return Err(RenderError::new("Unknown Characteristic unit"));
+            },
         }
     }
+    Ok(())
+}
+
+fn category_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value().as_str().unwrap();
+
+    match param.to_lowercase().as_str() {
+        "air quality sensor"
+        | "carbon dioxide sensor"
+        | "carbon monoxide sensor"
+        | "contact sensor"
+        | "humidity sensor"
+        | "leak sensor"
+        | "light sensor"
+        | "motion sensor"
+        | "occupancy sensor"
+        | "smoke sensor"
+        | "temperature sensor" => {
+            out.write("AccessoryCategory::Sensor")?;
+        },
+        "doorbell" => {
+            out.write("AccessoryCategory::VideoDoorbell")?;
+        },
+        "fan v2" => {
+            out.write("AccessoryCategory::Fan")?;
+        },
+        "heater-cooler" => {
+            out.write("AccessoryCategory::AirHeater /* or AccessoryCategory::AirConditioner */")?;
+        },
+        "humidifier-dehumidifier" => {
+            out.write("AccessoryCategory::AirHumidifier /* or AccessoryCategory::AirDehumidifier */")?;
+        },
+        "irrigation-system" => {
+            out.write("AccessoryCategory::Sprinkler")?;
+        },
+        "smart speaker" => {
+            out.write("AccessoryCategory::Speaker")?;
+        },
+        "stateful programmable switch" | "stateless programmable switch" => {
+            out.write("AccessoryCategory::ProgrammableSwitch")?;
+        },
+        "wi-fi satellite" => {
+            out.write("AccessoryCategory::WiFiRouter")?;
+        },
+        _ => {
+            let param = param.replace("-", " ");
+            let name = param
+                .to_lowercase()
+                .split(" ")
+                .into_iter()
+                .map(|word| {
+                    let mut c = word.chars().collect::<Vec<char>>();
+                    c[0] = c[0].to_uppercase().nth(0).unwrap();
+                    c.into_iter().collect::<String>()
+                })
+                .collect::<String>();
+            let name = name.replace(" ", "").replace(".", "_");
+            out.write(&format!("AccessoryCategory::{}", name))?;
+        },
+    }
+
     Ok(())
 }
 
@@ -349,12 +455,54 @@ fn valid_values_helper(
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value().as_object().unwrap();
+    let mut values = param
+        .into_iter()
+        .map(|(key, val)| (key.clone(), val.clone()))
+        .collect::<Vec<(String, Value)>>();
+    // values.sort_by(|a, b| a.1.cmp(&b.1));
+
     let mut output = String::from("vec![\n");
-    for (key, val) in param {
-        output.push_str(&format!("\t\t\t\t\t{}, // {}\n", key, val));
+    for (key, val) in values {
+        output.push_str(&format!("\t\t\t\t{}, // {}\n", val, key));
     }
-    output.push_str("\t\t\t\t]");
+    output.push_str("\t\t\t]");
     out.write(&output)?;
+
+    Ok(())
+}
+
+fn valid_values_enum_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value().as_object().unwrap();
+    let mut values = param
+        .into_iter()
+        .map(|(key, val)| (key.clone(), val.clone()))
+        .collect::<Vec<(String, Value)>>();
+    // values.sort_by(|a, b| a.1.cmp(&b.1));
+
+    let mut output = String::from("\npub enum Value {\n");
+    for (key, val) in values {
+        let key = key
+            .to_lowercase()
+            .split("_")
+            .into_iter()
+            .map(|word| {
+                let mut c = word.chars().collect::<Vec<char>>();
+                c[0] = c[0].to_uppercase().nth(0).unwrap();
+                c.into_iter().collect::<String>()
+            })
+            .collect::<String>();
+
+        output.push_str(&format!("\t{} = {},\n", key, val));
+    }
+    output.push_str("}\n");
+    out.write(&output)?;
+
     Ok(())
 }
 
@@ -571,11 +719,11 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// {{characteristic.DefaultDescription}} Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct {{pascal_case characteristic.DefaultDescription}}Characteristic(Characteristic<{{type characteristic.Format}}>);
-
+{{#if values.Values includeZero=true}}{{valid_values_enum values.Values}}{{/if}}
 impl {{pascal_case characteristic.DefaultDescription}}Characteristic {
     /// Creates a new {{characteristic.DefaultDescription}} Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
@@ -591,8 +739,7 @@ impl {{pascal_case characteristic.DefaultDescription}}Characteristic {
             {{#if characteristic.MinValue includeZero=true}}\n\t\t\tmin_value: Some({{characteristic.MinValue}}{{float characteristic.Format}}),{{/if}}\
             {{#if characteristic.StepValue includeZero=true}}\n\t\t\tstep_value: Some({{characteristic.StepValue}}{{float characteristic.Format}}),{{/if}}\
             {{#if characteristic.MaximumLength includeZero=true}}\n\t\t\tmax_len: Some({{characteristic.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.MaximumDataLength includeZero=true}}\n\t\t\tmax_data_len: Some({{characteristic.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.ValidValues includeZero=true}}\n\t\t\tvalid_values: Some({{valid_values characteristic.ValidValues}}),{{/if}}
+            {{#if values.Values includeZero=true}}\n\t\t\tvalid_values: Some({{valid_values values.Values}}),{{/if}}
             ..Default::default()
         })
     }
@@ -679,21 +826,21 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 {{#each required_characteristics as |r|}}\
-\t\t{{snake_case r.Name}}::{{pascal_case r.Name}}Characteristic,
+\t\t{{snake_case r.DefaultDescription}}::{{pascal_case r.DefaultDescription}}Characteristic,
 {{/each}}\
 {{#each optional_characteristics as |r|}}\
-\t\t{{snake_case r.Name}}::{{pascal_case r.Name}}Characteristic,
+\t\t{{snake_case r.DefaultDescription}}::{{pascal_case r.DefaultDescription}}Characteristic,
 {{/each}}\
 \t},
     HapType,
 };
 
-/// {{service.Name}} Service.
+/// {{service.DefaultDescription}} Service.
 #[derive(Debug, Default)]
-pub struct {{pascal_case service.Name}}Service {
-    /// Instance ID of the {{service.Name}} Service.
+pub struct {{pascal_case service.DefaultDescription}}Service {
+    /// Instance ID of the {{service.DefaultDescription}} Service.
     id: u64,
-    /// `HapType` of the {{service.Name}} Service.
+    /// `HapType` of the {{service.DefaultDescription}} Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -703,33 +850,33 @@ pub struct {{pascal_case service.Name}}Service {
     linked_services: Vec<u64>,
 
 {{#each required_characteristics as |r|}}\
-\t/// {{r.Name}} Characteristic (required).
-\tpub {{snake_case r.Name}}: {{pascal_case r.Name}}Characteristic,
+\t/// {{r.DefaultDescription}} Characteristic (required).
+\tpub {{snake_case r.DefaultDescription}}: {{pascal_case r.DefaultDescription}}Characteristic,
 {{/each}}\
 \n{{#each optional_characteristics as |o|}}\
-\t/// {{o.Name}} Characteristic (optional).
-\tpub {{snake_case o.Name}}: Option<{{pascal_case o.Name}}Characteristic>,
+\t/// {{o.DefaultDescription}} Characteristic (optional).
+\tpub {{snake_case o.DefaultDescription}}: Option<{{pascal_case o.DefaultDescription}}Characteristic>,
 {{/each}}\
 }
 
-impl {{pascal_case service.Name}}Service {
-    /// Creates a new {{service.Name}} Service.
+impl {{pascal_case service.DefaultDescription}}Service {
+    /// Creates a new {{service.DefaultDescription}} Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::{{pascal_case service.Name}},
+            hap_type: HapType::{{pascal_case service.DefaultDescription}},
 {{#each required_characteristics as |r|}}\
-\t\t\t{{snake_case r.Name}}: {{pascal_case r.Name}}Characteristic::new(id + 1 + {{@index}}, accessory_id),
+\t\t\t{{snake_case r.DefaultDescription}}: {{pascal_case r.DefaultDescription}}Characteristic::new(id + 1 + {{@index}}, accessory_id),
 {{/each}}\
 {{#each optional_characteristics as |o|}}\
-\t\t\t{{snake_case o.Name}}: Some({{pascal_case o.Name}}Characteristic::new(id + 1 + {{@index}} + {{array_length ../required_characteristics}}, accessory_id)),
+\t\t\t{{snake_case o.DefaultDescription}}: Some({{pascal_case o.DefaultDescription}}Characteristic::new(id + 1 + {{@index}} + {{array_length ../required_characteristics}}, accessory_id)),
 {{/each}}\
         \t\t\t..Default::default()
         }
     }
 }
 
-impl HapService for {{pascal_case service.Name}}Service {
+impl HapService for {{pascal_case service.DefaultDescription}}Service {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -781,13 +928,14 @@ impl HapService for {{pascal_case service.Name}}Service {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 {{#each required_characteristics as |r|}}\
-\t\t\t&self.{{snake_case r.Name}},
+\t\t\t&self.{{snake_case r.DefaultDescription}},
 {{/each}}\
         \t\t];
 {{#each optional_characteristics as |r|}}\
-\t\tif let Some(c) = &self.{{snake_case r.Name}} {
+\t\tif let Some(c) = &self.{{snake_case r.DefaultDescription}} {
 \t\t    characteristics.push(c);
 \t\t}
 {{/each}}\
@@ -795,13 +943,14 @@ impl HapService for {{pascal_case service.Name}}Service {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 {{#each required_characteristics as |r|}}\
-\t\t\t&mut self.{{snake_case r.Name}},
+\t\t\t&mut self.{{snake_case r.DefaultDescription}},
 {{/each}}\
         \t\t];
 {{#each optional_characteristics as |r|}}\
-\t\tif let Some(c) = &mut self.{{snake_case r.Name}} {
+\t\tif let Some(c) = &mut self.{{snake_case r.DefaultDescription}} {
 \t\t    characteristics.push(c);
 \t\t}
 {{/each}}\
@@ -809,7 +958,7 @@ impl HapService for {{pascal_case service.Name}}Service {
     }
 }
 
-impl Serialize for {{pascal_case service.Name}}Service {
+impl Serialize for {{pascal_case service.DefaultDescription}}Service {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct(\"HapService\", 5)?;
         state.serialize_field(\"iid\", &self.get_id())?;
@@ -832,40 +981,40 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
 \taccessory::{AccessoryInformation, HapAccessory},
-\tservice::{HapService, accessory_information::AccessoryInformationService, {{snake_case service.Name}}::{{pascal_case service.Name}}Service},
+\tservice::{HapService, accessory_information::AccessoryInformationService, {{snake_case service.DefaultDescription}}::{{pascal_case service.DefaultDescription}}Service},
 \tHapType,
 \tResult,
 };
 
-/// {{service.Name}} Accessory.
+/// {{service.DefaultDescription}} Accessory.
 #[derive(Debug, Default)]
-pub struct {{pascal_case service.Name}}Accessory {
-    /// ID of the {{service.Name}} Accessory.
+pub struct {{pascal_case service.DefaultDescription}}Accessory {
+    /// ID of the {{service.DefaultDescription}} Accessory.
     id: u64,
 
     /// Accessory Information Service.
     pub accessory_information: AccessoryInformationService,
-    /// {{service.Name}} Service.
-    pub {{snake_case service.Name}}: {{pascal_case service.Name}}Service,
+    /// {{service.DefaultDescription}} Service.
+    pub {{snake_case service.DefaultDescription}}: {{pascal_case service.DefaultDescription}}Service,
 }
 
-impl {{pascal_case service.Name}}Accessory {
-    /// Creates a new {{service.Name}} Accessory.
+impl {{pascal_case service.DefaultDescription}}Accessory {
+    /// Creates a new {{service.DefaultDescription}} Accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
-        let {{snake_case service.Name}}_id = accessory_information.get_characteristics().len() as u64;
-        let mut {{snake_case service.Name}} = {{pascal_case service.Name}}Service::new(1 + {{snake_case service.Name}}_id + 1, id);
-        {{snake_case service.Name}}.set_primary(true);
+        let {{snake_case service.DefaultDescription}}_id = accessory_information.get_characteristics().len() as u64;
+        let mut {{snake_case service.DefaultDescription}} = {{pascal_case service.DefaultDescription}}Service::new(1 + {{snake_case service.DefaultDescription}}_id + 1, id);
+        {{snake_case service.DefaultDescription}}.set_primary(true);
 
         Ok(Self {
             id,
             accessory_information,
-            {{snake_case service.Name}},
+            {{snake_case service.DefaultDescription}},
         })
     }
 }
 
-impl HapAccessory for {{pascal_case service.Name}}Accessory {
+impl HapAccessory for {{pascal_case service.DefaultDescription}}Accessory {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -895,19 +1044,19 @@ impl HapAccessory for {{pascal_case service.Name}}Accessory {
     fn get_services(&self) -> Vec<&dyn HapService> {
         vec![
             &self.accessory_information,
-            &self.{{snake_case service.Name}},
+            &self.{{snake_case service.DefaultDescription}},
         ]
     }
 
     fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> {
         vec![
             &mut self.accessory_information,
-            &mut self.{{snake_case service.Name}},
+            &mut self.{{snake_case service.DefaultDescription}},
         ]
     }
 }
 
-impl Serialize for {{pascal_case service.Name}}Accessory {
+impl Serialize for {{pascal_case service.DefaultDescription}}Accessory {
     fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct(\"HapAccessory\", 2)?;
         state.serialize_field(\"aid\", &self.get_id())?;
@@ -921,99 +1070,97 @@ static ACCESSORY_MOD: &'static str = "// this file is auto-generated by hap-code
 {{#each accessories as |a|}}\npub mod {{a}};{{/each}}
 ";
 
-// static EXAMPLE: &'static str = "\
-// use std::net::{IpAddr, SocketAddr};
+static EXAMPLE: &'static str = "\
+use hap::{
+    accessory::{AccessoryCategory, AccessoryInformation, {{snake_case service.DefaultDescription}}::{{pascal_case service.DefaultDescription}}Accessory},
+    server::{IpServer, Server},
+    storage::{FileStorage, Storage},
+    tokio,
+    Config,
+    MacAddress,
+    Pin,
+    Result,
+};
 
-// use hap::{
-//     accessory::{ {{~snake_case service.Name~}} ::{{pascal_case service.Name}}Accessory, AccessoryCategory,
-// AccessoryInformation},     server::{IpServer, Server},
-//     storage::FileStorage,
-//     tokio,
-//     Config,
-//     MacAddress,
-//     Pin,
-// };
+#[tokio::main]
+async fn main() -> Result<()> {
+    let {{snake_case service.DefaultDescription}} = {{pascal_case service.DefaultDescription}}Accessory::new(1, AccessoryInformation {
+        name: \"Acme {{service.DefaultDescription}}\".into(),
+        ..Default::default()
+    })?;
 
-// #[tokio::main]
-// async fn main() {
-//     let current_ipv4 = || -> Option<IpAddr> {
-//         for iface in pnet::datalink::interfaces() {
-//             for ip_network in iface.ips {
-//                 if ip_network.is_ipv4() {
-//                     let ip = ip_network.ip();
-//                     if !ip.is_loopback() {
-//                         return Some(ip);
-//                     }
-//                 }
-//             }
-//         }
-//         None
-//     };
+    let mut storage = FileStorage::current_dir().await?;
 
-//     let lightbulb = {{pascal_case service.Name}}Accessory::new(1, AccessoryInformation {
-//         name: \"Acme {{service.Name}}\".into(),
-//         ..Default::default()
-//     })
-//     .unwrap();
+    let config = match storage.load_config().await {
+        Ok(mut config) => {
+            config.redetermine_local_ip();
+            storage.save_config(&config).await?;
+            config
+        },
+        Err(_) => {
+            let config = Config {
+                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
+                name: \"Acme {{service.DefaultDescription}}\".into(),
+                device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+                category: {{category service.DefaultDescription}},
+                ..Default::default()
+            };
+            storage.save_config(&config).await?;
+            config
+        },
+    };
 
-//     let config = Config {
-//         socket_addr: SocketAddr::new(current_ipv4().unwrap(), 32000),
-//         pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-//         name: \"Acme {{service.Name}}\".into(),
-//         device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-//         category: AccessoryCategory::{{pascal_case service.Name}},
-//         ..Default::default()
-//     };
-//     let storage = FileStorage::current_dir().await.unwrap();
+    let server = IpServer::new(config, storage).await?;
+    server.add_accessory({{snake_case service.DefaultDescription}}).await?;
 
-//     let mut server = IpServer::new(config, storage).unwrap();
-//     server.add_accessory(lightbulb).await.unwrap();
+    let handle = server.run_handle();
 
-//     let handle = server.run_handle();
+    std::env::set_var(\"RUST_LOG\", \"hap=debug\");
+    env_logger::init();
 
-//     std::env::set_var(\"RUST_LOG\", \"hap=info\");
-//     env_logger::init();
+    handle.await
+}
+";
 
-//     handle.await;
-// }
-// ";
+const NON_PRIMARY_SERVICES: &'static [&'static str] = &[
+    "accessory information",
+    "access control",
+    "accessory runtime information",
+    "audio stream management",
+    "battery",
+    "camera operating mode",
+    "camera recording management",
+    "camera stream management",
+    "cloud relay",
+    "data stream transport management",
+    "diagnostics",
+    "filter maintenance",
+    "input source",
+    "label",
+    "lock management",
+    "lock mechanism",
+    "microphone",
+    "pairing",
+    "power management",
+    "protocol information",
+    "siri",
+    "slats",
+    "speaker",
+    "target control management",
+    "target control",
+    "television",
+    "thread transport",
+    "transfer transport management",
+    "tunnel",
+    "valve",
+    "wi-fi transport",
+];
 
 fn main() {
-    // let simulator_metadata_file = File::open("codegen/gen/simulator.json").unwrap();
     let metadata_file = File::open("codegen/gen/system.json").unwrap();
 
-    // let simulator_metadata: Metadata = serde_json::from_reader(&simulator_metadata_file).unwrap();
     let metadata: SystemMetadata = serde_json::from_reader(&metadata_file).unwrap();
     let metadata = RenderMetadata::from(metadata);
-
-    // let mut metadata = Metadata {
-    //     categories: simulator_metadata.categories,
-    //     characteristics: simulator_metadata.characteristics,
-    //     services: simulator_metadata.services,
-    // };
-
-    // metadata.categories.append(&mut unofficial_metadata.categories);
-    // metadata
-    //     .characteristics
-    //     .append(&mut unofficial_metadata.characteristics);
-    // metadata.services.append(&mut unofficial_metadata.services);
-
-    // metadata
-    //     .categories
-    //     .sort_by(|a, b| a.number.partial_cmp(&b.number).unwrap());
-    // metadata.characteristics.sort_by(|a, b| a.name.cmp(&b.name));
-    // metadata.services.sort_by(|a, b| a.name.cmp(&b.name));
-
-    // let mut metadata_ex = MetadataEx {
-    //     metadata,
-    //     characteristics: std::collections::HashMap::new(),
-    // };
-    // let metadata = &metadata_ex.metadata;
-
-    // // build characteristic map
-    // for c in &metadata.characteristics {
-    //     metadata_ex.characteristics.insert(c.id.to_string(), &c);
-    // }
 
     let mut handlebars = Handlebars::new();
     handlebars.register_helper("if_eq", Box::new(if_eq_helper));
@@ -1022,8 +1169,10 @@ fn main() {
     handlebars.register_helper("format", Box::new(format_helper));
     handlebars.register_helper("type", Box::new(type_helper));
     handlebars.register_helper("unit", Box::new(unit_helper));
+    handlebars.register_helper("category", Box::new(category_helper));
     handlebars.register_helper("uuid", Box::new(uuid_helper));
     handlebars.register_helper("valid_values", Box::new(valid_values_helper));
+    handlebars.register_helper("valid_values_enum", Box::new(valid_values_enum_helper));
     handlebars.register_helper("perms", Box::new(perms_helper));
     handlebars.register_helper("float", Box::new(float_helper));
     handlebars.register_helper("array_length", Box::new(array_length_helper));
@@ -1043,7 +1192,7 @@ fn main() {
     handlebars
         .register_template_string("accessory_mod", ACCESSORY_MOD)
         .unwrap();
-    // handlebars.register_template_string("example", EXAMPLE).unwrap();
+    handlebars.register_template_string("example", EXAMPLE).unwrap();
 
     let categories = handlebars.render("categories", &metadata).unwrap();
     let categories_path = "src/accessory/category.rs".to_owned();
@@ -1062,15 +1211,15 @@ fn main() {
     fs::create_dir_all(&characteristic_base_path).unwrap();
     let mut characteristic_names = vec![];
     for (_, c) in &metadata.characteristics {
-        let characteristic = handlebars
-            .render("characteristic", &json!({ "characteristic": c }))
-            .unwrap();
         let characteristic_file_name = c
             .name
             .replace(" ", "_")
             .replace(".", "_")
             .replace("-", "_")
             .to_lowercase();
+        let characteristic = handlebars
+            .render("characteristic", &json!({ "characteristic": c, "values": metadata.assistant_characteristics.get(&characteristic_file_name.to_uppercase()) }))
+            .unwrap();
         let mut characteristic_path = String::from(characteristic_base_path);
         characteristic_path.push_str(&characteristic_file_name);
         characteristic_path.push_str(".rs");
@@ -1090,87 +1239,95 @@ fn main() {
         .write_all(characteristic_mod.as_bytes())
         .unwrap();
 
-    // let service_base_path = "src/service/generated/";
-    // let accessory_base_path = "src/accessory/generated/";
-    // if std::path::Path::new(&service_base_path).exists() {
-    //     fs::remove_dir_all(&service_base_path).unwrap();
-    // }
-    // if std::path::Path::new(&accessory_base_path).exists() {
-    //     fs::remove_dir_all(&accessory_base_path).unwrap();
-    // }
-    // fs::create_dir_all(&service_base_path).unwrap();
-    // fs::create_dir_all(&accessory_base_path).unwrap();
-    // let mut service_names = vec![];
-    // let mut accessory_names = vec![];
-    // for s in &metadata.services {
-    //     let mut required_characteristics = Vec::new();
-    //     let mut optional_characteristics = Vec::new();
+    let service_base_path = "src/service/generated/";
+    let accessory_base_path = "src/accessory/generated/";
+    if std::path::Path::new(&service_base_path).exists() {
+        fs::remove_dir_all(&service_base_path).unwrap();
+    }
+    if std::path::Path::new(&accessory_base_path).exists() {
+        fs::remove_dir_all(&accessory_base_path).unwrap();
+    }
+    for entry in fs::read_dir("examples").unwrap() {
+        let entry = entry.unwrap();
 
-    //     for c in &s.required_characteristics {
-    //         required_characteristics.push(metadata_ex.characteristics[c]);
-    //     }
+        if entry.file_type().unwrap().is_file() {
+            fs::remove_file(entry.path()).unwrap();
+        }
+    }
+    fs::create_dir_all(&service_base_path).unwrap();
+    fs::create_dir_all(&accessory_base_path).unwrap();
+    let mut service_names = vec![];
+    let mut accessory_names = vec![];
+    for s in &metadata.sorted_services {
+        let mut required_characteristics = Vec::new();
+        let mut optional_characteristics = Vec::new();
 
-    //     for c in &s.optional_characteristics {
-    //         optional_characteristics.push(metadata_ex.characteristics[c]);
-    //     }
+        for c in &s.characteristics.required_characteristics {
+            required_characteristics.push(metadata.characteristics.get(c).unwrap().clone());
+        }
 
-    //     let service = handlebars
-    //         .render(
-    //             "service",
-    //             &json!({
-    //                 "service": s,
-    //                 "required_characteristics": &required_characteristics,
-    //                 "optional_characteristics": &optional_characteristics,
-    //             }),
-    //         )
-    //         .unwrap();
+        if let Some(o_cs) = &s.characteristics.optional_characteristics {
+            for c in o_cs {
+                optional_characteristics.push(metadata.characteristics.get(c).unwrap().clone());
+            }
+        }
 
-    //     let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
-    //     let mut service_path = String::from(service_base_path);
-    //     service_path.push_str(&service_file_name);
-    //     service_path.push_str(".rs");
-    //     let mut service_file = File::create(&service_path).unwrap();
-    //     service_file.write_all(service.as_bytes()).unwrap();
-    //     service_names.push(service_file_name.clone());
+        let service = handlebars
+            .render(
+                "service",
+                &json!({
+                    "service": s,
+                    "required_characteristics": &required_characteristics,
+                    "optional_characteristics": &optional_characteristics,
+                }),
+            )
+            .unwrap();
 
-    //     if s.name != "Accessory Information"
-    //         && s.name != "Battery Service"
-    //         && s.name != "Camera RTP Stream Management"
-    //         && s.name != "Doorbell"
-    //         && s.name != "Faucet"
-    //         && s.name != "Filter Maintenance"
-    //         && s.name != "Irrigation System"
-    //         && s.name != "Lock Management"
-    //         && s.name != "Lock Mechanism"
-    //         && s.name != "Microphone"
-    //         && s.name != "Service Label"
-    //         && s.name != "Slat"
-    //         && s.name != "Speaker"
-    //         && s.name != "Television"
-    //         && s.name != "Input Source"
-    //     {
-    //         let accessory = handlebars
-    //             .render(
-    //                 "accessory",
-    //                 &json!({"service": s, "characteristics": &metadata.characteristics}),
-    //             )
-    //             .unwrap();
-    //         let mut accessory_path = String::from(accessory_base_path);
-    //         accessory_path.push_str(&service_file_name);
-    //         accessory_path.push_str(".rs");
-    //         let mut accessory_file = File::create(&accessory_path).unwrap();
-    //         accessory_file.write_all(accessory.as_bytes()).unwrap();
-    //         accessory_names.push(service_file_name);
-    //     }
-    // }
-    // let service_mod = handlebars
-    //     .render("service_mod", &json!({ "services": service_names }))
-    //     .unwrap();
-    // let mut service_mod_file = File::create(&format!("{}mod.rs", service_base_path)).unwrap();
-    // service_mod_file.write_all(service_mod.as_bytes()).unwrap();
-    // let accessory_mod = handlebars
-    //     .render("accessory_mod", &json!({ "accessories": accessory_names }))
-    //     .unwrap();
-    // let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
-    // accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
+        let service_file_name = s
+            .name
+            .replace(" ", "_")
+            .replace(".", "_")
+            .replace("-", "_")
+            .to_lowercase();
+        let mut service_path = String::from(service_base_path);
+        service_path.push_str(&service_file_name);
+        service_path.push_str(".rs");
+        let mut service_file = File::create(&service_path).unwrap();
+        service_file.write_all(service.as_bytes()).unwrap();
+
+        service_names.push(service_file_name.clone());
+
+        if !NON_PRIMARY_SERVICES.contains(&s.name.to_lowercase().as_str()) {
+            let accessory = handlebars
+                .render(
+                    "accessory",
+                    &json!({"service": s, "characteristics": &metadata.characteristics}),
+                )
+                .unwrap();
+            let mut accessory_path = String::from(accessory_base_path);
+            accessory_path.push_str(&service_file_name);
+            accessory_path.push_str(".rs");
+            let mut accessory_file = File::create(&accessory_path).unwrap();
+            accessory_file.write_all(accessory.as_bytes()).unwrap();
+
+            let example = handlebars.render("example", &json!({ "service": s })).unwrap();
+            let mut example_path = String::from("examples/");
+            example_path.push_str(&service_file_name);
+            example_path.push_str(".rs");
+            let mut example_file = File::create(&example_path).unwrap();
+            example_file.write_all(example.as_bytes()).unwrap();
+
+            accessory_names.push(service_file_name);
+        }
+    }
+    let service_mod = handlebars
+        .render("service_mod", &json!({ "services": service_names }))
+        .unwrap();
+    let mut service_mod_file = File::create(&format!("{}mod.rs", service_base_path)).unwrap();
+    service_mod_file.write_all(service_mod.as_bytes()).unwrap();
+    let accessory_mod = handlebars
+        .render("accessory_mod", &json!({ "accessories": accessory_names }))
+        .unwrap();
+    let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
+    accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
 }

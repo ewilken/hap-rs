@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Image Rotation Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ImageRotationCharacteristic(Characteristic<i32>);

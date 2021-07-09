@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Transmit Power Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TransmitPowerCharacteristic(Characteristic<i32>);

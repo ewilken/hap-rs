@@ -100,7 +100,7 @@ impl Default for Config {
             device_ed25519_keypair: generate_ed25519_keypair(),
             configuration_number: 1,
             state_number: 1,
-            category: AccessoryCategory::Unknown,
+            category: AccessoryCategory::Other,
             protocol_version: "1.0".into(),
             status_flag: BonjourStatusFlag::NotPaired,
             feature_flag: BonjourFeatureFlag::Zero,

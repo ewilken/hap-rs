@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Service Signature Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ServiceSignatureCharacteristic(Characteristic<Vec<u8>>);

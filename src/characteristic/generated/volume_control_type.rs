@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Volume Control Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VolumeControlTypeCharacteristic(Characteristic<u8>);

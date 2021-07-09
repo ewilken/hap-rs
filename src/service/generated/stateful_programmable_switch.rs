@@ -6,23 +6,19 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		supported_video_stream_configuration::SupportedVideoStreamConfigurationCharacteristic,
-		supported_audio_stream_configuration::SupportedAudioStreamConfigurationCharacteristic,
-		supported_rtp_configuration::SupportedRtpConfigurationCharacteristic,
-		selected_rtp_stream_configuration::SelectedRtpStreamConfigurationCharacteristic,
-		streaming_status::StreamingStatusCharacteristic,
-		setup_endpoints::SetupEndpointsCharacteristic,
+		programmable_switch_event::ProgrammableSwitchEventCharacteristic,
+		programmable_switch_output_state::ProgrammableSwitchOutputStateCharacteristic,
 		name::NameCharacteristic,
 	},
     HapType,
 };
 
-/// Camera RTP Stream Management Service.
+/// Stateful Programmable Switch Service.
 #[derive(Debug, Default)]
-pub struct CameraRtpStreamManagementService {
-    /// Instance ID of the Camera RTP Stream Management Service.
+pub struct StatefulProgrammableSwitchService {
+    /// Instance ID of the Stateful Programmable Switch Service.
     id: u64,
-    /// `HapType` of the Camera RTP Stream Management Service.
+    /// `HapType` of the Stateful Programmable Switch Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -31,42 +27,30 @@ pub struct CameraRtpStreamManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Supported Video Stream Configuration Characteristic (required).
-	pub supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic,
-	/// Supported Audio Stream Configuration Characteristic (required).
-	pub supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic,
-	/// Supported RTP Configuration Characteristic (required).
-	pub supported_rtp_configuration: SupportedRtpConfigurationCharacteristic,
-	/// Selected RTP Stream Configuration Characteristic (required).
-	pub selected_rtp_stream_configuration: SelectedRtpStreamConfigurationCharacteristic,
-	/// Streaming Status Characteristic (required).
-	pub streaming_status: StreamingStatusCharacteristic,
-	/// Setup Endpoints Characteristic (required).
-	pub setup_endpoints: SetupEndpointsCharacteristic,
+	/// Programmable Switch Event Characteristic (required).
+	pub programmable_switch_event: ProgrammableSwitchEventCharacteristic,
+	/// Programmable Switch Output State Characteristic (required).
+	pub programmable_switch_output_state: ProgrammableSwitchOutputStateCharacteristic,
 
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
-impl CameraRtpStreamManagementService {
-    /// Creates a new Camera RTP Stream Management Service.
+impl StatefulProgrammableSwitchService {
+    /// Creates a new Stateful Programmable Switch Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::CameraRtpStreamManagement,
-			supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic::new(id + 1 + 0, accessory_id),
-			supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
-			supported_rtp_configuration: SupportedRtpConfigurationCharacteristic::new(id + 1 + 2, accessory_id),
-			selected_rtp_stream_configuration: SelectedRtpStreamConfigurationCharacteristic::new(id + 1 + 3, accessory_id),
-			streaming_status: StreamingStatusCharacteristic::new(id + 1 + 4, accessory_id),
-			setup_endpoints: SetupEndpointsCharacteristic::new(id + 1 + 5, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 6, accessory_id)),
+            hap_type: HapType::StatefulProgrammableSwitch,
+			programmable_switch_event: ProgrammableSwitchEventCharacteristic::new(id + 1 + 0, accessory_id),
+			programmable_switch_output_state: ProgrammableSwitchOutputStateCharacteristic::new(id + 1 + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
 			..Default::default()
         }
     }
 }
 
-impl HapService for CameraRtpStreamManagementService {
+impl HapService for StatefulProgrammableSwitchService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -118,13 +102,10 @@ impl HapService for CameraRtpStreamManagementService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.supported_video_stream_configuration,
-			&self.supported_audio_stream_configuration,
-			&self.supported_rtp_configuration,
-			&self.selected_rtp_stream_configuration,
-			&self.streaming_status,
-			&self.setup_endpoints,
+			&self.programmable_switch_event,
+			&self.programmable_switch_output_state,
 		];
 		if let Some(c) = &self.name {
 		    characteristics.push(c);
@@ -133,13 +114,10 @@ impl HapService for CameraRtpStreamManagementService {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.supported_video_stream_configuration,
-			&mut self.supported_audio_stream_configuration,
-			&mut self.supported_rtp_configuration,
-			&mut self.selected_rtp_stream_configuration,
-			&mut self.streaming_status,
-			&mut self.setup_endpoints,
+			&mut self.programmable_switch_event,
+			&mut self.programmable_switch_output_state,
 		];
 		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
@@ -148,7 +126,7 @@ impl HapService for CameraRtpStreamManagementService {
     }
 }
 
-impl Serialize for CameraRtpStreamManagementService {
+impl Serialize for StatefulProgrammableSwitchService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

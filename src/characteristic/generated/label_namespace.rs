@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Label Namespace Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LabelNamespaceCharacteristic(Characteristic<u8>);

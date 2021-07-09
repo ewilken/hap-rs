@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Optical Zoom Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OpticalZoomCharacteristic(Characteristic<f32>);

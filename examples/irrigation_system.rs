@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{humidifier_dehumidifier::HumidifierDehumidifierAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, irrigation_system::IrrigationSystemAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -11,8 +11,8 @@ use hap::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let dehumidifier = HumidifierDehumidifierAccessory::new(1, AccessoryInformation {
-        name: "Acme Dehumidifier".into(),
+    let irrigation_system = IrrigationSystemAccessory::new(1, AccessoryInformation {
+        name: "Acme Irrigation-System".into(),
         ..Default::default()
     })?;
 
@@ -27,9 +27,9 @@ async fn main() -> Result<()> {
         Err(_) => {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-                name: "Acme Dehumidifier".into(),
+                name: "Acme Irrigation-System".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-                category: AccessoryCategory::Dehumidifier,
+                category: AccessoryCategory::Sprinkler,
                 ..Default::default()
             };
             storage.save_config(&config).await?;
@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
     };
 
     let server = IpServer::new(config, storage).await?;
-    server.add_accessory(dehumidifier).await?;
+    server.add_accessory(irrigation_system).await?;
 
     let handle = server.run_handle();
 

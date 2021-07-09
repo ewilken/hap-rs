@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Power Mode Selection Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PowerModeSelectionCharacteristic(Characteristic<u8>);

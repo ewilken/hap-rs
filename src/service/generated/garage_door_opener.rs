@@ -114,6 +114,7 @@ impl HapService for GarageDoorOpenerService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.current_door_state,
 			&self.target_door_state,
@@ -132,6 +133,7 @@ impl HapService for GarageDoorOpenerService {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.current_door_state,
 			&mut self.target_door_state,

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Target Humidifier-Dehumidifier State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetHumidifierDehumidifierStateCharacteristic(Characteristic<u8>);

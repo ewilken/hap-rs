@@ -11,11 +11,11 @@ use crate::{
 		current_temperature::CurrentTemperatureCharacteristic,
 		target_temperature::TargetTemperatureCharacteristic,
 		temperature_display_units::TemperatureDisplayUnitsCharacteristic,
+		name::NameCharacteristic,
 		current_relative_humidity::CurrentRelativeHumidityCharacteristic,
 		target_relative_humidity::TargetRelativeHumidityCharacteristic,
 		cooling_threshold_temperature::CoolingThresholdTemperatureCharacteristic,
 		heating_threshold_temperature::HeatingThresholdTemperatureCharacteristic,
-		name::NameCharacteristic,
 	},
     HapType,
 };
@@ -45,6 +45,8 @@ pub struct ThermostatService {
 	/// Temperature Display Units Characteristic (required).
 	pub temperature_display_units: TemperatureDisplayUnitsCharacteristic,
 
+	/// Name Characteristic (optional).
+	pub name: Option<NameCharacteristic>,
 	/// Current Relative Humidity Characteristic (optional).
 	pub current_relative_humidity: Option<CurrentRelativeHumidityCharacteristic>,
 	/// Target Relative Humidity Characteristic (optional).
@@ -53,8 +55,6 @@ pub struct ThermostatService {
 	pub cooling_threshold_temperature: Option<CoolingThresholdTemperatureCharacteristic>,
 	/// Heating Threshold Temperature Characteristic (optional).
 	pub heating_threshold_temperature: Option<HeatingThresholdTemperatureCharacteristic>,
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
 impl ThermostatService {
@@ -68,11 +68,11 @@ impl ThermostatService {
 			current_temperature: CurrentTemperatureCharacteristic::new(id + 1 + 2, accessory_id),
 			target_temperature: TargetTemperatureCharacteristic::new(id + 1 + 3, accessory_id),
 			temperature_display_units: TemperatureDisplayUnitsCharacteristic::new(id + 1 + 4, accessory_id),
-			current_relative_humidity: Some(CurrentRelativeHumidityCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
-			target_relative_humidity: Some(TargetRelativeHumidityCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
-			cooling_threshold_temperature: Some(CoolingThresholdTemperatureCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
-			heating_threshold_temperature: Some(HeatingThresholdTemperatureCharacteristic::new(id + 1 + 3 + 5, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 4 + 5, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
+			current_relative_humidity: Some(CurrentRelativeHumidityCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
+			target_relative_humidity: Some(TargetRelativeHumidityCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
+			cooling_threshold_temperature: Some(CoolingThresholdTemperatureCharacteristic::new(id + 1 + 3 + 5, accessory_id)),
+			heating_threshold_temperature: Some(HeatingThresholdTemperatureCharacteristic::new(id + 1 + 4 + 5, accessory_id)),
 			..Default::default()
         }
     }
@@ -130,6 +130,7 @@ impl HapService for ThermostatService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.current_heating_cooling_state,
 			&self.target_heating_cooling_state,
@@ -137,6 +138,9 @@ impl HapService for ThermostatService {
 			&self.target_temperature,
 			&self.temperature_display_units,
 		];
+		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.current_relative_humidity {
 		    characteristics.push(c);
 		}
@@ -149,13 +153,11 @@ impl HapService for ThermostatService {
 		if let Some(c) = &self.heating_threshold_temperature {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.current_heating_cooling_state,
 			&mut self.target_heating_cooling_state,
@@ -163,6 +165,9 @@ impl HapService for ThermostatService {
 			&mut self.target_temperature,
 			&mut self.temperature_display_units,
 		];
+		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &mut self.current_relative_humidity {
 		    characteristics.push(c);
 		}
@@ -173,9 +178,6 @@ impl HapService for ThermostatService {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.heating_threshold_temperature {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		characteristics

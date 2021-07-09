@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Camera Recording Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedCameraRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);

@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{motion_sensor::MotionSensorAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, motion_sensor::MotionSensorAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

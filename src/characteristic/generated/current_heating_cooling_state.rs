@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Current Heating Cooling State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentHeatingCoolingStateCharacteristic(Characteristic<u8>);
