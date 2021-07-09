@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Access Control Level Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AccessControlLevelCharacteristic(Characteristic<u16>);

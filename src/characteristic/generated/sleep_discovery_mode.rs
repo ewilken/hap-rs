@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Sleep Discovery Mode Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SleepDiscoveryModeCharacteristic(Characteristic<u8>);

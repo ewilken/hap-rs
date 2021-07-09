@@ -6,18 +6,19 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		service_label_namespace::ServiceLabelNamespaceCharacteristic,
-		name::NameCharacteristic,
+		setup_data_stream_transport::SetupDataStreamTransportCharacteristic,
+		supported_data_stream_transport_configuration::SupportedDataStreamTransportConfigurationCharacteristic,
+		version::VersionCharacteristic,
 	},
     HapType,
 };
 
-/// Service Label Service.
+/// Data Stream Transport Management Service.
 #[derive(Debug, Default)]
-pub struct ServiceLabelService {
-    /// Instance ID of the Service Label Service.
+pub struct DataStreamTransportManagementService {
+    /// Instance ID of the Data Stream Transport Management Service.
     id: u64,
-    /// `HapType` of the Service Label Service.
+    /// `HapType` of the Data Stream Transport Management Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,27 +27,30 @@ pub struct ServiceLabelService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Service Label Namespace Characteristic (required).
-	pub service_label_namespace: ServiceLabelNamespaceCharacteristic,
+	/// Setup Data Stream Transport Characteristic (required).
+	pub setup_data_stream_transport: SetupDataStreamTransportCharacteristic,
+	/// Supported Data Stream Transport Configuration Characteristic (required).
+	pub supported_data_stream_transport_configuration: SupportedDataStreamTransportConfigurationCharacteristic,
+	/// Version Characteristic (required).
+	pub version: VersionCharacteristic,
 
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
-impl ServiceLabelService {
-    /// Creates a new Service Label Service.
+impl DataStreamTransportManagementService {
+    /// Creates a new Data Stream Transport Management Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::ServiceLabel,
-			service_label_namespace: ServiceLabelNamespaceCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+            hap_type: HapType::DataStreamTransportManagement,
+			setup_data_stream_transport: SetupDataStreamTransportCharacteristic::new(id + 1 + 0, accessory_id),
+			supported_data_stream_transport_configuration: SupportedDataStreamTransportConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
+			version: VersionCharacteristic::new(id + 1 + 2, accessory_id),
 			..Default::default()
         }
     }
 }
 
-impl HapService for ServiceLabelService {
+impl HapService for DataStreamTransportManagementService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -98,27 +102,27 @@ impl HapService for ServiceLabelService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.service_label_namespace,
+			&self.setup_data_stream_transport,
+			&self.supported_data_stream_transport_configuration,
+			&self.version,
 		];
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.service_label_namespace,
+			&mut self.setup_data_stream_transport,
+			&mut self.supported_data_stream_transport_configuration,
+			&mut self.version,
 		];
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 }
 
-impl Serialize for ServiceLabelService {
+impl Serialize for DataStreamTransportManagementService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

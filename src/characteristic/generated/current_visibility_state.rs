@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Current Visibility State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentVisibilityStateCharacteristic(Characteristic<u8>);

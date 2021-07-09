@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Motion Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MotionDetectedCharacteristic(Characteristic<bool>);

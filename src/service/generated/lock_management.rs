@@ -8,14 +8,13 @@ use crate::{
         HapCharacteristic,
 		lock_control_point::LockControlPointCharacteristic,
 		version::VersionCharacteristic,
-		logs::LogsCharacteristic,
-		audio_feedback::AudioFeedbackCharacteristic,
-		lock_management_auto_security_timeout::LockManagementAutoSecurityTimeoutCharacteristic,
 		administrator_only_access::AdministratorOnlyAccessCharacteristic,
-		lock_last_known_action::LockLastKnownActionCharacteristic,
+		audio_feedback::AudioFeedbackCharacteristic,
 		current_door_state::CurrentDoorStateCharacteristic,
+		lock_management_auto_security_timeout::LockManagementAutoSecurityTimeoutCharacteristic,
+		lock_last_known_action::LockLastKnownActionCharacteristic,
+		logs::LogsCharacteristic,
 		motion_detected::MotionDetectedCharacteristic,
-		name::NameCharacteristic,
 	},
     HapType,
 };
@@ -39,22 +38,20 @@ pub struct LockManagementService {
 	/// Version Characteristic (required).
 	pub version: VersionCharacteristic,
 
-	/// Logs Characteristic (optional).
-	pub logs: Option<LogsCharacteristic>,
-	/// Audio Feedback Characteristic (optional).
-	pub audio_feedback: Option<AudioFeedbackCharacteristic>,
-	/// Lock Management Auto Security Timeout Characteristic (optional).
-	pub lock_management_auto_security_timeout: Option<LockManagementAutoSecurityTimeoutCharacteristic>,
 	/// Administrator Only Access Characteristic (optional).
 	pub administrator_only_access: Option<AdministratorOnlyAccessCharacteristic>,
-	/// Lock Last Known Action Characteristic (optional).
-	pub lock_last_known_action: Option<LockLastKnownActionCharacteristic>,
+	/// Audio Feedback Characteristic (optional).
+	pub audio_feedback: Option<AudioFeedbackCharacteristic>,
 	/// Current Door State Characteristic (optional).
 	pub current_door_state: Option<CurrentDoorStateCharacteristic>,
+	/// Lock Management Auto Security Timeout Characteristic (optional).
+	pub lock_management_auto_security_timeout: Option<LockManagementAutoSecurityTimeoutCharacteristic>,
+	/// Lock Last Known Action Characteristic (optional).
+	pub lock_last_known_action: Option<LockLastKnownActionCharacteristic>,
+	/// Logs Characteristic (optional).
+	pub logs: Option<LogsCharacteristic>,
 	/// Motion Detected Characteristic (optional).
 	pub motion_detected: Option<MotionDetectedCharacteristic>,
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
 impl LockManagementService {
@@ -65,14 +62,13 @@ impl LockManagementService {
             hap_type: HapType::LockManagement,
 			lock_control_point: LockControlPointCharacteristic::new(id + 1 + 0, accessory_id),
 			version: VersionCharacteristic::new(id + 1 + 1, accessory_id),
-			logs: Some(LogsCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			administrator_only_access: Some(AdministratorOnlyAccessCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
 			audio_feedback: Some(AudioFeedbackCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			lock_management_auto_security_timeout: Some(LockManagementAutoSecurityTimeoutCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			administrator_only_access: Some(AdministratorOnlyAccessCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
+			current_door_state: Some(CurrentDoorStateCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
+			lock_management_auto_security_timeout: Some(LockManagementAutoSecurityTimeoutCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
 			lock_last_known_action: Some(LockLastKnownActionCharacteristic::new(id + 1 + 4 + 2, accessory_id)),
-			current_door_state: Some(CurrentDoorStateCharacteristic::new(id + 1 + 5 + 2, accessory_id)),
+			logs: Some(LogsCharacteristic::new(id + 1 + 5 + 2, accessory_id)),
 			motion_detected: Some(MotionDetectedCharacteristic::new(id + 1 + 6 + 2, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 7 + 2, accessory_id)),
 			..Default::default()
         }
     }
@@ -130,64 +126,60 @@ impl HapService for LockManagementService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.lock_control_point,
 			&self.version,
 		];
-		if let Some(c) = &self.logs {
+		if let Some(c) = &self.administrator_only_access {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.audio_feedback {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.lock_management_auto_security_timeout {
+		if let Some(c) = &self.current_door_state {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.administrator_only_access {
+		if let Some(c) = &self.lock_management_auto_security_timeout {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.lock_last_known_action {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.current_door_state {
+		if let Some(c) = &self.logs {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.motion_detected {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.lock_control_point,
 			&mut self.version,
 		];
-		if let Some(c) = &mut self.logs {
+		if let Some(c) = &mut self.administrator_only_access {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.audio_feedback {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.lock_management_auto_security_timeout {
+		if let Some(c) = &mut self.current_door_state {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.administrator_only_access {
+		if let Some(c) = &mut self.lock_management_auto_security_timeout {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.lock_last_known_action {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.current_door_state {
+		if let Some(c) = &mut self.logs {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.motion_detected {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		characteristics

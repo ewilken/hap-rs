@@ -9,12 +9,12 @@ use crate::{
 		active::ActiveCharacteristic,
 		in_use::InUseCharacteristic,
 		valve_type::ValveTypeCharacteristic,
-		set_duration::SetDurationCharacteristic,
-		remaining_duration::RemainingDurationCharacteristic,
 		is_configured::IsConfiguredCharacteristic,
-		service_label_index::ServiceLabelIndexCharacteristic,
-		status_fault::StatusFaultCharacteristic,
 		name::NameCharacteristic,
+		remaining_duration::RemainingDurationCharacteristic,
+		label_index::LabelIndexCharacteristic,
+		set_duration::SetDurationCharacteristic,
+		status_fault::StatusFaultCharacteristic,
 	},
     HapType,
 };
@@ -40,18 +40,18 @@ pub struct ValveService {
 	/// Valve Type Characteristic (required).
 	pub valve_type: ValveTypeCharacteristic,
 
-	/// Set Duration Characteristic (optional).
-	pub set_duration: Option<SetDurationCharacteristic>,
-	/// Remaining Duration Characteristic (optional).
-	pub remaining_duration: Option<RemainingDurationCharacteristic>,
 	/// Is Configured Characteristic (optional).
 	pub is_configured: Option<IsConfiguredCharacteristic>,
-	/// Service Label Index Characteristic (optional).
-	pub service_label_index: Option<ServiceLabelIndexCharacteristic>,
-	/// Status Fault Characteristic (optional).
-	pub status_fault: Option<StatusFaultCharacteristic>,
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
+	/// Remaining Duration Characteristic (optional).
+	pub remaining_duration: Option<RemainingDurationCharacteristic>,
+	/// Label Index Characteristic (optional).
+	pub label_index: Option<LabelIndexCharacteristic>,
+	/// Set Duration Characteristic (optional).
+	pub set_duration: Option<SetDurationCharacteristic>,
+	/// Status Fault Characteristic (optional).
+	pub status_fault: Option<StatusFaultCharacteristic>,
 }
 
 impl ValveService {
@@ -63,12 +63,12 @@ impl ValveService {
 			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
 			in_use: InUseCharacteristic::new(id + 1 + 1, accessory_id),
 			valve_type: ValveTypeCharacteristic::new(id + 1 + 2, accessory_id),
-			set_duration: Some(SetDurationCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
-			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
-			is_configured: Some(IsConfiguredCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
-			service_label_index: Some(ServiceLabelIndexCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 4 + 3, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 5 + 3, accessory_id)),
+			is_configured: Some(IsConfiguredCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
+			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
+			label_index: Some(LabelIndexCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
+			set_duration: Some(SetDurationCharacteristic::new(id + 1 + 4 + 3, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 5 + 3, accessory_id)),
 			..Default::default()
         }
     }
@@ -126,54 +126,56 @@ impl HapService for ValveService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.active,
 			&self.in_use,
 			&self.valve_type,
 		];
-		if let Some(c) = &self.set_duration {
+		if let Some(c) = &self.is_configured {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.name {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.remaining_duration {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.is_configured {
+		if let Some(c) = &self.label_index {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.service_label_index {
+		if let Some(c) = &self.set_duration {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.active,
 			&mut self.in_use,
 			&mut self.valve_type,
 		];
-		if let Some(c) = &mut self.set_duration {
+		if let Some(c) = &mut self.is_configured {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.remaining_duration {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.is_configured {
+		if let Some(c) = &mut self.label_index {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.service_label_index {
+		if let Some(c) = &mut self.set_duration {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		characteristics

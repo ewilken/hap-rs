@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Active Identifier Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ActiveIdentifierCharacteristic(Characteristic<u32>);

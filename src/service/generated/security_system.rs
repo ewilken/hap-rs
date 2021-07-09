@@ -8,10 +8,10 @@ use crate::{
         HapCharacteristic,
 		security_system_current_state::SecuritySystemCurrentStateCharacteristic,
 		security_system_target_state::SecuritySystemTargetStateCharacteristic,
+		name::NameCharacteristic,
+		security_system_alarm_type::SecuritySystemAlarmTypeCharacteristic,
 		status_fault::StatusFaultCharacteristic,
 		status_tampered::StatusTamperedCharacteristic,
-		security_system_alarm_type::SecuritySystemAlarmTypeCharacteristic,
-		name::NameCharacteristic,
 	},
     HapType,
 };
@@ -35,14 +35,14 @@ pub struct SecuritySystemService {
 	/// Security System Target State Characteristic (required).
 	pub security_system_target_state: SecuritySystemTargetStateCharacteristic,
 
+	/// Name Characteristic (optional).
+	pub name: Option<NameCharacteristic>,
+	/// Security System Alarm Type Characteristic (optional).
+	pub security_system_alarm_type: Option<SecuritySystemAlarmTypeCharacteristic>,
 	/// Status Fault Characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
 	/// Status Tampered Characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
-	/// Security System Alarm Type Characteristic (optional).
-	pub security_system_alarm_type: Option<SecuritySystemAlarmTypeCharacteristic>,
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
 impl SecuritySystemService {
@@ -53,10 +53,10 @@ impl SecuritySystemService {
             hap_type: HapType::SecuritySystem,
 			security_system_current_state: SecuritySystemCurrentStateCharacteristic::new(id + 1 + 0, accessory_id),
 			security_system_target_state: SecuritySystemTargetStateCharacteristic::new(id + 1 + 1, accessory_id),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			security_system_alarm_type: Some(SecuritySystemAlarmTypeCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			security_system_alarm_type: Some(SecuritySystemAlarmTypeCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
 			..Default::default()
         }
     }
@@ -114,40 +114,42 @@ impl HapService for SecuritySystemService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.security_system_current_state,
 			&self.security_system_target_state,
 		];
+		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.security_system_alarm_type {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.status_fault {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.status_tampered {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.security_system_alarm_type {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.security_system_current_state,
 			&mut self.security_system_target_state,
 		];
-		if let Some(c) = &mut self.status_fault {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.status_tampered {
+		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.security_system_alarm_type {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.name {
+		if let Some(c) = &mut self.status_fault {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.status_tampered {
 		    characteristics.push(c);
 		}
 		characteristics

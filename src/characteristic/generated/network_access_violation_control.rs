@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Network Access Violation Control Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct NetworkAccessViolationControlCharacteristic(Characteristic<Vec<u8>>);

@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{temperature_sensor::TemperatureSensorAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, temperature_sensor::TemperatureSensorAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

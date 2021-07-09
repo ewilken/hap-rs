@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Carbon dioxide Level Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CarbonDioxideLevelCharacteristic(Characteristic<f32>);
@@ -42,7 +42,7 @@ impl CarbonDioxideLevelCharacteristic {
 				Perm::Events,
 				Perm::PairedRead,
             ],
-			unit: Some(Unit::Percentage),
+			unit: Some(Unit::PartsPerMillion),
 			max_value: Some(100000 as f32),
 			min_value: Some(0 as f32),
 			step_value: Some(1 as f32),

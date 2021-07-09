@@ -6,22 +6,20 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		slat_type::SlatTypeCharacteristic,
-		current_slat_state::CurrentSlatStateCharacteristic,
-		name::NameCharacteristic,
-		current_tilt_angle::CurrentTiltAngleCharacteristic,
-		target_tilt_angle::TargetTiltAngleCharacteristic,
-		swing_mode::SwingModeCharacteristic,
+		list_pairings::ListPairingsCharacteristic,
+		pair_setup::PairSetupCharacteristic,
+		pair_verify::PairVerifyCharacteristic,
+		pairing_features::PairingFeaturesCharacteristic,
 	},
     HapType,
 };
 
-/// Slat Service.
+/// Pairing Service.
 #[derive(Debug, Default)]
-pub struct SlatService {
-    /// Instance ID of the Slat Service.
+pub struct PairingService {
+    /// Instance ID of the Pairing Service.
     id: u64,
-    /// `HapType` of the Slat Service.
+    /// `HapType` of the Pairing Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,39 +28,33 @@ pub struct SlatService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Slat Type Characteristic (required).
-	pub slat_type: SlatTypeCharacteristic,
-	/// Current Slat State Characteristic (required).
-	pub current_slat_state: CurrentSlatStateCharacteristic,
+	/// List Pairings Characteristic (required).
+	pub list_pairings: ListPairingsCharacteristic,
+	/// Pair Setup Characteristic (required).
+	pub pair_setup: PairSetupCharacteristic,
+	/// Pair Verify Characteristic (required).
+	pub pair_verify: PairVerifyCharacteristic,
+	/// Pairing Features Characteristic (required).
+	pub pairing_features: PairingFeaturesCharacteristic,
 
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
-	/// Current Tilt Angle Characteristic (optional).
-	pub current_tilt_angle: Option<CurrentTiltAngleCharacteristic>,
-	/// Target Tilt Angle Characteristic (optional).
-	pub target_tilt_angle: Option<TargetTiltAngleCharacteristic>,
-	/// Swing Mode Characteristic (optional).
-	pub swing_mode: Option<SwingModeCharacteristic>,
 }
 
-impl SlatService {
-    /// Creates a new Slat Service.
+impl PairingService {
+    /// Creates a new Pairing Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::Slat,
-			slat_type: SlatTypeCharacteristic::new(id + 1 + 0, accessory_id),
-			current_slat_state: CurrentSlatStateCharacteristic::new(id + 1 + 1, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			current_tilt_angle: Some(CurrentTiltAngleCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			target_tilt_angle: Some(TargetTiltAngleCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
+            hap_type: HapType::Pairing,
+			list_pairings: ListPairingsCharacteristic::new(id + 1 + 0, accessory_id),
+			pair_setup: PairSetupCharacteristic::new(id + 1 + 1, accessory_id),
+			pair_verify: PairVerifyCharacteristic::new(id + 1 + 2, accessory_id),
+			pairing_features: PairingFeaturesCharacteristic::new(id + 1 + 3, accessory_id),
 			..Default::default()
         }
     }
 }
 
-impl HapService for SlatService {
+impl HapService for PairingService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -114,47 +106,29 @@ impl HapService for SlatService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.slat_type,
-			&self.current_slat_state,
+			&self.list_pairings,
+			&self.pair_setup,
+			&self.pair_verify,
+			&self.pairing_features,
 		];
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.current_tilt_angle {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.target_tilt_angle {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.swing_mode {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.slat_type,
-			&mut self.current_slat_state,
+			&mut self.list_pairings,
+			&mut self.pair_setup,
+			&mut self.pair_verify,
+			&mut self.pairing_features,
 		];
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.current_tilt_angle {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.target_tilt_angle {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.swing_mode {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 }
 
-impl Serialize for SlatService {
+impl Serialize for PairingService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

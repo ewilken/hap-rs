@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{humidifier_dehumidifier::HumidifierDehumidifierAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, humidifier_dehumidifier::HumidifierDehumidifierAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -11,8 +11,8 @@ use hap::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let humidifier = HumidifierDehumidifierAccessory::new(1, AccessoryInformation {
-        name: "Acme Humidifier".into(),
+    let humidifier_dehumidifier = HumidifierDehumidifierAccessory::new(1, AccessoryInformation {
+        name: "Acme Humidifier-Dehumidifier".into(),
         ..Default::default()
     })?;
 
@@ -27,9 +27,9 @@ async fn main() -> Result<()> {
         Err(_) => {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-                name: "Acme Humidifier".into(),
+                name: "Acme Humidifier-Dehumidifier".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-                category: AccessoryCategory::Humidifier,
+                category: AccessoryCategory::AirHumidifier /* or AccessoryCategory::AirDehumidifier */,
                 ..Default::default()
             };
             storage.save_config(&config).await?;
@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
     };
 
     let server = IpServer::new(config, storage).await?;
-    server.add_accessory(humidifier).await?;
+    server.add_accessory(humidifier_dehumidifier).await?;
 
     let handle = server.run_handle();
 

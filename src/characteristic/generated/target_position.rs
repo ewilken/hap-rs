@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Target Position Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetPositionCharacteristic(Characteristic<u8>);

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Video Stream Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedVideoStreamConfigurationCharacteristic(Characteristic<Vec<u8>>);

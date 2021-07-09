@@ -7,23 +7,23 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 		carbon_monoxide_detected::CarbonMonoxideDetectedCharacteristic,
+		carbon_monoxide_level::CarbonMonoxideLevelCharacteristic,
+		carbon_monoxide_peak_level::CarbonMonoxidePeakLevelCharacteristic,
+		name::NameCharacteristic,
 		status_active::StatusActiveCharacteristic,
 		status_fault::StatusFaultCharacteristic,
 		status_low_battery::StatusLowBatteryCharacteristic,
 		status_tampered::StatusTamperedCharacteristic,
-		carbon_monoxide_level::CarbonMonoxideLevelCharacteristic,
-		carbon_monoxide_peak_level::CarbonMonoxidePeakLevelCharacteristic,
-		name::NameCharacteristic,
 	},
     HapType,
 };
 
-/// Carbon Monoxide Sensor Service.
+/// Carbon monoxide Sensor Service.
 #[derive(Debug, Default)]
 pub struct CarbonMonoxideSensorService {
-    /// Instance ID of the Carbon Monoxide Sensor Service.
+    /// Instance ID of the Carbon monoxide Sensor Service.
     id: u64,
-    /// `HapType` of the Carbon Monoxide Sensor Service.
+    /// `HapType` of the Carbon monoxide Sensor Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -32,9 +32,15 @@ pub struct CarbonMonoxideSensorService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Carbon Monoxide Detected Characteristic (required).
+	/// Carbon monoxide Detected Characteristic (required).
 	pub carbon_monoxide_detected: CarbonMonoxideDetectedCharacteristic,
 
+	/// Carbon monoxide Level Characteristic (optional).
+	pub carbon_monoxide_level: Option<CarbonMonoxideLevelCharacteristic>,
+	/// Carbon monoxide Peak Level Characteristic (optional).
+	pub carbon_monoxide_peak_level: Option<CarbonMonoxidePeakLevelCharacteristic>,
+	/// Name Characteristic (optional).
+	pub name: Option<NameCharacteristic>,
 	/// Status Active Characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
 	/// Status Fault Characteristic (optional).
@@ -43,28 +49,22 @@ pub struct CarbonMonoxideSensorService {
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
 	/// Status Tampered Characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
-	/// Carbon Monoxide Level Characteristic (optional).
-	pub carbon_monoxide_level: Option<CarbonMonoxideLevelCharacteristic>,
-	/// Carbon Monoxide Peak Level Characteristic (optional).
-	pub carbon_monoxide_peak_level: Option<CarbonMonoxidePeakLevelCharacteristic>,
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
 impl CarbonMonoxideSensorService {
-    /// Creates a new Carbon Monoxide Sensor Service.
+    /// Creates a new Carbon monoxide Sensor Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
             hap_type: HapType::CarbonMonoxideSensor,
 			carbon_monoxide_detected: CarbonMonoxideDetectedCharacteristic::new(id + 1 + 0, accessory_id),
-			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
-			carbon_monoxide_level: Some(CarbonMonoxideLevelCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
-			carbon_monoxide_peak_level: Some(CarbonMonoxidePeakLevelCharacteristic::new(id + 1 + 5 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 6 + 1, accessory_id)),
+			carbon_monoxide_level: Some(CarbonMonoxideLevelCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			carbon_monoxide_peak_level: Some(CarbonMonoxidePeakLevelCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
+			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 5 + 1, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 6 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -122,9 +122,19 @@ impl HapService for CarbonMonoxideSensorService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.carbon_monoxide_detected,
 		];
+		if let Some(c) = &self.carbon_monoxide_level {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.carbon_monoxide_peak_level {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &self.status_active {
 		    characteristics.push(c);
 		}
@@ -137,22 +147,23 @@ impl HapService for CarbonMonoxideSensorService {
 		if let Some(c) = &self.status_tampered {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.carbon_monoxide_level {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.carbon_monoxide_peak_level {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.carbon_monoxide_detected,
 		];
+		if let Some(c) = &mut self.carbon_monoxide_level {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.carbon_monoxide_peak_level {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
 		if let Some(c) = &mut self.status_active {
 		    characteristics.push(c);
 		}
@@ -163,15 +174,6 @@ impl HapService for CarbonMonoxideSensorService {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.status_tampered {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.carbon_monoxide_level {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.carbon_monoxide_peak_level {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		characteristics

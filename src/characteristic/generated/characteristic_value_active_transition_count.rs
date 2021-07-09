@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Characteristic Value Active Transition Count Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CharacteristicValueActiveTransitionCountCharacteristic(Characteristic<u8>);

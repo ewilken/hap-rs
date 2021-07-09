@@ -60,3 +60,23 @@ tokio = { version = "1.6", features = ["rt-multi-thread", "time"] }
 
 [workspace]
 members = ["codegen"]
+
+[[example]]
+name = "adding_accessories_dynamically"
+path = "examples/special/adding_accessories_dynamically.rs"
+
+[[example]]
+name = "async_callbacks"
+path = "examples/special/async_callbacks.rs"
+
+[[example]]
+name = "bridged_accessories"
+path = "examples/special/bridged_accessories.rs"
+
+[[example]]
+name = "callbacks"
+path = "examples/special/callbacks.rs"
+
+[[example]]
+name = "setting_values_after_server_start"
+path = "examples/special/setting_values_after_server_start.rs"

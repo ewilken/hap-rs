@@ -25,10 +25,15 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Occupancy Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OccupancyDetectedCharacteristic(Characteristic<u8>);
+
+pub enum Value {
+	OccupancyDetected = 1,
+	OccupancyNotDetected = 0,
+}
 
 impl OccupancyDetectedCharacteristic {
     /// Creates a new Occupancy Detected Characteristic.
@@ -45,6 +50,10 @@ impl OccupancyDetectedCharacteristic {
 			max_value: Some(1),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				1, // OCCUPANCY_DETECTED
+				0, // OCCUPANCY_NOT_DETECTED
+			]),
             ..Default::default()
         })
     }

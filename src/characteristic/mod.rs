@@ -336,13 +336,17 @@ pub enum Unit {
     #[serde(rename = "fahrenheit")]
     Fahrenheit,
     #[serde(rename = "percentage")]
-    Percent,
+    Percentage,
     #[serde(rename = "arcdegrees")]
     ArcDegrees,
     #[serde(rename = "lux")]
     Lux,
     #[serde(rename = "seconds")]
     Seconds,
+    #[serde(rename = "ppm")]
+    PartsPerMillion,
+    #[serde(rename = "micrograms/m^3")]
+    MicrogramsPerCubicMeter,
 }
 
 /// Format (data type) of a `Characteristic`.

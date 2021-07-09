@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Periodic Snapshots Active Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PeriodicSnapshotsActiveCharacteristic(Characteristic<bool>);

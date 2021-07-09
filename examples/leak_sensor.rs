@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{leak_sensor::LeakSensorAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, leak_sensor::LeakSensorAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

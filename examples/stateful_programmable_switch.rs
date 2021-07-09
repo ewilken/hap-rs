@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{valve::ValveAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, stateful_programmable_switch::StatefulProgrammableSwitchAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -11,8 +11,8 @@ use hap::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let sprinkler = ValveAccessory::new(1, AccessoryInformation {
-        name: "Acme Sprinkler".into(),
+    let stateful_programmable_switch = StatefulProgrammableSwitchAccessory::new(1, AccessoryInformation {
+        name: "Acme Stateful Programmable Switch".into(),
         ..Default::default()
     })?;
 
@@ -27,9 +27,9 @@ async fn main() -> Result<()> {
         Err(_) => {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-                name: "Acme Sprinkler".into(),
+                name: "Acme Stateful Programmable Switch".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-                category: AccessoryCategory::Sprinklers,
+                category: AccessoryCategory::ProgrammableSwitch,
                 ..Default::default()
             };
             storage.save_config(&config).await?;
@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
     };
 
     let server = IpServer::new(config, storage).await?;
-    server.add_accessory(sprinkler).await?;
+    server.add_accessory(stateful_programmable_switch).await?;
 
     let handle = server.run_handle();
 

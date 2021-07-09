@@ -6,9 +6,9 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		on::OnCharacteristic,
-		outlet_in_use::OutletInUseCharacteristic,
+		power_state::PowerStateCharacteristic,
 		name::NameCharacteristic,
+		outlet_in_use::OutletInUseCharacteristic,
 	},
     HapType,
 };
@@ -27,13 +27,13 @@ pub struct OutletService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// On Characteristic (required).
-	pub on: OnCharacteristic,
-	/// Outlet In Use Characteristic (required).
-	pub outlet_in_use: OutletInUseCharacteristic,
+	/// Power State Characteristic (required).
+	pub power_state: PowerStateCharacteristic,
 
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
+	/// Outlet In Use Characteristic (optional).
+	pub outlet_in_use: Option<OutletInUseCharacteristic>,
 }
 
 impl OutletService {
@@ -42,9 +42,9 @@ impl OutletService {
         Self {
             id,
             hap_type: HapType::Outlet,
-			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
-			outlet_in_use: OutletInUseCharacteristic::new(id + 1 + 1, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			outlet_in_use: Some(OutletInUseCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -102,22 +102,28 @@ impl HapService for OutletService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.on,
-			&self.outlet_in_use,
+			&self.power_state,
 		];
 		if let Some(c) = &self.name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.outlet_in_use {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.on,
-			&mut self.outlet_in_use,
+			&mut self.power_state,
 		];
 		if let Some(c) = &mut self.name {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.outlet_in_use {
 		    characteristics.push(c);
 		}
 		characteristics

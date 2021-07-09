@@ -25,10 +25,16 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Charging State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ChargingStateCharacteristic(Characteristic<u8>);
+
+pub enum Value {
+	Charging = 1,
+	NotChargeable = 2,
+	NotCharging = 0,
+}
 
 impl ChargingStateCharacteristic {
     /// Creates a new Charging State Characteristic.
@@ -45,6 +51,11 @@ impl ChargingStateCharacteristic {
 			max_value: Some(2),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				1, // CHARGING
+				2, // NOT_CHARGEABLE
+				0, // NOT_CHARGING
+			]),
             ..Default::default()
         })
     }

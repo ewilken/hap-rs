@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Brightness Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct BrightnessCharacteristic(Characteristic<i32>);

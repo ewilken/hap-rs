@@ -25,10 +25,15 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Rotation Direction Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RotationDirectionCharacteristic(Characteristic<i32>);
+
+pub enum Value {
+	Clockwise = 0,
+	Counterclockwise = 1,
+}
 
 impl RotationDirectionCharacteristic {
     /// Creates a new Rotation Direction Characteristic.
@@ -46,6 +51,10 @@ impl RotationDirectionCharacteristic {
 			max_value: Some(1),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				0, // CLOCKWISE
+				1, // COUNTERCLOCKWISE
+			]),
             ..Default::default()
         })
     }

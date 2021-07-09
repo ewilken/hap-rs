@@ -6,20 +6,17 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		battery_level::BatteryLevelCharacteristic,
-		charging_state::ChargingStateCharacteristic,
-		status_low_battery::StatusLowBatteryCharacteristic,
-		name::NameCharacteristic,
+		supported_diagnostics_snapshot::SupportedDiagnosticsSnapshotCharacteristic,
 	},
     HapType,
 };
 
-/// Battery Service Service.
+/// Diagnostics Service.
 #[derive(Debug, Default)]
-pub struct BatteryServiceService {
-    /// Instance ID of the Battery Service Service.
+pub struct DiagnosticsService {
+    /// Instance ID of the Diagnostics Service.
     id: u64,
-    /// `HapType` of the Battery Service Service.
+    /// `HapType` of the Diagnostics Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,33 +25,24 @@ pub struct BatteryServiceService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Battery Level Characteristic (required).
-	pub battery_level: BatteryLevelCharacteristic,
-	/// Charging State Characteristic (required).
-	pub charging_state: ChargingStateCharacteristic,
-	/// Status Low Battery Characteristic (required).
-	pub status_low_battery: StatusLowBatteryCharacteristic,
+	/// Supported Diagnostics Snapshot Characteristic (required).
+	pub supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic,
 
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 }
 
-impl BatteryServiceService {
-    /// Creates a new Battery Service Service.
+impl DiagnosticsService {
+    /// Creates a new Diagnostics Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::BatteryService,
-			battery_level: BatteryLevelCharacteristic::new(id + 1 + 0, accessory_id),
-			charging_state: ChargingStateCharacteristic::new(id + 1 + 1, accessory_id),
-			status_low_battery: StatusLowBatteryCharacteristic::new(id + 1 + 2, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+            hap_type: HapType::Diagnostics,
+			supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic::new(id + 1 + 0, accessory_id),
 			..Default::default()
         }
     }
 }
 
-impl HapService for BatteryServiceService {
+impl HapService for DiagnosticsService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -106,31 +94,23 @@ impl HapService for BatteryServiceService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.battery_level,
-			&self.charging_state,
-			&self.status_low_battery,
+			&self.supported_diagnostics_snapshot,
 		];
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.battery_level,
-			&mut self.charging_state,
-			&mut self.status_low_battery,
+			&mut self.supported_diagnostics_snapshot,
 		];
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 }
 
-impl Serialize for BatteryServiceService {
+impl Serialize for DiagnosticsService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

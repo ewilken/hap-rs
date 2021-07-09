@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Lock Control Point Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockControlPointCharacteristic(Characteristic<Vec<u8>>);

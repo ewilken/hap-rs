@@ -6,7 +6,7 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		on::OnCharacteristic,
+		power_state::PowerStateCharacteristic,
 		name::NameCharacteristic,
 	},
     HapType,
@@ -26,8 +26,8 @@ pub struct SwitchService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// On Characteristic (required).
-	pub on: OnCharacteristic,
+	/// Power State Characteristic (required).
+	pub power_state: PowerStateCharacteristic,
 
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
@@ -39,7 +39,7 @@ impl SwitchService {
         Self {
             id,
             hap_type: HapType::Switch,
-			on: OnCharacteristic::new(id + 1 + 0, accessory_id),
+			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
 			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
 			..Default::default()
         }
@@ -98,8 +98,9 @@ impl HapService for SwitchService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.on,
+			&self.power_state,
 		];
 		if let Some(c) = &self.name {
 		    characteristics.push(c);
@@ -108,8 +109,9 @@ impl HapService for SwitchService {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.on,
+			&mut self.power_state,
 		];
 		if let Some(c) = &mut self.name {
 		    characteristics.push(c);

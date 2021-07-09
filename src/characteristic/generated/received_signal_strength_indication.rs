@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Received Signal Strength Indication Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ReceivedSignalStrengthIndicationCharacteristic(Characteristic<i32>);

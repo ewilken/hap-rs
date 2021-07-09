@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Network Client Status Control Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct NetworkClientStatusControlCharacteristic(Characteristic<Vec<u8>>);

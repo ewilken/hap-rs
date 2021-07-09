@@ -8,7 +8,7 @@ use crate::{
         HapCharacteristic,
 		programmable_switch_event::ProgrammableSwitchEventCharacteristic,
 		name::NameCharacteristic,
-		service_label_index::ServiceLabelIndexCharacteristic,
+		label_index::LabelIndexCharacteristic,
 	},
     HapType,
 };
@@ -32,8 +32,8 @@ pub struct StatelessProgrammableSwitchService {
 
 	/// Name Characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Service Label Index Characteristic (optional).
-	pub service_label_index: Option<ServiceLabelIndexCharacteristic>,
+	/// Label Index Characteristic (optional).
+	pub label_index: Option<LabelIndexCharacteristic>,
 }
 
 impl StatelessProgrammableSwitchService {
@@ -44,7 +44,7 @@ impl StatelessProgrammableSwitchService {
             hap_type: HapType::StatelessProgrammableSwitch,
 			programmable_switch_event: ProgrammableSwitchEventCharacteristic::new(id + 1 + 0, accessory_id),
 			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			service_label_index: Some(ServiceLabelIndexCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			label_index: Some(LabelIndexCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -102,26 +102,28 @@ impl HapService for StatelessProgrammableSwitchService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.programmable_switch_event,
 		];
 		if let Some(c) = &self.name {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.service_label_index {
+		if let Some(c) = &self.label_index {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.programmable_switch_event,
 		];
 		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.service_label_index {
+		if let Some(c) = &mut self.label_index {
 		    characteristics.push(c);
 		}
 		characteristics

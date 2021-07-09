@@ -6,9 +6,8 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		volume::VolumeCharacteristic,
 		mute::MuteCharacteristic,
-		name::NameCharacteristic,
+		volume::VolumeCharacteristic,
 	},
     HapType,
 };
@@ -27,13 +26,11 @@ pub struct MicrophoneService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Volume Characteristic (required).
-	pub volume: VolumeCharacteristic,
 	/// Mute Characteristic (required).
 	pub mute: MuteCharacteristic,
 
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
+	/// Volume Characteristic (optional).
+	pub volume: Option<VolumeCharacteristic>,
 }
 
 impl MicrophoneService {
@@ -42,9 +39,8 @@ impl MicrophoneService {
         Self {
             id,
             hap_type: HapType::Microphone,
-			volume: VolumeCharacteristic::new(id + 1 + 0, accessory_id),
-			mute: MuteCharacteristic::new(id + 1 + 1, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			mute: MuteCharacteristic::new(id + 1 + 0, accessory_id),
+			volume: Some(VolumeCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -102,22 +98,22 @@ impl HapService for MicrophoneService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.volume,
 			&self.mute,
 		];
-		if let Some(c) = &self.name {
+		if let Some(c) = &self.volume {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.volume,
 			&mut self.mute,
 		];
-		if let Some(c) = &mut self.name {
+		if let Some(c) = &mut self.volume {
 		    characteristics.push(c);
 		}
 		characteristics

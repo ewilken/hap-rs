@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Application Matching Identifier Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ApplicationMatchingIdentifierCharacteristic(Characteristic<Vec<u8>>);

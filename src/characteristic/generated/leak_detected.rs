@@ -25,10 +25,15 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Leak Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LeakDetectedCharacteristic(Characteristic<u8>);
+
+pub enum Value {
+	LeakDetected = 1,
+	LeakNotDetected = 0,
+}
 
 impl LeakDetectedCharacteristic {
     /// Creates a new Leak Detected Characteristic.
@@ -45,6 +50,10 @@ impl LeakDetectedCharacteristic {
 			max_value: Some(1),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				1, // LEAK_DETECTED
+				0, // LEAK_NOT_DETECTED
+			]),
             ..Default::default()
         })
     }

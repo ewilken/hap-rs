@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Wake Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct WakeConfigurationCharacteristic(Characteristic<Vec<u8>>);

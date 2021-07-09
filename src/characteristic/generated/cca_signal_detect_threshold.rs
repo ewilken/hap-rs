@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// CCA Signal Detect Threshold Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CcaSignalDetectThresholdCharacteristic(Characteristic<i32>);

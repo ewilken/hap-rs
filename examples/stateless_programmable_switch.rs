@@ -1,9 +1,5 @@
 use hap::{
-    accessory::{
-        stateless_programmable_switch::StatelessProgrammableSwitchAccessory,
-        AccessoryCategory,
-        AccessoryInformation,
-    },
+    accessory::{AccessoryCategory, AccessoryInformation, stateless_programmable_switch::StatelessProgrammableSwitchAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -33,7 +29,7 @@ async fn main() -> Result<()> {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
                 name: "Acme Stateless Programmable Switch".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-                category: AccessoryCategory::Switch,
+                category: AccessoryCategory::ProgrammableSwitch,
                 ..Default::default()
             };
             storage.save_config(&config).await?;

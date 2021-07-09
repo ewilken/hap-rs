@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Current Vertical Tilt Angle Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentVerticalTiltAngleCharacteristic(Characteristic<i32>);

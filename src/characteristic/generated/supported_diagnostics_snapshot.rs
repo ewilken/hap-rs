@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Diagnostics Snapshot Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedDiagnosticsSnapshotCharacteristic(Characteristic<Vec<u8>>);

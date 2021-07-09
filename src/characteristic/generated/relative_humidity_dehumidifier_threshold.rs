@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Relative Humidity Dehumidifier Threshold Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RelativeHumidityDehumidifierThresholdCharacteristic(Characteristic<f32>);

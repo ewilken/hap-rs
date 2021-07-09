@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Audio Recording Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedAudioRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);

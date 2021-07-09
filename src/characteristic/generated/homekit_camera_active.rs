@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// HomeKit Camera Active Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HomekitCameraActiveCharacteristic(Characteristic<bool>);

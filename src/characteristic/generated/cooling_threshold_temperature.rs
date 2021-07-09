@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Cooling Threshold Temperature Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CoolingThresholdTemperatureCharacteristic(Characteristic<f32>);

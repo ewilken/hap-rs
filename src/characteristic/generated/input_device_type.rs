@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Input Device Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct InputDeviceTypeCharacteristic(Characteristic<u8>);

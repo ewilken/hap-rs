@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Target Temperature Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetTemperatureCharacteristic(Characteristic<f32>);

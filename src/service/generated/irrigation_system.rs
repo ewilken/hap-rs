@@ -9,19 +9,19 @@ use crate::{
 		active::ActiveCharacteristic,
 		program_mode::ProgramModeCharacteristic,
 		in_use::InUseCharacteristic,
-		name::NameCharacteristic,
 		remaining_duration::RemainingDurationCharacteristic,
+		name::NameCharacteristic,
 		status_fault::StatusFaultCharacteristic,
 	},
     HapType,
 };
 
-/// Irrigation System Service.
+/// Irrigation-System Service.
 #[derive(Debug, Default)]
 pub struct IrrigationSystemService {
-    /// Instance ID of the Irrigation System Service.
+    /// Instance ID of the Irrigation-System Service.
     id: u64,
-    /// `HapType` of the Irrigation System Service.
+    /// `HapType` of the Irrigation-System Service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -37,16 +37,16 @@ pub struct IrrigationSystemService {
 	/// In Use Characteristic (required).
 	pub in_use: InUseCharacteristic,
 
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
 	/// Remaining Duration Characteristic (optional).
 	pub remaining_duration: Option<RemainingDurationCharacteristic>,
+	/// Name Characteristic (optional).
+	pub name: Option<NameCharacteristic>,
 	/// Status Fault Characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
 }
 
 impl IrrigationSystemService {
-    /// Creates a new Irrigation System Service.
+    /// Creates a new Irrigation-System Service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
@@ -54,8 +54,8 @@ impl IrrigationSystemService {
 			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
 			program_mode: ProgramModeCharacteristic::new(id + 1 + 1, accessory_id),
 			in_use: InUseCharacteristic::new(id + 1 + 2, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
-			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
+			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
 			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
 			..Default::default()
         }
@@ -114,15 +114,16 @@ impl HapService for IrrigationSystemService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.active,
 			&self.program_mode,
 			&self.in_use,
 		];
-		if let Some(c) = &self.name {
+		if let Some(c) = &self.remaining_duration {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &self.remaining_duration {
+		if let Some(c) = &self.name {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.status_fault {
@@ -132,15 +133,16 @@ impl HapService for IrrigationSystemService {
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.active,
 			&mut self.program_mode,
 			&mut self.in_use,
 		];
-		if let Some(c) = &mut self.name {
+		if let Some(c) = &mut self.remaining_duration {
 		    characteristics.push(c);
 		}
-		if let Some(c) = &mut self.remaining_duration {
+		if let Some(c) = &mut self.name {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.status_fault {

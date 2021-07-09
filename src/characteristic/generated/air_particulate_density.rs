@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Air Particulate Density Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AirParticulateDensityCharacteristic(Characteristic<f32>);
@@ -42,7 +42,7 @@ impl AirParticulateDensityCharacteristic {
 				Perm::Events,
 				Perm::PairedRead,
             ],
-			unit: Some(Unit::Percentage),
+			unit: Some(Unit::MicrogramsPerCubicMeter),
 			max_value: Some(1000 as f32),
 			min_value: Some(0 as f32),
             ..Default::default()

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Manufacturer Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ManufacturerCharacteristic(Characteristic<String>);

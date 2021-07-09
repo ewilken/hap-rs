@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Hardware Revision Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HardwareRevisionCharacteristic(Characteristic<String>);

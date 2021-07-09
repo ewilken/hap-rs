@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Current Water Level Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentWaterLevelCharacteristic(Characteristic<f32>);

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Siri Input Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SiriInputTypeCharacteristic(Characteristic<u8>);

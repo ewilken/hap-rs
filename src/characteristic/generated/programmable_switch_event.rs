@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Programmable Switch Event Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ProgrammableSwitchEventCharacteristic(Characteristic<u8>);

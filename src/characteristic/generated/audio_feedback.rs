@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Audio Feedback Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AudioFeedbackCharacteristic(Characteristic<bool>);

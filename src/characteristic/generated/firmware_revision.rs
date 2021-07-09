@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Firmware Revision Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FirmwareRevisionCharacteristic(Characteristic<String>);

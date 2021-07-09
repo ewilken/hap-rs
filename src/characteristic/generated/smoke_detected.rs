@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Smoke Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SmokeDetectedCharacteristic(Characteristic<u8>);

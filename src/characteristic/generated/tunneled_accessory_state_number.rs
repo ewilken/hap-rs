@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Tunneled Accessory State Number Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TunneledAccessoryStateNumberCharacteristic(Characteristic<i32>);

@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{carbon_dioxide_sensor::CarbonDioxideSensorAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, carbon_dioxide_sensor::CarbonDioxideSensorAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -12,7 +12,7 @@ use hap::{
 #[tokio::main]
 async fn main() -> Result<()> {
     let carbon_dioxide_sensor = CarbonDioxideSensorAccessory::new(1, AccessoryInformation {
-        name: "Acme Carbon Dioxide Sensor".into(),
+        name: "Acme Carbon dioxide Sensor".into(),
         ..Default::default()
     })?;
 
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
         Err(_) => {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-                name: "Acme Carbon Dioxide Sensor".into(),
+                name: "Acme Carbon dioxide Sensor".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
                 category: AccessoryCategory::Sensor,
                 ..Default::default()

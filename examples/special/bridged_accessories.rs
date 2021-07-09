@@ -31,28 +31,28 @@ async fn main() -> Result<()> {
 
     lightbulb_1
         .lightbulb
-        .on
+        .power_state
         .on_update(Some(|current_val: &bool, new_val: &bool| {
             println!(
-                "Lightbulb 1: on characteristic updated from {} to {}",
+                "Lightbulb 1: power_state characteristic updated from {} to {}",
                 current_val, new_val
             );
         }));
     lightbulb_2
         .lightbulb
-        .on
+        .power_state
         .on_update(Some(|current_val: &bool, new_val: &bool| {
             println!(
-                "Lightbulb 2: on characteristic updated from {} to {}",
+                "Lightbulb 2: power_state characteristic updated from {} to {}",
                 current_val, new_val
             );
         }));
     lightbulb_3
         .lightbulb
-        .on
+        .power_state
         .on_update(Some(|current_val: &bool, new_val: &bool| {
             println!(
-                "Lightbulb 3: on characteristic updated from {} to {}",
+                "Lightbulb 3: power_state characteristic updated from {} to {}",
                 current_val, new_val
             );
         }));

@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{contact_sensor::ContactSensorAccessory, AccessoryCategory, AccessoryInformation},
+    accessory::{AccessoryCategory, AccessoryInformation, contact_sensor::ContactSensorAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

@@ -7,8 +7,10 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 		mute::MuteCharacteristic,
-		name::NameCharacteristic,
+		active::ActiveCharacteristic,
 		volume::VolumeCharacteristic,
+		volume_control_type::VolumeControlTypeCharacteristic,
+		volume_selector::VolumeSelectorCharacteristic,
 	},
     HapType,
 };
@@ -30,10 +32,14 @@ pub struct SpeakerService {
 	/// Mute Characteristic (required).
 	pub mute: MuteCharacteristic,
 
-	/// Name Characteristic (optional).
-	pub name: Option<NameCharacteristic>,
+	/// Active Characteristic (optional).
+	pub active: Option<ActiveCharacteristic>,
 	/// Volume Characteristic (optional).
 	pub volume: Option<VolumeCharacteristic>,
+	/// Volume Control Type Characteristic (optional).
+	pub volume_control_type: Option<VolumeControlTypeCharacteristic>,
+	/// Volume Selector Characteristic (optional).
+	pub volume_selector: Option<VolumeSelectorCharacteristic>,
 }
 
 impl SpeakerService {
@@ -43,8 +49,10 @@ impl SpeakerService {
             id,
             hap_type: HapType::Speaker,
 			mute: MuteCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			active: Some(ActiveCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
 			volume: Some(VolumeCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			volume_control_type: Some(VolumeControlTypeCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			volume_selector: Some(VolumeSelectorCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -102,26 +110,40 @@ impl HapService for SpeakerService {
     }
 
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.mute,
 		];
-		if let Some(c) = &self.name {
+		if let Some(c) = &self.active {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &self.volume {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.volume_control_type {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.volume_selector {
 		    characteristics.push(c);
 		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
+        #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.mute,
 		];
-		if let Some(c) = &mut self.name {
+		if let Some(c) = &mut self.active {
 		    characteristics.push(c);
 		}
 		if let Some(c) = &mut self.volume {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.volume_control_type {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.volume_selector {
 		    characteristics.push(c);
 		}
 		characteristics

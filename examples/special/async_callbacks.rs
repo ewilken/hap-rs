@@ -18,19 +18,19 @@ async fn main() -> Result<()> {
         ..Default::default()
     })?;
 
-    lightbulb.lightbulb.on.on_read_async(Some(|| {
+    lightbulb.lightbulb.power_state.on_read_async(Some(|| {
         async {
-            println!("on characteristic read");
+            println!("power_state characteristic read");
             None
         }
         .boxed()
     }));
     lightbulb
         .lightbulb
-        .on
+        .power_state
         .on_update_async(Some(|current_val: bool, new_val: bool| {
             async move {
-                println!("on characteristic updated from {} to {}", current_val, new_val);
+                println!("power_state characteristic updated from {} to {}", current_val, new_val);
             }
             .boxed()
         }));

@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Temperature Display Units Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TemperatureDisplayUnitsCharacteristic(Characteristic<u8>);

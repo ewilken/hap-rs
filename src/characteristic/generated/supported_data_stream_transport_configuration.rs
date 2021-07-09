@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Supported Data Stream Transport Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedDataStreamTransportConfigurationCharacteristic(Characteristic<Vec<u8>>);

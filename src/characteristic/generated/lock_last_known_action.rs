@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Lock Last Known Action Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockLastKnownActionCharacteristic(Characteristic<u8>);

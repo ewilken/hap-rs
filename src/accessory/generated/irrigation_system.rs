@@ -4,40 +4,40 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
 	accessory::{AccessoryInformation, HapAccessory},
-	service::{HapService, accessory_information::AccessoryInformationService, valve::ValveService},
+	service::{HapService, accessory_information::AccessoryInformationService, irrigation_system::IrrigationSystemService},
 	HapType,
 	Result,
 };
 
-/// Valve Accessory.
+/// Irrigation-System Accessory.
 #[derive(Debug, Default)]
-pub struct ValveAccessory {
-    /// ID of the Valve Accessory.
+pub struct IrrigationSystemAccessory {
+    /// ID of the Irrigation-System Accessory.
     id: u64,
 
     /// Accessory Information Service.
     pub accessory_information: AccessoryInformationService,
-    /// Valve Service.
-    pub valve: ValveService,
+    /// Irrigation-System Service.
+    pub irrigation_system: IrrigationSystemService,
 }
 
-impl ValveAccessory {
-    /// Creates a new Valve Accessory.
+impl IrrigationSystemAccessory {
+    /// Creates a new Irrigation-System Accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
-        let valve_id = accessory_information.get_characteristics().len() as u64;
-        let mut valve = ValveService::new(1 + valve_id + 1, id);
-        valve.set_primary(true);
+        let irrigation_system_id = accessory_information.get_characteristics().len() as u64;
+        let mut irrigation_system = IrrigationSystemService::new(1 + irrigation_system_id + 1, id);
+        irrigation_system.set_primary(true);
 
         Ok(Self {
             id,
             accessory_information,
-            valve,
+            irrigation_system,
         })
     }
 }
 
-impl HapAccessory for ValveAccessory {
+impl HapAccessory for IrrigationSystemAccessory {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -67,19 +67,19 @@ impl HapAccessory for ValveAccessory {
     fn get_services(&self) -> Vec<&dyn HapService> {
         vec![
             &self.accessory_information,
-            &self.valve,
+            &self.irrigation_system,
         ]
     }
 
     fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> {
         vec![
             &mut self.accessory_information,
-            &mut self.valve,
+            &mut self.irrigation_system,
         ]
     }
 }
 
-impl Serialize for ValveAccessory {
+impl Serialize for IrrigationSystemAccessory {
     fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapAccessory", 2)?;
         state.serialize_field("aid", &self.get_id())?;

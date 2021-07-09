@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Data Stream HAP Transport Interrupt Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct DataStreamHapTransportInterruptCharacteristic(Characteristic<Vec<u8>>);

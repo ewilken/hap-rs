@@ -25,7 +25,7 @@ use crate::{
     Result,
 };
 
-// TODO - re-check MaximumDataLength & ValidValues
+// TODO - re-check MaximumDataLength
 /// Sleep Interval Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SleepIntervalCharacteristic(Characteristic<u32>);

@@ -17,15 +17,15 @@ async fn main() -> Result<()> {
         ..Default::default()
     })?;
 
-    lightbulb.lightbulb.on.on_read(Some(|| {
-        println!("on characteristic read");
+    lightbulb.lightbulb.power_state.on_read(Some(|| {
+        println!("power_state characteristic read");
         None
     }));
     lightbulb
         .lightbulb
-        .on
+        .power_state
         .on_update(Some(|current_val: &bool, new_val: &bool| {
-            println!("on characteristic updated from {} to {}", current_val, new_val);
+            println!("power_state characteristic updated from {} to {}", current_val, new_val);
         }));
 
     let mut storage = FileStorage::current_dir().await?;
