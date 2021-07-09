@@ -25,26 +25,27 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Color Temperature Characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct ColorTemperatureCharacteristic(Characteristic<u32>);
+pub struct ColorTemperatureCharacteristic(Characteristic<i32>);
 
 impl ColorTemperatureCharacteristic {
     /// Creates a new Color Temperature Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<u32> {
+        Self(Characteristic::<i32> {
             id,
             accessory_id,
             hap_type: HapType::ColorTemperature,
-            format: Format::UInt32,
+            format: Format::Int32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				max_value: Some(500),
-				min_value: Some(140),
-				step_value: Some(1),
+			max_value: Some(500),
+			min_value: Some(140),
+			step_value: Some(1),
             ..Default::default()
         })
     }
@@ -106,14 +107,14 @@ impl HapCharacteristicSetup for ColorTemperatureCharacteristic {
     }
 }
 
-impl CharacteristicCallbacks<u32> for ColorTemperatureCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<u32>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<i32> for ColorTemperatureCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<i32>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<u32>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<i32>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<u32> for ColorTemperatureCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u32>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<i32> for ColorTemperatureCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<i32>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u32>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<i32>>) { self.0.on_update_async(f) }
 }

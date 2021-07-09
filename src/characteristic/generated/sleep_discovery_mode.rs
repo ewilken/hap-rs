@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Sleep Discovery Mode Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SleepDiscoveryModeCharacteristic(Characteristic<u8>);
@@ -38,15 +39,12 @@ impl SleepDiscoveryModeCharacteristic {
             hap_type: HapType::SleepDiscoveryMode,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(1),
-				min_value: Some(0),
-				valid_values: Some(vec![
-					0, // "NotDiscoverable"
-					1, // "AlwaysDiscoverable"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Filter Change Indication Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Filter Change indication Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FilterChangeIndicationCharacteristic(Characteristic<u8>);
 
 impl FilterChangeIndicationCharacteristic {
-    /// Creates a new Filter Change Indication Characteristic.
+    /// Creates a new Filter Change indication Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<u8> {
             id,
@@ -38,13 +39,12 @@ impl FilterChangeIndicationCharacteristic {
             hap_type: HapType::FilterChangeIndication,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Filter OK"
-					1, // "Change Filter"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

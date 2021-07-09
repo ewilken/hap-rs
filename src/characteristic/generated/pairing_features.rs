@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Pairing Features Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PairingFeaturesCharacteristic(Characteristic<u8>);
@@ -38,7 +39,8 @@ impl PairingFeaturesCharacteristic {
             hap_type: HapType::PairingFeatures,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

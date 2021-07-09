@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Night Vision Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct NightVisionCharacteristic(Characteristic<bool>);
@@ -38,9 +39,10 @@ impl NightVisionCharacteristic {
             hap_type: HapType::NightVision,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
+				Perm::TimedWrite,
             ],
             ..Default::default()
         })

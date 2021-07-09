@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Identify Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct IdentifyCharacteristic(Characteristic<bool>);
@@ -38,7 +39,7 @@ impl IdentifyCharacteristic {
             hap_type: HapType::Identify,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedWrite,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

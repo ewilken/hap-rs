@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Rotation Direction Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RotationDirectionCharacteristic(Characteristic<i32>);
@@ -38,14 +39,13 @@ impl RotationDirectionCharacteristic {
             hap_type: HapType::RotationDirection,
             format: Format::Int32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Clockwise"
-					1, // "Counter-clockwise"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Logs Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LogsCharacteristic(Characteristic<Vec<u8>>);
@@ -38,8 +39,8 @@ impl LogsCharacteristic {
             hap_type: HapType::Logs,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Obstruction Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ObstructionDetectedCharacteristic(Characteristic<bool>);
@@ -38,8 +39,8 @@ impl ObstructionDetectedCharacteristic {
             hap_type: HapType::ObstructionDetected,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

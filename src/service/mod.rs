@@ -20,6 +20,10 @@ pub trait HapService: erased_serde::Serialize + Send + Sync {
     fn get_primary(&self) -> bool;
     /// Sets the primary value of a Service.
     fn set_primary(&mut self, primary: bool);
+    /// Returns the linked_services value of a Service.
+    fn get_linked_services(&self) -> Vec<u64>;
+    /// Sets the linked_services value of a Service.
+    fn set_linked_services(&mut self, linked_services: Vec<u64>);
     /// Returns a reference to a specific Characteristic of the Service if it's present on it.
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic>;
     /// Returns a mutable reference to a specific Characteristic of the Service if it's present on it.

@@ -24,14 +24,16 @@ use crate::{
 /// Humidifier Dehumidifier Service.
 #[derive(Debug, Default)]
 pub struct HumidifierDehumidifierService {
-    /// ID of the Humidifier Dehumidifier Service.
+    /// Instance ID of the Humidifier Dehumidifier Service.
     id: u64,
     /// `HapType` of the Humidifier Dehumidifier Service.
     hap_type: HapType,
-    /// Specifies if the Service is hidden.
+    /// When set to true, this service is not visible to user.
     hidden: bool,
-    /// Specifies if the Service is the primary Service of the Accessory.
+    /// When set to true, this is the primary service on the accessory.
     primary: bool,
+    /// An array of numbers containing the instance IDs of the services that this service links to.
+    linked_services: Vec<u64>,
 
 	/// Current Relative Humidity Characteristic (required).
 	pub current_relative_humidity: CurrentRelativeHumidityCharacteristic,
@@ -103,6 +105,14 @@ impl HapService for HumidifierDehumidifierService {
 
     fn set_primary(&mut self, primary: bool) {
         self.primary = primary;
+    }
+
+    fn get_linked_services(&self) -> Vec<u64> {
+        self.linked_services.clone()
+    }
+
+    fn set_linked_services(&mut self, linked_services: Vec<u64>) {
+        self.linked_services = linked_services;
     }
 
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic> {

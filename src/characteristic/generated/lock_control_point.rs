@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Lock Control Point Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockControlPointCharacteristic(Characteristic<Vec<u8>>);
@@ -38,7 +39,7 @@ impl LockControlPointCharacteristic {
             hap_type: HapType::LockControlPoint,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedWrite,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

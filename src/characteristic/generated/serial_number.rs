@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Serial Number Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SerialNumberCharacteristic(Characteristic<String>);
@@ -38,9 +39,8 @@ impl SerialNumberCharacteristic {
             hap_type: HapType::SerialNumber,
             format: Format::String,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
-				max_len: Some(64),
             ..Default::default()
         })
     }

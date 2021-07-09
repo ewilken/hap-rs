@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Volume Selector Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VolumeSelectorCharacteristic(Characteristic<u8>);
@@ -38,15 +39,11 @@ impl VolumeSelectorCharacteristic {
             hap_type: HapType::VolumeSelector,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedWrite,
+				Perm::PairedWrite,
             ],
-				max_value: Some(1),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "Increment"
-					1, // "Decrement"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

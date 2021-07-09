@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Firmware Revision Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FirmwareRevisionCharacteristic(Characteristic<String>);
@@ -38,7 +39,7 @@ impl FirmwareRevisionCharacteristic {
             hap_type: HapType::FirmwareRevision,
             format: Format::String,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

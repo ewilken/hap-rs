@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Input Source Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct InputSourceTypeCharacteristic(Characteristic<u8>);
@@ -38,25 +39,12 @@ impl InputSourceTypeCharacteristic {
             hap_type: HapType::InputSourceType,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(10),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "Other"
-					1, // "HomeScreen"
-					10, // "Application"
-					2, // "Tuner"
-					3, // "Hdmi"
-					4, // "CompositeVideo"
-					5, // "SVideo"
-					6, // "ComponentVideo"
-					7, // "Dvi"
-					8, // "Airplay"
-					9, // "Usb"
-				]),
+			max_value: Some(10),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

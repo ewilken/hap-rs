@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Volume Control Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VolumeControlTypeCharacteristic(Characteristic<u8>);
@@ -38,18 +39,12 @@ impl VolumeControlTypeCharacteristic {
             hap_type: HapType::VolumeControlType,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(3),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "None"
-					1, // "Relative"
-					2, // "RelativeWithCurrent"
-					3, // "Absolute"
-				]),
+			max_value: Some(3),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

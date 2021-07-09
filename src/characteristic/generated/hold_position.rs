@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Hold Position Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HoldPositionCharacteristic(Characteristic<bool>);
@@ -38,7 +39,7 @@ impl HoldPositionCharacteristic {
             hap_type: HapType::HoldPosition,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedWrite,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

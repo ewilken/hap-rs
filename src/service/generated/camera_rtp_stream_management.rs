@@ -20,14 +20,16 @@ use crate::{
 /// Camera RTP Stream Management Service.
 #[derive(Debug, Default)]
 pub struct CameraRtpStreamManagementService {
-    /// ID of the Camera RTP Stream Management Service.
+    /// Instance ID of the Camera RTP Stream Management Service.
     id: u64,
     /// `HapType` of the Camera RTP Stream Management Service.
     hap_type: HapType,
-    /// Specifies if the Service is hidden.
+    /// When set to true, this service is not visible to user.
     hidden: bool,
-    /// Specifies if the Service is the primary Service of the Accessory.
+    /// When set to true, this is the primary service on the accessory.
     primary: bool,
+    /// An array of numbers containing the instance IDs of the services that this service links to.
+    linked_services: Vec<u64>,
 
 	/// Supported Video Stream Configuration Characteristic (required).
 	pub supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic,
@@ -87,6 +89,14 @@ impl HapService for CameraRtpStreamManagementService {
 
     fn set_primary(&mut self, primary: bool) {
         self.primary = primary;
+    }
+
+    fn get_linked_services(&self) -> Vec<u64> {
+        self.linked_services.clone()
+    }
+
+    fn set_linked_services(&mut self, linked_services: Vec<u64>) {
+        self.linked_services = linked_services;
     }
 
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic> {

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Mute Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MuteCharacteristic(Characteristic<bool>);
@@ -38,9 +39,9 @@ impl MuteCharacteristic {
             hap_type: HapType::Mute,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

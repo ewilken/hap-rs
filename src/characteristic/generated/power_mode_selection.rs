@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Power Mode Selection Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PowerModeSelectionCharacteristic(Characteristic<u8>);
@@ -38,15 +39,11 @@ impl PowerModeSelectionCharacteristic {
             hap_type: HapType::PowerModeSelection,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedWrite,
+				Perm::PairedWrite,
             ],
-				max_value: Some(1),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "Show"
-					1, // "Hide"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

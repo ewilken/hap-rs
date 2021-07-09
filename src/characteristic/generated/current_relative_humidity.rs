@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Relative Humidity Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentRelativeHumidityCharacteristic(Characteristic<f32>);
@@ -38,13 +39,13 @@ impl CurrentRelativeHumidityCharacteristic {
             hap_type: HapType::CurrentRelativeHumidity,
             format: Format::Float,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				unit: Some(Unit::Percentage),
-				max_value: Some(100 as f32),
-				min_value: Some(0 as f32),
-				step_value: Some(1 as f32),
+			unit: Some(Unit::Percentage),
+			max_value: Some(100 as f32),
+			min_value: Some(0 as f32),
+			step_value: Some(1 as f32),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Outlet In Use Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OutletInUseCharacteristic(Characteristic<bool>);
@@ -38,8 +39,8 @@ impl OutletInUseCharacteristic {
             hap_type: HapType::OutletInUse,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

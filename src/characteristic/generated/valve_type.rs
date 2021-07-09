@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Valve Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ValveTypeCharacteristic(Characteristic<u8>);
@@ -38,15 +39,12 @@ impl ValveTypeCharacteristic {
             hap_type: HapType::ValveType,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Generic valve"
-					1, // "Irrigation"
-					2, // "Shower head"
-					3, // "Water faucet"
-				]),
+			max_value: Some(3),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

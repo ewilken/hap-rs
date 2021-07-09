@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Status Active Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct StatusActiveCharacteristic(Characteristic<bool>);
@@ -38,8 +39,8 @@ impl StatusActiveCharacteristic {
             hap_type: HapType::StatusActive,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

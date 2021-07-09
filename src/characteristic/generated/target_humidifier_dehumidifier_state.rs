@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Target Humidifier Dehumidifier State Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Target Humidifier-Dehumidifier State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetHumidifierDehumidifierStateCharacteristic(Characteristic<u8>);
 
 impl TargetHumidifierDehumidifierStateCharacteristic {
-    /// Creates a new Target Humidifier Dehumidifier State Characteristic.
+    /// Creates a new Target Humidifier-Dehumidifier State Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<u8> {
             id,
@@ -38,15 +39,13 @@ impl TargetHumidifierDehumidifierStateCharacteristic {
             hap_type: HapType::TargetHumidifierDehumidifierState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Humidifier or Dehumidifier"
-					1, // "Humidifier"
-					2, // "Dehumidifier"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

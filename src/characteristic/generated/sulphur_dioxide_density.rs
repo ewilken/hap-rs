@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Sulphur Dioxide Density Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Sulphur dioxide Density Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SulphurDioxideDensityCharacteristic(Characteristic<f32>);
 
 impl SulphurDioxideDensityCharacteristic {
-    /// Creates a new Sulphur Dioxide Density Characteristic.
+    /// Creates a new Sulphur dioxide Density Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<f32> {
             id,
@@ -38,12 +39,13 @@ impl SulphurDioxideDensityCharacteristic {
             hap_type: HapType::SulphurDioxideDensity,
             format: Format::Float,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(1000 as f32),
-				min_value: Some(0 as f32),
-				step_value: Some(1 as f32),
+			unit: Some(Unit::Percentage),
+			max_value: Some(1000 as f32),
+			min_value: Some(0 as f32),
+			step_value: Some(1 as f32),
             ..Default::default()
         })
     }

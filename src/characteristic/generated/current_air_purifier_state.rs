@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Air Purifier State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentAirPurifierStateCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl CurrentAirPurifierStateCharacteristic {
             hap_type: HapType::CurrentAirPurifierState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Inactive"
-					1, // "Idle"
-					2, // "Purifying Air"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

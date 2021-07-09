@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Audio Feedback Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AudioFeedbackCharacteristic(Characteristic<bool>);
@@ -38,9 +39,9 @@ impl AudioFeedbackCharacteristic {
             hap_type: HapType::AudioFeedback,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

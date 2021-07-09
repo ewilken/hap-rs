@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Contact Sensor State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ContactSensorStateCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl ContactSensorStateCharacteristic {
             hap_type: HapType::ContactSensorState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Contact Detected"
-					1, // "Contact Not Detected"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

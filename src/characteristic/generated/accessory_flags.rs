@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Accessory Flags Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AccessoryFlagsCharacteristic(Characteristic<u32>);
@@ -38,8 +39,8 @@ impl AccessoryFlagsCharacteristic {
             hap_type: HapType::AccessoryFlags,
             format: Format::UInt32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

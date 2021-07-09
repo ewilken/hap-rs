@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Streaming Status Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct StreamingStatusCharacteristic(Characteristic<Vec<u8>>);
@@ -38,8 +39,8 @@ impl StreamingStatusCharacteristic {
             hap_type: HapType::StreamingStatus,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Image Mirroring Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ImageMirroringCharacteristic(Characteristic<bool>);
@@ -38,9 +39,9 @@ impl ImageMirroringCharacteristic {
             hap_type: HapType::ImageMirroring,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

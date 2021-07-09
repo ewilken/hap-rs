@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Tilt Angle Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentTiltAngleCharacteristic(Characteristic<i32>);
@@ -38,13 +39,13 @@ impl CurrentTiltAngleCharacteristic {
             hap_type: HapType::CurrentTiltAngle,
             format: Format::Int32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				unit: Some(Unit::ArcDegrees),
-				max_value: Some(90),
-				min_value: Some(-90),
-				step_value: Some(1),
+			unit: Some(Unit::ArcDegrees),
+			max_value: Some(90),
+			min_value: Some(-90),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Set Duration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SetDurationCharacteristic(Characteristic<u32>);
@@ -38,13 +39,14 @@ impl SetDurationCharacteristic {
             hap_type: HapType::SetDuration,
             format: Format::UInt32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				max_value: Some(3600),
-				min_value: Some(0),
-				step_value: Some(1),
+			unit: Some(Unit::Seconds),
+			max_value: Some(3600),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

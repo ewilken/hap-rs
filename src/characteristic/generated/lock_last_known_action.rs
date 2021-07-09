@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Lock Last Known Action Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockLastKnownActionCharacteristic(Characteristic<u8>);
@@ -38,20 +39,12 @@ impl LockLastKnownActionCharacteristic {
             hap_type: HapType::LockLastKnownAction,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Secured Physically, Interior"
-					1, // "Unsecured Physically, Interior"
-					2, // "Secured Physically, Exterior"
-					3, // "Unsecured Physically, Exterior"
-					4, // "Secured by Keypad"
-					5, // "Unsecured by Keypad"
-					6, // "Secured Remotely"
-					7, // "Unsecured Remotely"
-					8, // "Secured by Auto Secure Timeout"
-				]),
+			max_value: Some(8),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

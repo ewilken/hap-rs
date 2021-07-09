@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Slat State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentSlatStateCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl CurrentSlatStateCharacteristic {
             hap_type: HapType::CurrentSlatState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Fixed"
-					1, // "Jammed"
-					2, // "Swinging"
-				]),
+			max_value: Some(3),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

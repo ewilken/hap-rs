@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Cooling Threshold Temperature Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CoolingThresholdTemperatureCharacteristic(Characteristic<f32>);
@@ -38,14 +39,14 @@ impl CoolingThresholdTemperatureCharacteristic {
             hap_type: HapType::CoolingThresholdTemperature,
             format: Format::Float,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				unit: Some(Unit::Celsius),
-				max_value: Some(35 as f32),
-				min_value: Some(10 as f32),
-				step_value: Some(0.1 as f32),
+			unit: Some(Unit::Celsius),
+			max_value: Some(35 as f32),
+			min_value: Some(10 as f32),
+			step_value: Some(0.1 as f32),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Security System Alarm Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SecuritySystemAlarmTypeCharacteristic(Characteristic<u8>);
@@ -38,12 +39,12 @@ impl SecuritySystemAlarmTypeCharacteristic {
             hap_type: HapType::SecuritySystemAlarmType,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(1),
-				min_value: Some(0),
-				step_value: Some(1),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

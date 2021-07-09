@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Supported RTP Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedRtpConfigurationCharacteristic(Characteristic<Vec<u8>>);
@@ -38,7 +39,7 @@ impl SupportedRtpConfigurationCharacteristic {
             hap_type: HapType::SupportedRtpConfiguration,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

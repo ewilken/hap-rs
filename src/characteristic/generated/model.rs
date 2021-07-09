@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Model Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ModelCharacteristic(Characteristic<String>);
@@ -38,7 +39,7 @@ impl ModelCharacteristic {
             hap_type: HapType::Model,
             format: Format::String,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

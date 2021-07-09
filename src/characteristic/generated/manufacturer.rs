@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Manufacturer Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ManufacturerCharacteristic(Characteristic<String>);
@@ -38,7 +39,7 @@ impl ManufacturerCharacteristic {
             hap_type: HapType::Manufacturer,
             format: Format::String,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

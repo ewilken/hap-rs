@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Position Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentPositionCharacteristic(Characteristic<u8>);
@@ -38,13 +39,13 @@ impl CurrentPositionCharacteristic {
             hap_type: HapType::CurrentPosition,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				unit: Some(Unit::Percentage),
-				max_value: Some(100),
-				min_value: Some(0),
-				step_value: Some(1),
+			unit: Some(Unit::Percentage),
+			max_value: Some(100),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Pair Setup Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PairSetupCharacteristic(Characteristic<Vec<u8>>);
@@ -38,8 +39,8 @@ impl PairSetupCharacteristic {
             hap_type: HapType::PairSetup,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

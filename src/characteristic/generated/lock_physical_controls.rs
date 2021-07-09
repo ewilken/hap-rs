@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Lock Physical Controls Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockPhysicalControlsCharacteristic(Characteristic<u8>);
@@ -38,14 +39,13 @@ impl LockPhysicalControlsCharacteristic {
             hap_type: HapType::LockPhysicalControls,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Control Lock Disabled"
-					1, // "Control Lock Enabled"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

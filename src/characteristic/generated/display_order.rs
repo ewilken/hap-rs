@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Display Order Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct DisplayOrderCharacteristic(Characteristic<Vec<u8>>);
@@ -38,9 +39,8 @@ impl DisplayOrderCharacteristic {
             hap_type: HapType::DisplayOrder,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

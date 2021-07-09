@@ -1,79 +1,146 @@
+use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::{
     collections::HashMap,
     fs::{self, File},
     io::Write,
 };
 
-use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError, Renderable};
-use serde::{Deserialize, Serialize};
-use serde_json::json;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SystemMetadata {
+    #[serde(rename = "Version")]
+    pub version: usize,
+    #[serde(rename = "SchemaVersion")]
+    pub schema_version: usize,
+    #[serde(rename = "PlistDictionary")]
+    pub plist_dictionary: SystemPlistDictionary,
+}
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Metadata {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SystemPlistDictionary {
+    #[serde(rename = "Version")]
+    pub version: usize,
+    #[serde(rename = "SchemaVersion")]
+    pub schema_version: usize,
+    #[serde(rename = "HomeKit")]
+    pub homekit: HomeKit,
+    #[serde(rename = "HAP")]
+    pub hap: Hap,
+    /* #[serde(rename = "Assistant")]
+     * pub assistant: Assistant, */
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HomeKit {
     #[serde(rename = "Categories")]
-    pub categories: Vec<Category>,
-    #[serde(rename = "Characteristics")]
-    pub characteristics: Vec<Characteristic>,
-    #[serde(rename = "Services")]
-    pub services: Vec<Service>,
+    pub categories: HashMap<String, HomeKitCategory>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Category {
-    #[serde(rename = "Name")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HomeKitCategory {
+    #[serde(rename = "DefaultDescription")]
     pub name: String,
-    #[serde(rename = "Category")]
+    #[serde(rename = "Identifier")]
     pub number: u8,
+    #[serde(rename = "UUID")]
+    pub uuid: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Characteristic {
-    #[serde(rename = "UUID")]
-    pub id: String,
-    #[serde(rename = "Name")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Hap {
+    #[serde(rename = "Base UUID")]
+    pub base_uuid: String,
+    #[serde(rename = "Characteristics")]
+    pub characteristics: HashMap<String, HapCharacteristic>,
+    #[serde(rename = "Services")]
+    pub services: HashMap<String, HapService>,
+    #[serde(rename = "Properties")]
+    pub properties: HashMap<String, HapProperty>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HapCharacteristic {
+    #[serde(rename = "ShortUUID")]
+    pub short_uuid: String,
+    #[serde(rename = "DefaultDescription")]
     pub name: String,
     #[serde(rename = "Format")]
     pub format: String,
-    #[serde(rename = "Unit")]
-    pub unit: Option<String>,
-    #[serde(rename = "Constraints")]
-    pub constraints: Option<Constraints>,
-    #[serde(rename = "Permissions")]
-    pub permissions: Option<Vec<String>>,
-    #[serde(rename = "Properties")]
-    pub properties: Option<Vec<String>>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Constraints {
-    #[serde(rename = "ValidValues")]
-    pub valid_values: Option<HashMap<String, String>>,
-    #[serde(rename = "MaximumValue")]
-    pub max_value: Option<serde_json::Value>,
-    #[serde(rename = "MinimumValue")]
-    pub min_value: Option<serde_json::Value>,
+    #[serde(rename = "MinValue")]
+    pub min_value: Option<Value>,
+    #[serde(rename = "MaxValue")]
+    pub max_value: Option<Value>,
     #[serde(rename = "StepValue")]
-    pub step_value: Option<serde_json::Value>,
-    #[serde(rename = "MaximumLength")]
-    pub max_len: Option<u16>,
+    pub step_value: Option<Value>,
+    #[serde(rename = "MaxLength")]
+    pub max_length: Option<Value>,
+    #[serde(rename = "Units")]
+    pub units: Option<String>,
+    #[serde(rename = "Properties")]
+    pub properties: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Service {
-    #[serde(rename = "UUID")]
-    pub id: String,
-    #[serde(rename = "Name")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HapService {
+    #[serde(rename = "ShortUUID")]
+    pub short_uuid: String,
+    #[serde(rename = "DefaultDescription")]
     pub name: String,
-    #[serde(rename = "RequiredCharacteristics")]
-    pub required_characteristics: Vec<String>,
-    #[serde(rename = "OptionalCharacteristics")]
-    pub optional_characteristics: Vec<String>,
+    #[serde(rename = "Characteristics")]
+    pub characteristics: HapServiceCharacteristicRelation,
 }
 
-#[derive(Debug)]
-struct MetadataEx<'a> {
-    metadata: Metadata,
-    characteristics: std::collections::HashMap<String, &'a Characteristic>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HapServiceCharacteristicRelation {
+    #[serde(rename = "Required")]
+    pub required_characteristics: Vec<String>,
+    #[serde(rename = "Optional")]
+    pub optional_characteristics: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HapProperty {
+    #[serde(rename = "DefaultDescription")]
+    pub name: String,
+    #[serde(rename = "Position")]
+    pub number: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct RenderMetadata {
+    pub categories: HashMap<String, HomeKitCategory>,
+    pub sorted_categories: Vec<HomeKitCategory>,
+    pub characteristics: HashMap<String, HapCharacteristic>,
+    pub sorted_characteristics: Vec<HapCharacteristic>,
+    pub services: HashMap<String, HapService>,
+    pub sorted_services: Vec<HapService>,
+    pub properties: HashMap<String, HapProperty>,
+}
+
+impl From<SystemMetadata> for RenderMetadata {
+    fn from(v: SystemMetadata) -> Self {
+        let m = v.plist_dictionary;
+
+        let mut sorted_categories = m.homekit.categories.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
+        sorted_categories.sort_by(|a, b| a.number.partial_cmp(&b.number).unwrap());
+
+        let mut sorted_characteristics = m.hap.characteristics.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
+        sorted_characteristics.sort_by(|a, b| a.name.cmp(&b.name));
+
+        let mut sorted_services = m.hap.services.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
+        sorted_services.sort_by(|a, b| a.name.cmp(&b.name));
+
+        Self {
+            categories: m.homekit.categories,
+            sorted_categories,
+            characteristics: m.hap.characteristics,
+            sorted_characteristics,
+            services: m.hap.services,
+            sorted_services,
+            properties: m.hap.properties,
+        }
+    }
 }
 
 fn if_eq_helper<'reg, 'rc>(
@@ -250,8 +317,11 @@ fn unit_helper(
                 out.write("Unit::Seconds")?;
             },
             _ => {
-                return Err(RenderError::new("Unknown Characteristic unit"));
+                out.write("Unit::Percentage")?; // TODO - do this properly
             },
+            /* _ => {
+             *     return Err(RenderError::new("Unknown Characteristic unit"));
+             * }, */
         }
     }
     Ok(())
@@ -295,21 +365,28 @@ fn perms_helper(
     _: &mut RenderContext,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
-    let params = h.param(0).unwrap().value().as_array().unwrap();
-    for param in params {
-        match param.as_str() {
-            Some("read") => {
-                out.write("\n\t\t\t\t\tPerm::PairedRead,")?;
-            },
-            Some("write") => {
-                out.write("\n\t\t\t\t\tPerm::PairedWrite,")?;
-            },
-            Some("cnotify") => {
-                out.write("\n\t\t\t\t\tPerm::Events,")?;
-            },
-            _ => {},
+    let perms = vec![
+        (1 << 0, "\n\t\t\t\tPerm::Events,".to_string()),
+        (1 << 1, "\n\t\t\t\tPerm::PairedRead,".to_string()),
+        (1 << 2, "\n\t\t\t\tPerm::PairedWrite,".to_string()),
+        // Relevant for Bluetooth.
+        // (1 << 3, "\n\t\t\t\tPerm::Broadcast,".to_string()),
+        // aa set by homed just signals that aa may be supported. Setting up aa will always require a custom made app
+        // though. (1 << 4, "\n\t\t\t\tPerm::AdditionalAuthorization,".to_string()),
+        (1 << 5, "\n\t\t\t\tPerm::TimedWrite,".to_string()),
+        (1 << 6, "\n\t\t\t\tPerm::Hidden,".to_string()),
+        (1 << 7, "\n\t\t\t\tPerm::WriteResponse,".to_string()),
+    ];
+
+    let properties_bitmap = h.param(0).unwrap().value().as_u64().unwrap();
+
+    for (bitmap, name) in perms {
+        // if it stays the same, the bit is set
+        if (bitmap | properties_bitmap) == properties_bitmap {
+            out.write(&name)?;
         }
     }
+
     Ok(())
 }
 
@@ -339,11 +416,7 @@ fn array_length_helper(
     Ok(())
 }
 
-fn shorten_uuid(id: &str) -> String {
-    id.split("-").collect::<Vec<&str>>()[0]
-        .trim_start_matches('0')
-        .to_owned()
-}
+fn shorten_uuid(id: &str) -> String { id.trim_start_matches('0').to_owned() }
 
 fn snake_case_helper(
     h: &Helper,
@@ -353,7 +426,11 @@ fn snake_case_helper(
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
     let param = h.param(0).unwrap().value().as_str().unwrap();
-    let name = param.replace(" ", "_").replace(".", "_").to_lowercase();
+    let name = param
+        .replace(" ", "_")
+        .replace(".", "_")
+        .replace("-", "_")
+        .to_lowercase();
     out.write(&name)?;
     Ok(())
 }
@@ -365,7 +442,8 @@ fn pascal_case_helper(
     _: &mut RenderContext,
     out: &mut dyn Output,
 ) -> Result<(), RenderError> {
-    let param = h.param(0).unwrap().value().as_str().unwrap();
+    let param = h.param(0).unwrap().value().as_str().unwrap().to_owned();
+    let param = param.replace("-", " ");
     let name = param
         .to_lowercase()
         .split(" ")
@@ -387,8 +465,8 @@ use serde::{Deserialize, Serialize};
 /// HAP Accessory category.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum AccessoryCategory {
-{{#each Categories as |c|}}\
-\t{{pascal_case c.Name}} = {{c.Category}},
+{{#each sorted_categories as |c|}}\
+\t{{pascal_case c.DefaultDescription}} = {{c.Identifier}},
 {{/each}}\
 }
 ";
@@ -406,11 +484,11 @@ use crate::Error;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum HapType {
     Unknown,
-{{#each Characteristics as |c|}}\
-\t{{pascal_case c.Name}},
+{{#each sorted_characteristics as |c|}}\
+\t{{pascal_case c.DefaultDescription}},
 {{/each}}\
-{{#each Services as |s|}}\
-\t{{pascal_case s.Name}},
+{{#each sorted_services as |s|}}\
+\t{{pascal_case s.DefaultDescription}},
 {{/each}}\
 }
 
@@ -418,11 +496,11 @@ impl ToString for HapType {
     fn to_string(&self) -> String {
         match self {
             HapType::Unknown => \"unknown\".into(),
-{{#each Characteristics as |c|}}\
-\t\t\tHapType::{{pascal_case c.Name}} => \"{{uuid c.UUID}}\".into(),
+{{#each sorted_characteristics as |c|}}\
+\t\t\tHapType::{{pascal_case c.DefaultDescription}} => \"{{uuid c.ShortUUID}}\".into(),
 {{/each}}\
-{{#each Services as |s|}}\
-\t\t\tHapType::{{pascal_case s.Name}} => \"{{uuid s.UUID}}\".into(),
+{{#each sorted_services as |s|}}\
+\t\t\tHapType::{{pascal_case s.DefaultDescription}} => \"{{uuid s.ShortUUID}}\".into(),
 {{/each}}\
 \t\t}
     }
@@ -434,11 +512,11 @@ impl FromStr for HapType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             \"unknown\" => Ok(HapType::Unknown),
-{{#each Characteristics as |c|}}\
-\t\t\t\"{{uuid c.UUID}}\" => Ok(HapType::{{pascal_case c.Name}}),
+{{#each sorted_characteristics as |c|}}\
+\t\t\t\"{{uuid c.ShortUUID}}\" => Ok(HapType::{{pascal_case c.DefaultDescription}}),
 {{/each}}\
-{{#each Services as |s|}}\
-\t\t\t\"{{uuid s.UUID}}\" => Ok(HapType::{{pascal_case s.Name}}),
+{{#each sorted_services as |s|}}\
+\t\t\t\"{{uuid s.ShortUUID}}\" => Ok(HapType::{{pascal_case s.DefaultDescription}}),
 {{/each}}\
 \t\t\t_ => Err(Error::InvalidHapTypeString(s.to_string())),
 \t\t}
@@ -493,34 +571,35 @@ use crate::{
     Result,
 };
 
-/// {{characteristic.Name}} Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// {{characteristic.DefaultDescription}} Characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct {{pascal_case characteristic.Name}}Characteristic(Characteristic<{{type characteristic.Format}}>);
+pub struct {{pascal_case characteristic.DefaultDescription}}Characteristic(Characteristic<{{type characteristic.Format}}>);
 
-impl {{pascal_case characteristic.Name}}Characteristic {
-    /// Creates a new {{characteristic.Name}} Characteristic.
+impl {{pascal_case characteristic.DefaultDescription}}Characteristic {
+    /// Creates a new {{characteristic.DefaultDescription}} Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<{{type characteristic.Format}}> {
             id,
             accessory_id,
-            hap_type: HapType::{{pascal_case characteristic.Name}},
+            hap_type: HapType::{{pascal_case characteristic.DefaultDescription}},
             format: {{format characteristic.Format}},
             perms: vec![{{perms characteristic.Properties}}
             ],\
-            {{#if characteristic.Unit}}\n\t\t\t\tunit: Some({{unit characteristic.Unit}}),{{/if}}\
-            {{#if characteristic.Constraints.MaximumValue includeZero=true}}\n\t\t\t\tmax_value: Some({{characteristic.Constraints.MaximumValue}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.Constraints.MinimumValue includeZero=true}}\n\t\t\t\tmin_value: Some({{characteristic.Constraints.MinimumValue}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.Constraints.StepValue includeZero=true}}\n\t\t\t\tstep_value: Some({{characteristic.Constraints.StepValue}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.Constraints.MaximumLength includeZero=true}}\n\t\t\t\tmax_len: Some({{characteristic.Constraints.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.Constraints.MaximumDataLength includeZero=true}}\n\t\t\t\tmax_data_len: Some({{characteristic.Constraints.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.Constraints.ValidValues includeZero=true}}\n\t\t\t\tvalid_values: Some({{valid_values characteristic.Constraints.ValidValues}}),{{/if}}
+            {{#if characteristic.Units}}\n\t\t\tunit: Some({{unit characteristic.Units}}),{{/if}}\
+            {{#if characteristic.MaxValue includeZero=true}}\n\t\t\tmax_value: Some({{characteristic.MaxValue}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.MinValue includeZero=true}}\n\t\t\tmin_value: Some({{characteristic.MinValue}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.StepValue includeZero=true}}\n\t\t\tstep_value: Some({{characteristic.StepValue}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.MaximumLength includeZero=true}}\n\t\t\tmax_len: Some({{characteristic.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.MaximumDataLength includeZero=true}}\n\t\t\tmax_data_len: Some({{characteristic.MaximumDataLength}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.ValidValues includeZero=true}}\n\t\t\tvalid_values: Some({{valid_values characteristic.ValidValues}}),{{/if}}
             ..Default::default()
         })
     }
 }
 
 #[async_trait]
-impl HapCharacteristic for {{pascal_case characteristic.Name}}Characteristic {
+impl HapCharacteristic for {{pascal_case characteristic.DefaultDescription}}Characteristic {
     fn get_id(&self) -> u64 { self.0.get_id() }
 
     fn get_type(&self) -> HapType { self.0.get_type() }
@@ -569,19 +648,19 @@ impl HapCharacteristic for {{pascal_case characteristic.Name}}Characteristic {
     fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
 }
 
-impl HapCharacteristicSetup for {{pascal_case characteristic.Name}}Characteristic {
+impl HapCharacteristicSetup for {{pascal_case characteristic.DefaultDescription}}Characteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.0.set_event_emitter(event_emitter)
     }
 }
 
-impl CharacteristicCallbacks<{{type characteristic.Format}}> for {{pascal_case characteristic.Name}}Characteristic {
+impl CharacteristicCallbacks<{{type characteristic.Format}}> for {{pascal_case characteristic.DefaultDescription}}Characteristic {
     fn on_read(&mut self, f: Option<impl OnReadFn<{{type characteristic.Format}}>>) { self.0.on_read(f) }
 
     fn on_update(&mut self, f: Option<impl OnUpdateFn<{{type characteristic.Format}}>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<{{type characteristic.Format}}> for {{pascal_case characteristic.Name}}Characteristic {
+impl AsyncCharacteristicCallbacks<{{type characteristic.Format}}> for {{pascal_case characteristic.DefaultDescription}}Characteristic {
     fn on_read_async(&mut self, f: Option<impl OnReadFuture<{{type characteristic.Format}}>>) { self.0.on_read_async(f) }
 
     fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<{{type characteristic.Format}}>>) { self.0.on_update_async(f) }
@@ -612,14 +691,16 @@ use crate::{
 /// {{service.Name}} Service.
 #[derive(Debug, Default)]
 pub struct {{pascal_case service.Name}}Service {
-    /// ID of the {{service.Name}} Service.
+    /// Instance ID of the {{service.Name}} Service.
     id: u64,
     /// `HapType` of the {{service.Name}} Service.
     hap_type: HapType,
-    /// Specifies if the Service is hidden.
+    /// When set to true, this service is not visible to user.
     hidden: bool,
-    /// Specifies if the Service is the primary Service of the Accessory.
+    /// When set to true, this is the primary service on the accessory.
     primary: bool,
+    /// An array of numbers containing the instance IDs of the services that this service links to.
+    linked_services: Vec<u64>,
 
 {{#each required_characteristics as |r|}}\
 \t/// {{r.Name}} Characteristic (required).
@@ -671,6 +752,14 @@ impl HapService for {{pascal_case service.Name}}Service {
 
     fn set_primary(&mut self, primary: bool) {
         self.primary = primary;
+    }
+
+    fn get_linked_services(&self) -> Vec<u64> {
+        self.linked_services.clone()
+    }
+
+    fn set_linked_services(&mut self, linked_services: Vec<u64>) {
+        self.linked_services = linked_services;
     }
 
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic> {
@@ -890,40 +979,41 @@ static ACCESSORY_MOD: &'static str = "// this file is auto-generated by hap-code
 // ";
 
 fn main() {
-    let official_metadata_file = File::open("codegen/gen/official.json").unwrap();
-    let unofficial_metadata_file = File::open("codegen/gen/unofficial.json").unwrap();
+    // let simulator_metadata_file = File::open("codegen/gen/simulator.json").unwrap();
+    let metadata_file = File::open("codegen/gen/system.json").unwrap();
 
-    let official_metadata: Metadata = serde_json::from_reader(&official_metadata_file).unwrap();
-    let mut unofficial_metadata: Metadata = serde_json::from_reader(&unofficial_metadata_file).unwrap();
+    // let simulator_metadata: Metadata = serde_json::from_reader(&simulator_metadata_file).unwrap();
+    let metadata: SystemMetadata = serde_json::from_reader(&metadata_file).unwrap();
+    let metadata = RenderMetadata::from(metadata);
 
-    let mut metadata = Metadata {
-        categories: official_metadata.categories,
-        characteristics: official_metadata.characteristics,
-        services: official_metadata.services,
-    };
+    // let mut metadata = Metadata {
+    //     categories: simulator_metadata.categories,
+    //     characteristics: simulator_metadata.characteristics,
+    //     services: simulator_metadata.services,
+    // };
 
-    metadata.categories.append(&mut unofficial_metadata.categories);
-    metadata
-        .characteristics
-        .append(&mut unofficial_metadata.characteristics);
-    metadata.services.append(&mut unofficial_metadata.services);
+    // metadata.categories.append(&mut unofficial_metadata.categories);
+    // metadata
+    //     .characteristics
+    //     .append(&mut unofficial_metadata.characteristics);
+    // metadata.services.append(&mut unofficial_metadata.services);
 
-    metadata
-        .categories
-        .sort_by(|a, b| a.number.partial_cmp(&b.number).unwrap());
-    metadata.characteristics.sort_by(|a, b| a.name.cmp(&b.name));
-    metadata.services.sort_by(|a, b| a.name.cmp(&b.name));
+    // metadata
+    //     .categories
+    //     .sort_by(|a, b| a.number.partial_cmp(&b.number).unwrap());
+    // metadata.characteristics.sort_by(|a, b| a.name.cmp(&b.name));
+    // metadata.services.sort_by(|a, b| a.name.cmp(&b.name));
 
-    let mut metadata_ex = MetadataEx {
-        metadata,
-        characteristics: std::collections::HashMap::new(),
-    };
-    let metadata = &metadata_ex.metadata;
+    // let mut metadata_ex = MetadataEx {
+    //     metadata,
+    //     characteristics: std::collections::HashMap::new(),
+    // };
+    // let metadata = &metadata_ex.metadata;
 
-    // build characteristic map
-    for c in &metadata.characteristics {
-        metadata_ex.characteristics.insert(c.id.to_string(), &c);
-    }
+    // // build characteristic map
+    // for c in &metadata.characteristics {
+    //     metadata_ex.characteristics.insert(c.id.to_string(), &c);
+    // }
 
     let mut handlebars = Handlebars::new();
     handlebars.register_helper("if_eq", Box::new(if_eq_helper));
@@ -970,23 +1060,29 @@ fn main() {
         fs::remove_dir_all(&characteristic_base_path).unwrap();
     }
     fs::create_dir_all(&characteristic_base_path).unwrap();
-    let mut characteristsic_names = vec![];
-    for c in &metadata.characteristics {
+    let mut characteristic_names = vec![];
+    for (_, c) in &metadata.characteristics {
         let characteristic = handlebars
             .render("characteristic", &json!({ "characteristic": c }))
             .unwrap();
-        let characteristic_file_name = c.name.replace(" ", "_").replace(".", "_").to_lowercase();
+        let characteristic_file_name = c
+            .name
+            .replace(" ", "_")
+            .replace(".", "_")
+            .replace("-", "_")
+            .to_lowercase();
         let mut characteristic_path = String::from(characteristic_base_path);
         characteristic_path.push_str(&characteristic_file_name);
         characteristic_path.push_str(".rs");
         let mut characteristic_file = File::create(&characteristic_path).unwrap();
         characteristic_file.write_all(characteristic.as_bytes()).unwrap();
-        characteristsic_names.push(characteristic_file_name);
+        characteristic_names.push(characteristic_file_name);
     }
+    characteristic_names.sort();
     let characteristic_mod = handlebars
         .render(
             "characteristic_mod",
-            &json!({ "characteristics": characteristsic_names }),
+            &json!({ "characteristics": characteristic_names }),
         )
         .unwrap();
     let mut characteristic_mod_file = File::create(&format!("{}mod.rs", characteristic_base_path)).unwrap();
@@ -994,87 +1090,87 @@ fn main() {
         .write_all(characteristic_mod.as_bytes())
         .unwrap();
 
-    let service_base_path = "src/service/generated/";
-    let accessory_base_path = "src/accessory/generated/";
-    if std::path::Path::new(&service_base_path).exists() {
-        fs::remove_dir_all(&service_base_path).unwrap();
-    }
-    if std::path::Path::new(&accessory_base_path).exists() {
-        fs::remove_dir_all(&accessory_base_path).unwrap();
-    }
-    fs::create_dir_all(&service_base_path).unwrap();
-    fs::create_dir_all(&accessory_base_path).unwrap();
-    let mut service_names = vec![];
-    let mut accessory_names = vec![];
-    for s in &metadata.services {
-        let mut required_characteristics = Vec::new();
-        let mut optional_characteristics = Vec::new();
+    // let service_base_path = "src/service/generated/";
+    // let accessory_base_path = "src/accessory/generated/";
+    // if std::path::Path::new(&service_base_path).exists() {
+    //     fs::remove_dir_all(&service_base_path).unwrap();
+    // }
+    // if std::path::Path::new(&accessory_base_path).exists() {
+    //     fs::remove_dir_all(&accessory_base_path).unwrap();
+    // }
+    // fs::create_dir_all(&service_base_path).unwrap();
+    // fs::create_dir_all(&accessory_base_path).unwrap();
+    // let mut service_names = vec![];
+    // let mut accessory_names = vec![];
+    // for s in &metadata.services {
+    //     let mut required_characteristics = Vec::new();
+    //     let mut optional_characteristics = Vec::new();
 
-        for c in &s.required_characteristics {
-            required_characteristics.push(metadata_ex.characteristics[c]);
-        }
+    //     for c in &s.required_characteristics {
+    //         required_characteristics.push(metadata_ex.characteristics[c]);
+    //     }
 
-        for c in &s.optional_characteristics {
-            optional_characteristics.push(metadata_ex.characteristics[c]);
-        }
+    //     for c in &s.optional_characteristics {
+    //         optional_characteristics.push(metadata_ex.characteristics[c]);
+    //     }
 
-        let service = handlebars
-            .render(
-                "service",
-                &json!({
-                    "service": s,
-                    "required_characteristics": &required_characteristics,
-                    "optional_characteristics": &optional_characteristics,
-                }),
-            )
-            .unwrap();
+    //     let service = handlebars
+    //         .render(
+    //             "service",
+    //             &json!({
+    //                 "service": s,
+    //                 "required_characteristics": &required_characteristics,
+    //                 "optional_characteristics": &optional_characteristics,
+    //             }),
+    //         )
+    //         .unwrap();
 
-        let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
-        let mut service_path = String::from(service_base_path);
-        service_path.push_str(&service_file_name);
-        service_path.push_str(".rs");
-        let mut service_file = File::create(&service_path).unwrap();
-        service_file.write_all(service.as_bytes()).unwrap();
-        service_names.push(service_file_name.clone());
+    //     let service_file_name = s.name.replace(" ", "_").replace(".", "_").to_lowercase();
+    //     let mut service_path = String::from(service_base_path);
+    //     service_path.push_str(&service_file_name);
+    //     service_path.push_str(".rs");
+    //     let mut service_file = File::create(&service_path).unwrap();
+    //     service_file.write_all(service.as_bytes()).unwrap();
+    //     service_names.push(service_file_name.clone());
 
-        if s.name != "Accessory Information"
-            && s.name != "Battery Service"
-            && s.name != "Camera RTP Stream Management"
-            && s.name != "Doorbell"
-            && s.name != "Faucet"
-            && s.name != "Filter Maintenance"
-            && s.name != "Irrigation System"
-            && s.name != "Lock Management"
-            && s.name != "Lock Mechanism"
-            && s.name != "Microphone"
-            && s.name != "Service Label"
-            && s.name != "Slat"
-            && s.name != "Speaker"
-            && s.name != "Television"
-            && s.name != "Input Source"
-        {
-            let accessory = handlebars
-                .render(
-                    "accessory",
-                    &json!({"service": s, "characteristics": &metadata.characteristics}),
-                )
-                .unwrap();
-            let mut accessory_path = String::from(accessory_base_path);
-            accessory_path.push_str(&service_file_name);
-            accessory_path.push_str(".rs");
-            let mut accessory_file = File::create(&accessory_path).unwrap();
-            accessory_file.write_all(accessory.as_bytes()).unwrap();
-            accessory_names.push(service_file_name);
-        }
-    }
-    let service_mod = handlebars
-        .render("service_mod", &json!({ "services": service_names }))
-        .unwrap();
-    let mut service_mod_file = File::create(&format!("{}mod.rs", service_base_path)).unwrap();
-    service_mod_file.write_all(service_mod.as_bytes()).unwrap();
-    let accessory_mod = handlebars
-        .render("accessory_mod", &json!({ "accessories": accessory_names }))
-        .unwrap();
-    let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
-    accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
+    //     if s.name != "Accessory Information"
+    //         && s.name != "Battery Service"
+    //         && s.name != "Camera RTP Stream Management"
+    //         && s.name != "Doorbell"
+    //         && s.name != "Faucet"
+    //         && s.name != "Filter Maintenance"
+    //         && s.name != "Irrigation System"
+    //         && s.name != "Lock Management"
+    //         && s.name != "Lock Mechanism"
+    //         && s.name != "Microphone"
+    //         && s.name != "Service Label"
+    //         && s.name != "Slat"
+    //         && s.name != "Speaker"
+    //         && s.name != "Television"
+    //         && s.name != "Input Source"
+    //     {
+    //         let accessory = handlebars
+    //             .render(
+    //                 "accessory",
+    //                 &json!({"service": s, "characteristics": &metadata.characteristics}),
+    //             )
+    //             .unwrap();
+    //         let mut accessory_path = String::from(accessory_base_path);
+    //         accessory_path.push_str(&service_file_name);
+    //         accessory_path.push_str(".rs");
+    //         let mut accessory_file = File::create(&accessory_path).unwrap();
+    //         accessory_file.write_all(accessory.as_bytes()).unwrap();
+    //         accessory_names.push(service_file_name);
+    //     }
+    // }
+    // let service_mod = handlebars
+    //     .render("service_mod", &json!({ "services": service_names }))
+    //     .unwrap();
+    // let mut service_mod_file = File::create(&format!("{}mod.rs", service_base_path)).unwrap();
+    // service_mod_file.write_all(service_mod.as_bytes()).unwrap();
+    // let accessory_mod = handlebars
+    //     .render("accessory_mod", &json!({ "accessories": accessory_names }))
+    //     .unwrap();
+    // let mut accessory_mod_file = File::create(&format!("{}mod.rs", accessory_base_path)).unwrap();
+    // accessory_mod_file.write_all(accessory_mod.as_bytes()).unwrap();
 }

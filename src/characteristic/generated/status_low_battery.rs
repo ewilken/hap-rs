@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Status Low Battery Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct StatusLowBatteryCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl StatusLowBatteryCharacteristic {
             hap_type: HapType::StatusLowBattery,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Battery Level Normal"
-					1, // "Battery Level Low"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

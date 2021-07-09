@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Closed Captions Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ClosedCaptionsCharacteristic(Characteristic<u8>);
@@ -38,17 +39,13 @@ impl ClosedCaptionsCharacteristic {
             hap_type: HapType::ClosedCaptions,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				max_value: Some(1),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "Disabled"
-					1, // "Enabled"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

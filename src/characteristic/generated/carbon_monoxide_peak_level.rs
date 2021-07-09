@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Carbon Monoxide Peak Level Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Carbon monoxide Peak Level Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CarbonMonoxidePeakLevelCharacteristic(Characteristic<f32>);
 
 impl CarbonMonoxidePeakLevelCharacteristic {
-    /// Creates a new Carbon Monoxide Peak Level Characteristic.
+    /// Creates a new Carbon monoxide Peak Level Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<f32> {
             id,
@@ -38,11 +39,13 @@ impl CarbonMonoxidePeakLevelCharacteristic {
             hap_type: HapType::CarbonMonoxidePeakLevel,
             format: Format::Float,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(100 as f32),
-				min_value: Some(0 as f32),
+			unit: Some(Unit::Percentage),
+			max_value: Some(100 as f32),
+			min_value: Some(0 as f32),
+			step_value: Some(1 as f32),
             ..Default::default()
         })
     }
