@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// In Use Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct InUseCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl InUseCharacteristic {
             hap_type: HapType::InUse,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Not in use"
-					1, // "In use"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -28,12 +28,12 @@ Ceiling Fan Accessory
 |   |-- Serial Characteristic
 |
 |-- Fan Service
-|   |-- On Characteristic
+|   |-- Power State Characteristic
 |   |-- Rotation Direction Characteristic
 |   |-- Rotation Speed Characteristic
 |
 |-- Lightbulb Service
-|   |-- On Characteristic
+|   |-- Power State Characteristic
 |   |-- Brightness Characteristic
 |   |-- Hue Characteristic
 |   |-- Saturation Characteristic
@@ -104,13 +104,13 @@ async fn main() -> Result<()> {
 ```rust
 use hap::characteristic::CharacteristicCallbacks;
 
-lightbulb.lightbulb.on.on_read(Some(|| {
-    println!("on characteristic read");
+lightbulb.lightbulb.power_state.on_read(Some(|| {
+    println!("power_state characteristic read");
     None
 }));
 
-lightbulb.lightbulb.on.on_update(Some(|current_val: &bool, new_val: &bool| {
-    println!("on characteristic updated from {} to {}", current_val, new_val);
+lightbulb.lightbulb.power_state.on_update(Some(|current_val: &bool, new_val: &bool| {
+    println!("power_state characteristic updated from {} to {}", current_val, new_val);
 }));
 ```
 
@@ -119,17 +119,17 @@ lightbulb.lightbulb.on.on_update(Some(|current_val: &bool, new_val: &bool| {
 ```rust
 use hap::characteristic::AsyncCharacteristicCallbacks;
 
-lightbulb.lightbulb.on.on_read_async(Some(|| {
+lightbulb.lightbulb.power_state.on_read_async(Some(|| {
     async {
-        println!("on characteristic read (async)");
+        println!("power_state characteristic read (async)");
         None
     }
     .boxed()
 }));
 
-lightbulb.lightbulb.on.on_update_async(Some(|current_val: bool, new_val: bool| {
+lightbulb.lightbulb.power_state.on_update_async(Some(|current_val: bool, new_val: bool| {
     async move {
-        println!("on characteristic updated from {} to {} (async)", current_val, new_val);
+        println!("power_state characteristic updated from {} to {} (async)", current_val, new_val);
     }
     .boxed()
 }));
@@ -143,7 +143,7 @@ use hap::{
     serde_json::Value,
 };
 
-lightbulb.lightbulb.on.set_value(Value::Bool(true)).await.unwrap();
+lightbulb.lightbulb.power_state.set_value(Value::Bool(true)).await.unwrap();
 ```
 
 ### Interacting with accessories added to the server
@@ -158,7 +158,7 @@ async {
 
 Accessories behind the pointer are represented by the `HapAccessory` trait. The `HapAccessory::get_service` and `HapAccessory::get_mut_service` methods provide access to the services of the accessory, represented by the `HapService` trait. The `HapService::get_characteristic` and `HapService::get_mut_characteristic` methods provide access to the characteristics of the service, represented by the `HapCharacteristic` trait. All services and characteristics are identified by their `HapType`.
 
-Accessing and changing the `on` characteristic of the `lightbulb` service of a `lightbulb` accessory would look like this:
+Accessing and changing the `power_state` characteristic of the `lightbulb` service of a `lightbulb` accessory would look like this:
 
 ```rust
 use hap::{HapType, serde_json::Value};
@@ -167,9 +167,9 @@ async {
     let mut lightbulb_accessory = lightbulb_ptr.lock().await;
 
     let lightbulb_service = lightbulb_accessory.get_mut_service(HapType::Lightbulb).unwrap();
-    let on_characteristic = lightbulb_service.get_mut_characteristic(HapType::On).unwrap();
+    let power_state_characteristic = lightbulb_service.get_mut_characteristic(HapType::PowerState).unwrap();
 
-    on_characteristic.set_value(Value::Bool(true)).await.unwrap();
+    power_state_characteristic.set_value(Value::Bool(true)).await.unwrap();
 }
 ```
 
@@ -201,17 +201,6 @@ let config = match storage.load_config().await {
     },
 };
 ```
-
-## TODOs
-
-- [x] IP Transport
-- [x] Default Accessories
-- [x] Lock Accessory
-- [x] Television Accessory
-- [ ] Camera Streams
-  - [ ] IP Camera Accessory
-  - [ ] Video Doorbell Accessory
-- [ ] BLE Transport
 
 ## Development
 

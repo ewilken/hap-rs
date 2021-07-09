@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Air Particulate Size Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AirParticulateSizeCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl AirParticulateSizeCharacteristic {
             hap_type: HapType::AirParticulateSize,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "2.5 μm"
-					1, // "10 μm"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

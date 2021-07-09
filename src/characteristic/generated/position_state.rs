@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Position State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PositionStateCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl PositionStateCharacteristic {
             hap_type: HapType::PositionState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Decreasing"
-					1, // "Increasing"
-					2, // "Stopped"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

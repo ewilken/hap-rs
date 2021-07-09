@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Supported Audio Stream Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedAudioStreamConfigurationCharacteristic(Characteristic<Vec<u8>>);
@@ -38,7 +39,7 @@ impl SupportedAudioStreamConfigurationCharacteristic {
             hap_type: HapType::SupportedAudioStreamConfiguration,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

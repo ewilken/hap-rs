@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Supported Camera Recording Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedCameraRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);
@@ -38,8 +39,8 @@ impl SupportedCameraRecordingConfigurationCharacteristic {
             hap_type: HapType::SupportedCameraRecordingConfiguration,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

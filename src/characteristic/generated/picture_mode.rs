@@ -25,36 +25,27 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Picture Mode Characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct PictureModeCharacteristic(Characteristic<u16>);
+pub struct PictureModeCharacteristic(Characteristic<u8>);
 
 impl PictureModeCharacteristic {
     /// Creates a new Picture Mode Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<u16> {
+        Self(Characteristic::<u8> {
             id,
             accessory_id,
             hap_type: HapType::PictureMode,
-            format: Format::UInt16,
+            format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				max_value: Some(13),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "Other"
-					1, // "Standard"
-					2, // "Calibrated"
-					3, // "CalibratedDark"
-					4, // "Vivid"
-					5, // "Game"
-					6, // "Computer"
-					7, // "Custom"
-				]),
+			max_value: Some(13),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }
@@ -116,14 +107,14 @@ impl HapCharacteristicSetup for PictureModeCharacteristic {
     }
 }
 
-impl CharacteristicCallbacks<u16> for PictureModeCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<u16>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<u8> for PictureModeCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<u8>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<u16>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<u8>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<u16> for PictureModeCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u16>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<u8> for PictureModeCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u8>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u16>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u8>>) { self.0.on_update_async(f) }
 }

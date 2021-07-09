@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Slat Type Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SlatTypeCharacteristic(Characteristic<u8>);
@@ -38,12 +39,11 @@ impl SlatTypeCharacteristic {
             hap_type: HapType::SlatType,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Horizontal"
-					1, // "Vertical"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Supported Audio Recording Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedAudioRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);
@@ -38,8 +39,8 @@ impl SupportedAudioRecordingConfigurationCharacteristic {
             hap_type: HapType::SupportedAudioRecordingConfiguration,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

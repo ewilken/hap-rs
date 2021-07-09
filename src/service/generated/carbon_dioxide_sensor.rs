@@ -21,14 +21,16 @@ use crate::{
 /// Carbon Dioxide Sensor Service.
 #[derive(Debug, Default)]
 pub struct CarbonDioxideSensorService {
-    /// ID of the Carbon Dioxide Sensor Service.
+    /// Instance ID of the Carbon Dioxide Sensor Service.
     id: u64,
     /// `HapType` of the Carbon Dioxide Sensor Service.
     hap_type: HapType,
-    /// Specifies if the Service is hidden.
+    /// When set to true, this service is not visible to user.
     hidden: bool,
-    /// Specifies if the Service is the primary Service of the Accessory.
+    /// When set to true, this is the primary service on the accessory.
     primary: bool,
+    /// An array of numbers containing the instance IDs of the services that this service links to.
+    linked_services: Vec<u64>,
 
 	/// Carbon Dioxide Detected Characteristic (required).
 	pub carbon_dioxide_detected: CarbonDioxideDetectedCharacteristic,
@@ -91,6 +93,14 @@ impl HapService for CarbonDioxideSensorService {
 
     fn set_primary(&mut self, primary: bool) {
         self.primary = primary;
+    }
+
+    fn get_linked_services(&self) -> Vec<u64> {
+        self.linked_services.clone()
+    }
+
+    fn set_linked_services(&mut self, linked_services: Vec<u64>) {
+        self.linked_services = linked_services;
     }
 
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic> {

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Supported Video Recording Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedVideoRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);
@@ -38,8 +39,8 @@ impl SupportedVideoRecordingConfigurationCharacteristic {
             hap_type: HapType::SupportedVideoRecordingConfiguration,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// PM10 Density Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct Pm10DensityCharacteristic(Characteristic<f32>);
@@ -38,12 +39,13 @@ impl Pm10DensityCharacteristic {
             hap_type: HapType::Pm10Density,
             format: Format::Float,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(1000 as f32),
-				min_value: Some(0 as f32),
-				step_value: Some(1 as f32),
+			unit: Some(Unit::Percentage),
+			max_value: Some(1000 as f32),
+			min_value: Some(0 as f32),
+			step_value: Some(1 as f32),
             ..Default::default()
         })
     }

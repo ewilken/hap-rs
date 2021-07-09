@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Is Configured Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct IsConfiguredCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl IsConfiguredCharacteristic {
             hap_type: HapType::IsConfigured,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Not Configured"
-					1, // "Configured"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

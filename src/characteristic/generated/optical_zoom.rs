@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Optical Zoom Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OpticalZoomCharacteristic(Characteristic<f32>);
@@ -38,10 +39,11 @@ impl OpticalZoomCharacteristic {
             hap_type: HapType::OpticalZoom,
             format: Format::Float,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
+			step_value: Some(0.1 as f32),
             ..Default::default()
         })
     }

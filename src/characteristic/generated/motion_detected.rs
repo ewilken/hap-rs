@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Motion Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MotionDetectedCharacteristic(Characteristic<bool>);
@@ -38,8 +39,8 @@ impl MotionDetectedCharacteristic {
             hap_type: HapType::MotionDetected,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Target Visibility State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetVisibilityStateCharacteristic(Characteristic<u8>);
@@ -38,17 +39,13 @@ impl TargetVisibilityStateCharacteristic {
             hap_type: HapType::TargetVisibilityState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				max_value: Some(2),
-				min_value: Some(0),
-				step_value: Some(1),
-				valid_values: Some(vec![
-					0, // "Shown"
-					1, // "Hidden"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

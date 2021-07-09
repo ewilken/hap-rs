@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Supported Video Stream Configuration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedVideoStreamConfigurationCharacteristic(Characteristic<Vec<u8>>);
@@ -38,7 +39,7 @@ impl SupportedVideoStreamConfigurationCharacteristic {
             hap_type: HapType::SupportedVideoStreamConfiguration,
             format: Format::Tlv8,
             perms: vec![
-					Perm::PairedRead,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

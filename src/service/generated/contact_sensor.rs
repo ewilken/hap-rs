@@ -19,14 +19,16 @@ use crate::{
 /// Contact Sensor Service.
 #[derive(Debug, Default)]
 pub struct ContactSensorService {
-    /// ID of the Contact Sensor Service.
+    /// Instance ID of the Contact Sensor Service.
     id: u64,
     /// `HapType` of the Contact Sensor Service.
     hap_type: HapType,
-    /// Specifies if the Service is hidden.
+    /// When set to true, this service is not visible to user.
     hidden: bool,
-    /// Specifies if the Service is the primary Service of the Accessory.
+    /// When set to true, this is the primary service on the accessory.
     primary: bool,
+    /// An array of numbers containing the instance IDs of the services that this service links to.
+    linked_services: Vec<u64>,
 
 	/// Contact Sensor State Characteristic (required).
 	pub contact_sensor_state: ContactSensorStateCharacteristic,
@@ -83,6 +85,14 @@ impl HapService for ContactSensorService {
 
     fn set_primary(&mut self, primary: bool) {
         self.primary = primary;
+    }
+
+    fn get_linked_services(&self) -> Vec<u64> {
+        self.linked_services.clone()
+    }
+
+    fn set_linked_services(&mut self, linked_services: Vec<u64>) {
+        self.linked_services = linked_services;
     }
 
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic> {

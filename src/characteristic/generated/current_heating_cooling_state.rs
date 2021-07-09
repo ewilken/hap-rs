@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Heating Cooling State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentHeatingCoolingStateCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl CurrentHeatingCoolingStateCharacteristic {
             hap_type: HapType::CurrentHeatingCoolingState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Off"
-					1, // "Heat"
-					2, // "Cool"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

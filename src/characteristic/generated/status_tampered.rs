@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Status Tampered Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct StatusTamperedCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl StatusTamperedCharacteristic {
             hap_type: HapType::StatusTampered,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Not Tampered"
-					1, // "Tampered"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

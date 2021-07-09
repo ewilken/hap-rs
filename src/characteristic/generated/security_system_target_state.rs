@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Security System Target State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SecuritySystemTargetStateCharacteristic(Characteristic<u8>);
@@ -38,16 +39,13 @@ impl SecuritySystemTargetStateCharacteristic {
             hap_type: HapType::SecuritySystemTargetState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Stay Arm"
-					1, // "Away Arm"
-					2, // "Night Arm"
-					3, // "Disarm"
-				]),
+			max_value: Some(3),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Smoke Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SmokeDetectedCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl SmokeDetectedCharacteristic {
             hap_type: HapType::SmokeDetected,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Smoke Not Detected"
-					1, // "Smoke Detected"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Remaining Duration Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RemainingDurationCharacteristic(Characteristic<u32>);
@@ -38,12 +39,13 @@ impl RemainingDurationCharacteristic {
             hap_type: HapType::RemainingDuration,
             format: Format::UInt32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_value: Some(3600),
-				min_value: Some(0),
-				step_value: Some(1),
+			unit: Some(Unit::Seconds),
+			max_value: Some(3600),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

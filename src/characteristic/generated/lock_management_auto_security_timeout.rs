@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Lock Management Auto Security Timeout Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockManagementAutoSecurityTimeoutCharacteristic(Characteristic<u32>);
@@ -38,11 +39,11 @@ impl LockManagementAutoSecurityTimeoutCharacteristic {
             hap_type: HapType::LockManagementAutoSecurityTimeout,
             format: Format::UInt32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				unit: Some(Unit::Seconds),
+			unit: Some(Unit::Seconds),
             ..Default::default()
         })
     }

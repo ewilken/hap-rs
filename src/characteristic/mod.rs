@@ -1,5 +1,3 @@
-use std::fmt;
-
 use async_trait::async_trait;
 use erased_serde::serialize_trait_object;
 use futures::future::BoxFuture;
@@ -9,6 +7,7 @@ use serde::{
     Serialize,
 };
 use serde_json::json;
+use std::fmt;
 
 use crate::{event::Event, pointer, HapType, Result};
 
@@ -21,28 +20,73 @@ pub use generated::*;
 /// of the characteristic can be accessed.
 #[derive(Default)]
 pub struct Characteristic<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> {
+    /// Instance ID; integer assigned by the server to uniquely identify the HAP characteristic object.
     id: u64,
+    /// ID of the accessory the characteristic belongs to.
     accessory_id: u64,
+    /// The type of the characteristic.
     hap_type: HapType,
+    /// Format of the value.
     format: Format,
+    /// Permissions describing the capabilities of the characteristic.
     perms: Vec<Perm>,
+    /// String describing the characteristic on a manufacturer-specific basis, such as an indoor versus outdoor
+    /// temperature reading.
     description: Option<String>,
+    /// Boolean indicating if event notifications are enabled for this characteristic.
     event_notifications: Option<bool>,
 
+    /// The value of the characteristic, which must conform to the `format` property. This property must be present if
+    /// and only if the characteristic contains the Paired Read permission.
     value: T,
+    /// Unit of the value, e.g. `Celsius`.
     unit: Option<Unit>,
 
+    /// Maximum value for the characteristic, which is only appropriate for characteristics that have a format of `Int`
+    /// or `Float`.
     max_value: Option<T>,
+    // Minimum value for the characteristic, which is only appropriate for characteristics that have a format of `Int`
+    // or `Float`.
     min_value: Option<T>,
+    /// Minimum step value for the characteristic, which is only appropriate for characteristics that have a format of
+    /// ”int” or ”float”. For example, if this were 0.15, the characteris- tic value can be incremented from the min-
+    /// imum value in multiples of 0.15. For “float”, the “Value” needs to be rounded on the ac- cessory side to the
+    /// closest allowed value per the ”Step Value” (e.g. a value of 10.150001 received on the accessory side with a
+    /// ”Step Value” of 0.15 and a ”Minimum Value” of 10.0 needs to be interpreted as 10.15).
     step_value: Option<T>,
+    /// Maximum number of characters if the for- mat is ”string”. If this property is omitted for ”string” formats,
+    /// then the default value is 64. The maximum value allowed is 256.
     max_len: Option<u16>,
+    /// Maximum number of characters if the format is ”data”. If this property is omitted for ”data” formats, then the
+    /// default value is 2097152.
     max_data_len: Option<u32>,
+    /// An array of numbers where each element rep- resents a valid value.
     valid_values: Option<Vec<T>>,
+    /// A 2 element array representing the starting value and ending value of the range of valid values.
     valid_values_range: Option<[T; 2]>,
 
+    /// Specified TTL in milliseconds the controller requests the accessory to securely execute a write command.
+    /// Maximum value of this is 9007199254740991.
+    ttl: Option<u64>,
+    /// 64-bit unsigned integer assigned by the controller to uniquely identify the timed write transaction.
+    pid: Option<u64>,
+
+    /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
+    /// Returning a `Some(T)` from this function changes the value of the `Characteristic` before the Controller reads
+    /// it so the Controller reads the new value.
     on_read: Option<Box<dyn OnReadFn<T>>>,
+    /// Sets a callback function on a characteristic that is called every time a controller attempts to update its
+    /// value. The first argument is a reference to the current value of the characteristic and the second argument is
+    /// a reference to the value the controller attempts to change the characteristic's to.
     on_update: Option<Box<dyn OnUpdateFn<T>>>,
+    /// Sets an async callback function on a characteristic that is driven to completion by the async runtime driving
+    /// the HAP server every time a controller attempts to read its value. Returning a `Some(T)` from this function
+    /// changes the value of the characteristic before the controller reads it so the controller reads the new value.
     on_read_async: Option<Box<dyn OnReadFuture<T>>>,
+    /// Sets an async callback function on a characteristic that is driven to completion by the async runtime driving
+    /// the HAP server every time a controller attempts to update its value. The first argument is a reference to the
+    /// current value of the characteristic and the second argument is a reference to the value the controller attempts
+    /// to change the characteristic's to.
     on_update_async: Option<Box<dyn OnUpdateFuture<T>>>,
 
     event_emitter: Option<pointer::EventEmitter>,
@@ -255,6 +299,12 @@ impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> Serialize for Ch
         if let Some(ref valid_values_range) = self.valid_values_range {
             state.serialize_field("valid-values-range", valid_values_range)?;
         }
+        if let Some(ref ttl) = self.ttl {
+            state.serialize_field("TTL", ttl)?;
+        }
+        if let Some(ref pid) = self.pid {
+            state.serialize_field("pid", pid)?;
+        }
         state.end()
     }
 }
@@ -274,17 +324,21 @@ pub enum Perm {
     TimedWrite,
     #[serde(rename = "hd")]
     Hidden,
+    #[serde(rename = "wr")]
+    WriteResponse,
 }
 
 /// Unit of a `Characteristic`.
 #[derive(Debug, Copy, Clone, Serialize)]
 pub enum Unit {
-    #[serde(rename = "percentage")]
-    Percentage,
-    #[serde(rename = "arcdegrees")]
-    ArcDegrees,
     #[serde(rename = "celsius")]
     Celsius,
+    #[serde(rename = "fahrenheit")]
+    Fahrenheit,
+    #[serde(rename = "percentage")]
+    Percent,
+    #[serde(rename = "arcdegrees")]
+    ArcDegrees,
     #[serde(rename = "lux")]
     Lux,
     #[serde(rename = "seconds")]
@@ -294,12 +348,8 @@ pub enum Unit {
 /// Format (data type) of a `Characteristic`.
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Format {
-    #[serde(rename = "string")]
-    String,
     #[serde(rename = "bool")]
     Bool,
-    #[serde(rename = "float")]
-    Float,
     #[serde(rename = "uint8")]
     UInt8,
     #[serde(rename = "uint16")]
@@ -308,8 +358,12 @@ pub enum Format {
     UInt32,
     #[serde(rename = "uint64")]
     UInt64,
-    #[serde(rename = "int32")]
+    #[serde(rename = "int")]
     Int32,
+    #[serde(rename = "float")]
+    Float,
+    #[serde(rename = "string")]
+    String,
     #[serde(rename = "tlv8")]
     Tlv8,
     #[serde(rename = "data")]
@@ -385,9 +439,6 @@ impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFuture<T> for F wh
 {
 }
 
-// Fn() -> impl Future<Output = Option<T>>
-// Fn(&T, &T) -> Future<Output = ()>
-
 pub trait CharacteristicCallbacks<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> {
     /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
     /// Returning a `Some(T)` from this function changes the value of the `Characteristic` before the Controller reads
@@ -436,6 +487,9 @@ mod tests {
             max_data_len: None,
             valid_values: None,
             valid_values_range: Some([0, 360]),
+
+            ttl: None,
+            pid: None,
 
             on_read: None,
             on_update: None,

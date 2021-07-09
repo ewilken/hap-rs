@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Target Position Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetPositionCharacteristic(Characteristic<u8>);
@@ -38,14 +39,14 @@ impl TargetPositionCharacteristic {
             hap_type: HapType::TargetPosition,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				unit: Some(Unit::Percentage),
-				max_value: Some(100),
-				min_value: Some(0),
-				step_value: Some(1),
+			unit: Some(Unit::Percentage),
+			max_value: Some(100),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

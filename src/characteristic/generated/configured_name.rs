@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Configured Name Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ConfiguredNameCharacteristic(Characteristic<String>);
@@ -38,9 +39,8 @@ impl ConfiguredNameCharacteristic {
             hap_type: HapType::ConfiguredName,
             format: Format::String,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
             ..Default::default()
         })

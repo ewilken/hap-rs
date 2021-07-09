@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Lock Target State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockTargetStateCharacteristic(Characteristic<u8>);
@@ -38,14 +39,13 @@ impl LockTargetStateCharacteristic {
             hap_type: HapType::LockTargetState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Unsecured"
-					1, // "Secured"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

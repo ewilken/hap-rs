@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Active Identifier Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ActiveIdentifierCharacteristic(Characteristic<u32>);
@@ -38,11 +39,11 @@ impl ActiveIdentifierCharacteristic {
             hap_type: HapType::ActiveIdentifier,
             format: Format::UInt32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				min_value: Some(0),
+			min_value: Some(0),
             ..Default::default()
         })
     }

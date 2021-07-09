@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Carbon Dioxide Detected Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Carbon dioxide Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CarbonDioxideDetectedCharacteristic(Characteristic<u8>);
 
 impl CarbonDioxideDetectedCharacteristic {
-    /// Creates a new Carbon Dioxide Detected Characteristic.
+    /// Creates a new Carbon dioxide Detected Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<u8> {
             id,
@@ -38,13 +39,12 @@ impl CarbonDioxideDetectedCharacteristic {
             hap_type: HapType::CarbonDioxideDetected,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "CO2 Levels Normal"
-					1, // "CO2 Levels Abnormal"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Status Jammed Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct StatusJammedCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl StatusJammedCharacteristic {
             hap_type: HapType::StatusJammed,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Not Jammed"
-					1, // "Jammed"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

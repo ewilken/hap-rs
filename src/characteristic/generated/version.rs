@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Version Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VersionCharacteristic(Characteristic<String>);
@@ -38,10 +39,9 @@ impl VersionCharacteristic {
             hap_type: HapType::Version,
             format: Format::String,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				max_len: Some(64),
             ..Default::default()
         })
     }

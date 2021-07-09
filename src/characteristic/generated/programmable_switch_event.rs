@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Programmable Switch Event Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ProgrammableSwitchEventCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl ProgrammableSwitchEventCharacteristic {
             hap_type: HapType::ProgrammableSwitchEvent,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Single Press"
-					1, // "Double Press"
-					2, // "Long Press"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

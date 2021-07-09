@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Occupancy Detected Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OccupancyDetectedCharacteristic(Characteristic<u8>);
@@ -38,13 +39,12 @@ impl OccupancyDetectedCharacteristic {
             hap_type: HapType::OccupancyDetected,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Occupancy Not Detected"
-					1, // "Occupancy Detected"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

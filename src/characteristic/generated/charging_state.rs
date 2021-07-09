@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Charging State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ChargingStateCharacteristic(Characteristic<u8>);
@@ -38,14 +39,12 @@ impl ChargingStateCharacteristic {
             hap_type: HapType::ChargingState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Not Charging"
-					1, // "Charging"
-					2, // "Not Chargeable"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

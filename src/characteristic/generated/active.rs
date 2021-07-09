@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Active Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ActiveCharacteristic(Characteristic<u8>);
@@ -38,14 +39,13 @@ impl ActiveCharacteristic {
             hap_type: HapType::Active,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Inactive"
-					1, // "Active"
-				]),
+			max_value: Some(1),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

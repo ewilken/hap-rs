@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Current Door State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentDoorStateCharacteristic(Characteristic<u8>);
@@ -38,16 +39,12 @@ impl CurrentDoorStateCharacteristic {
             hap_type: HapType::CurrentDoorState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Open"
-					1, // "Closed"
-					2, // "Opening"
-					3, // "Closing"
-					4, // "Stopped"
-				]),
+			max_value: Some(4),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

@@ -25,6 +25,7 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Administrator Only Access Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AdministratorOnlyAccessCharacteristic(Characteristic<bool>);
@@ -38,9 +39,9 @@ impl AdministratorOnlyAccessCharacteristic {
             hap_type: HapType::AdministratorOnlyAccess,
             format: Format::Bool,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
             ..Default::default()
         })

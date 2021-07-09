@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Current Heater Cooler State Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Current Heater-Cooler State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentHeaterCoolerStateCharacteristic(Characteristic<u8>);
 
 impl CurrentHeaterCoolerStateCharacteristic {
-    /// Creates a new Current Heater Cooler State Characteristic.
+    /// Creates a new Current Heater-Cooler State Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<u8> {
             id,
@@ -38,15 +39,12 @@ impl CurrentHeaterCoolerStateCharacteristic {
             hap_type: HapType::CurrentHeaterCoolerState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
             ],
-				valid_values: Some(vec![
-					0, // "Inactive"
-					1, // "Idle"
-					2, // "Heating"
-					3, // "Cooling"
-				]),
+			max_value: Some(3),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }

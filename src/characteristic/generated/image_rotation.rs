@@ -25,27 +25,28 @@ use crate::{
     Result,
 };
 
+// TODO - re-check MaximumDataLength & ValidValues
 /// Image Rotation Characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct ImageRotationCharacteristic(Characteristic<f32>);
+pub struct ImageRotationCharacteristic(Characteristic<i32>);
 
 impl ImageRotationCharacteristic {
     /// Creates a new Image Rotation Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<f32> {
+        Self(Characteristic::<i32> {
             id,
             accessory_id,
             hap_type: HapType::ImageRotation,
-            format: Format::Float,
+            format: Format::Int32,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				unit: Some(Unit::ArcDegrees),
-				max_value: Some(270 as f32),
-				min_value: Some(0 as f32),
-				step_value: Some(90 as f32),
+			unit: Some(Unit::ArcDegrees),
+			max_value: Some(360),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }
@@ -107,14 +108,14 @@ impl HapCharacteristicSetup for ImageRotationCharacteristic {
     }
 }
 
-impl CharacteristicCallbacks<f32> for ImageRotationCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<f32>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<i32> for ImageRotationCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<i32>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<f32>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<i32>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<f32> for ImageRotationCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<f32>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<i32> for ImageRotationCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<i32>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<f32>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<i32>>) { self.0.on_update_async(f) }
 }

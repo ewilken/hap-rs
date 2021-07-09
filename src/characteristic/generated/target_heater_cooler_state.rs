@@ -25,12 +25,13 @@ use crate::{
     Result,
 };
 
-/// Target Heater Cooler State Characteristic.
+// TODO - re-check MaximumDataLength & ValidValues
+/// Target Heater-Cooler State Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetHeaterCoolerStateCharacteristic(Characteristic<u8>);
 
 impl TargetHeaterCoolerStateCharacteristic {
-    /// Creates a new Target Heater Cooler State Characteristic.
+    /// Creates a new Target Heater-Cooler State Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self(Characteristic::<u8> {
             id,
@@ -38,15 +39,13 @@ impl TargetHeaterCoolerStateCharacteristic {
             hap_type: HapType::TargetHeaterCoolerState,
             format: Format::UInt8,
             perms: vec![
-					Perm::PairedRead,
-					Perm::PairedWrite,
-					Perm::Events,
+				Perm::Events,
+				Perm::PairedRead,
+				Perm::PairedWrite,
             ],
-				valid_values: Some(vec![
-					0, // "Auto"
-					1, // "Heat"
-					2, // "Cool"
-				]),
+			max_value: Some(2),
+			min_value: Some(0),
+			step_value: Some(1),
             ..Default::default()
         })
     }
