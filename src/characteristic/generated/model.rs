@@ -41,6 +41,7 @@ impl ModelCharacteristic {
             perms: vec![
 				Perm::PairedRead,
             ],
+			max_len: Some(64),
             ..Default::default()
         })
     }
