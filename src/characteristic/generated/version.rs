@@ -42,6 +42,7 @@ impl VersionCharacteristic {
 				Perm::Events,
 				Perm::PairedRead,
             ],
+			max_len: Some(64),
             ..Default::default()
         })
     }

@@ -738,7 +738,7 @@ impl {{pascal_case characteristic.DefaultDescription}}Characteristic {
             {{#if characteristic.MaxValue includeZero=true}}\n\t\t\tmax_value: Some({{characteristic.MaxValue}}{{float characteristic.Format}}),{{/if}}\
             {{#if characteristic.MinValue includeZero=true}}\n\t\t\tmin_value: Some({{characteristic.MinValue}}{{float characteristic.Format}}),{{/if}}\
             {{#if characteristic.StepValue includeZero=true}}\n\t\t\tstep_value: Some({{characteristic.StepValue}}{{float characteristic.Format}}),{{/if}}\
-            {{#if characteristic.MaximumLength includeZero=true}}\n\t\t\tmax_len: Some({{characteristic.MaximumLength}}{{float characteristic.Format}}),{{/if}}\
+            {{#if characteristic.MaxLength includeZero=true}}\n\t\t\tmax_len: Some({{characteristic.MaxLength}}{{float characteristic.Format}}),{{/if}}\
             {{#if values.Values includeZero=true}}\n\t\t\tvalid_values: Some({{valid_values values.Values}}),{{/if}}
             ..Default::default()
         })

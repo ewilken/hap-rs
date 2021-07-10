@@ -4,8 +4,12 @@ use futures::executor;
 use crate::{
     characteristic::{
         accessory_flags::AccessoryFlagsCharacteristic,
+        application_matching_identifier::ApplicationMatchingIdentifierCharacteristic,
+        configured_name::ConfiguredNameCharacteristic,
         firmware_revision::FirmwareRevisionCharacteristic,
         hardware_revision::HardwareRevisionCharacteristic,
+        product_data::ProductDataCharacteristic,
+        software_revision::SoftwareRevisionCharacteristic,
         HapCharacteristic,
     },
     pointer,
@@ -86,6 +90,11 @@ pub struct AccessoryInformation {
     /// Contains the manufacturer-specific serial number of the `Accessory`, e.g. "1A2B3C4D5E6F".
     /// The length must be greater than 1.
     pub serial_number: String,
+    /// When set indicates accessory requires additional setup. Use of Accessory Flags requires
+    /// written approval by Apple in advance.
+    pub accessory_flags: Option<u32>,
+    pub application_matching_identifier: Option<Vec<u8>>,
+    pub configured_name: Option<String>,
     /// Describes a firmware revision string x[.y[.z]] (e.g. "100.1.1"):
     /// - <x> is the major version number, required.
     /// - <y> is the minor version number, required if it is non-zero or if <z> is present.
@@ -99,7 +108,7 @@ pub struct AccessoryInformation {
     /// - Subsequent firmware updates can have a lower <z> version only if <x> or <y> is incremented
     ///
     /// The value must change after every firmware update.
-    pub firmware_revision: String,
+    pub firmware_revision: Option<String>,
     /// Describes a hardware revision string x[.y[.z]] (e.g. "100.1.1") and tracked when the board
     /// or components of the same accessory is changed:
     /// - <x> is the major version number, required.
@@ -115,34 +124,77 @@ pub struct AccessoryInformation {
     ///
     /// The value must change after every hardware update.
     pub hardware_revision: Option<String>,
-    /// When set indicates accessory requires additional setup. Use of Accessory Flags requires
-    /// written approval by Apple in advance.
-    pub accessory_flags: Option<u32>,
+    pub software_revision: Option<String>,
+    pub product_data: Option<Vec<u8>>,
 }
 
 impl AccessoryInformation {
     /// Converts the `Information` struct to an Accessory Information Service.
     pub(crate) fn to_service(self, id: u64, accessory_id: u64) -> Result<AccessoryInformationService> {
         let mut i = AccessoryInformationService::new(id, accessory_id);
+
         executor::block_on(i.identify.set_value(serde_json::Value::Bool(false)))?;
         executor::block_on(i.manufacturer.set_value(serde_json::Value::String(self.manufacturer)))?;
         executor::block_on(i.model.set_value(serde_json::Value::String(self.model)))?;
         executor::block_on(i.name.set_value(serde_json::Value::String(self.name)))?;
         executor::block_on(i.serial_number.set_value(serde_json::Value::String(self.serial_number)))?;
 
-        let mut fr = FirmwareRevisionCharacteristic::new(id + 9, accessory_id);
-        executor::block_on(fr.set_value(serde_json::Value::String(self.firmware_revision)))?;
-        i.firmware_revision = Some(fr);
-        if let Some(v) = self.hardware_revision {
-            let mut hr = HardwareRevisionCharacteristic::new(id + 10, accessory_id);
-            executor::block_on(hr.set_value(serde_json::Value::String(v)))?;
-            i.hardware_revision = Some(hr);
-        }
         if let Some(v) = self.accessory_flags {
-            let mut af = AccessoryFlagsCharacteristic::new(id + 6, accessory_id);
-            executor::block_on(af.set_value(serde_json::Value::Number(v.into())))?;
-            i.accessory_flags = Some(af);
+            let mut c = AccessoryFlagsCharacteristic::new(id + 6, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.accessory_flags = Some(c);
+        } else {
+            i.accessory_flags = None;
         }
+
+        if let Some(v) = self.application_matching_identifier {
+            let mut c = ApplicationMatchingIdentifierCharacteristic::new(id + 7, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.application_matching_identifier = Some(c);
+        } else {
+            i.application_matching_identifier = None;
+        }
+
+        if let Some(v) = self.configured_name {
+            let mut c = ConfiguredNameCharacteristic::new(id + 8, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.configured_name = Some(c);
+        } else {
+            i.configured_name = None;
+        }
+
+        if let Some(v) = self.firmware_revision {
+            let mut c = FirmwareRevisionCharacteristic::new(id + 9, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.firmware_revision = Some(c);
+        } else {
+            i.firmware_revision = None;
+        }
+
+        if let Some(v) = self.hardware_revision {
+            let mut c = HardwareRevisionCharacteristic::new(id + 10, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.hardware_revision = Some(c);
+        } else {
+            i.hardware_revision = None;
+        }
+
+        if let Some(v) = self.software_revision {
+            let mut c = SoftwareRevisionCharacteristic::new(id + 11, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.software_revision = Some(c);
+        } else {
+            i.software_revision = None;
+        }
+
+        if let Some(v) = self.product_data {
+            let mut c = ProductDataCharacteristic::new(id + 12, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.product_data = Some(c);
+        } else {
+            i.product_data = None;
+        }
+
         Ok(i)
     }
 }
@@ -154,9 +206,13 @@ impl Default for AccessoryInformation {
             model: "undefined".into(),
             name: "undefined".into(),
             serial_number: "undefined".into(),
-            firmware_revision: "undefined".into(),
-            hardware_revision: None,
             accessory_flags: None,
+            application_matching_identifier: None,
+            configured_name: None,
+            firmware_revision: None,
+            hardware_revision: None,
+            software_revision: None,
+            product_data: None,
         }
     }
 }
