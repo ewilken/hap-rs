@@ -139,6 +139,8 @@ struct RenderMetadata {
     pub sorted_services: Vec<HapService>,
     pub properties: HashMap<String, HapProperty>,
     pub assistant_characteristics: HashMap<String, AssistantCharacteristic>,
+    pub characteristic_in_values: HashMap<String, HashMap<String, Value>>,
+    pub characteristic_out_values: HashMap<String, HashMap<String, Value>>,
 }
 
 impl From<SystemMetadata> for RenderMetadata {
@@ -162,6 +164,33 @@ impl From<SystemMetadata> for RenderMetadata {
         let mut sorted_services = m.hap.services.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
         sorted_services.sort_by(|a, b| a.name.cmp(&b.name));
 
+        let mut characteristic_in_values = HashMap::new();
+        let mut characteristic_out_values = HashMap::new();
+
+        for (_, characteristic) in m.assistant.characteristics.clone() {
+            if let (Some(ref read_name), Some(ref values), &None) =
+                (&characteristic.read, &characteristic.values, &characteristic.out_values)
+            {
+                characteristic_in_values.insert(read_name.clone(), values.clone());
+            }
+
+            if let (Some(ref read_write_name), Some(ref values), &None) = (
+                &characteristic.read_write,
+                &characteristic.values,
+                &characteristic.out_values,
+            ) {
+                characteristic_in_values.insert(read_write_name.clone(), values.clone());
+            }
+
+            if let (Some(read_name), Some(out_values)) = (characteristic.read, characteristic.out_values) {
+                characteristic_out_values.insert(read_name, out_values);
+            }
+
+            if let (Some(write_name), Some(values)) = (characteristic.write, characteristic.values) {
+                characteristic_in_values.insert(write_name, values);
+            }
+        }
+
         Self {
             categories: m.homekit.categories,
             sorted_categories,
@@ -171,6 +200,8 @@ impl From<SystemMetadata> for RenderMetadata {
             sorted_services,
             properties: m.hap.properties,
             assistant_characteristics: m.assistant.characteristics,
+            characteristic_in_values,
+            characteristic_out_values,
         }
     }
 }
@@ -447,7 +478,7 @@ fn uuid_helper(
     Ok(())
 }
 
-fn valid_values_helper(
+fn in_values_helper(
     h: &Helper,
     _: &Handlebars,
     _: &Context,
@@ -457,9 +488,9 @@ fn valid_values_helper(
     let param = h.param(0).unwrap().value().as_object().unwrap();
     let mut values = param
         .into_iter()
-        .map(|(key, val)| (key.clone(), val.clone()))
-        .collect::<Vec<(String, Value)>>();
-    // values.sort_by(|a, b| a.1.cmp(&b.1));
+        .map(|(key, val)| (key.clone(), val.clone().to_string().replace("\"", "")))
+        .collect::<Vec<(String, String)>>();
+    values.sort_by(|a, b| a.1.cmp(&b.1));
 
     let mut output = String::from("vec![\n");
     for (key, val) in values {
@@ -471,7 +502,7 @@ fn valid_values_helper(
     Ok(())
 }
 
-fn valid_values_enum_helper(
+fn out_values_helper(
     h: &Helper,
     _: &Handlebars,
     _: &Context,
@@ -481,9 +512,33 @@ fn valid_values_enum_helper(
     let param = h.param(0).unwrap().value().as_object().unwrap();
     let mut values = param
         .into_iter()
-        .map(|(key, val)| (key.clone(), val.clone()))
-        .collect::<Vec<(String, Value)>>();
-    // values.sort_by(|a, b| a.1.cmp(&b.1));
+        .map(|(key, val)| (val.clone().to_string().replace("\"", ""), key.clone()))
+        .collect::<Vec<(String, String)>>();
+    values.sort_by(|a, b| a.1.cmp(&b.1));
+
+    let mut output = String::from("vec![\n");
+    for (key, val) in values {
+        output.push_str(&format!("\t\t\t\t{}, // {}\n", val, key));
+    }
+    output.push_str("\t\t\t]");
+    out.write(&output)?;
+
+    Ok(())
+}
+
+fn in_values_enum_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value().as_object().unwrap();
+    let mut values = param
+        .into_iter()
+        .map(|(key, val)| (key.clone(), val.clone().to_string().replace("\"", "")))
+        .collect::<Vec<(String, String)>>();
+    values.sort_by(|a, b| a.1.cmp(&b.1));
 
     let mut output = String::from("\npub enum Value {\n");
     for (key, val) in values {
@@ -493,8 +548,53 @@ fn valid_values_enum_helper(
             .into_iter()
             .map(|word| {
                 let mut c = word.chars().collect::<Vec<char>>();
-                c[0] = c[0].to_uppercase().nth(0).unwrap();
-                c.into_iter().collect::<String>()
+
+                if c.len() == 1 && c[0].is_numeric() {
+                    format!("Num{}", c[0])
+                } else {
+                    c[0] = c[0].to_uppercase().nth(0).unwrap();
+                    c.into_iter().collect::<String>()
+                }
+            })
+            .collect::<String>();
+
+        output.push_str(&format!("\t{} = {},\n", key, val));
+    }
+    output.push_str("}\n");
+    out.write(&output)?;
+
+    Ok(())
+}
+
+fn out_values_enum_helper(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    _: &mut RenderContext,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    let param = h.param(0).unwrap().value().as_object().unwrap();
+    let mut values = param
+        .into_iter()
+        .map(|(key, val)| (val.clone().to_string().replace("\"", ""), key.clone()))
+        .collect::<Vec<(String, String)>>();
+    values.sort_by(|a, b| a.1.cmp(&b.1));
+
+    let mut output = String::from("\npub enum Value {\n");
+    for (key, val) in values {
+        let key = key
+            .to_lowercase()
+            .split("_")
+            .into_iter()
+            .map(|word| {
+                let mut c = word.chars().collect::<Vec<char>>();
+
+                if c.len() == 1 && c[0].is_numeric() {
+                    format!("Num{}", c[0])
+                } else {
+                    c[0] = c[0].to_uppercase().nth(0).unwrap();
+                    c.into_iter().collect::<String>()
+                }
             })
             .collect::<String>();
 
@@ -723,11 +823,12 @@ use crate::{
 /// {{characteristic.DefaultDescription}} Characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct {{pascal_case characteristic.DefaultDescription}}Characteristic(Characteristic<{{type characteristic.Format}}>);
-{{#if values.Values includeZero=true}}{{valid_values_enum values.Values}}{{/if}}
+{{#if in_values includeZero=true}}{{in_values_enum in_values}}{{/if}}{{#if out_values includeZero=true}}{{out_values_enum out_values}}{{/if}}
 impl {{pascal_case characteristic.DefaultDescription}}Characteristic {
     /// Creates a new {{characteristic.DefaultDescription}} Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<{{type characteristic.Format}}> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<{{type characteristic.Format}}> {
             id,
             accessory_id,
             hap_type: HapType::{{pascal_case characteristic.DefaultDescription}},
@@ -739,9 +840,19 @@ impl {{pascal_case characteristic.DefaultDescription}}Characteristic {
             {{#if characteristic.MinValue includeZero=true}}\n\t\t\tmin_value: Some({{characteristic.MinValue}}{{float characteristic.Format}}),{{/if}}\
             {{#if characteristic.StepValue includeZero=true}}\n\t\t\tstep_value: Some({{characteristic.StepValue}}{{float characteristic.Format}}),{{/if}}\
             {{#if characteristic.MaxLength includeZero=true}}\n\t\t\tmax_len: Some({{characteristic.MaxLength}}{{float characteristic.Format}}),{{/if}}\
-            {{#if values.Values includeZero=true}}\n\t\t\tvalid_values: Some({{valid_values values.Values}}),{{/if}}
+            {{#if in_values includeZero=true}}\n\t\t\tvalid_values: Some({{in_values in_values}}),{{/if}}{{#if out_values includeZero=true}}\n\t\t\tvalid_values: Some({{out_values out_values}}),{{/if}}
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 
@@ -1122,7 +1233,9 @@ async fn main() -> Result<()> {
 }
 ";
 
-const NON_PRIMARY_SERVICES: &'static [&'static str] = &[
+/// Services for which accessories need some level of manual adjustment and therefore we don't want to auto-generate an
+/// accesory for.
+const NON_IDIOMATIC_SERVICES: &'static [&'static str] = &[
     "accessory information",
     "access control",
     "accessory runtime information",
@@ -1134,9 +1247,14 @@ const NON_PRIMARY_SERVICES: &'static [&'static str] = &[
     "cloud relay",
     "data stream transport management",
     "diagnostics",
+    "doorbell",
+    "faucet",
     "filter maintenance",
+    "heater-cooler",
     "input source",
+    "irrigation-system",
     "label",
+    "lightbulb",
     "lock management",
     "lock mechanism",
     "microphone",
@@ -1156,6 +1274,32 @@ const NON_PRIMARY_SERVICES: &'static [&'static str] = &[
     "wi-fi transport",
 ];
 
+/// Services for which we can auto-generate an accessory, but want to skip the example generation because the example
+/// needs some level of manual adjustment.
+const SKIP_EXAMPLE_GENERATION: &'static [&'static str] = &["humidifier-dehumidifier"];
+
+/// Example file names that are generated or edited manually and therefore shouldn't be overridden by codegen.
+const MANUALLY_GENERATED_EXAMPLES: &'static [&'static str] = &[
+    "adding_accessories_dynamically.rs",
+    "async_callbacks.rs",
+    "bridged_accessories.rs",
+    "callbacks.rs",
+    "cooler.rs",
+    "dehumidifier.rs",
+    "faucet.rs",
+    "heater.rs",
+    "humidifier.rs",
+    "irrigation_system.rs",
+    "lightbulb.rs",
+    "lock.rs",
+    "setting_values_after_server_start.rs",
+    "shower_head.rs",
+    "sprinkler.rs",
+    "television.rs",
+];
+
+// TODO - manual overrides for valve type & media state values
+
 fn main() {
     let metadata_file = File::open("codegen/gen/system.json").unwrap();
 
@@ -1171,8 +1315,10 @@ fn main() {
     handlebars.register_helper("unit", Box::new(unit_helper));
     handlebars.register_helper("category", Box::new(category_helper));
     handlebars.register_helper("uuid", Box::new(uuid_helper));
-    handlebars.register_helper("valid_values", Box::new(valid_values_helper));
-    handlebars.register_helper("valid_values_enum", Box::new(valid_values_enum_helper));
+    handlebars.register_helper("in_values", Box::new(in_values_helper));
+    handlebars.register_helper("out_values", Box::new(out_values_helper));
+    handlebars.register_helper("in_values_enum", Box::new(in_values_enum_helper));
+    handlebars.register_helper("out_values_enum", Box::new(out_values_enum_helper));
     handlebars.register_helper("perms", Box::new(perms_helper));
     handlebars.register_helper("float", Box::new(float_helper));
     handlebars.register_helper("array_length", Box::new(array_length_helper));
@@ -1210,16 +1356,23 @@ fn main() {
     }
     fs::create_dir_all(&characteristic_base_path).unwrap();
     let mut characteristic_names = vec![];
-    for (_, c) in &metadata.characteristics {
+    for (c_name, c) in &metadata.characteristics {
+        let in_values = metadata.characteristic_in_values.get(c_name);
+        let out_values = metadata.characteristic_out_values.get(c_name);
+
+        let characteristic = handlebars
+            .render(
+                "characteristic",
+                &json!({ "characteristic": c, "in_values": in_values, "out_values": out_values }),
+            )
+            .unwrap();
+
         let characteristic_file_name = c
             .name
             .replace(" ", "_")
             .replace(".", "_")
             .replace("-", "_")
             .to_lowercase();
-        let characteristic = handlebars
-            .render("characteristic", &json!({ "characteristic": c, "values": metadata.assistant_characteristics.get(&characteristic_file_name.to_uppercase()) }))
-            .unwrap();
         let mut characteristic_path = String::from(characteristic_base_path);
         characteristic_path.push_str(&characteristic_file_name);
         characteristic_path.push_str(".rs");
@@ -1250,7 +1403,9 @@ fn main() {
     for entry in fs::read_dir("examples").unwrap() {
         let entry = entry.unwrap();
 
-        if entry.file_type().unwrap().is_file() {
+        if entry.file_type().unwrap().is_file()
+            && !MANUALLY_GENERATED_EXAMPLES.contains(&entry.file_name().to_str().unwrap())
+        {
             fs::remove_file(entry.path()).unwrap();
         }
     }
@@ -1297,7 +1452,7 @@ fn main() {
 
         service_names.push(service_file_name.clone());
 
-        if !NON_PRIMARY_SERVICES.contains(&s.name.to_lowercase().as_str()) {
+        if !NON_IDIOMATIC_SERVICES.contains(&s.name.to_lowercase().as_str()) {
             let accessory = handlebars
                 .render(
                     "accessory",
@@ -1310,12 +1465,14 @@ fn main() {
             let mut accessory_file = File::create(&accessory_path).unwrap();
             accessory_file.write_all(accessory.as_bytes()).unwrap();
 
-            let example = handlebars.render("example", &json!({ "service": s })).unwrap();
-            let mut example_path = String::from("examples/");
-            example_path.push_str(&service_file_name);
-            example_path.push_str(".rs");
-            let mut example_file = File::create(&example_path).unwrap();
-            example_file.write_all(example.as_bytes()).unwrap();
+            if !SKIP_EXAMPLE_GENERATION.contains(&s.name.to_lowercase().as_str()) {
+                let example = handlebars.render("example", &json!({ "service": s })).unwrap();
+                let mut example_path = String::from("examples/");
+                example_path.push_str(&service_file_name);
+                example_path.push_str(".rs");
+                let mut example_file = File::create(&example_path).unwrap();
+                example_file.write_all(example.as_bytes()).unwrap();
+            }
 
             accessory_names.push(service_file_name);
         }

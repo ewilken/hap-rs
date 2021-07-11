@@ -3,48 +3,49 @@
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 use crate::{
-	accessory::{AccessoryInformation, HapAccessory},
-	service::{HapService, accessory_information::AccessoryInformationService, irrigation_system::IrrigationSystemService},
-	HapType,
-	Result,
+    accessory::{AccessoryInformation, HapAccessory},
+    service::{accessory_information::AccessoryInformationService, lightbulb::LightbulbService, HapService},
+    HapType,
+    Result,
 };
 
-/// Irrigation-System Accessory.
+/// Lightbulb Accessory.
 #[derive(Debug, Default)]
-pub struct IrrigationSystemAccessory {
-    /// ID of the Irrigation-System Accessory.
+pub struct LightbulbAccessory {
+    /// ID of the Lightbulb Accessory.
     id: u64,
 
     /// Accessory Information Service.
     pub accessory_information: AccessoryInformationService,
-    /// Irrigation-System Service.
-    pub irrigation_system: IrrigationSystemService,
+    /// Lightbulb Service.
+    pub lightbulb: LightbulbService,
 }
 
-impl IrrigationSystemAccessory {
-    /// Creates a new Irrigation-System Accessory.
+impl LightbulbAccessory {
+    /// Creates a new Lightbulb Accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
-        let irrigation_system_id = accessory_information.get_characteristics().len() as u64;
-        let mut irrigation_system = IrrigationSystemService::new(1 + irrigation_system_id + 1, id);
-        irrigation_system.set_primary(true);
+        let lightbulb_id = accessory_information.get_characteristics().len() as u64;
+        let mut lightbulb = LightbulbService::new(1 + lightbulb_id + 1, id);
+        lightbulb.set_primary(true);
+
+        // TODO - this has to do with adaptive lighting and the controller refuses to pair until we figured it out
+        lightbulb.characteristic_value_active_transition_count = None;
+        lightbulb.characteristic_value_transition_control = None;
+        lightbulb.supported_characteristic_value_transition_configuration = None;
 
         Ok(Self {
             id,
             accessory_information,
-            irrigation_system,
+            lightbulb,
         })
     }
 }
 
-impl HapAccessory for IrrigationSystemAccessory {
-    fn get_id(&self) -> u64 {
-        self.id
-    }
+impl HapAccessory for LightbulbAccessory {
+    fn get_id(&self) -> u64 { self.id }
 
-    fn set_id(&mut self, id: u64) {
-        self.id = id;
-    }
+    fn set_id(&mut self, id: u64) { self.id = id; }
 
     fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService> {
         for service in self.get_services() {
@@ -64,22 +65,14 @@ impl HapAccessory for IrrigationSystemAccessory {
         None
     }
 
-    fn get_services(&self) -> Vec<&dyn HapService> {
-        vec![
-            &self.accessory_information,
-            &self.irrigation_system,
-        ]
-    }
+    fn get_services(&self) -> Vec<&dyn HapService> { vec![&self.accessory_information, &self.lightbulb] }
 
     fn get_mut_services(&mut self) -> Vec<&mut dyn HapService> {
-        vec![
-            &mut self.accessory_information,
-            &mut self.irrigation_system,
-        ]
+        vec![&mut self.accessory_information, &mut self.lightbulb]
     }
 }
 
-impl Serialize for IrrigationSystemAccessory {
+impl Serialize for LightbulbAccessory {
     fn serialize<S: Serializer>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapAccessory", 2)?;
         state.serialize_field("aid", &self.get_id())?;

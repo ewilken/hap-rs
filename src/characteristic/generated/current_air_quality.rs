@@ -30,10 +30,20 @@ use crate::{
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentAirQualityCharacteristic(Characteristic<u8>);
 
+pub enum Value {
+	Unknown = 0,
+	Excellent = 1,
+	Good = 2,
+	Fair = 3,
+	Inferior = 4,
+	Poor = 5,
+}
+
 impl CurrentAirQualityCharacteristic {
     /// Creates a new Current Air Quality Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<u8> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<u8> {
             id,
             accessory_id,
             hap_type: HapType::CurrentAirQuality,
@@ -45,8 +55,26 @@ impl CurrentAirQualityCharacteristic {
 			max_value: Some(5),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				0, // UNKNOWN
+				1, // EXCELLENT
+				2, // GOOD
+				3, // FAIR
+				4, // INFERIOR
+				5, // POOR
+			]),
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 

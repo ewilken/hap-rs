@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, doorbell::DoorbellAccessory},
+    accessory::{television::TelevisionAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,
@@ -11,8 +11,8 @@ use hap::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let doorbell = DoorbellAccessory::new(1, AccessoryInformation {
-        name: "Acme Doorbell".into(),
+    let television = TelevisionAccessory::new(1, AccessoryInformation {
+        name: "Acme Television".into(),
         ..Default::default()
     })?;
 
@@ -27,9 +27,9 @@ async fn main() -> Result<()> {
         Err(_) => {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-                name: "Acme Doorbell".into(),
+                name: "Acme Television".into(),
                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
-                category: AccessoryCategory::VideoDoorbell,
+                category: AccessoryCategory::Television,
                 ..Default::default()
             };
             storage.save_config(&config).await?;
@@ -38,7 +38,7 @@ async fn main() -> Result<()> {
     };
 
     let server = IpServer::new(config, storage).await?;
-    server.add_accessory(doorbell).await?;
+    server.add_accessory(television).await?;
 
     let handle = server.run_handle();
 

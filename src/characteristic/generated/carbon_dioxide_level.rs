@@ -33,7 +33,8 @@ pub struct CarbonDioxideLevelCharacteristic(Characteristic<f32>);
 impl CarbonDioxideLevelCharacteristic {
     /// Creates a new Carbon dioxide Level Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<f32> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<f32> {
             id,
             accessory_id,
             hap_type: HapType::CarbonDioxideLevel,
@@ -47,7 +48,17 @@ impl CarbonDioxideLevelCharacteristic {
 			min_value: Some(0 as f32),
 			step_value: Some(1 as f32),
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 

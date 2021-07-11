@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, garage_door_opener::GarageDoorOpenerAccessory},
+    accessory::{garage_door_opener::GarageDoorOpenerAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

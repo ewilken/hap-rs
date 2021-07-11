@@ -33,7 +33,8 @@ pub struct ManufacturerCharacteristic(Characteristic<String>);
 impl ManufacturerCharacteristic {
     /// Creates a new Manufacturer Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<String> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<String> {
             id,
             accessory_id,
             hap_type: HapType::Manufacturer,
@@ -43,7 +44,17 @@ impl ManufacturerCharacteristic {
             ],
 			max_len: Some(64),
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 

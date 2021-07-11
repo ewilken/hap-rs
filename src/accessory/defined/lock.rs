@@ -31,14 +31,16 @@ impl LockAccessory {
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
 
-        let lock_mechanism_id = accessory_information.get_characteristics().len() as u64;
-        let mut lock_mechanism = LockMechanismService::new(1 + lock_mechanism_id + 1, id);
+        let lock_mechanism_id = 2 + accessory_information.get_characteristics().len() as u64;
+        let mut lock_mechanism = LockMechanismService::new(lock_mechanism_id, id);
         lock_mechanism.set_primary(true);
 
-        // TODO: check if this is correct
-        let lock_management_id = lock_mechanism_id + lock_mechanism.get_characteristics().len() as u64;
-        let mut lock_management = LockManagementService::new(1 + lock_management_id + 1, id);
+        let lock_management_id = 3 + lock_mechanism_id + lock_mechanism.get_characteristics().len() as u64;
+        let mut lock_management = LockManagementService::new(lock_management_id, id);
         lock_management.set_primary(true);
+
+        // TODO - figure out how to auto-set reasonable default values for tlv8 characteristics
+        lock_management.logs = None;
 
         Ok(Self {
             id,
