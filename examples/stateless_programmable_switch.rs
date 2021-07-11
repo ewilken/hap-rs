@@ -1,5 +1,9 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, stateless_programmable_switch::StatelessProgrammableSwitchAccessory},
+    accessory::{
+        stateless_programmable_switch::StatelessProgrammableSwitchAccessory,
+        AccessoryCategory,
+        AccessoryInformation,
+    },
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

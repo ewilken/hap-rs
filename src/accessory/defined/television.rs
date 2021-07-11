@@ -31,14 +31,15 @@ impl TelevisionAccessory {
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
 
-        let television_id = accessory_information.get_characteristics().len() as u64;
-        let mut television = TelevisionService::new(1 + television_id + 1, id);
+        let television_id = 2 + accessory_information.get_characteristics().len() as u64;
+        let mut television = TelevisionService::new(television_id, id);
         television.set_primary(true);
 
-        // TODO: check if this is correct
-        let speaker_id = television_id + television.get_characteristics().len() as u64;
-        let mut speaker = SpeakerService::new(1 + speaker_id + 1, id);
-        speaker.set_primary(true);
+        // TODO - figure out how to auto-set reasonable default values for tlv8 characteristics
+        television.display_order = None;
+
+        let speaker_id = 3 + television_id + television.get_characteristics().len() as u64;
+        let speaker = SpeakerService::new(speaker_id, id);
 
         Ok(Self {
             id,

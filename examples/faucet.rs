@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, faucet::FaucetAccessory},
+    accessory::{faucet::FaucetAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

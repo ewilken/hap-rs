@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, carbon_monoxide_sensor::CarbonMonoxideSensorAccessory},
+    accessory::{carbon_monoxide_sensor::CarbonMonoxideSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

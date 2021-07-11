@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, thermostat::ThermostatAccessory},
+    accessory::{thermostat::ThermostatAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

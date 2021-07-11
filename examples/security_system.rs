@@ -1,5 +1,5 @@
 use hap::{
-    accessory::{AccessoryCategory, AccessoryInformation, security_system::SecuritySystemAccessory},
+    accessory::{security_system::SecuritySystemAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     tokio,

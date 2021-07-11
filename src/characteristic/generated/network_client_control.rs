@@ -33,7 +33,8 @@ pub struct NetworkClientControlCharacteristic(Characteristic<Vec<u8>>);
 impl NetworkClientControlCharacteristic {
     /// Creates a new Network Client Control Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<Vec<u8>> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<Vec<u8>> {
             id,
             accessory_id,
             hap_type: HapType::NetworkClientControl,
@@ -46,7 +47,17 @@ impl NetworkClientControlCharacteristic {
 				Perm::WriteResponse,
             ],
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 

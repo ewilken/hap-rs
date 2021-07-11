@@ -30,10 +30,17 @@ use crate::{
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentFanStateCharacteristic(Characteristic<u8>);
 
+pub enum Value {
+	Inactive = 0,
+	Idle = 1,
+	Blowing = 2,
+}
+
 impl CurrentFanStateCharacteristic {
     /// Creates a new Current Fan State Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<u8> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<u8> {
             id,
             accessory_id,
             hap_type: HapType::CurrentFanState,
@@ -45,8 +52,23 @@ impl CurrentFanStateCharacteristic {
 			max_value: Some(2),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				0, // INACTIVE
+				1, // IDLE
+				2, // BLOWING
+			]),
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 

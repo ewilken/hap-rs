@@ -33,7 +33,8 @@ pub struct VideoAnalysisActiveCharacteristic(Characteristic<u8>);
 impl VideoAnalysisActiveCharacteristic {
     /// Creates a new Video Analysis Active Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<u8> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<u8> {
             id,
             accessory_id,
             hap_type: HapType::VideoAnalysisActive,
@@ -44,7 +45,17 @@ impl VideoAnalysisActiveCharacteristic {
 				Perm::PairedWrite,
             ],
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 

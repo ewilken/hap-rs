@@ -30,10 +30,19 @@ use crate::{
 #[derive(Debug, Default, Serialize)]
 pub struct SecuritySystemTargetStateCharacteristic(Characteristic<u8>);
 
+pub enum Value {
+	StayArm = 0,
+	AwayArm = 1,
+	NightArm = 2,
+	Disarm = 3,
+	AlarmTriggered = 4,
+}
+
 impl SecuritySystemTargetStateCharacteristic {
     /// Creates a new Security System Target State Characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
-        Self(Characteristic::<u8> {
+        #[allow(unused_mut)]
+        let mut c = Self(Characteristic::<u8> {
             id,
             accessory_id,
             hap_type: HapType::SecuritySystemTargetState,
@@ -46,8 +55,25 @@ impl SecuritySystemTargetStateCharacteristic {
 			max_value: Some(3),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				0, // STAY_ARM
+				1, // AWAY_ARM
+				2, // NIGHT_ARM
+				3, // DISARM
+				4, // ALARM_TRIGGERED
+			]),
             ..Default::default()
-        })
+        });
+
+        if let Some(ref min_value) = &c.0.min_value {
+            c.0.value = min_value.clone();
+        } else if let Some(ref valid_values) = &c.0.valid_values {
+            if valid_values.len() > 0 {
+                c.0.value = valid_values[0].clone();
+            }
+        }
+
+        c
     }
 }
 
