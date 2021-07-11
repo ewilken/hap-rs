@@ -14,12 +14,12 @@ use crate::{
     HapType,
 };
 
-/// Target Control Service.
+/// Target Control service.
 #[derive(Debug, Default)]
 pub struct TargetControlService {
-    /// Instance ID of the Target Control Service.
+    /// Instance ID of the Target Control service.
     id: u64,
-    /// `HapType` of the Target Control Service.
+    /// [`HapType`](HapType) of the Target Control service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,19 +28,19 @@ pub struct TargetControlService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Active Identifier Characteristic (required).
+	/// Active Identifier characteristic (required).
 	pub active_identifier: ActiveIdentifierCharacteristic,
-	/// Button Event Characteristic (required).
+	/// Button Event characteristic (required).
 	pub button_event: ButtonEventCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
 impl TargetControlService {
-    /// Creates a new Target Control Service.
+    /// Creates a new Target Control service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

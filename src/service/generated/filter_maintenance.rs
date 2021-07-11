@@ -14,12 +14,12 @@ use crate::{
     HapType,
 };
 
-/// Filter Maintenance Service.
+/// Filter Maintenance service.
 #[derive(Debug, Default)]
 pub struct FilterMaintenanceService {
-    /// Instance ID of the Filter Maintenance Service.
+    /// Instance ID of the Filter Maintenance service.
     id: u64,
-    /// `HapType` of the Filter Maintenance Service.
+    /// [`HapType`](HapType) of the Filter Maintenance service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,19 +28,19 @@ pub struct FilterMaintenanceService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Filter Change indication Characteristic (required).
+	/// Filter Change indication characteristic (required).
 	pub filter_change_indication: FilterChangeIndicationCharacteristic,
 
-	/// Filter Life Level Characteristic (optional).
+	/// Filter Life Level characteristic (optional).
 	pub filter_life_level: Option<FilterLifeLevelCharacteristic>,
-	/// Filter Reset Change Indication Characteristic (optional).
+	/// Filter Reset Change Indication characteristic (optional).
 	pub filter_reset_change_indication: Option<FilterResetChangeIndicationCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
 impl FilterMaintenanceService {
-    /// Creates a new Filter Maintenance Service.
+    /// Creates a new Filter Maintenance service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

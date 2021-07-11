@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Transmit Power Characteristic.
+/// Transmit Power characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TransmitPowerCharacteristic(Characteristic<i32>);
 
 impl TransmitPowerCharacteristic {
-    /// Creates a new Transmit Power Characteristic.
+    /// Creates a new Transmit Power characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

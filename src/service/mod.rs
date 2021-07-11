@@ -6,31 +6,31 @@ mod generated;
 
 pub use crate::service::generated::*;
 
-/// `HapService` is implemented by the inner type of every `Service`.
+/// [`HapService`](HapService) is implemented by every HAP service.
 pub trait HapService: erased_serde::Serialize + Send + Sync {
-    /// Returns the ID of a Service.
+    /// Returns the ID of the service.
     fn get_id(&self) -> u64;
-    /// Returns the `HapType` of a Service.
+    /// Returns the [`HapType`](HapType) of the service.
     fn get_type(&self) -> HapType;
-    /// Returns the hidden value of a Service.
+    /// Returns the `hidden` value of the service.
     fn get_hidden(&self) -> bool;
-    /// Sets the hidden value of a Service.
+    /// Sets the `hidden` value of the service.
     fn set_hidden(&mut self, hidden: bool);
-    /// Returns the primary value of a Service.
+    /// Returns the `primary` value of the service.
     fn get_primary(&self) -> bool;
-    /// Sets the primary value of a Service.
+    /// Sets the `primary` value of the service.
     fn set_primary(&mut self, primary: bool);
-    /// Returns the linked_services value of a Service.
+    /// Returns the `linked_services` value of the service.
     fn get_linked_services(&self) -> Vec<u64>;
-    /// Sets the linked_services value of a Service.
+    /// Sets the `linked_services` value of the service.
     fn set_linked_services(&mut self, linked_services: Vec<u64>);
-    /// Returns a reference to a specific Characteristic of the Service if it's present on it.
+    /// Returns a reference to a specific characteristic of the service if it's present on it.
     fn get_characteristic(&self, hap_type: HapType) -> Option<&dyn HapCharacteristic>;
-    /// Returns a mutable reference to a specific Characteristic of the Service if it's present on it.
+    /// Returns a mutable reference to a specific characteristic of the service if it's present on it.
     fn get_mut_characteristic(&mut self, hap_type: HapType) -> Option<&mut dyn HapCharacteristic>;
-    /// Returns references to the Characteristics of a Service.
+    /// Returns references to all characteristics of the service.
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic>;
-    /// Returns mutable references to the Characteristics of a Service.
+    /// Returns mutable references to all characteristics of the service.
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic>;
 }
 

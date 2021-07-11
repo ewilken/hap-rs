@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Light Level Characteristic.
+/// Current Light Level characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentLightLevelCharacteristic(Characteristic<f32>);
 
 impl CurrentLightLevelCharacteristic {
-    /// Creates a new Current Light Level Characteristic.
+    /// Creates a new Current Light Level characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

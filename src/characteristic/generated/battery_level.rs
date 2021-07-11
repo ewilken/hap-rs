@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Battery Level Characteristic.
+/// Battery Level characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct BatteryLevelCharacteristic(Characteristic<u8>);
 
 impl BatteryLevelCharacteristic {
-    /// Creates a new Battery Level Characteristic.
+    /// Creates a new Battery Level characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

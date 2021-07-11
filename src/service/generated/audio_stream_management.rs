@@ -12,12 +12,12 @@ use crate::{
     HapType,
 };
 
-/// Audio Stream Management Service.
+/// Audio Stream Management service.
 #[derive(Debug, Default)]
 pub struct AudioStreamManagementService {
-    /// Instance ID of the Audio Stream Management Service.
+    /// Instance ID of the Audio Stream Management service.
     id: u64,
-    /// `HapType` of the Audio Stream Management Service.
+    /// [`HapType`](HapType) of the Audio Stream Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,15 +26,15 @@ pub struct AudioStreamManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Supported Audio Stream Configuration Characteristic (required).
+	/// Supported Audio Stream Configuration characteristic (required).
 	pub supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic,
-	/// Selected Audio Stream Configuration Characteristic (required).
+	/// Selected Audio Stream Configuration characteristic (required).
 	pub selected_audio_stream_configuration: SelectedAudioStreamConfigurationCharacteristic,
 
 }
 
 impl AudioStreamManagementService {
-    /// Creates a new Audio Stream Management Service.
+    /// Creates a new Audio Stream Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

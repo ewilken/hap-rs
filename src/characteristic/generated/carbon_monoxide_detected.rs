@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Carbon monoxide Detected Characteristic.
+/// Carbon monoxide Detected characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CarbonMonoxideDetectedCharacteristic(Characteristic<u8>);
 
 impl CarbonMonoxideDetectedCharacteristic {
-    /// Creates a new Carbon monoxide Detected Characteristic.
+    /// Creates a new Carbon monoxide Detected characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

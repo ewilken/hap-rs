@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Characteristic Value Transition Control Characteristic.
+/// Characteristic Value Transition Control characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CharacteristicValueTransitionControlCharacteristic(Characteristic<Vec<u8>>);
 
 impl CharacteristicValueTransitionControlCharacteristic {
-    /// Creates a new Characteristic Value Transition Control Characteristic.
+    /// Creates a new Characteristic Value Transition Control characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

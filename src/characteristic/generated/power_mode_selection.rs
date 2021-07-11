@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Power Mode Selection Characteristic.
+/// Power Mode Selection characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PowerModeSelectionCharacteristic(Characteristic<u8>);
 
 impl PowerModeSelectionCharacteristic {
-    /// Creates a new Power Mode Selection Characteristic.
+    /// Creates a new Power Mode Selection characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

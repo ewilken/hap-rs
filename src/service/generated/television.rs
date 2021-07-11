@@ -23,12 +23,12 @@ use crate::{
     HapType,
 };
 
-/// Television Service.
+/// Television service.
 #[derive(Debug, Default)]
 pub struct TelevisionService {
-    /// Instance ID of the Television Service.
+    /// Instance ID of the Television service.
     id: u64,
-    /// `HapType` of the Television Service.
+    /// [`HapType`](HapType) of the Television service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -37,37 +37,37 @@ pub struct TelevisionService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Active Identifier Characteristic (required).
+	/// Active Identifier characteristic (required).
 	pub active_identifier: ActiveIdentifierCharacteristic,
-	/// Configured Name Characteristic (required).
+	/// Configured Name characteristic (required).
 	pub configured_name: ConfiguredNameCharacteristic,
-	/// Remote Key Characteristic (required).
+	/// Remote Key characteristic (required).
 	pub remote_key: RemoteKeyCharacteristic,
-	/// Sleep Discovery Mode Characteristic (required).
+	/// Sleep Discovery Mode characteristic (required).
 	pub sleep_discovery_mode: SleepDiscoveryModeCharacteristic,
 
-	/// Brightness Characteristic (optional).
+	/// Brightness characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
-	/// Closed Captions Characteristic (optional).
+	/// Closed Captions characteristic (optional).
 	pub closed_captions: Option<ClosedCaptionsCharacteristic>,
-	/// Display Order Characteristic (optional).
+	/// Display Order characteristic (optional).
 	pub display_order: Option<DisplayOrderCharacteristic>,
-	/// Current Media State Characteristic (optional).
+	/// Current Media State characteristic (optional).
 	pub current_media_state: Option<CurrentMediaStateCharacteristic>,
-	/// Target Media State Characteristic (optional).
+	/// Target Media State characteristic (optional).
 	pub target_media_state: Option<TargetMediaStateCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Picture Mode Characteristic (optional).
+	/// Picture Mode characteristic (optional).
 	pub picture_mode: Option<PictureModeCharacteristic>,
-	/// Power Mode Selection Characteristic (optional).
+	/// Power Mode Selection characteristic (optional).
 	pub power_mode_selection: Option<PowerModeSelectionCharacteristic>,
 }
 
 impl TelevisionService {
-    /// Creates a new Television Service.
+    /// Creates a new Television service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

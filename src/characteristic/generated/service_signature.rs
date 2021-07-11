@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Service Signature Characteristic.
+/// Service Signature characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ServiceSignatureCharacteristic(Characteristic<Vec<u8>>);
 
 impl ServiceSignatureCharacteristic {
-    /// Creates a new Service Signature Characteristic.
+    /// Creates a new Service Signature characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

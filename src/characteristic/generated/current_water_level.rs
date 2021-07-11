@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Water Level Characteristic.
+/// Current Water Level characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentWaterLevelCharacteristic(Characteristic<f32>);
 
 impl CurrentWaterLevelCharacteristic {
-    /// Creates a new Current Water Level Characteristic.
+    /// Creates a new Current Water Level characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

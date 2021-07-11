@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target Visibility State Characteristic.
+/// Target Visibility State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetVisibilityStateCharacteristic(Characteristic<u8>);
 
 impl TargetVisibilityStateCharacteristic {
-    /// Creates a new Target Visibility State Characteristic.
+    /// Creates a new Target Visibility State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

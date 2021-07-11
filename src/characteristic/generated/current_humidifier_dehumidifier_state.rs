@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Humidifier-Dehumidifier State Characteristic.
+/// Current Humidifier-Dehumidifier State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentHumidifierDehumidifierStateCharacteristic(Characteristic<u8>);
 
@@ -38,7 +38,7 @@ pub enum Value {
 }
 
 impl CurrentHumidifierDehumidifierStateCharacteristic {
-    /// Creates a new Current Humidifier-Dehumidifier State Characteristic.
+    /// Creates a new Current Humidifier-Dehumidifier State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

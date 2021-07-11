@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Siri Input Type Characteristic.
+/// Siri Input Type characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SiriInputTypeCharacteristic(Characteristic<u8>);
 
 impl SiriInputTypeCharacteristic {
-    /// Creates a new Siri Input Type Characteristic.
+    /// Creates a new Siri Input Type characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

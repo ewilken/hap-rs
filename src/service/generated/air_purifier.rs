@@ -17,12 +17,12 @@ use crate::{
     HapType,
 };
 
-/// Air Purifier Service.
+/// Air Purifier service.
 #[derive(Debug, Default)]
 pub struct AirPurifierService {
-    /// Instance ID of the Air Purifier Service.
+    /// Instance ID of the Air Purifier service.
     id: u64,
-    /// `HapType` of the Air Purifier Service.
+    /// [`HapType`](HapType) of the Air Purifier service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -31,25 +31,25 @@ pub struct AirPurifierService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Current Air Purifier State Characteristic (required).
+	/// Current Air Purifier State characteristic (required).
 	pub current_air_purifier_state: CurrentAirPurifierStateCharacteristic,
-	/// Target Air Purifier State Characteristic (required).
+	/// Target Air Purifier State characteristic (required).
 	pub target_air_purifier_state: TargetAirPurifierStateCharacteristic,
 
-	/// Lock Physical Controls Characteristic (optional).
+	/// Lock Physical Controls characteristic (optional).
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Rotation Speed Characteristic (optional).
+	/// Rotation Speed characteristic (optional).
 	pub rotation_speed: Option<RotationSpeedCharacteristic>,
-	/// Swing Mode Characteristic (optional).
+	/// Swing Mode characteristic (optional).
 	pub swing_mode: Option<SwingModeCharacteristic>,
 }
 
 impl AirPurifierService {
-    /// Creates a new Air Purifier Service.
+    /// Creates a new Air Purifier service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

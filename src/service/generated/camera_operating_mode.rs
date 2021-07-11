@@ -17,12 +17,12 @@ use crate::{
     HapType,
 };
 
-/// Camera Operating Mode Service.
+/// Camera Operating Mode service.
 #[derive(Debug, Default)]
 pub struct CameraOperatingModeService {
-    /// Instance ID of the Camera Operating Mode Service.
+    /// Instance ID of the Camera Operating Mode service.
     id: u64,
-    /// `HapType` of the Camera Operating Mode Service.
+    /// [`HapType`](HapType) of the Camera Operating Mode service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -31,25 +31,25 @@ pub struct CameraOperatingModeService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Event Snapshots Active Characteristic (required).
+	/// Event Snapshots Active characteristic (required).
 	pub event_snapshots_active: EventSnapshotsActiveCharacteristic,
-	/// HomeKit Camera Active Characteristic (required).
+	/// HomeKit Camera Active characteristic (required).
 	pub homekit_camera_active: HomekitCameraActiveCharacteristic,
 
-	/// Camera Operating Mode Indicator Characteristic (optional).
+	/// Camera Operating Mode Indicator characteristic (optional).
 	pub camera_operating_mode_indicator: Option<CameraOperatingModeIndicatorCharacteristic>,
-	/// Manually disabled Characteristic (optional).
+	/// Manually disabled characteristic (optional).
 	pub manually_disabled: Option<ManuallyDisabledCharacteristic>,
-	/// Night Vision Characteristic (optional).
+	/// Night Vision characteristic (optional).
 	pub night_vision: Option<NightVisionCharacteristic>,
-	/// Periodic Snapshots Active Characteristic (optional).
+	/// Periodic Snapshots Active characteristic (optional).
 	pub periodic_snapshots_active: Option<PeriodicSnapshotsActiveCharacteristic>,
-	/// Third Party Camera Active Characteristic (optional).
+	/// Third Party Camera Active characteristic (optional).
 	pub third_party_camera_active: Option<ThirdPartyCameraActiveCharacteristic>,
 }
 
 impl CameraOperatingModeService {
-    /// Creates a new Camera Operating Mode Service.
+    /// Creates a new Camera Operating Mode service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

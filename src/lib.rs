@@ -21,11 +21,17 @@ mod pointer;
 mod tlv;
 mod transport;
 
+/// Definitions of HomeKit accessories.
 pub mod accessory;
+/// Definitions of HomeKit characteristics.
 pub mod characteristic;
+/// Representation of paired controllers.
 pub mod pairing;
+/// The HomeKit Accessory Server implementation.
 pub mod server;
+/// Definitions of HomeKit services.
 pub mod service;
+/// Representations of persistent storage.
 pub mod storage;
 
 /// `Result` type redefinition.

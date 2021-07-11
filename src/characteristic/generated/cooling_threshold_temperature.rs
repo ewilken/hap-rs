@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Cooling Threshold Temperature Characteristic.
+/// Cooling Threshold Temperature characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CoolingThresholdTemperatureCharacteristic(Characteristic<f32>);
 
 impl CoolingThresholdTemperatureCharacteristic {
-    /// Creates a new Cooling Threshold Temperature Characteristic.
+    /// Creates a new Cooling Threshold Temperature characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

@@ -15,12 +15,12 @@ use crate::{
     HapType,
 };
 
-/// Speaker Service.
+/// Speaker service.
 #[derive(Debug, Default)]
 pub struct SpeakerService {
-    /// Instance ID of the Speaker Service.
+    /// Instance ID of the Speaker service.
     id: u64,
-    /// `HapType` of the Speaker Service.
+    /// [`HapType`](HapType) of the Speaker service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -29,21 +29,21 @@ pub struct SpeakerService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Mute Characteristic (required).
+	/// Mute characteristic (required).
 	pub mute: MuteCharacteristic,
 
-	/// Active Characteristic (optional).
+	/// Active characteristic (optional).
 	pub active: Option<ActiveCharacteristic>,
-	/// Volume Characteristic (optional).
+	/// Volume characteristic (optional).
 	pub volume: Option<VolumeCharacteristic>,
-	/// Volume Control Type Characteristic (optional).
+	/// Volume Control Type characteristic (optional).
 	pub volume_control_type: Option<VolumeControlTypeCharacteristic>,
-	/// Volume Selector Characteristic (optional).
+	/// Volume Selector characteristic (optional).
 	pub volume_selector: Option<VolumeSelectorCharacteristic>,
 }
 
 impl SpeakerService {
-    /// Creates a new Speaker Service.
+    /// Creates a new Speaker service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

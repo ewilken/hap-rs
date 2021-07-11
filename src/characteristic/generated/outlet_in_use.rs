@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Outlet In Use Characteristic.
+/// Outlet In Use characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OutletInUseCharacteristic(Characteristic<bool>);
 
 impl OutletInUseCharacteristic {
-    /// Creates a new Outlet In Use Characteristic.
+    /// Creates a new Outlet In Use characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

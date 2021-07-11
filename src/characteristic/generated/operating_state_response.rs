@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Operating State Response Characteristic.
+/// Operating State Response characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct OperatingStateResponseCharacteristic(Characteristic<Vec<u8>>);
 
 impl OperatingStateResponseCharacteristic {
-    /// Creates a new Operating State Response Characteristic.
+    /// Creates a new Operating State Response characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

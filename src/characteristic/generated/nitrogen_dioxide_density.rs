@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Nitrogen dioxide Density Characteristic.
+/// Nitrogen dioxide Density characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct NitrogenDioxideDensityCharacteristic(Characteristic<f32>);
 
 impl NitrogenDioxideDensityCharacteristic {
-    /// Creates a new Nitrogen dioxide Density Characteristic.
+    /// Creates a new Nitrogen dioxide Density characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

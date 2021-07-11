@@ -19,12 +19,12 @@ use crate::{
     HapType,
 };
 
-/// Lock Management Service.
+/// Lock Management service.
 #[derive(Debug, Default)]
 pub struct LockManagementService {
-    /// Instance ID of the Lock Management Service.
+    /// Instance ID of the Lock Management service.
     id: u64,
-    /// `HapType` of the Lock Management Service.
+    /// [`HapType`](HapType) of the Lock Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -33,29 +33,29 @@ pub struct LockManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Lock Control Point Characteristic (required).
+	/// Lock Control Point characteristic (required).
 	pub lock_control_point: LockControlPointCharacteristic,
-	/// Version Characteristic (required).
+	/// Version characteristic (required).
 	pub version: VersionCharacteristic,
 
-	/// Administrator Only Access Characteristic (optional).
+	/// Administrator Only Access characteristic (optional).
 	pub administrator_only_access: Option<AdministratorOnlyAccessCharacteristic>,
-	/// Audio Feedback Characteristic (optional).
+	/// Audio Feedback characteristic (optional).
 	pub audio_feedback: Option<AudioFeedbackCharacteristic>,
-	/// Current Door State Characteristic (optional).
+	/// Current Door State characteristic (optional).
 	pub current_door_state: Option<CurrentDoorStateCharacteristic>,
-	/// Lock Management Auto Security Timeout Characteristic (optional).
+	/// Lock Management Auto Security Timeout characteristic (optional).
 	pub lock_management_auto_security_timeout: Option<LockManagementAutoSecurityTimeoutCharacteristic>,
-	/// Lock Last Known Action Characteristic (optional).
+	/// Lock Last Known Action characteristic (optional).
 	pub lock_last_known_action: Option<LockLastKnownActionCharacteristic>,
-	/// Logs Characteristic (optional).
+	/// Logs characteristic (optional).
 	pub logs: Option<LogsCharacteristic>,
-	/// Motion Detected Characteristic (optional).
+	/// Motion Detected characteristic (optional).
 	pub motion_detected: Option<MotionDetectedCharacteristic>,
 }
 
 impl LockManagementService {
-    /// Creates a new Lock Management Service.
+    /// Creates a new Lock Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

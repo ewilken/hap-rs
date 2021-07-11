@@ -11,12 +11,12 @@ use crate::{
     HapType,
 };
 
-/// Label Service.
+/// Label service.
 #[derive(Debug, Default)]
 pub struct LabelService {
-    /// Instance ID of the Label Service.
+    /// Instance ID of the Label service.
     id: u64,
-    /// `HapType` of the Label Service.
+    /// [`HapType`](HapType) of the Label service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -25,13 +25,13 @@ pub struct LabelService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Label Namespace Characteristic (required).
+	/// Label Namespace characteristic (required).
 	pub label_namespace: LabelNamespaceCharacteristic,
 
 }
 
 impl LabelService {
-    /// Creates a new Label Service.
+    /// Creates a new Label service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Label Index Characteristic.
+/// Label Index characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LabelIndexCharacteristic(Characteristic<u8>);
 
 impl LabelIndexCharacteristic {
-    /// Creates a new Label Index Characteristic.
+    /// Creates a new Label Index characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

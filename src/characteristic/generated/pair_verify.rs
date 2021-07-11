@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Pair Verify Characteristic.
+/// Pair Verify characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PairVerifyCharacteristic(Characteristic<Vec<u8>>);
 
 impl PairVerifyCharacteristic {
-    /// Creates a new Pair Verify Characteristic.
+    /// Creates a new Pair Verify characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

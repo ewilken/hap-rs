@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Model Characteristic.
+/// Model characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ModelCharacteristic(Characteristic<String>);
 
 impl ModelCharacteristic {
-    /// Creates a new Model Characteristic.
+    /// Creates a new Model characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<String> {

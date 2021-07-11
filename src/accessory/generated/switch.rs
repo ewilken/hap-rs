@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Switch Accessory.
+/// Switch accessory.
 #[derive(Debug, Default)]
 pub struct SwitchAccessory {
     /// ID of the Switch Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Switch Service.
+    /// Switch service.
     pub switch: SwitchService,
 }
 
 impl SwitchAccessory {
-    /// Creates a new Switch Accessory.
+    /// Creates a new Switch accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let switch_id = accessory_information.get_characteristics().len() as u64;

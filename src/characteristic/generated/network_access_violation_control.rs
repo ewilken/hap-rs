@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Network Access Violation Control Characteristic.
+/// Network Access Violation Control characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct NetworkAccessViolationControlCharacteristic(Characteristic<Vec<u8>>);
 
 impl NetworkAccessViolationControlCharacteristic {
-    /// Creates a new Network Access Violation Control Characteristic.
+    /// Creates a new Network Access Violation Control characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

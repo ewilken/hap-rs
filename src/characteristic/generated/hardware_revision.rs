@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Hardware Revision Characteristic.
+/// Hardware Revision characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HardwareRevisionCharacteristic(Characteristic<String>);
 
 impl HardwareRevisionCharacteristic {
-    /// Creates a new Hardware Revision Characteristic.
+    /// Creates a new Hardware Revision characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<String> {

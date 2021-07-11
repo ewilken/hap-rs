@@ -12,12 +12,12 @@ use crate::{
     HapType,
 };
 
-/// Microphone Service.
+/// Microphone service.
 #[derive(Debug, Default)]
 pub struct MicrophoneService {
-    /// Instance ID of the Microphone Service.
+    /// Instance ID of the Microphone service.
     id: u64,
-    /// `HapType` of the Microphone Service.
+    /// [`HapType`](HapType) of the Microphone service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,15 +26,15 @@ pub struct MicrophoneService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Mute Characteristic (required).
+	/// Mute characteristic (required).
 	pub mute: MuteCharacteristic,
 
-	/// Volume Characteristic (optional).
+	/// Volume characteristic (optional).
 	pub volume: Option<VolumeCharacteristic>,
 }
 
 impl MicrophoneService {
-    /// Creates a new Microphone Service.
+    /// Creates a new Microphone service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// HomeKit Camera Active Characteristic.
+/// HomeKit Camera Active characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HomekitCameraActiveCharacteristic(Characteristic<bool>);
 
 impl HomekitCameraActiveCharacteristic {
-    /// Creates a new HomeKit Camera Active Characteristic.
+    /// Creates a new HomeKit Camera Active characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

@@ -12,12 +12,12 @@ use crate::{
     HapType,
 };
 
-/// Transfer Transport Management Service.
+/// Transfer Transport Management service.
 #[derive(Debug, Default)]
 pub struct TransferTransportManagementService {
-    /// Instance ID of the Transfer Transport Management Service.
+    /// Instance ID of the Transfer Transport Management service.
     id: u64,
-    /// `HapType` of the Transfer Transport Management Service.
+    /// [`HapType`](HapType) of the Transfer Transport Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,15 +26,15 @@ pub struct TransferTransportManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Supported Transfer Transport Configuration Characteristic (required).
+	/// Supported Transfer Transport Configuration characteristic (required).
 	pub supported_transfer_transport_configuration: SupportedTransferTransportConfigurationCharacteristic,
-	/// Setup Transfer Transport Characteristic (required).
+	/// Setup Transfer Transport characteristic (required).
 	pub setup_transfer_transport: SetupTransferTransportCharacteristic,
 
 }
 
 impl TransferTransportManagementService {
-    /// Creates a new Transfer Transport Management Service.
+    /// Creates a new Transfer Transport Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

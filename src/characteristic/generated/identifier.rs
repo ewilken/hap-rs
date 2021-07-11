@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Identifier Characteristic.
+/// Identifier characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct IdentifierCharacteristic(Characteristic<u32>);
 
 impl IdentifierCharacteristic {
-    /// Creates a new Identifier Characteristic.
+    /// Creates a new Identifier characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u32> {

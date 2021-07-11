@@ -18,12 +18,12 @@ use crate::{
     HapType,
 };
 
-/// Carbon dioxide Sensor Service.
+/// Carbon dioxide Sensor service.
 #[derive(Debug, Default)]
 pub struct CarbonDioxideSensorService {
-    /// Instance ID of the Carbon dioxide Sensor Service.
+    /// Instance ID of the Carbon dioxide Sensor service.
     id: u64,
-    /// `HapType` of the Carbon dioxide Sensor Service.
+    /// [`HapType`](HapType) of the Carbon dioxide Sensor service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -32,27 +32,27 @@ pub struct CarbonDioxideSensorService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Carbon dioxide Detected Characteristic (required).
+	/// Carbon dioxide Detected characteristic (required).
 	pub carbon_dioxide_detected: CarbonDioxideDetectedCharacteristic,
 
-	/// Carbon dioxide Level Characteristic (optional).
+	/// Carbon dioxide Level characteristic (optional).
 	pub carbon_dioxide_level: Option<CarbonDioxideLevelCharacteristic>,
-	/// Carbon dioxide Peak Level Characteristic (optional).
+	/// Carbon dioxide Peak Level characteristic (optional).
 	pub carbon_dioxide_peak_level: Option<CarbonDioxidePeakLevelCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Active Characteristic (optional).
+	/// Status Active characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Low Battery Characteristic (optional).
+	/// Status Low Battery characteristic (optional).
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
-	/// Status Tampered Characteristic (optional).
+	/// Status Tampered characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl CarbonDioxideSensorService {
-    /// Creates a new Carbon dioxide Sensor Service.
+    /// Creates a new Carbon dioxide Sensor service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

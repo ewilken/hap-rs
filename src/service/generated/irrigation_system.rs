@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Irrigation-System Service.
+/// Irrigation-System service.
 #[derive(Debug, Default)]
 pub struct IrrigationSystemService {
-    /// Instance ID of the Irrigation-System Service.
+    /// Instance ID of the Irrigation-System service.
     id: u64,
-    /// `HapType` of the Irrigation-System Service.
+    /// [`HapType`](HapType) of the Irrigation-System service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct IrrigationSystemService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Program Mode Characteristic (required).
+	/// Program Mode characteristic (required).
 	pub program_mode: ProgramModeCharacteristic,
-	/// In Use Characteristic (required).
+	/// In Use characteristic (required).
 	pub in_use: InUseCharacteristic,
 
-	/// Remaining Duration Characteristic (optional).
+	/// Remaining Duration characteristic (optional).
 	pub remaining_duration: Option<RemainingDurationCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
 }
 
 impl IrrigationSystemService {
-    /// Creates a new Irrigation-System Service.
+    /// Creates a new Irrigation-System service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

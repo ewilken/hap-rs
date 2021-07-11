@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Outlet Service.
+/// Outlet service.
 #[derive(Debug, Default)]
 pub struct OutletService {
-    /// Instance ID of the Outlet Service.
+    /// Instance ID of the Outlet service.
     id: u64,
-    /// `HapType` of the Outlet Service.
+    /// [`HapType`](HapType) of the Outlet service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct OutletService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Power State Characteristic (required).
+	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Outlet In Use Characteristic (optional).
+	/// Outlet In Use characteristic (optional).
 	pub outlet_in_use: Option<OutletInUseCharacteristic>,
 }
 
 impl OutletService {
-    /// Creates a new Outlet Service.
+    /// Creates a new Outlet service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Wi-Fi Router Accessory.
+/// Wi-Fi Router accessory.
 #[derive(Debug, Default)]
 pub struct WiFiRouterAccessory {
     /// ID of the Wi-Fi Router Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Wi-Fi Router Service.
+    /// Wi-Fi Router service.
     pub wi_fi_router: WiFiRouterService,
 }
 
 impl WiFiRouterAccessory {
-    /// Creates a new Wi-Fi Router Accessory.
+    /// Creates a new Wi-Fi Router accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let wi_fi_router_id = accessory_information.get_characteristics().len() as u64;

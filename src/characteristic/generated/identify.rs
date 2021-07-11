@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Identify Characteristic.
+/// Identify characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct IdentifyCharacteristic(Characteristic<bool>);
 
 impl IdentifyCharacteristic {
-    /// Creates a new Identify Characteristic.
+    /// Creates a new Identify characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

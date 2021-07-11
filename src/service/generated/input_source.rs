@@ -18,12 +18,12 @@ use crate::{
     HapType,
 };
 
-/// Input Source Service.
+/// Input Source service.
 #[derive(Debug, Default)]
 pub struct InputSourceService {
-    /// Instance ID of the Input Source Service.
+    /// Instance ID of the Input Source service.
     id: u64,
-    /// `HapType` of the Input Source Service.
+    /// [`HapType`](HapType) of the Input Source service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -32,27 +32,27 @@ pub struct InputSourceService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Configured Name Characteristic (required).
+	/// Configured Name characteristic (required).
 	pub configured_name: ConfiguredNameCharacteristic,
-	/// Input Source Type Characteristic (required).
+	/// Input Source Type characteristic (required).
 	pub input_source_type: InputSourceTypeCharacteristic,
-	/// Is Configured Characteristic (required).
+	/// Is Configured characteristic (required).
 	pub is_configured: IsConfiguredCharacteristic,
-	/// Name Characteristic (required).
+	/// Name characteristic (required).
 	pub name: NameCharacteristic,
-	/// Current Visibility State Characteristic (required).
+	/// Current Visibility State characteristic (required).
 	pub current_visibility_state: CurrentVisibilityStateCharacteristic,
 
-	/// Identifier Characteristic (optional).
+	/// Identifier characteristic (optional).
 	pub identifier: Option<IdentifierCharacteristic>,
-	/// Input Device Type Characteristic (optional).
+	/// Input Device Type characteristic (optional).
 	pub input_device_type: Option<InputDeviceTypeCharacteristic>,
-	/// Target Visibility State Characteristic (optional).
+	/// Target Visibility State characteristic (optional).
 	pub target_visibility_state: Option<TargetVisibilityStateCharacteristic>,
 }
 
 impl InputSourceService {
-    /// Creates a new Input Source Service.
+    /// Creates a new Input Source service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Product Data Characteristic.
+/// Product Data characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ProductDataCharacteristic(Characteristic<Vec<u8>>);
 
 impl ProductDataCharacteristic {
-    /// Creates a new Product Data Characteristic.
+    /// Creates a new Product Data characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

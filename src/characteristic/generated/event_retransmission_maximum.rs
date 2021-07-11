@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Event Retransmission Maximum Characteristic.
+/// Event Retransmission Maximum characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct EventRetransmissionMaximumCharacteristic(Characteristic<u8>);
 
 impl EventRetransmissionMaximumCharacteristic {
-    /// Creates a new Event Retransmission Maximum Characteristic.
+    /// Creates a new Event Retransmission Maximum characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

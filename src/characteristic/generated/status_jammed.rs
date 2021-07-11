@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Status Jammed Characteristic.
+/// Status Jammed characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct StatusJammedCharacteristic(Characteristic<u8>);
 
 impl StatusJammedCharacteristic {
-    /// Creates a new Status Jammed Characteristic.
+    /// Creates a new Status Jammed characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Target Configuration Characteristic.
+/// Supported Target Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedTargetConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedTargetConfigurationCharacteristic {
-    /// Creates a new Supported Target Configuration Characteristic.
+    /// Creates a new Supported Target Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

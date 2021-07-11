@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// HAP Accessory category.
+/// HAP accessory category.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum AccessoryCategory {
 	Other = 1,

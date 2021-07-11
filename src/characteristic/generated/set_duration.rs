@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Set Duration Characteristic.
+/// Set Duration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SetDurationCharacteristic(Characteristic<u32>);
 
 impl SetDurationCharacteristic {
-    /// Creates a new Set Duration Characteristic.
+    /// Creates a new Set Duration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u32> {

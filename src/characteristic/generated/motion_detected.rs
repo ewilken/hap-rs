@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Motion Detected Characteristic.
+/// Motion Detected characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MotionDetectedCharacteristic(Characteristic<bool>);
 
 impl MotionDetectedCharacteristic {
-    /// Creates a new Motion Detected Characteristic.
+    /// Creates a new Motion Detected characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

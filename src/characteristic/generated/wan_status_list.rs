@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// WAN Status List Characteristic.
+/// WAN Status List characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct WanStatusListCharacteristic(Characteristic<Vec<u8>>);
 
 impl WanStatusListCharacteristic {
-    /// Creates a new WAN Status List Characteristic.
+    /// Creates a new WAN Status List characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Relative Humidity Dehumidifier Threshold Characteristic.
+/// Relative Humidity Dehumidifier Threshold characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RelativeHumidityDehumidifierThresholdCharacteristic(Characteristic<f32>);
 
 impl RelativeHumidityDehumidifierThresholdCharacteristic {
-    /// Creates a new Relative Humidity Dehumidifier Threshold Characteristic.
+    /// Creates a new Relative Humidity Dehumidifier Threshold characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

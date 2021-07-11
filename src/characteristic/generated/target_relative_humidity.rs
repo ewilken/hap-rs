@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target Relative Humidity Characteristic.
+/// Target Relative Humidity characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetRelativeHumidityCharacteristic(Characteristic<f32>);
 
 impl TargetRelativeHumidityCharacteristic {
-    /// Creates a new Target Relative Humidity Characteristic.
+    /// Creates a new Target Relative Humidity characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

@@ -12,12 +12,12 @@ use crate::{
     HapType,
 };
 
-/// Target Control Management Service.
+/// Target Control Management service.
 #[derive(Debug, Default)]
 pub struct TargetControlManagementService {
-    /// Instance ID of the Target Control Management Service.
+    /// Instance ID of the Target Control Management service.
     id: u64,
-    /// `HapType` of the Target Control Management Service.
+    /// [`HapType`](HapType) of the Target Control Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,15 +26,15 @@ pub struct TargetControlManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Supported Target Configuration Characteristic (required).
+	/// Supported Target Configuration characteristic (required).
 	pub supported_target_configuration: SupportedTargetConfigurationCharacteristic,
-	/// Target List Configuration Characteristic (required).
+	/// Target List Configuration characteristic (required).
 	pub target_list_configuration: TargetListConfigurationCharacteristic,
 
 }
 
 impl TargetControlManagementService {
-    /// Creates a new Target Control Management Service.
+    /// Creates a new Target Control Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

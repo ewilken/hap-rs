@@ -19,12 +19,12 @@ use crate::{
     HapType,
 };
 
-/// Wi-Fi Router Service.
+/// Wi-Fi Router service.
 #[derive(Debug, Default)]
 pub struct WiFiRouterService {
-    /// Instance ID of the Wi-Fi Router Service.
+    /// Instance ID of the Wi-Fi Router service.
     id: u64,
-    /// `HapType` of the Wi-Fi Router Service.
+    /// [`HapType`](HapType) of the Wi-Fi Router service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -33,29 +33,29 @@ pub struct WiFiRouterService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Configured Name Characteristic (required).
+	/// Configured Name characteristic (required).
 	pub configured_name: ConfiguredNameCharacteristic,
-	/// Managed Network Enable Characteristic (required).
+	/// Managed Network Enable characteristic (required).
 	pub managed_network_enable: ManagedNetworkEnableCharacteristic,
-	/// Network Access Violation Control Characteristic (required).
+	/// Network Access Violation Control characteristic (required).
 	pub network_access_violation_control: NetworkAccessViolationControlCharacteristic,
-	/// Network Client Control Characteristic (required).
+	/// Network Client Control characteristic (required).
 	pub network_client_control: NetworkClientControlCharacteristic,
-	/// Network Client Status Control Characteristic (required).
+	/// Network Client Status Control characteristic (required).
 	pub network_client_status_control: NetworkClientStatusControlCharacteristic,
-	/// Router Status Characteristic (required).
+	/// Router Status characteristic (required).
 	pub router_status: RouterStatusCharacteristic,
-	/// Supported Router Configuration Characteristic (required).
+	/// Supported Router Configuration characteristic (required).
 	pub supported_router_configuration: SupportedRouterConfigurationCharacteristic,
-	/// WAN Configuration List Characteristic (required).
+	/// WAN Configuration List characteristic (required).
 	pub wan_configuration_list: WanConfigurationListCharacteristic,
-	/// WAN Status List Characteristic (required).
+	/// WAN Status List characteristic (required).
 	pub wan_status_list: WanStatusListCharacteristic,
 
 }
 
 impl WiFiRouterService {
-    /// Creates a new Wi-Fi Router Service.
+    /// Creates a new Wi-Fi Router service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Window Service.
+/// Window service.
 #[derive(Debug, Default)]
 pub struct WindowService {
-    /// Instance ID of the Window Service.
+    /// Instance ID of the Window service.
     id: u64,
-    /// `HapType` of the Window Service.
+    /// [`HapType`](HapType) of the Window service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct WindowService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Position Characteristic (required).
+	/// Current Position characteristic (required).
 	pub current_position: CurrentPositionCharacteristic,
-	/// Position State Characteristic (required).
+	/// Position State characteristic (required).
 	pub position_state: PositionStateCharacteristic,
-	/// Target Position Characteristic (required).
+	/// Target Position characteristic (required).
 	pub target_position: TargetPositionCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Obstruction Detected Characteristic (optional).
+	/// Obstruction Detected characteristic (optional).
 	pub obstruction_detected: Option<ObstructionDetectedCharacteristic>,
-	/// Hold Position Characteristic (optional).
+	/// Hold Position characteristic (optional).
 	pub hold_position: Option<HoldPositionCharacteristic>,
 }
 
 impl WindowService {
-    /// Creates a new Window Service.
+    /// Creates a new Window service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

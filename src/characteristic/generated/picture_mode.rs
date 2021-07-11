@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Picture Mode Characteristic.
+/// Picture Mode characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PictureModeCharacteristic(Characteristic<u8>);
 
 impl PictureModeCharacteristic {
-    /// Creates a new Picture Mode Characteristic.
+    /// Creates a new Picture Mode characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

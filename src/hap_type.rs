@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 use crate::Error;
 
-/// HAP Service and Characteristic type representation.
+/// HAP service and characteristic type representation.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum HapType {
     Unknown,

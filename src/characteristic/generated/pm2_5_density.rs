@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// PM2.5 Density Characteristic.
+/// PM2.5 Density characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct Pm2_5DensityCharacteristic(Characteristic<f32>);
 
 impl Pm2_5DensityCharacteristic {
-    /// Creates a new PM2.5 Density Characteristic.
+    /// Creates a new PM2.5 Density characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

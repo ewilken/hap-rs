@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Cloud Relay Control Point Characteristic.
+/// Cloud Relay Control Point characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CloudRelayControlPointCharacteristic(Characteristic<Vec<u8>>);
 
 impl CloudRelayControlPointCharacteristic {
-    /// Creates a new Cloud Relay Control Point Characteristic.
+    /// Creates a new Cloud Relay Control Point characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

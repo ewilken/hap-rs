@@ -12,12 +12,12 @@ use crate::{
     HapType,
 };
 
-/// Access Control Service.
+/// Access Control service.
 #[derive(Debug, Default)]
 pub struct AccessControlService {
-    /// Instance ID of the Access Control Service.
+    /// Instance ID of the Access Control service.
     id: u64,
-    /// `HapType` of the Access Control Service.
+    /// [`HapType`](HapType) of the Access Control service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,15 +26,15 @@ pub struct AccessControlService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Access Control Level Characteristic (required).
+	/// Access Control Level characteristic (required).
 	pub access_control_level: AccessControlLevelCharacteristic,
 
-	/// Password Setting Characteristic (optional).
+	/// Password Setting characteristic (optional).
 	pub password_setting: Option<PasswordSettingCharacteristic>,
 }
 
 impl AccessControlService {
-    /// Creates a new Access Control Service.
+    /// Creates a new Access Control service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

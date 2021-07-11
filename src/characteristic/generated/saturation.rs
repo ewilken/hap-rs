@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Saturation Characteristic.
+/// Saturation characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SaturationCharacteristic(Characteristic<f32>);
 
 impl SaturationCharacteristic {
-    /// Creates a new Saturation Characteristic.
+    /// Creates a new Saturation characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

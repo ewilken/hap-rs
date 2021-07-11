@@ -14,12 +14,12 @@ use crate::{
     HapType,
 };
 
-/// Pairing Service.
+/// Pairing service.
 #[derive(Debug, Default)]
 pub struct PairingService {
-    /// Instance ID of the Pairing Service.
+    /// Instance ID of the Pairing service.
     id: u64,
-    /// `HapType` of the Pairing Service.
+    /// [`HapType`](HapType) of the Pairing service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,19 +28,19 @@ pub struct PairingService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// List Pairings Characteristic (required).
+	/// List Pairings characteristic (required).
 	pub list_pairings: ListPairingsCharacteristic,
-	/// Pair Setup Characteristic (required).
+	/// Pair Setup characteristic (required).
 	pub pair_setup: PairSetupCharacteristic,
-	/// Pair Verify Characteristic (required).
+	/// Pair Verify characteristic (required).
 	pub pair_verify: PairVerifyCharacteristic,
-	/// Pairing Features Characteristic (required).
+	/// Pairing Features characteristic (required).
 	pub pairing_features: PairingFeaturesCharacteristic,
 
 }
 
 impl PairingService {
-    /// Creates a new Pairing Service.
+    /// Creates a new Pairing service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Periodic Snapshots Active Characteristic.
+/// Periodic Snapshots Active characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PeriodicSnapshotsActiveCharacteristic(Characteristic<bool>);
 
 impl PeriodicSnapshotsActiveCharacteristic {
-    /// Creates a new Periodic Snapshots Active Characteristic.
+    /// Creates a new Periodic Snapshots Active characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

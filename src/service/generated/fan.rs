@@ -14,12 +14,12 @@ use crate::{
     HapType,
 };
 
-/// Fan Service.
+/// Fan service.
 #[derive(Debug, Default)]
 pub struct FanService {
-    /// Instance ID of the Fan Service.
+    /// Instance ID of the Fan service.
     id: u64,
-    /// `HapType` of the Fan Service.
+    /// [`HapType`](HapType) of the Fan service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,19 +28,19 @@ pub struct FanService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Power State Characteristic (required).
+	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Rotation Direction Characteristic (optional).
+	/// Rotation Direction characteristic (optional).
 	pub rotation_direction: Option<RotationDirectionCharacteristic>,
-	/// Rotation Speed Characteristic (optional).
+	/// Rotation Speed characteristic (optional).
 	pub rotation_speed: Option<RotationSpeedCharacteristic>,
 }
 
 impl FanService {
-    /// Creates a new Fan Service.
+    /// Creates a new Fan service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

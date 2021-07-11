@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Volume Selector Characteristic.
+/// Volume Selector characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VolumeSelectorCharacteristic(Characteristic<u8>);
 
 impl VolumeSelectorCharacteristic {
-    /// Creates a new Volume Selector Characteristic.
+    /// Creates a new Volume Selector characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

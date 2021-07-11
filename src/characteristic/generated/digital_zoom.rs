@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Digital Zoom Characteristic.
+/// Digital Zoom characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct DigitalZoomCharacteristic(Characteristic<f32>);
 
 impl DigitalZoomCharacteristic {
-    /// Creates a new Digital Zoom Characteristic.
+    /// Creates a new Digital Zoom characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target List Configuration Characteristic.
+/// Target List Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetListConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl TargetListConfigurationCharacteristic {
-    /// Creates a new Target List Configuration Characteristic.
+    /// Creates a new Target List Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

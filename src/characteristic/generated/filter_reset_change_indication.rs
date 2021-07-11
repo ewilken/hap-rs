@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Filter Reset Change Indication Characteristic.
+/// Filter Reset Change Indication characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FilterResetChangeIndicationCharacteristic(Characteristic<u8>);
 
 impl FilterResetChangeIndicationCharacteristic {
-    /// Creates a new Filter Reset Change Indication Characteristic.
+    /// Creates a new Filter Reset Change Indication characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

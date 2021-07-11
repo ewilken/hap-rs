@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Slats Service.
+/// Slats service.
 #[derive(Debug, Default)]
 pub struct SlatsService {
-    /// Instance ID of the Slats Service.
+    /// Instance ID of the Slats service.
     id: u64,
-    /// `HapType` of the Slats Service.
+    /// [`HapType`](HapType) of the Slats service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct SlatsService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Slat State Characteristic (required).
+	/// Current Slat State characteristic (required).
 	pub current_slat_state: CurrentSlatStateCharacteristic,
-	/// Slat Type Characteristic (required).
+	/// Slat Type characteristic (required).
 	pub slat_type: SlatTypeCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Swing Mode Characteristic (optional).
+	/// Swing Mode characteristic (optional).
 	pub swing_mode: Option<SwingModeCharacteristic>,
-	/// Current Tilt Angle Characteristic (optional).
+	/// Current Tilt Angle characteristic (optional).
 	pub current_tilt_angle: Option<CurrentTiltAngleCharacteristic>,
-	/// Target Tilt Angle Characteristic (optional).
+	/// Target Tilt Angle characteristic (optional).
 	pub target_tilt_angle: Option<TargetTiltAngleCharacteristic>,
 }
 
 impl SlatsService {
-    /// Creates a new Slats Service.
+    /// Creates a new Slats service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

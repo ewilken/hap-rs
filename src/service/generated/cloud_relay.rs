@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Cloud Relay Service.
+/// Cloud Relay service.
 #[derive(Debug, Default)]
 pub struct CloudRelayService {
-    /// Instance ID of the Cloud Relay Service.
+    /// Instance ID of the Cloud Relay service.
     id: u64,
-    /// `HapType` of the Cloud Relay Service.
+    /// [`HapType`](HapType) of the Cloud Relay service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct CloudRelayService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Cloud Relay Control Point Characteristic (required).
+	/// Cloud Relay Control Point characteristic (required).
 	pub cloud_relay_control_point: CloudRelayControlPointCharacteristic,
-	/// Cloud Relay Current State Characteristic (required).
+	/// Cloud Relay Current State characteristic (required).
 	pub cloud_relay_current_state: CloudRelayCurrentStateCharacteristic,
-	/// Cloud Relay Enable Status Characteristic (required).
+	/// Cloud Relay Enable Status characteristic (required).
 	pub cloud_relay_enable_status: CloudRelayEnableStatusCharacteristic,
 
 }
 
 impl CloudRelayService {
-    /// Creates a new Cloud Relay Service.
+    /// Creates a new Cloud Relay service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

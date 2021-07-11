@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Door Accessory.
+/// Door accessory.
 #[derive(Debug, Default)]
 pub struct DoorAccessory {
     /// ID of the Door Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Door Service.
+    /// Door service.
     pub door: DoorService,
 }
 
 impl DoorAccessory {
-    /// Creates a new Door Accessory.
+    /// Creates a new Door accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let door_id = accessory_information.get_characteristics().len() as u64;

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Color Temperature Characteristic.
+/// Color Temperature characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ColorTemperatureCharacteristic(Characteristic<i32>);
 
 impl ColorTemperatureCharacteristic {
-    /// Creates a new Color Temperature Characteristic.
+    /// Creates a new Color Temperature characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

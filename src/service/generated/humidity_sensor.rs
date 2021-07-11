@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Humidity Sensor Service.
+/// Humidity Sensor service.
 #[derive(Debug, Default)]
 pub struct HumiditySensorService {
-    /// Instance ID of the Humidity Sensor Service.
+    /// Instance ID of the Humidity Sensor service.
     id: u64,
-    /// `HapType` of the Humidity Sensor Service.
+    /// [`HapType`](HapType) of the Humidity Sensor service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct HumiditySensorService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Relative Humidity Characteristic (required).
+	/// Current Relative Humidity characteristic (required).
 	pub current_relative_humidity: CurrentRelativeHumidityCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Active Characteristic (optional).
+	/// Status Active characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Low Battery Characteristic (optional).
+	/// Status Low Battery characteristic (optional).
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
-	/// Status Tampered Characteristic (optional).
+	/// Status Tampered characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl HumiditySensorService {
-    /// Creates a new Humidity Sensor Service.
+    /// Creates a new Humidity Sensor service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

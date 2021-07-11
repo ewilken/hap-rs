@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Tilt Angle Characteristic.
+/// Current Tilt Angle characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentTiltAngleCharacteristic(Characteristic<i32>);
 
 impl CurrentTiltAngleCharacteristic {
-    /// Creates a new Current Tilt Angle Characteristic.
+    /// Creates a new Current Tilt Angle characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

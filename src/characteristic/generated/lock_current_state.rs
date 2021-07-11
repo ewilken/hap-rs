@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Lock Current State Characteristic.
+/// Lock Current State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockCurrentStateCharacteristic(Characteristic<u8>);
 
 impl LockCurrentStateCharacteristic {
-    /// Creates a new Lock Current State Characteristic.
+    /// Creates a new Lock Current State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

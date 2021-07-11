@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Volatile Organic Compound Density Characteristic.
+/// Volatile Organic Compound Density characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VolatileOrganicCompoundDensityCharacteristic(Characteristic<f32>);
 
 impl VolatileOrganicCompoundDensityCharacteristic {
-    /// Creates a new Volatile Organic Compound Density Characteristic.
+    /// Creates a new Volatile Organic Compound Density characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

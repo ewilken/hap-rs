@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Serial Number Characteristic.
+/// Serial Number characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SerialNumberCharacteristic(Characteristic<String>);
 
 impl SerialNumberCharacteristic {
-    /// Creates a new Serial Number Characteristic.
+    /// Creates a new Serial Number characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<String> {

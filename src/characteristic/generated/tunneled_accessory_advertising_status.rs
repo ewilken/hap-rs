@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Tunneled Accessory Advertising Status Characteristic.
+/// Tunneled Accessory Advertising Status characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TunneledAccessoryAdvertisingStatusCharacteristic(Characteristic<bool>);
 
 impl TunneledAccessoryAdvertisingStatusCharacteristic {
-    /// Creates a new Tunneled Accessory Advertising Status Characteristic.
+    /// Creates a new Tunneled Accessory Advertising Status characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

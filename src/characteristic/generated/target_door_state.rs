@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target Door State Characteristic.
+/// Target Door State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetDoorStateCharacteristic(Characteristic<u8>);
 
@@ -36,7 +36,7 @@ pub enum Value {
 }
 
 impl TargetDoorStateCharacteristic {
-    /// Creates a new Target Door State Characteristic.
+    /// Creates a new Target Door State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

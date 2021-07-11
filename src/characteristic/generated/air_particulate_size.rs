@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Air Particulate Size Characteristic.
+/// Air Particulate Size characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AirParticulateSizeCharacteristic(Characteristic<u8>);
 
 impl AirParticulateSizeCharacteristic {
-    /// Creates a new Air Particulate Size Characteristic.
+    /// Creates a new Air Particulate Size characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

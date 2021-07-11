@@ -11,12 +11,12 @@ use crate::{
     HapType,
 };
 
-/// Wi-Fi Satellite Service.
+/// Wi-Fi Satellite service.
 #[derive(Debug, Default)]
 pub struct WiFiSatelliteService {
-    /// Instance ID of the Wi-Fi Satellite Service.
+    /// Instance ID of the Wi-Fi Satellite service.
     id: u64,
-    /// `HapType` of the Wi-Fi Satellite Service.
+    /// [`HapType`](HapType) of the Wi-Fi Satellite service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -25,13 +25,13 @@ pub struct WiFiSatelliteService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Wi-Fi Satellite Status Characteristic (required).
+	/// Wi-Fi Satellite Status characteristic (required).
 	pub wi_fi_satellite_status: WiFiSatelliteStatusCharacteristic,
 
 }
 
 impl WiFiSatelliteService {
-    /// Creates a new Wi-Fi Satellite Service.
+    /// Creates a new Wi-Fi Satellite service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

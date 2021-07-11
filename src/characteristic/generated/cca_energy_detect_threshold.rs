@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// CCA Energy Detect Threshold Characteristic.
+/// CCA Energy Detect Threshold characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CcaEnergyDetectThresholdCharacteristic(Characteristic<i32>);
 
 impl CcaEnergyDetectThresholdCharacteristic {
-    /// Creates a new CCA Energy Detect Threshold Characteristic.
+    /// Creates a new CCA Energy Detect Threshold characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

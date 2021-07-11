@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Occupancy Sensor Service.
+/// Occupancy Sensor service.
 #[derive(Debug, Default)]
 pub struct OccupancySensorService {
-    /// Instance ID of the Occupancy Sensor Service.
+    /// Instance ID of the Occupancy Sensor service.
     id: u64,
-    /// `HapType` of the Occupancy Sensor Service.
+    /// [`HapType`](HapType) of the Occupancy Sensor service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct OccupancySensorService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Occupancy Detected Characteristic (required).
+	/// Occupancy Detected characteristic (required).
 	pub occupancy_detected: OccupancyDetectedCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Active Characteristic (optional).
+	/// Status Active characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Low Battery Characteristic (optional).
+	/// Status Low Battery characteristic (optional).
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
-	/// Status Tampered Characteristic (optional).
+	/// Status Tampered characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl OccupancySensorService {
-    /// Creates a new Occupancy Sensor Service.
+    /// Creates a new Occupancy Sensor service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

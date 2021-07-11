@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Air Purifier State Characteristic.
+/// Current Air Purifier State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentAirPurifierStateCharacteristic(Characteristic<u8>);
 
@@ -37,7 +37,7 @@ pub enum Value {
 }
 
 impl CurrentAirPurifierStateCharacteristic {
-    /// Creates a new Current Air Purifier State Characteristic.
+    /// Creates a new Current Air Purifier State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

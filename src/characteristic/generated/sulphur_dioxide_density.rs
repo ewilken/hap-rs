@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Sulphur dioxide Density Characteristic.
+/// Sulphur dioxide Density characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SulphurDioxideDensityCharacteristic(Characteristic<f32>);
 
 impl SulphurDioxideDensityCharacteristic {
-    /// Creates a new Sulphur dioxide Density Characteristic.
+    /// Creates a new Sulphur dioxide Density characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

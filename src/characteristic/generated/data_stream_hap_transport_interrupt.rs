@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Data Stream HAP Transport Interrupt Characteristic.
+/// Data Stream HAP Transport Interrupt characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct DataStreamHapTransportInterruptCharacteristic(Characteristic<Vec<u8>>);
 
 impl DataStreamHapTransportInterruptCharacteristic {
-    /// Creates a new Data Stream HAP Transport Interrupt Characteristic.
+    /// Creates a new Data Stream HAP Transport Interrupt characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

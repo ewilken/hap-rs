@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Security System Alarm Type Characteristic.
+/// Security System Alarm Type characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SecuritySystemAlarmTypeCharacteristic(Characteristic<u8>);
 
 impl SecuritySystemAlarmTypeCharacteristic {
-    /// Creates a new Security System Alarm Type Characteristic.
+    /// Creates a new Security System Alarm Type characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

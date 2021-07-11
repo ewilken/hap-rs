@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Slat Type Characteristic.
+/// Slat Type characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SlatTypeCharacteristic(Characteristic<u8>);
 
 impl SlatTypeCharacteristic {
-    /// Creates a new Slat Type Characteristic.
+    /// Creates a new Slat Type characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

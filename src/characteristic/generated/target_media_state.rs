@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target Media State Characteristic.
+/// Target Media State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetMediaStateCharacteristic(Characteristic<u8>);
 
 impl TargetMediaStateCharacteristic {
-    /// Creates a new Target Media State Characteristic.
+    /// Creates a new Target Media State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

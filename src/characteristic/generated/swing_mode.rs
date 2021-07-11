@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Swing Mode Characteristic.
+/// Swing Mode characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SwingModeCharacteristic(Characteristic<u8>);
 
 impl SwingModeCharacteristic {
-    /// Creates a new Swing Mode Characteristic.
+    /// Creates a new Swing Mode characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

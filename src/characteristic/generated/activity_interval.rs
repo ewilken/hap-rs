@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Activity Interval Characteristic.
+/// Activity Interval characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ActivityIntervalCharacteristic(Characteristic<u32>);
 
 impl ActivityIntervalCharacteristic {
-    /// Creates a new Activity Interval Characteristic.
+    /// Creates a new Activity Interval characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u32> {

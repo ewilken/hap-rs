@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Heater-Cooler State Characteristic.
+/// Current Heater-Cooler State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentHeaterCoolerStateCharacteristic(Characteristic<u8>);
 
@@ -38,7 +38,7 @@ pub enum Value {
 }
 
 impl CurrentHeaterCoolerStateCharacteristic {
-    /// Creates a new Current Heater-Cooler State Characteristic.
+    /// Creates a new Current Heater-Cooler State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

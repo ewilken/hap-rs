@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Lock Control Point Characteristic.
+/// Lock Control Point characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockControlPointCharacteristic(Characteristic<Vec<u8>>);
 
 impl LockControlPointCharacteristic {
-    /// Creates a new Lock Control Point Characteristic.
+    /// Creates a new Lock Control Point characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

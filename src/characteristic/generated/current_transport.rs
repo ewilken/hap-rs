@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Transport Characteristic.
+/// Current Transport characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentTransportCharacteristic(Characteristic<bool>);
 
 impl CurrentTransportCharacteristic {
-    /// Creates a new Current Transport Characteristic.
+    /// Creates a new Current Transport characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

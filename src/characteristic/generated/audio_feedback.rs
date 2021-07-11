@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Audio Feedback Characteristic.
+/// Audio Feedback characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AudioFeedbackCharacteristic(Characteristic<bool>);
 
 impl AudioFeedbackCharacteristic {
-    /// Creates a new Audio Feedback Characteristic.
+    /// Creates a new Audio Feedback characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

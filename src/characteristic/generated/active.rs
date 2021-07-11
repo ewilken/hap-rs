@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Active Characteristic.
+/// Active characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ActiveCharacteristic(Characteristic<u8>);
 
 impl ActiveCharacteristic {
-    /// Creates a new Active Characteristic.
+    /// Creates a new Active characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

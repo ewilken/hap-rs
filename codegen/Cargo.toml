@@ -1,6 +1,6 @@
 [package]
 name = "hap-codegen"
-version = "0.1.0-pre.8"
+version = "0.1.0-pre.9"
 authors = ["Elias Wilken <elias@wlkn.io>"]
 edition = "2018"
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// MAC Transmission Counters Characteristic.
+/// MAC Transmission Counters characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MacTransmissionCountersCharacteristic(Characteristic<Vec<u8>>);
 
 impl MacTransmissionCountersCharacteristic {
-    /// Creates a new MAC Transmission Counters Characteristic.
+    /// Creates a new MAC Transmission Counters characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

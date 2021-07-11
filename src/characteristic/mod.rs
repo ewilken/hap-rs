@@ -72,7 +72,7 @@ pub struct Characteristic<T: fmt::Debug + Default + Clone + Serialize + Send + S
     pid: Option<u64>,
 
     /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
-    /// Returning a `Some(T)` from this function changes the value of the `Characteristic` before the Controller reads
+    /// Returning a `Some(T)` from this function changes the value of the characteristic before the controller reads
     /// it so the Controller reads the new value.
     on_read: Option<Box<dyn OnReadFn<T>>>,
     /// Sets a callback function on a characteristic that is called every time a controller attempts to update its
@@ -119,30 +119,30 @@ impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> Characteristic<T
 where
     for<'de> T: Deserialize<'de>,
 {
-    /// Returns the ID of a Characteristic.
+    /// Returns the ID of the characteristic.
     pub fn get_id(&self) -> u64 { self.id }
 
-    /// Returns the `HapType` of a Characteristic.
+    /// Returns the [`HapType`](HapType) of the characteristic.
     pub fn get_type(&self) -> HapType { self.hap_type }
 
-    /// Returns the `Format` of a Characteristic.
+    /// Returns the [`Format`](Format) of the characteristic.
     pub fn get_format(&self) -> Format { self.format }
 
-    /// Returns the `Perm`s of a Characteristic.
+    /// Returns the [`Perm`](Perm)s of the characteristic.
     pub fn get_perms(&self) -> Vec<Perm> { self.perms.clone() }
 
-    /// Sets the description of a Characteristic.
+    /// Sets the description of the characteristic.
     pub fn set_description(&mut self, description: Option<String>) { self.description = description; }
 
-    /// Returns the event notifications value of a Characteristic.
+    /// Returns the `event_notifications` value of the characteristic.
     pub fn get_event_notifications(&self) -> Option<bool> { self.event_notifications }
 
-    /// Sets the event notifications value of a Characteristic.
+    /// Sets the `event_notifications` value of the characteristic.
     pub fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
         self.event_notifications = event_notifications;
     }
 
-    /// Returns the value of a Characteristic.
+    /// Returns the value of the characteristic.
     pub async fn get_value(&mut self) -> Result<T> {
         let mut val = None;
         if let Some(ref on_read) = self.on_read {
@@ -158,9 +158,9 @@ where
         Ok(self.value.clone())
     }
 
-    /// Sets the value of a Characteristic.
+    /// Sets the value of the characteristic.
     pub async fn set_value(&mut self, val: T) -> Result<()> {
-        // TODO: check for min/max on types implementing PartialOrd
+        // TODO - check for min/max on types implementing PartialOrd
         // if let Some(ref max) = self.inner.try_borrow()?.max_value {
         //     if &val > max {
         //         return Err(Error::from_str("value above max_value"));
@@ -199,33 +199,33 @@ where
         Ok(())
     }
 
-    /// Returns the `Unit` of a Characteristic.
+    /// Returns the [`Unit`](Unit) of the characteristic.
     pub fn get_unit(&self) -> Option<Unit> { self.unit }
 
-    /// Returns the maximum value of a Characteristic.
+    /// Returns the maximum value of the characteristic.
     pub fn get_max_value(&self) -> Option<T> { self.max_value.clone() }
 
-    /// Sets the maximum value of a Characteristic.
+    /// Sets the maximum value of the characteristic.
     pub fn set_max_value(&mut self, val: Option<T>) { self.max_value = val; }
 
-    /// Returns the minimum value of a Characteristic.
+    /// Returns the minimum value of the characteristic.
     pub fn get_min_value(&self) -> Option<T> { self.min_value.clone() }
 
-    /// Sets the minimum value of a Characteristic.
+    /// Sets the minimum value of the characteristic.
     pub fn set_min_value(&mut self, val: Option<T>) { self.min_value = val; }
 
-    /// Returns the step value of a Characteristic.
+    /// Returns the step value of the characteristic.
     pub fn get_step_value(&self) -> Option<T> { self.step_value.clone() }
 
-    /// Returns the step value of a Characteristic.
+    /// Sets the step value of the characteristic.
     pub fn set_step_value(&mut self, val: Option<T>) { self.step_value = val; }
 
-    /// Returns the maximum length of a Characteristic.
+    /// Returns the maximum length of the characteristic.
     pub fn get_max_len(&self) -> Option<u16> { self.max_len }
 
     /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
-    /// Returning a `Some(T)` from this function changes the value of the `Characteristic` before the Controller reads
-    /// it so the Controller reads the new value.
+    /// Returning a `Some(T)` from this function changes the value of the characteristic before the controller reads
+    /// it so the controller reads the new value.
     pub fn on_read(&mut self, f: Option<impl OnReadFn<T>>) {
         self.on_read = f.map(|f| Box::new(f) as Box<dyn OnReadFn<T>>);
     }
@@ -252,7 +252,7 @@ where
         self.on_update_async = f.map(|f| Box::new(f) as Box<dyn OnUpdateFuture<T>>);
     }
 
-    /// Sets a `hap::event::pointer::EventEmitter` on the Characteristic.
+    /// Sets a pointer to an `EventEmitter` on the characteristic.
     pub(crate) fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.event_emitter = event_emitter;
     }
@@ -309,7 +309,7 @@ impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> Serialize for Ch
     }
 }
 
-/// Permission of a `Characteristic`.
+/// Permission of a characteristic.
 #[derive(Debug, Copy, Clone, Serialize, PartialEq)]
 pub enum Perm {
     #[serde(rename = "pr")]
@@ -328,7 +328,7 @@ pub enum Perm {
     WriteResponse,
 }
 
-/// Unit of a `Characteristic`.
+/// [`Unit`](Unit) of a characteristic.
 #[derive(Debug, Copy, Clone, Serialize)]
 pub enum Unit {
     #[serde(rename = "celsius")]
@@ -349,7 +349,7 @@ pub enum Unit {
     MicrogramsPerCubicMeter,
 }
 
-/// Format (data type) of a `Characteristic`.
+/// [`Format`](Format) (data type) of a characteristic.
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Format {
     #[serde(rename = "bool")]
@@ -378,53 +378,66 @@ impl Default for Format {
     fn default() -> Format { Format::String }
 }
 
-/// `HapCharacteristic` is implemented by every `Characteristic`.
+/// [`HapCharacteristic`](HapCharacteristic) is implemented by every HAP characteristic.
 #[async_trait]
 pub trait HapCharacteristic: HapCharacteristicSetup + erased_serde::Serialize + Send + Sync {
-    /// Returns the ID of a Characteristic.
+    /// Returns the ID of the characteristic.
     fn get_id(&self) -> u64;
-    /// Returns the `HapType` of a Characteristic.
+    /// Returns the [`HapType`](HapType) of the characteristic.
     fn get_type(&self) -> HapType;
-    /// Returns the `Format` of a Characteristic.
+    /// Returns the [`Format`](Format) of the characteristic.
     fn get_format(&self) -> Format;
-    /// Returns the `Perm`s of a Characteristic.
+    /// Returns the [`Perm`](Perm)s of the characteristic.
     fn get_perms(&self) -> Vec<Perm>;
-    /// Returns the event notifications value of a Characteristic.
+    /// Returns the `event_notifications` value of the characteristic.
     fn get_event_notifications(&self) -> Option<bool>;
-    /// Sets the event notifications value of a Characteristic.
+    /// Sets the `event_notifications` value of the characteristic.
     fn set_event_notifications(&mut self, event_notifications: Option<bool>);
-    /// Returns the value of a Characteristic.
+    /// Returns the value of the characteristic.
     async fn get_value(&mut self) -> Result<serde_json::Value>;
-    /// Sets the value of a Characteristic.
+    /// Sets the value of the characteristic.
     async fn set_value(&mut self, value: serde_json::Value) -> Result<()>;
-    /// Returns the `Unit` of a Characteristic.
+    /// Returns the [`Unit`](Unit) of the characteristic.
     fn get_unit(&self) -> Option<Unit>;
-    /// Returns the maximum value of a Characteristic.
+    /// Returns the maximum value of the characteristic.
     fn get_max_value(&self) -> Option<serde_json::Value>;
-    /// Returns the minimum value of a Characteristic.
+    /// Returns the minimum value of the characteristic.
     fn get_min_value(&self) -> Option<serde_json::Value>;
-    /// Returns the step value of a Characteristic.
+    /// Returns the step value of the characteristic.
     fn get_step_value(&self) -> Option<serde_json::Value>;
-    /// Returns the maximum length of a Characteristic.
+    /// Returns the maximum length of the characteristic.
     fn get_max_len(&self) -> Option<u16>;
 }
 
 serialize_trait_object!(HapCharacteristic);
 
+/// [`HapCharacteristicSetup`](HapCharacteristicSetup) is implemented by every HAP characteristic to provide helper
+/// methods used by the HAP server for setup purposes. It's not meant to be used by a consumer of the library.
 pub trait HapCharacteristicSetup {
-    /// Sets a `hap::event::pointer::EventEmitter` on the characteristic.
+    /// Sets a pointer to an `EventEmitter` on the characteristic.
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>);
 }
 
+/// [`OnReadFn`](OnReadFn) represents a callback function to be set on a characteristic that is called every time a
+/// controller attempts to read its value. Returning a `Some(T)` from this function changes the value of the
+/// characteristic before the controller reads it so the controller reads the new value.
 pub trait OnReadFn<T: Default + Clone + Serialize + Send + Sync>: Fn() -> Option<T> + 'static + Send + Sync {}
 impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFn<T> for F where
     F: Fn() -> Option<T> + 'static + Send + Sync
 {
 }
 
+/// [`OnUpdateFn`](OnUpdateFn) represents a callback function to be set on a characteristic that is called every time a
+/// controller attempts to update its value. The first argument is a reference to the current value of the
+/// characteristic and the second argument is a reference to the value the controller attempts to change the
+/// characteristic's to.
 pub trait OnUpdateFn<T: Default + Clone + Serialize + Send + Sync>: Fn(&T, &T) + 'static + Send + Sync {}
 impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFn<T> for F where F: Fn(&T, &T) + 'static + Send + Sync {}
 
+/// [`OnReadFuture`](OnReadFuture) represents an async callback function to be set on a characteristic that is driven to
+/// completion by the async runtime driving the HAP server every time a controller attempts to read its value. Returning
+/// a `Some(T)` from this function changes the value of the characteristic before the controller reads it so the
+/// controller reads the new value.
 pub trait OnReadFuture<T: Default + Clone + Serialize + Send + Sync>:
     Fn() -> BoxFuture<'static, Option<T>> + 'static + Send + Sync
 {
@@ -434,6 +447,10 @@ impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFuture<T> for F wher
 {
 }
 
+/// [`OnUpdateFuture`](OnUpdateFuture) represents an async callback function to be set on a characteristic that is
+/// driven to completion by the async runtime driving the HAP server every time a controller attempts to update its
+/// value. The first argument is a reference to the current value of the characteristic and the second argument is a
+/// reference to the value the controller attempts to change the characteristic's to.
 pub trait OnUpdateFuture<T: Default + Clone + Serialize + Send + Sync>:
     Fn(T, T) -> BoxFuture<'static, ()> + 'static + Send + Sync
 {
@@ -443,10 +460,11 @@ impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFuture<T> for F wh
 {
 }
 
+/// Trait containing the [`OnReadFn`](OnReadFn) and [`OnUpdateFn`](OnUpdateFn) callback functions.
 pub trait CharacteristicCallbacks<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> {
     /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
-    /// Returning a `Some(T)` from this function changes the value of the `Characteristic` before the Controller reads
-    /// it so the Controller reads the new value.
+    /// Returning a `Some(T)` from this function changes the value of the characteristic before the controller reads
+    /// it so the controller reads the new value.
     fn on_read(&mut self, f: Option<impl OnReadFn<T>>);
     /// Sets a callback function on a characteristic that is called every time a controller attempts to update its
     /// value. The first argument is a reference to the current value of the characteristic and the second argument is a
@@ -454,6 +472,7 @@ pub trait CharacteristicCallbacks<T: fmt::Debug + Default + Clone + Serialize + 
     fn on_update(&mut self, f: Option<impl OnUpdateFn<T>>);
 }
 
+/// Trait containing the [`OnReadFuture`](OnReadFuture) and [`OnUpdateFuture`](OnUpdateFuture) callback functions.
 pub trait AsyncCharacteristicCallbacks<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> {
     /// Sets an async callback function on a characteristic that is driven to completion by the async runtime driving
     /// the HAP server every time a controller attempts to read its value. Returning a `Some(T)` from this function

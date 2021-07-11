@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Stateless Programmable Switch Service.
+/// Stateless Programmable Switch service.
 #[derive(Debug, Default)]
 pub struct StatelessProgrammableSwitchService {
-    /// Instance ID of the Stateless Programmable Switch Service.
+    /// Instance ID of the Stateless Programmable Switch service.
     id: u64,
-    /// `HapType` of the Stateless Programmable Switch Service.
+    /// [`HapType`](HapType) of the Stateless Programmable Switch service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct StatelessProgrammableSwitchService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Programmable Switch Event Characteristic (required).
+	/// Programmable Switch Event characteristic (required).
 	pub programmable_switch_event: ProgrammableSwitchEventCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Label Index Characteristic (optional).
+	/// Label Index characteristic (optional).
 	pub label_index: Option<LabelIndexCharacteristic>,
 }
 
 impl StatelessProgrammableSwitchService {
-    /// Creates a new Stateless Programmable Switch Service.
+    /// Creates a new Stateless Programmable Switch service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Lock Mechanism Service.
+/// Lock Mechanism service.
 #[derive(Debug, Default)]
 pub struct LockMechanismService {
-    /// Instance ID of the Lock Mechanism Service.
+    /// Instance ID of the Lock Mechanism service.
     id: u64,
-    /// `HapType` of the Lock Mechanism Service.
+    /// [`HapType`](HapType) of the Lock Mechanism service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct LockMechanismService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Lock Current State Characteristic (required).
+	/// Lock Current State characteristic (required).
 	pub lock_current_state: LockCurrentStateCharacteristic,
-	/// Lock Target State Characteristic (required).
+	/// Lock Target State characteristic (required).
 	pub lock_target_state: LockTargetStateCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
 impl LockMechanismService {
-    /// Creates a new Lock Mechanism Service.
+    /// Creates a new Lock Mechanism service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

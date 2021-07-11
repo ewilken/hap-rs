@@ -24,26 +24,28 @@ mod generated;
 
 pub use crate::accessory::{category::AccessoryCategory, defined::*, generated::*};
 
-/// `HapAccessory` is implemented by the inner type of every `Accessory`.
+/// [`HapAccessory`](HapAccessory) is implemented by every HAP accessory.
 pub trait HapAccessory: HapAccessorySetup + erased_serde::Serialize + Send + Sync {
-    /// Returns the ID of the Accessory.
+    /// Returns the ID of the accessory.
     fn get_id(&self) -> u64;
-    /// Sets the ID of the Accessory.
+    /// Sets the ID of the accessory.
     fn set_id(&mut self, id: u64);
-    /// Returns a reference to a specific Service of the Accessory if it's present on it.
+    /// Returns a reference to a specific service of the accessory if it's present on it.
     fn get_service(&self, hap_type: HapType) -> Option<&dyn HapService>;
-    /// Returns a mutable reference to a specific Service of the Accessory if it's present on it.
+    /// Returns a mutable reference to a specific service of the accessory if it's present on it.
     fn get_mut_service(&mut self, hap_type: HapType) -> Option<&mut dyn HapService>;
-    /// Returns references to all Services of the Accessory.
+    /// Returns references to all services of the accessory.
     fn get_services(&self) -> Vec<&dyn HapService>;
-    /// Returns mutable references to the Services of the Accessory.
+    /// Returns mutable references to all services of the accessory.
     fn get_mut_services(&mut self) -> Vec<&mut dyn HapService>;
 }
 
 serialize_trait_object!(HapAccessory);
 
+/// [`HapAccessorySetup`](HapAccessorySetup) is implemented by every HAP accessory to provide helper methods used by the
+/// HAP server for setup purposes. It's not meant to be used by a consumer of the library.
 pub trait HapAccessorySetup {
-    /// Sets a `hap::event::pointer::EventEmitter` on all Characteristics of the Accessory.
+    /// Sets a pointer to an `EventEmitter` on all characteristics of the accessory.
     fn set_event_emitter_on_characteristics(&mut self, event_emitter: Option<pointer::EventEmitter>);
 }
 
@@ -60,8 +62,9 @@ where
     }
 }
 
-/// The `AccessoryInformationInformation` struct is used to store metadata about an `Accessory` and is converted to the
-/// Accessory Information Service of the `Accessory` it is passed to on its creation.
+/// The [`AccessoryInformation`](AccessoryInformation) struct is used to conveniently store metadata about an accessory
+/// and is converted to the [`AccessoryInformationService`](AccessoryInformationService) of the accessory it is passed
+/// to on its creation.
 ///
 /// # Examples
 ///
@@ -81,16 +84,16 @@ where
 #[derive(Debug)]
 pub struct AccessoryInformation {
     // TODO - include all possible fields of AccessoryInformationService
-    /// Contains the name of the company whose brand will appear on the `Accessory`, e.g., "Acme".
+    /// Contains the name of the company whose brand will appear on the accessory, e.g., "Acme".
     pub manufacturer: String,
-    /// Contains the manufacturer-specific model of the `Accessory`, e.g. "A1234".
+    /// Contains the manufacturer-specific model of the accessory, e.g. "A1234".
     pub model: String,
-    /// Describes the name of the `Accessory`.
+    /// Describes the name of the accessory.
     pub name: String,
-    /// Contains the manufacturer-specific serial number of the `Accessory`, e.g. "1A2B3C4D5E6F".
+    /// Contains the manufacturer-specific serial number of the accessory, e.g. "1A2B3C4D5E6F".
     /// The length must be greater than 1.
     pub serial_number: String,
-    /// When set indicates accessory requires additional setup. Use of Accessory Flags requires
+    /// When set indicates accessory requires additional setup. Use of accessory flags requires
     /// written approval by Apple in advance.
     pub accessory_flags: Option<u32>,
     pub application_matching_identifier: Option<Vec<u8>>,
@@ -101,7 +104,7 @@ pub struct AccessoryInformation {
     /// - <z> is the revision version number, required if non-zero.
     ///
     /// The firmware revision must follow the below rules:
-    /// - <x> is incremented when there is significant change. e.g.,1.0.0, 2.0.0, 3.0.0, etc.
+    /// - <x> is incremented when there is significant change. e.g., 1.0.0, 2.0.0, 3.0.0, etc.
     /// - <y> is incremented when minor changes are introduced such as 1.1.0, 2.1.0, 3.1.0 etc.
     /// - <z> is incremented when bug-fixes are introduced such as 1.0.1, 2.0.1, 3.0.1 etc.
     /// - Subsequent firmware updates can have a lower <y> version only if <x> is incremented
@@ -116,7 +119,7 @@ pub struct AccessoryInformation {
     /// - <z> is the revision version number, required if non-zero.
     ///
     /// The hardware revision must follow the below rules:
-    /// - <x> is incremented when there is significant change. e.g.,1.0.0, 2.0.0, 3.0.0, etc.
+    /// - <x> is incremented when there is significant change. e.g., 1.0.0, 2.0.0, 3.0.0, etc.
     /// - <y> is incremented when minor changes are introduced such as 1.1.0, 2.1.0, 3.1.0 etc.
     /// - <z> is incremented when bug-fixes are introduced such as 1.0.1, 2.0.1, 3.0.1 etc.
     /// - Subsequent firmware updates can have a lower <y> version only if <x> is incremented

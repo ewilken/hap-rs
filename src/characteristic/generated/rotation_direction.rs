@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Rotation Direction Characteristic.
+/// Rotation Direction characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RotationDirectionCharacteristic(Characteristic<i32>);
 
@@ -36,7 +36,7 @@ pub enum Value {
 }
 
 impl RotationDirectionCharacteristic {
-    /// Creates a new Rotation Direction Characteristic.
+    /// Creates a new Rotation Direction characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

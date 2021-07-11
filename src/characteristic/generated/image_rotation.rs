@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Image Rotation Characteristic.
+/// Image Rotation characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ImageRotationCharacteristic(Characteristic<i32>);
 
 impl ImageRotationCharacteristic {
-    /// Creates a new Image Rotation Characteristic.
+    /// Creates a new Image Rotation characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

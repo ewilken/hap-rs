@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Power State Characteristic.
+/// Power State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct PowerStateCharacteristic(Characteristic<bool>);
 
 impl PowerStateCharacteristic {
-    /// Creates a new Power State Characteristic.
+    /// Creates a new Power State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

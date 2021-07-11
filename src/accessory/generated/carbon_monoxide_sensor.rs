@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Carbon monoxide Sensor Accessory.
+/// Carbon monoxide Sensor accessory.
 #[derive(Debug, Default)]
 pub struct CarbonMonoxideSensorAccessory {
     /// ID of the Carbon monoxide Sensor Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Carbon monoxide Sensor Service.
+    /// Carbon monoxide Sensor service.
     pub carbon_monoxide_sensor: CarbonMonoxideSensorService,
 }
 
 impl CarbonMonoxideSensorAccessory {
-    /// Creates a new Carbon monoxide Sensor Accessory.
+    /// Creates a new Carbon monoxide Sensor accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let carbon_monoxide_sensor_id = accessory_information.get_characteristics().len() as u64;

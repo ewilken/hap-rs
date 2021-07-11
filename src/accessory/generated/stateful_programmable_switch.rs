@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Stateful Programmable Switch Accessory.
+/// Stateful Programmable Switch accessory.
 #[derive(Debug, Default)]
 pub struct StatefulProgrammableSwitchAccessory {
     /// ID of the Stateful Programmable Switch Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Stateful Programmable Switch Service.
+    /// Stateful Programmable Switch service.
     pub stateful_programmable_switch: StatefulProgrammableSwitchService,
 }
 
 impl StatefulProgrammableSwitchAccessory {
-    /// Creates a new Stateful Programmable Switch Accessory.
+    /// Creates a new Stateful Programmable Switch accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let stateful_programmable_switch_id = accessory_information.get_characteristics().len() as u64;

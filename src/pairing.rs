@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{Error, Result};
 
-/// `Pairing` represents paired controllers.
+/// A [`Pairing`](Pairing) represents a paired controller.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Pairing {
     pub id: Uuid,
@@ -12,7 +12,7 @@ pub struct Pairing {
 }
 
 impl Pairing {
-    /// Creates a new `Pairing`.
+    /// Creates a new [`Pairing`](Pairing).
     pub fn new(id: Uuid, permissions: Permissions, public_key: [u8; 32]) -> Pairing {
         Pairing {
             id,
@@ -21,13 +21,13 @@ impl Pairing {
         }
     }
 
-    /// Deserializes a `Pairing` from bytes.
+    /// Deserializes a [`Pairing`](Pairing) from bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Pairing> {
         let value = serde_json::from_slice(&bytes)?;
         Ok(value)
     }
 
-    /// Serializes a `Pairing` to bytes.
+    /// Serializes a [`Pairing`](Pairing) to bytes.
     pub fn as_bytes(&self) -> Result<Vec<u8>> {
         let value = serde_json::to_vec(&self)?;
         Ok(value)

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Obstruction Detected Characteristic.
+/// Obstruction Detected characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ObstructionDetectedCharacteristic(Characteristic<bool>);
 
 impl ObstructionDetectedCharacteristic {
-    /// Creates a new Obstruction Detected Characteristic.
+    /// Creates a new Obstruction Detected characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

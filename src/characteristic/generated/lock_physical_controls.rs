@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Lock Physical Controls Characteristic.
+/// Lock Physical Controls characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockPhysicalControlsCharacteristic(Characteristic<u8>);
 
 impl LockPhysicalControlsCharacteristic {
-    /// Creates a new Lock Physical Controls Characteristic.
+    /// Creates a new Lock Physical Controls characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

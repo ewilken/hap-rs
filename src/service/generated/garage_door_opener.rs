@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Garage Door Opener Service.
+/// Garage Door Opener service.
 #[derive(Debug, Default)]
 pub struct GarageDoorOpenerService {
-    /// Instance ID of the Garage Door Opener Service.
+    /// Instance ID of the Garage Door Opener service.
     id: u64,
-    /// `HapType` of the Garage Door Opener Service.
+    /// [`HapType`](HapType) of the Garage Door Opener service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct GarageDoorOpenerService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Door State Characteristic (required).
+	/// Current Door State characteristic (required).
 	pub current_door_state: CurrentDoorStateCharacteristic,
-	/// Target Door State Characteristic (required).
+	/// Target Door State characteristic (required).
 	pub target_door_state: TargetDoorStateCharacteristic,
-	/// Obstruction Detected Characteristic (required).
+	/// Obstruction Detected characteristic (required).
 	pub obstruction_detected: ObstructionDetectedCharacteristic,
 
-	/// Lock Current State Characteristic (optional).
+	/// Lock Current State characteristic (optional).
 	pub lock_current_state: Option<LockCurrentStateCharacteristic>,
-	/// Lock Target State Characteristic (optional).
+	/// Lock Target State characteristic (optional).
 	pub lock_target_state: Option<LockTargetStateCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
 impl GarageDoorOpenerService {
-    /// Creates a new Garage Door Opener Service.
+    /// Creates a new Garage Door Opener service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

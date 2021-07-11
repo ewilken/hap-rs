@@ -21,12 +21,12 @@ use crate::{
     HapType,
 };
 
-/// Heater-Cooler Service.
+/// Heater-Cooler service.
 #[derive(Debug, Default)]
 pub struct HeaterCoolerService {
-    /// Instance ID of the Heater-Cooler Service.
+    /// Instance ID of the Heater-Cooler service.
     id: u64,
-    /// `HapType` of the Heater-Cooler Service.
+    /// [`HapType`](HapType) of the Heater-Cooler service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -35,33 +35,33 @@ pub struct HeaterCoolerService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Current Heater-Cooler State Characteristic (required).
+	/// Current Heater-Cooler State characteristic (required).
 	pub current_heater_cooler_state: CurrentHeaterCoolerStateCharacteristic,
-	/// Target Heater-Cooler State Characteristic (required).
+	/// Target Heater-Cooler State characteristic (required).
 	pub target_heater_cooler_state: TargetHeaterCoolerStateCharacteristic,
-	/// Current Temperature Characteristic (required).
+	/// Current Temperature characteristic (required).
 	pub current_temperature: CurrentTemperatureCharacteristic,
 
-	/// Lock Physical Controls Characteristic (optional).
+	/// Lock Physical Controls characteristic (optional).
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Rotation Speed Characteristic (optional).
+	/// Rotation Speed characteristic (optional).
 	pub rotation_speed: Option<RotationSpeedCharacteristic>,
-	/// Swing Mode Characteristic (optional).
+	/// Swing Mode characteristic (optional).
 	pub swing_mode: Option<SwingModeCharacteristic>,
-	/// Cooling Threshold Temperature Characteristic (optional).
+	/// Cooling Threshold Temperature characteristic (optional).
 	pub cooling_threshold_temperature: Option<CoolingThresholdTemperatureCharacteristic>,
-	/// Heating Threshold Temperature Characteristic (optional).
+	/// Heating Threshold Temperature characteristic (optional).
 	pub heating_threshold_temperature: Option<HeatingThresholdTemperatureCharacteristic>,
-	/// Temperature Display Units Characteristic (optional).
+	/// Temperature Display Units characteristic (optional).
 	pub temperature_display_units: Option<TemperatureDisplayUnitsCharacteristic>,
 }
 
 impl HeaterCoolerService {
-    /// Creates a new Heater-Cooler Service.
+    /// Creates a new Heater-Cooler service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

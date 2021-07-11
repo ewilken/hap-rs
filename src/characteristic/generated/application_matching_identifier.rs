@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Application Matching Identifier Characteristic.
+/// Application Matching Identifier characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ApplicationMatchingIdentifierCharacteristic(Characteristic<Vec<u8>>);
 
 impl ApplicationMatchingIdentifierCharacteristic {
-    /// Creates a new Application Matching Identifier Characteristic.
+    /// Creates a new Application Matching Identifier characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

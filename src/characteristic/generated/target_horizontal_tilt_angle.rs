@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target Horizontal Tilt Angle Characteristic.
+/// Target Horizontal Tilt Angle characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetHorizontalTiltAngleCharacteristic(Characteristic<i32>);
 
 impl TargetHorizontalTiltAngleCharacteristic {
-    /// Creates a new Target Horizontal Tilt Angle Characteristic.
+    /// Creates a new Target Horizontal Tilt Angle characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

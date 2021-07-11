@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Administrator Only Access Characteristic.
+/// Administrator Only Access characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct AdministratorOnlyAccessCharacteristic(Characteristic<bool>);
 
 impl AdministratorOnlyAccessCharacteristic {
-    /// Creates a new Administrator Only Access Characteristic.
+    /// Creates a new Administrator Only Access characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Selected Camera Recording Configuration Characteristic.
+/// Selected Camera Recording Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SelectedCameraRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SelectedCameraRecordingConfigurationCharacteristic {
-    /// Creates a new Selected Camera Recording Configuration Characteristic.
+    /// Creates a new Selected Camera Recording Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

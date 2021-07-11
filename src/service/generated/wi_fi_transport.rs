@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Wi-Fi Transport Service.
+/// Wi-Fi Transport service.
 #[derive(Debug, Default)]
 pub struct WiFiTransportService {
-    /// Instance ID of the Wi-Fi Transport Service.
+    /// Instance ID of the Wi-Fi Transport service.
     id: u64,
-    /// `HapType` of the Wi-Fi Transport Service.
+    /// [`HapType`](HapType) of the Wi-Fi Transport service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct WiFiTransportService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Transport Characteristic (required).
+	/// Current Transport characteristic (required).
 	pub current_transport: CurrentTransportCharacteristic,
-	/// Wi-Fi Capabilities Characteristic (required).
+	/// Wi-Fi Capabilities characteristic (required).
 	pub wi_fi_capabilities: WiFiCapabilitiesCharacteristic,
 
-	/// Wi-Fi Configuration Control Characteristic (optional).
+	/// Wi-Fi Configuration Control characteristic (optional).
 	pub wi_fi_configuration_control: Option<WiFiConfigurationControlCharacteristic>,
 }
 
 impl WiFiTransportService {
-    /// Creates a new Wi-Fi Transport Service.
+    /// Creates a new Wi-Fi Transport service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

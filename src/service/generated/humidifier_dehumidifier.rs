@@ -21,12 +21,12 @@ use crate::{
     HapType,
 };
 
-/// Humidifier-Dehumidifier Service.
+/// Humidifier-Dehumidifier service.
 #[derive(Debug, Default)]
 pub struct HumidifierDehumidifierService {
-    /// Instance ID of the Humidifier-Dehumidifier Service.
+    /// Instance ID of the Humidifier-Dehumidifier service.
     id: u64,
-    /// `HapType` of the Humidifier-Dehumidifier Service.
+    /// [`HapType`](HapType) of the Humidifier-Dehumidifier service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -35,33 +35,33 @@ pub struct HumidifierDehumidifierService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Current Humidifier-Dehumidifier State Characteristic (required).
+	/// Current Humidifier-Dehumidifier State characteristic (required).
 	pub current_humidifier_dehumidifier_state: CurrentHumidifierDehumidifierStateCharacteristic,
-	/// Target Humidifier-Dehumidifier State Characteristic (required).
+	/// Target Humidifier-Dehumidifier State characteristic (required).
 	pub target_humidifier_dehumidifier_state: TargetHumidifierDehumidifierStateCharacteristic,
-	/// Current Relative Humidity Characteristic (required).
+	/// Current Relative Humidity characteristic (required).
 	pub current_relative_humidity: CurrentRelativeHumidityCharacteristic,
 
-	/// Lock Physical Controls Characteristic (optional).
+	/// Lock Physical Controls characteristic (optional).
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Relative Humidity Dehumidifier Threshold Characteristic (optional).
+	/// Relative Humidity Dehumidifier Threshold characteristic (optional).
 	pub relative_humidity_dehumidifier_threshold: Option<RelativeHumidityDehumidifierThresholdCharacteristic>,
-	/// Relative Humidity Humidifier Threshold Characteristic (optional).
+	/// Relative Humidity Humidifier Threshold characteristic (optional).
 	pub relative_humidity_humidifier_threshold: Option<RelativeHumidityHumidifierThresholdCharacteristic>,
-	/// Rotation Speed Characteristic (optional).
+	/// Rotation Speed characteristic (optional).
 	pub rotation_speed: Option<RotationSpeedCharacteristic>,
-	/// Swing Mode Characteristic (optional).
+	/// Swing Mode characteristic (optional).
 	pub swing_mode: Option<SwingModeCharacteristic>,
-	/// Current Water Level Characteristic (optional).
+	/// Current Water Level characteristic (optional).
 	pub current_water_level: Option<CurrentWaterLevelCharacteristic>,
 }
 
 impl HumidifierDehumidifierService {
-    /// Creates a new Humidifier-Dehumidifier Service.
+    /// Creates a new Humidifier-Dehumidifier service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

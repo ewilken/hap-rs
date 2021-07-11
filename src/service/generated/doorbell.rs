@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Doorbell Service.
+/// Doorbell service.
 #[derive(Debug, Default)]
 pub struct DoorbellService {
-    /// Instance ID of the Doorbell Service.
+    /// Instance ID of the Doorbell service.
     id: u64,
-    /// `HapType` of the Doorbell Service.
+    /// [`HapType`](HapType) of the Doorbell service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct DoorbellService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Programmable Switch Event Characteristic (required).
+	/// Programmable Switch Event characteristic (required).
 	pub programmable_switch_event: ProgrammableSwitchEventCharacteristic,
 
-	/// Brightness Characteristic (optional).
+	/// Brightness characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
-	/// Mute Characteristic (optional).
+	/// Mute characteristic (optional).
 	pub mute: Option<MuteCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Operating State Response Characteristic (optional).
+	/// Operating State Response characteristic (optional).
 	pub operating_state_response: Option<OperatingStateResponseCharacteristic>,
-	/// Volume Characteristic (optional).
+	/// Volume characteristic (optional).
 	pub volume: Option<VolumeCharacteristic>,
 }
 
 impl DoorbellService {
-    /// Creates a new Doorbell Service.
+    /// Creates a new Doorbell service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Smart Speaker Accessory.
+/// Smart Speaker accessory.
 #[derive(Debug, Default)]
 pub struct SmartSpeakerAccessory {
     /// ID of the Smart Speaker Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Smart Speaker Service.
+    /// Smart Speaker service.
     pub smart_speaker: SmartSpeakerService,
 }
 
 impl SmartSpeakerAccessory {
-    /// Creates a new Smart Speaker Accessory.
+    /// Creates a new Smart Speaker accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let smart_speaker_id = accessory_information.get_characteristics().len() as u64;

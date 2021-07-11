@@ -17,12 +17,12 @@ use crate::{
     HapType,
 };
 
-/// Camera Stream Management Service.
+/// Camera Stream Management service.
 #[derive(Debug, Default)]
 pub struct CameraStreamManagementService {
-    /// Instance ID of the Camera Stream Management Service.
+    /// Instance ID of the Camera Stream Management service.
     id: u64,
-    /// `HapType` of the Camera Stream Management Service.
+    /// [`HapType`](HapType) of the Camera Stream Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -31,25 +31,25 @@ pub struct CameraStreamManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Selected Stream Configuration Characteristic (required).
+	/// Selected Stream Configuration characteristic (required).
 	pub selected_stream_configuration: SelectedStreamConfigurationCharacteristic,
-	/// Setup Endpoint Characteristic (required).
+	/// Setup Endpoint characteristic (required).
 	pub setup_endpoint: SetupEndpointCharacteristic,
-	/// Streaming Status Characteristic (required).
+	/// Streaming Status characteristic (required).
 	pub streaming_status: StreamingStatusCharacteristic,
-	/// Supported Audio Stream Configuration Characteristic (required).
+	/// Supported Audio Stream Configuration characteristic (required).
 	pub supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic,
-	/// Supported RTP Configuration Characteristic (required).
+	/// Supported RTP Configuration characteristic (required).
 	pub supported_rtp_configuration: SupportedRtpConfigurationCharacteristic,
-	/// Supported Video Stream Configuration Characteristic (required).
+	/// Supported Video Stream Configuration characteristic (required).
 	pub supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic,
 
-	/// Active Characteristic (optional).
+	/// Active characteristic (optional).
 	pub active: Option<ActiveCharacteristic>,
 }
 
 impl CameraStreamManagementService {
-    /// Creates a new Camera Stream Management Service.
+    /// Creates a new Camera Stream Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

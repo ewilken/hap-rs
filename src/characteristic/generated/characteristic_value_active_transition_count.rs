@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Characteristic Value Active Transition Count Characteristic.
+/// Characteristic Value Active Transition Count characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CharacteristicValueActiveTransitionCountCharacteristic(Characteristic<u8>);
 
 impl CharacteristicValueActiveTransitionCountCharacteristic {
-    /// Creates a new Characteristic Value Active Transition Count Characteristic.
+    /// Creates a new Characteristic Value Active Transition Count characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

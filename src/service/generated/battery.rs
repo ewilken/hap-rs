@@ -14,12 +14,12 @@ use crate::{
     HapType,
 };
 
-/// Battery Service.
+/// Battery service.
 #[derive(Debug, Default)]
 pub struct BatteryService {
-    /// Instance ID of the Battery Service.
+    /// Instance ID of the Battery service.
     id: u64,
-    /// `HapType` of the Battery Service.
+    /// [`HapType`](HapType) of the Battery service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,19 +28,19 @@ pub struct BatteryService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Status Low Battery Characteristic (required).
+	/// Status Low Battery characteristic (required).
 	pub status_low_battery: StatusLowBatteryCharacteristic,
 
-	/// Battery Level Characteristic (optional).
+	/// Battery Level characteristic (optional).
 	pub battery_level: Option<BatteryLevelCharacteristic>,
-	/// Charging State Characteristic (optional).
+	/// Charging State characteristic (optional).
 	pub charging_state: Option<ChargingStateCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
 impl BatteryService {
-    /// Creates a new Battery Service.
+    /// Creates a new Battery service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

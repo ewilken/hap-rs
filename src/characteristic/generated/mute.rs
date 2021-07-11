@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Mute Characteristic.
+/// Mute characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct MuteCharacteristic(Characteristic<bool>);
 
 impl MuteCharacteristic {
-    /// Creates a new Mute Characteristic.
+    /// Creates a new Mute characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

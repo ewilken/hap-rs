@@ -13,7 +13,7 @@ use crate::{
     Result,
 };
 
-/// `AccessoryDatabase` is a wrapper type holding a list of Accessories.
+/// `AccessoryDatabase` is a wrapper type holding a list of accessories.
 pub struct AccessoryDatabase {
     pub accessories: Vec<pointer::Accessory>,
     event_emitter: pointer::EventEmitter,
@@ -28,7 +28,7 @@ impl AccessoryDatabase {
         }
     }
 
-    /// Adds an Accessory to the `AccessoryDatabase` and returns a pointer to the added Accessory.
+    /// Adds an accessory to the `AccessoryDatabase` and returns a pointer to the added accessory.
     pub fn add_accessory(&mut self, accessory: Box<dyn HapAccessory>) -> Result<pointer::Accessory> {
         let mut accessory = accessory;
         accessory.set_event_emitter_on_characteristics(Some(self.event_emitter.clone()));
@@ -40,7 +40,7 @@ impl AccessoryDatabase {
         Ok(accessory)
     }
 
-    /// Takes a pointer to an Accessory and removes the Accessory from the `AccessoryDatabase`.
+    /// Takes a pointer to an accessory and removes the accessory from the `AccessoryDatabase`.
     pub async fn remove_accessory(&mut self, accessory: &pointer::Accessory) -> Result<()> {
         let accessory = accessory.lock().await;
         let mut remove = None;

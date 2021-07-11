@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Diagnostics Snapshot Characteristic.
+/// Supported Diagnostics Snapshot characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedDiagnosticsSnapshotCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedDiagnosticsSnapshotCharacteristic {
-    /// Creates a new Supported Diagnostics Snapshot Characteristic.
+    /// Creates a new Supported Diagnostics Snapshot characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

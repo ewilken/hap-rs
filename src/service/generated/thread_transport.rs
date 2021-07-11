@@ -26,12 +26,12 @@ use crate::{
     HapType,
 };
 
-/// Thread Transport Service.
+/// Thread Transport service.
 #[derive(Debug, Default)]
 pub struct ThreadTransportService {
-    /// Instance ID of the Thread Transport Service.
+    /// Instance ID of the Thread Transport service.
     id: u64,
-    /// `HapType` of the Thread Transport Service.
+    /// [`HapType`](HapType) of the Thread Transport service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -40,43 +40,43 @@ pub struct ThreadTransportService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Transport Characteristic (required).
+	/// Current Transport characteristic (required).
 	pub current_transport: CurrentTransportCharacteristic,
-	/// Thread Control Point Characteristic (required).
+	/// Thread Control Point characteristic (required).
 	pub thread_control_point: ThreadControlPointCharacteristic,
-	/// Thread Node Capabilities Characteristic (required).
+	/// Thread Node Capabilities characteristic (required).
 	pub thread_node_capabilities: ThreadNodeCapabilitiesCharacteristic,
-	/// Thread Status Characteristic (required).
+	/// Thread Status characteristic (required).
 	pub thread_status: ThreadStatusCharacteristic,
 
-	/// CCA Energy Detect Threshold Characteristic (optional).
+	/// CCA Energy Detect Threshold characteristic (optional).
 	pub cca_energy_detect_threshold: Option<CcaEnergyDetectThresholdCharacteristic>,
-	/// CCA Signal Detect Threshold Characteristic (optional).
+	/// CCA Signal Detect Threshold characteristic (optional).
 	pub cca_signal_detect_threshold: Option<CcaSignalDetectThresholdCharacteristic>,
-	/// Event Retransmission Maximum Characteristic (optional).
+	/// Event Retransmission Maximum characteristic (optional).
 	pub event_retransmission_maximum: Option<EventRetransmissionMaximumCharacteristic>,
-	/// Event Transmission Counters Characteristic (optional).
+	/// Event Transmission Counters characteristic (optional).
 	pub event_transmission_counters: Option<EventTransmissionCountersCharacteristic>,
-	/// MAC Retransmission Maximum Characteristic (optional).
+	/// MAC Retransmission Maximum characteristic (optional).
 	pub mac_retransmission_maximum: Option<MacRetransmissionMaximumCharacteristic>,
-	/// MAC Transmission Counters Characteristic (optional).
+	/// MAC Transmission Counters characteristic (optional).
 	pub mac_transmission_counters: Option<MacTransmissionCountersCharacteristic>,
-	/// Receiver Sensitivity Characteristic (optional).
+	/// Receiver Sensitivity characteristic (optional).
 	pub receiver_sensitivity: Option<ReceiverSensitivityCharacteristic>,
-	/// Received Signal Strength Indication Characteristic (optional).
+	/// Received Signal Strength Indication characteristic (optional).
 	pub received_signal_strength_indication: Option<ReceivedSignalStrengthIndicationCharacteristic>,
-	/// Signal-to-noise Ratio Characteristic (optional).
+	/// Signal-to-noise Ratio characteristic (optional).
 	pub signal_to_noise_ratio: Option<SignalToNoiseRatioCharacteristic>,
-	/// Thread OpenThread Version Characteristic (optional).
+	/// Thread OpenThread Version characteristic (optional).
 	pub thread_openthread_version: Option<ThreadOpenthreadVersionCharacteristic>,
-	/// Transmit Power Characteristic (optional).
+	/// Transmit Power characteristic (optional).
 	pub transmit_power: Option<TransmitPowerCharacteristic>,
-	/// Maximum Transmit Power Characteristic (optional).
+	/// Maximum Transmit Power characteristic (optional).
 	pub maximum_transmit_power: Option<MaximumTransmitPowerCharacteristic>,
 }
 
 impl ThreadTransportService {
-    /// Creates a new Thread Transport Service.
+    /// Creates a new Thread Transport service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

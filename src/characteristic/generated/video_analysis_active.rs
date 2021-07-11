@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Video Analysis Active Characteristic.
+/// Video Analysis Active characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct VideoAnalysisActiveCharacteristic(Characteristic<u8>);
 
 impl VideoAnalysisActiveCharacteristic {
-    /// Creates a new Video Analysis Active Characteristic.
+    /// Creates a new Video Analysis Active characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

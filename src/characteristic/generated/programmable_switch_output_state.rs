@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Programmable Switch Output State Characteristic.
+/// Programmable Switch Output State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ProgrammableSwitchOutputStateCharacteristic(Characteristic<u8>);
 
 impl ProgrammableSwitchOutputStateCharacteristic {
-    /// Creates a new Programmable Switch Output State Characteristic.
+    /// Creates a new Programmable Switch Output State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

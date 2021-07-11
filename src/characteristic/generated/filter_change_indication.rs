@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Filter Change indication Characteristic.
+/// Filter Change indication characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct FilterChangeIndicationCharacteristic(Characteristic<u8>);
 
@@ -36,7 +36,7 @@ pub enum Value {
 }
 
 impl FilterChangeIndicationCharacteristic {
-    /// Creates a new Filter Change indication Characteristic.
+    /// Creates a new Filter Change indication characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

@@ -13,14 +13,15 @@ use uuid::Uuid;
 
 use crate::{pairing::Pairing, storage::Storage, Config, Error, Result};
 
-/// `FileStorage` is an implementor of the `Storage` trait that stores data to the file system.
+/// [`FileStorage`](FileStorage) is an implementor of the [`Storage`](Storage) trait that stores data to the file
+/// system.
 #[derive(Debug)]
 pub struct FileStorage {
     dir_path: PathBuf,
 }
 
 impl FileStorage {
-    /// Creates a new `FileStorage`.
+    /// Creates a new [`FileStorage`](FileStorage).
     pub async fn new<D: AsRef<OsStr> + ?Sized>(dir: &D) -> Result<Self> {
         let dir_path = Path::new(dir).to_path_buf();
         let dir_path = spawn_blocking(move || -> Result<PathBuf> {
@@ -33,7 +34,7 @@ impl FileStorage {
         Ok(FileStorage { dir_path })
     }
 
-    /// Creates a new `FileStorage` with the current directory as storage path.
+    /// Creates a new [`FileStorage`](FileStorage) with the current directory as storage path.
     pub async fn current_dir() -> Result<Self> {
         let current_dir =
             spawn_blocking(move || -> Result<PathBuf> { env::current_dir().map_err(Error::from) }).await??;

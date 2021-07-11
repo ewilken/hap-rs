@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Charging State Characteristic.
+/// Charging State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ChargingStateCharacteristic(Characteristic<u8>);
 
@@ -37,7 +37,7 @@ pub enum Value {
 }
 
 impl ChargingStateCharacteristic {
-    /// Creates a new Charging State Characteristic.
+    /// Creates a new Charging State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Air Quality Characteristic.
+/// Current Air Quality characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentAirQualityCharacteristic(Characteristic<u8>);
 
@@ -40,7 +40,7 @@ pub enum Value {
 }
 
 impl CurrentAirQualityCharacteristic {
-    /// Creates a new Current Air Quality Characteristic.
+    /// Creates a new Current Air Quality characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

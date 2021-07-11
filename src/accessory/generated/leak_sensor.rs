@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Leak Sensor Accessory.
+/// Leak Sensor accessory.
 #[derive(Debug, Default)]
 pub struct LeakSensorAccessory {
     /// ID of the Leak Sensor Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Leak Sensor Service.
+    /// Leak Sensor service.
     pub leak_sensor: LeakSensorService,
 }
 
 impl LeakSensorAccessory {
-    /// Creates a new Leak Sensor Accessory.
+    /// Creates a new Leak Sensor accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let leak_sensor_id = accessory_information.get_characteristics().len() as u64;

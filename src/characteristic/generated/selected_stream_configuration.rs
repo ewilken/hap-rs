@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Selected Stream Configuration Characteristic.
+/// Selected Stream Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SelectedStreamConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SelectedStreamConfigurationCharacteristic {
-    /// Creates a new Selected Stream Configuration Characteristic.
+    /// Creates a new Selected Stream Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

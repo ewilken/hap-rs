@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Humidity Sensor Accessory.
+/// Humidity Sensor accessory.
 #[derive(Debug, Default)]
 pub struct HumiditySensorAccessory {
     /// ID of the Humidity Sensor Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Humidity Sensor Service.
+    /// Humidity Sensor service.
     pub humidity_sensor: HumiditySensorService,
 }
 
 impl HumiditySensorAccessory {
-    /// Creates a new Humidity Sensor Accessory.
+    /// Creates a new Humidity Sensor accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let humidity_sensor_id = accessory_information.get_characteristics().len() as u64;

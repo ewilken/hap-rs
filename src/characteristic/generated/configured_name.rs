@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Configured Name Characteristic.
+/// Configured Name characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ConfiguredNameCharacteristic(Characteristic<String>);
 
 impl ConfiguredNameCharacteristic {
-    /// Creates a new Configured Name Characteristic.
+    /// Creates a new Configured Name characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<String> {

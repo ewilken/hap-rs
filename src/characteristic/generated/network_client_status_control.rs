@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Network Client Status Control Characteristic.
+/// Network Client Status Control characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct NetworkClientStatusControlCharacteristic(Characteristic<Vec<u8>>);
 
 impl NetworkClientStatusControlCharacteristic {
-    /// Creates a new Network Client Status Control Characteristic.
+    /// Creates a new Network Client Status Control characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Router Status Characteristic.
+/// Router Status characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RouterStatusCharacteristic(Characteristic<u8>);
 
 impl RouterStatusCharacteristic {
-    /// Creates a new Router Status Characteristic.
+    /// Creates a new Router Status characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

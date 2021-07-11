@@ -11,12 +11,12 @@ use crate::{
     HapType,
 };
 
-/// Protocol Information Service.
+/// Protocol Information service.
 #[derive(Debug, Default)]
 pub struct ProtocolInformationService {
-    /// Instance ID of the Protocol Information Service.
+    /// Instance ID of the Protocol Information service.
     id: u64,
-    /// `HapType` of the Protocol Information Service.
+    /// [`HapType`](HapType) of the Protocol Information service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -25,13 +25,13 @@ pub struct ProtocolInformationService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Version Characteristic (required).
+	/// Version characteristic (required).
 	pub version: VersionCharacteristic,
 
 }
 
 impl ProtocolInformationService {
-    /// Creates a new Protocol Information Service.
+    /// Creates a new Protocol Information service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

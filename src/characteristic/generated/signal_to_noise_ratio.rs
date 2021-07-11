@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Signal-to-noise Ratio Characteristic.
+/// Signal-to-noise Ratio characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SignalToNoiseRatioCharacteristic(Characteristic<i32>);
 
 impl SignalToNoiseRatioCharacteristic {
-    /// Creates a new Signal-to-noise Ratio Characteristic.
+    /// Creates a new Signal-to-noise Ratio characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

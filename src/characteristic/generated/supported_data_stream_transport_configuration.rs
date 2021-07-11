@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Data Stream Transport Configuration Characteristic.
+/// Supported Data Stream Transport Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedDataStreamTransportConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedDataStreamTransportConfigurationCharacteristic {
-    /// Creates a new Supported Data Stream Transport Configuration Characteristic.
+    /// Creates a new Supported Data Stream Transport Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

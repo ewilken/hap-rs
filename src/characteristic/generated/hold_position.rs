@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Hold Position Characteristic.
+/// Hold Position characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct HoldPositionCharacteristic(Characteristic<bool>);
 
 impl HoldPositionCharacteristic {
-    /// Creates a new Hold Position Characteristic.
+    /// Creates a new Hold Position characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

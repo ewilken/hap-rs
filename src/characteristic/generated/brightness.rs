@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Brightness Characteristic.
+/// Brightness characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct BrightnessCharacteristic(Characteristic<i32>);
 
 impl BrightnessCharacteristic {
-    /// Creates a new Brightness Characteristic.
+    /// Creates a new Brightness characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

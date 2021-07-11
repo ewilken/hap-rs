@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Window Accessory.
+/// Window accessory.
 #[derive(Debug, Default)]
 pub struct WindowAccessory {
     /// ID of the Window Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Window Service.
+    /// Window service.
     pub window: WindowService,
 }
 
 impl WindowAccessory {
-    /// Creates a new Window Accessory.
+    /// Creates a new Window accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let window_id = accessory_information.get_characteristics().len() as u64;

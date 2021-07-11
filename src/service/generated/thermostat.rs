@@ -20,12 +20,12 @@ use crate::{
     HapType,
 };
 
-/// Thermostat Service.
+/// Thermostat service.
 #[derive(Debug, Default)]
 pub struct ThermostatService {
-    /// Instance ID of the Thermostat Service.
+    /// Instance ID of the Thermostat service.
     id: u64,
-    /// `HapType` of the Thermostat Service.
+    /// [`HapType`](HapType) of the Thermostat service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -34,31 +34,31 @@ pub struct ThermostatService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Heating Cooling State Characteristic (required).
+	/// Current Heating Cooling State characteristic (required).
 	pub current_heating_cooling_state: CurrentHeatingCoolingStateCharacteristic,
-	/// Target Heating Cooling State Characteristic (required).
+	/// Target Heating Cooling State characteristic (required).
 	pub target_heating_cooling_state: TargetHeatingCoolingStateCharacteristic,
-	/// Current Temperature Characteristic (required).
+	/// Current Temperature characteristic (required).
 	pub current_temperature: CurrentTemperatureCharacteristic,
-	/// Target Temperature Characteristic (required).
+	/// Target Temperature characteristic (required).
 	pub target_temperature: TargetTemperatureCharacteristic,
-	/// Temperature Display Units Characteristic (required).
+	/// Temperature Display Units characteristic (required).
 	pub temperature_display_units: TemperatureDisplayUnitsCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Current Relative Humidity Characteristic (optional).
+	/// Current Relative Humidity characteristic (optional).
 	pub current_relative_humidity: Option<CurrentRelativeHumidityCharacteristic>,
-	/// Target Relative Humidity Characteristic (optional).
+	/// Target Relative Humidity characteristic (optional).
 	pub target_relative_humidity: Option<TargetRelativeHumidityCharacteristic>,
-	/// Cooling Threshold Temperature Characteristic (optional).
+	/// Cooling Threshold Temperature characteristic (optional).
 	pub cooling_threshold_temperature: Option<CoolingThresholdTemperatureCharacteristic>,
-	/// Heating Threshold Temperature Characteristic (optional).
+	/// Heating Threshold Temperature characteristic (optional).
 	pub heating_threshold_temperature: Option<HeatingThresholdTemperatureCharacteristic>,
 }
 
 impl ThermostatService {
-    /// Creates a new Thermostat Service.
+    /// Creates a new Thermostat service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

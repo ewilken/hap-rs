@@ -31,7 +31,7 @@ pub struct IpServer {
 }
 
 impl IpServer {
-    /// Creates a new `IpServer`.
+    /// Creates a new [`IpServer`](IpServer).
     ///
     /// # Examples
     /// ```no_run

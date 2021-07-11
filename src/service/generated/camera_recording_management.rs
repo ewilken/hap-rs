@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Camera Recording Management Service.
+/// Camera Recording Management service.
 #[derive(Debug, Default)]
 pub struct CameraRecordingManagementService {
-    /// Instance ID of the Camera Recording Management Service.
+    /// Instance ID of the Camera Recording Management service.
     id: u64,
-    /// `HapType` of the Camera Recording Management Service.
+    /// [`HapType`](HapType) of the Camera Recording Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct CameraRecordingManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// Supported Camera Recording Configuration Characteristic (required).
+	/// Supported Camera Recording Configuration characteristic (required).
 	pub supported_camera_recording_configuration: SupportedCameraRecordingConfigurationCharacteristic,
-	/// Supported Video Recording Configuration Characteristic (required).
+	/// Supported Video Recording Configuration characteristic (required).
 	pub supported_video_recording_configuration: SupportedVideoRecordingConfigurationCharacteristic,
-	/// Supported Audio Recording Configuration Characteristic (required).
+	/// Supported Audio Recording Configuration characteristic (required).
 	pub supported_audio_recording_configuration: SupportedAudioRecordingConfigurationCharacteristic,
-	/// Selected Camera Recording Configuration Characteristic (required).
+	/// Selected Camera Recording Configuration characteristic (required).
 	pub selected_camera_recording_configuration: SelectedCameraRecordingConfigurationCharacteristic,
 
-	/// recording audio active Characteristic (optional).
+	/// recording audio active characteristic (optional).
 	pub recording_audio_active: Option<RecordingAudioActiveCharacteristic>,
 }
 
 impl CameraRecordingManagementService {
-    /// Creates a new Camera Recording Management Service.
+    /// Creates a new Camera Recording Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

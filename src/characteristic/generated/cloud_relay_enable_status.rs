@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Cloud Relay Enable Status Characteristic.
+/// Cloud Relay Enable Status characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CloudRelayEnableStatusCharacteristic(Characteristic<bool>);
 
 impl CloudRelayEnableStatusCharacteristic {
-    /// Creates a new Cloud Relay Enable Status Characteristic.
+    /// Creates a new Cloud Relay Enable Status characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

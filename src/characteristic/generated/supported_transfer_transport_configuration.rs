@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Transfer Transport Configuration Characteristic.
+/// Supported Transfer Transport Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedTransferTransportConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedTransferTransportConfigurationCharacteristic {
-    /// Creates a new Supported Transfer Transport Configuration Characteristic.
+    /// Creates a new Supported Transfer Transport Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

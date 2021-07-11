@@ -18,12 +18,12 @@ use crate::{
     HapType,
 };
 
-/// Carbon monoxide Sensor Service.
+/// Carbon monoxide Sensor service.
 #[derive(Debug, Default)]
 pub struct CarbonMonoxideSensorService {
-    /// Instance ID of the Carbon monoxide Sensor Service.
+    /// Instance ID of the Carbon monoxide Sensor service.
     id: u64,
-    /// `HapType` of the Carbon monoxide Sensor Service.
+    /// [`HapType`](HapType) of the Carbon monoxide Sensor service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -32,27 +32,27 @@ pub struct CarbonMonoxideSensorService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Carbon monoxide Detected Characteristic (required).
+	/// Carbon monoxide Detected characteristic (required).
 	pub carbon_monoxide_detected: CarbonMonoxideDetectedCharacteristic,
 
-	/// Carbon monoxide Level Characteristic (optional).
+	/// Carbon monoxide Level characteristic (optional).
 	pub carbon_monoxide_level: Option<CarbonMonoxideLevelCharacteristic>,
-	/// Carbon monoxide Peak Level Characteristic (optional).
+	/// Carbon monoxide Peak Level characteristic (optional).
 	pub carbon_monoxide_peak_level: Option<CarbonMonoxidePeakLevelCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Active Characteristic (optional).
+	/// Status Active characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Low Battery Characteristic (optional).
+	/// Status Low Battery characteristic (optional).
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
-	/// Status Tampered Characteristic (optional).
+	/// Status Tampered characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl CarbonMonoxideSensorService {
-    /// Creates a new Carbon monoxide Sensor Service.
+    /// Creates a new Carbon monoxide Sensor service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

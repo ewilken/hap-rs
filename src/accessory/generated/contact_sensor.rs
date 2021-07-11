@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Contact Sensor Accessory.
+/// Contact Sensor accessory.
 #[derive(Debug, Default)]
 pub struct ContactSensorAccessory {
     /// ID of the Contact Sensor Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Contact Sensor Service.
+    /// Contact Sensor service.
     pub contact_sensor: ContactSensorService,
 }
 
 impl ContactSensorAccessory {
-    /// Creates a new Contact Sensor Accessory.
+    /// Creates a new Contact Sensor accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let contact_sensor_id = accessory_information.get_characteristics().len() as u64;

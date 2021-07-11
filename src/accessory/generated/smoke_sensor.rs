@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Smoke Sensor Accessory.
+/// Smoke Sensor accessory.
 #[derive(Debug, Default)]
 pub struct SmokeSensorAccessory {
     /// ID of the Smoke Sensor Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Smoke Sensor Service.
+    /// Smoke Sensor service.
     pub smoke_sensor: SmokeSensorService,
 }
 
 impl SmokeSensorAccessory {
-    /// Creates a new Smoke Sensor Accessory.
+    /// Creates a new Smoke Sensor accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let smoke_sensor_id = accessory_information.get_characteristics().len() as u64;

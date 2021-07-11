@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Data Stream Transport Management Service.
+/// Data Stream Transport Management service.
 #[derive(Debug, Default)]
 pub struct DataStreamTransportManagementService {
-    /// Instance ID of the Data Stream Transport Management Service.
+    /// Instance ID of the Data Stream Transport Management service.
     id: u64,
-    /// `HapType` of the Data Stream Transport Management Service.
+    /// [`HapType`](HapType) of the Data Stream Transport Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct DataStreamTransportManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Setup Data Stream Transport Characteristic (required).
+	/// Setup Data Stream Transport characteristic (required).
 	pub setup_data_stream_transport: SetupDataStreamTransportCharacteristic,
-	/// Supported Data Stream Transport Configuration Characteristic (required).
+	/// Supported Data Stream Transport Configuration characteristic (required).
 	pub supported_data_stream_transport_configuration: SupportedDataStreamTransportConfigurationCharacteristic,
-	/// Version Characteristic (required).
+	/// Version characteristic (required).
 	pub version: VersionCharacteristic,
 
 }
 
 impl DataStreamTransportManagementService {
-    /// Creates a new Data Stream Transport Management Service.
+    /// Creates a new Data Stream Transport Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

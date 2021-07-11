@@ -19,12 +19,12 @@ use crate::{
     HapType,
 };
 
-/// Valve Service.
+/// Valve service.
 #[derive(Debug, Default)]
 pub struct ValveService {
-    /// Instance ID of the Valve Service.
+    /// Instance ID of the Valve service.
     id: u64,
-    /// `HapType` of the Valve Service.
+    /// [`HapType`](HapType) of the Valve service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -33,29 +33,29 @@ pub struct ValveService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-	/// In Use Characteristic (required).
+	/// In Use characteristic (required).
 	pub in_use: InUseCharacteristic,
-	/// Valve Type Characteristic (required).
+	/// Valve Type characteristic (required).
 	pub valve_type: ValveTypeCharacteristic,
 
-	/// Is Configured Characteristic (optional).
+	/// Is Configured characteristic (optional).
 	pub is_configured: Option<IsConfiguredCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Remaining Duration Characteristic (optional).
+	/// Remaining Duration characteristic (optional).
 	pub remaining_duration: Option<RemainingDurationCharacteristic>,
-	/// Label Index Characteristic (optional).
+	/// Label Index characteristic (optional).
 	pub label_index: Option<LabelIndexCharacteristic>,
-	/// Set Duration Characteristic (optional).
+	/// Set Duration characteristic (optional).
 	pub set_duration: Option<SetDurationCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
 }
 
 impl ValveService {
-    /// Creates a new Valve Service.
+    /// Creates a new Valve service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

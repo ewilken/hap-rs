@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Window Covering Accessory.
+/// Window Covering accessory.
 #[derive(Debug, Default)]
 pub struct WindowCoveringAccessory {
     /// ID of the Window Covering Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Window Covering Service.
+    /// Window Covering service.
     pub window_covering: WindowCoveringService,
 }
 
 impl WindowCoveringAccessory {
-    /// Creates a new Window Covering Accessory.
+    /// Creates a new Window Covering accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let window_covering_id = accessory_information.get_characteristics().len() as u64;

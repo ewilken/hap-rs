@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Video Recording Configuration Characteristic.
+/// Supported Video Recording Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedVideoRecordingConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedVideoRecordingConfigurationCharacteristic {
-    /// Creates a new Supported Video Recording Configuration Characteristic.
+    /// Creates a new Supported Video Recording Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

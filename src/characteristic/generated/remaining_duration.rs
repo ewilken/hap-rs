@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Remaining Duration Characteristic.
+/// Remaining Duration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct RemainingDurationCharacteristic(Characteristic<u32>);
 
 impl RemainingDurationCharacteristic {
-    /// Creates a new Remaining Duration Characteristic.
+    /// Creates a new Remaining Duration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u32> {

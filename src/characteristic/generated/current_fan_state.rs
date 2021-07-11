@@ -26,7 +26,7 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Fan State Characteristic.
+/// Current Fan State characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentFanStateCharacteristic(Characteristic<u8>);
 
@@ -37,7 +37,7 @@ pub enum Value {
 }
 
 impl CurrentFanStateCharacteristic {
-    /// Creates a new Current Fan State Characteristic.
+    /// Creates a new Current Fan State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

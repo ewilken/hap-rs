@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Air Purifier Accessory.
+/// Air Purifier accessory.
 #[derive(Debug, Default)]
 pub struct AirPurifierAccessory {
     /// ID of the Air Purifier Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Air Purifier Service.
+    /// Air Purifier service.
     pub air_purifier: AirPurifierService,
 }
 
 impl AirPurifierAccessory {
-    /// Creates a new Air Purifier Accessory.
+    /// Creates a new Air Purifier accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let air_purifier_id = accessory_information.get_characteristics().len() as u64;

@@ -11,12 +11,12 @@ use crate::{
     HapType,
 };
 
-/// Siri Service.
+/// Siri service.
 #[derive(Debug, Default)]
 pub struct SiriService {
-    /// Instance ID of the Siri Service.
+    /// Instance ID of the Siri service.
     id: u64,
-    /// `HapType` of the Siri Service.
+    /// [`HapType`](HapType) of the Siri service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -25,13 +25,13 @@ pub struct SiriService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Siri Input Type Characteristic (required).
+	/// Siri Input Type characteristic (required).
 	pub siri_input_type: SiriInputTypeCharacteristic,
 
 }
 
 impl SiriService {
-    /// Creates a new Siri Service.
+    /// Creates a new Siri service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

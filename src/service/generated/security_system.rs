@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Security System Service.
+/// Security System service.
 #[derive(Debug, Default)]
 pub struct SecuritySystemService {
-    /// Instance ID of the Security System Service.
+    /// Instance ID of the Security System service.
     id: u64,
-    /// `HapType` of the Security System Service.
+    /// [`HapType`](HapType) of the Security System service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct SecuritySystemService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Security System Current State Characteristic (required).
+	/// Security System Current State characteristic (required).
 	pub security_system_current_state: SecuritySystemCurrentStateCharacteristic,
-	/// Security System Target State Characteristic (required).
+	/// Security System Target State characteristic (required).
 	pub security_system_target_state: SecuritySystemTargetStateCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Security System Alarm Type Characteristic (optional).
+	/// Security System Alarm Type characteristic (optional).
 	pub security_system_alarm_type: Option<SecuritySystemAlarmTypeCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Tampered Characteristic (optional).
+	/// Status Tampered characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl SecuritySystemService {
-    /// Creates a new Security System Service.
+    /// Creates a new Security System service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

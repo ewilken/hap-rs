@@ -15,12 +15,12 @@ use crate::{
     HapType,
 };
 
-/// Tunnel Service.
+/// Tunnel service.
 #[derive(Debug, Default)]
 pub struct TunnelService {
-    /// Instance ID of the Tunnel Service.
+    /// Instance ID of the Tunnel service.
     id: u64,
-    /// `HapType` of the Tunnel Service.
+    /// [`HapType`](HapType) of the Tunnel service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -29,21 +29,21 @@ pub struct TunnelService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Accessory Identifier Characteristic (required).
+	/// Accessory Identifier characteristic (required).
 	pub accessory_identifier: AccessoryIdentifierCharacteristic,
-	/// Tunnel Connection Timeout Characteristic (required).
+	/// Tunnel Connection Timeout characteristic (required).
 	pub tunnel_connection_timeout: TunnelConnectionTimeoutCharacteristic,
-	/// Tunneled Accessory Advertising Status Characteristic (required).
+	/// Tunneled Accessory Advertising Status characteristic (required).
 	pub tunneled_accessory_advertising_status: TunneledAccessoryAdvertisingStatusCharacteristic,
-	/// Tunneled Accessory Connection Status Characteristic (required).
+	/// Tunneled Accessory Connection Status characteristic (required).
 	pub tunneled_accessory_connection_status: TunneledAccessoryConnectionStatusCharacteristic,
-	/// Tunneled Accessory State Number Characteristic (required).
+	/// Tunneled Accessory State Number characteristic (required).
 	pub tunneled_accessory_state_number: TunneledAccessoryStateNumberCharacteristic,
 
 }
 
 impl TunnelService {
-    /// Creates a new Tunnel Service.
+    /// Creates a new Tunnel service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

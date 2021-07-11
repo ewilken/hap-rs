@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Display Order Characteristic.
+/// Display Order characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct DisplayOrderCharacteristic(Characteristic<Vec<u8>>);
 
 impl DisplayOrderCharacteristic {
-    /// Creates a new Display Order Characteristic.
+    /// Creates a new Display Order characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

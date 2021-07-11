@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Target Position Characteristic.
+/// Target Position characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TargetPositionCharacteristic(Characteristic<u8>);
 
 impl TargetPositionCharacteristic {
-    /// Creates a new Target Position Characteristic.
+    /// Creates a new Target Position characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

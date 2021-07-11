@@ -19,12 +19,12 @@ use crate::{
     HapType,
 };
 
-/// Lightbulb Service.
+/// Lightbulb service.
 #[derive(Debug, Default)]
 pub struct LightbulbService {
-    /// Instance ID of the Lightbulb Service.
+    /// Instance ID of the Lightbulb service.
     id: u64,
-    /// `HapType` of the Lightbulb Service.
+    /// [`HapType`](HapType) of the Lightbulb service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -33,29 +33,29 @@ pub struct LightbulbService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Power State Characteristic (required).
+	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
 
-	/// Brightness Characteristic (optional).
+	/// Brightness characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
-	/// Characteristic Value Active Transition Count Characteristic (optional).
+	/// Characteristic Value Active Transition Count characteristic (optional).
 	pub characteristic_value_active_transition_count: Option<CharacteristicValueActiveTransitionCountCharacteristic>,
-	/// Characteristic Value Transition Control Characteristic (optional).
+	/// Characteristic Value Transition Control characteristic (optional).
 	pub characteristic_value_transition_control: Option<CharacteristicValueTransitionControlCharacteristic>,
-	/// Color Temperature Characteristic (optional).
+	/// Color Temperature characteristic (optional).
 	pub color_temperature: Option<ColorTemperatureCharacteristic>,
-	/// Hue Characteristic (optional).
+	/// Hue characteristic (optional).
 	pub hue: Option<HueCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Saturation Characteristic (optional).
+	/// Saturation characteristic (optional).
 	pub saturation: Option<SaturationCharacteristic>,
-	/// Supported Characteristic Value Transition Configuration Characteristic (optional).
+	/// Supported Characteristic Value Transition Configuration characteristic (optional).
 	pub supported_characteristic_value_transition_configuration: Option<SupportedCharacteristicValueTransitionConfigurationCharacteristic>,
 }
 
 impl LightbulbService {
-    /// Creates a new Lightbulb Service.
+    /// Creates a new Lightbulb service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

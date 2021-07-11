@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Lock Management Auto Security Timeout Characteristic.
+/// Lock Management Auto Security Timeout characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct LockManagementAutoSecurityTimeoutCharacteristic(Characteristic<u32>);
 
 impl LockManagementAutoSecurityTimeoutCharacteristic {
-    /// Creates a new Lock Management Auto Security Timeout Characteristic.
+    /// Creates a new Lock Management Auto Security Timeout characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u32> {

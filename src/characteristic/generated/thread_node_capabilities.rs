@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Thread Node Capabilities Characteristic.
+/// Thread Node Capabilities characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ThreadNodeCapabilitiesCharacteristic(Characteristic<u16>);
 
 impl ThreadNodeCapabilitiesCharacteristic {
-    /// Creates a new Thread Node Capabilities Characteristic.
+    /// Creates a new Thread Node Capabilities characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u16> {

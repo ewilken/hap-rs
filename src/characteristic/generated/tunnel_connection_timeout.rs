@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Tunnel Connection Timeout Characteristic.
+/// Tunnel Connection Timeout characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TunnelConnectionTimeoutCharacteristic(Characteristic<i32>);
 
 impl TunnelConnectionTimeoutCharacteristic {
-    /// Creates a new Tunnel Connection Timeout Characteristic.
+    /// Creates a new Tunnel Connection Timeout characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

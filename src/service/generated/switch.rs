@@ -12,12 +12,12 @@ use crate::{
     HapType,
 };
 
-/// Switch Service.
+/// Switch service.
 #[derive(Debug, Default)]
 pub struct SwitchService {
-    /// Instance ID of the Switch Service.
+    /// Instance ID of the Switch service.
     id: u64,
-    /// `HapType` of the Switch Service.
+    /// [`HapType`](HapType) of the Switch service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -26,15 +26,15 @@ pub struct SwitchService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Power State Characteristic (required).
+	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
 
 impl SwitchService {
-    /// Creates a new Switch Service.
+    /// Creates a new Switch service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

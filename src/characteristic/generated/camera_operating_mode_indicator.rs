@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Camera Operating Mode Indicator Characteristic.
+/// Camera Operating Mode Indicator characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CameraOperatingModeIndicatorCharacteristic(Characteristic<bool>);
 
 impl CameraOperatingModeIndicatorCharacteristic {
-    /// Creates a new Camera Operating Mode Indicator Characteristic.
+    /// Creates a new Camera Operating Mode Indicator characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Thermostat Accessory.
+/// Thermostat accessory.
 #[derive(Debug, Default)]
 pub struct ThermostatAccessory {
     /// ID of the Thermostat Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Thermostat Service.
+    /// Thermostat service.
     pub thermostat: ThermostatService,
 }
 
 impl ThermostatAccessory {
-    /// Creates a new Thermostat Accessory.
+    /// Creates a new Thermostat accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let thermostat_id = accessory_information.get_characteristics().len() as u64;

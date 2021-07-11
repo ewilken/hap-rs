@@ -11,12 +11,12 @@ use crate::{
     HapType,
 };
 
-/// Power Management Service.
+/// Power Management service.
 #[derive(Debug, Default)]
 pub struct PowerManagementService {
-    /// Instance ID of the Power Management Service.
+    /// Instance ID of the Power Management service.
     id: u64,
-    /// `HapType` of the Power Management Service.
+    /// [`HapType`](HapType) of the Power Management service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -25,13 +25,13 @@ pub struct PowerManagementService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Wake Configuration Characteristic (required).
+	/// Wake Configuration characteristic (required).
 	pub wake_configuration: WakeConfigurationCharacteristic,
 
 }
 
 impl PowerManagementService {
-    /// Creates a new Power Management Service.
+    /// Creates a new Power Management service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

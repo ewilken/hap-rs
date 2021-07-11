@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Router Configuration Characteristic.
+/// Supported Router Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedRouterConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedRouterConfigurationCharacteristic {
-    /// Creates a new Supported Router Configuration Characteristic.
+    /// Creates a new Supported Router Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

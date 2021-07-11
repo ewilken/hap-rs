@@ -16,12 +16,12 @@ use crate::{
     HapType,
 };
 
-/// Smart Speaker Service.
+/// Smart Speaker service.
 #[derive(Debug, Default)]
 pub struct SmartSpeakerService {
-    /// Instance ID of the Smart Speaker Service.
+    /// Instance ID of the Smart Speaker service.
     id: u64,
-    /// `HapType` of the Smart Speaker Service.
+    /// [`HapType`](HapType) of the Smart Speaker service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -30,23 +30,23 @@ pub struct SmartSpeakerService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Media State Characteristic (required).
+	/// Current Media State characteristic (required).
 	pub current_media_state: CurrentMediaStateCharacteristic,
-	/// Target Media State Characteristic (required).
+	/// Target Media State characteristic (required).
 	pub target_media_state: TargetMediaStateCharacteristic,
 
-	/// Configured Name Characteristic (optional).
+	/// Configured Name characteristic (optional).
 	pub configured_name: Option<ConfiguredNameCharacteristic>,
-	/// Mute Characteristic (optional).
+	/// Mute characteristic (optional).
 	pub mute: Option<MuteCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Volume Characteristic (optional).
+	/// Volume characteristic (optional).
 	pub volume: Option<VolumeCharacteristic>,
 }
 
 impl SmartSpeakerService {
-    /// Creates a new Smart Speaker Service.
+    /// Creates a new Smart Speaker service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

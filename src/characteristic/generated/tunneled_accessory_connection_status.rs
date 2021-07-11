@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Tunneled Accessory Connection Status Characteristic.
+/// Tunneled Accessory Connection Status characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct TunneledAccessoryConnectionStatusCharacteristic(Characteristic<bool>);
 
 impl TunneledAccessoryConnectionStatusCharacteristic {
-    /// Creates a new Tunneled Accessory Connection Status Characteristic.
+    /// Creates a new Tunneled Accessory Connection Status characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

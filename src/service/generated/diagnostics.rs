@@ -11,12 +11,12 @@ use crate::{
     HapType,
 };
 
-/// Diagnostics Service.
+/// Diagnostics service.
 #[derive(Debug, Default)]
 pub struct DiagnosticsService {
-    /// Instance ID of the Diagnostics Service.
+    /// Instance ID of the Diagnostics service.
     id: u64,
-    /// `HapType` of the Diagnostics Service.
+    /// [`HapType`](HapType) of the Diagnostics service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -25,13 +25,13 @@ pub struct DiagnosticsService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Supported Diagnostics Snapshot Characteristic (required).
+	/// Supported Diagnostics Snapshot characteristic (required).
 	pub supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic,
 
 }
 
 impl DiagnosticsService {
-    /// Creates a new Diagnostics Service.
+    /// Creates a new Diagnostics service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

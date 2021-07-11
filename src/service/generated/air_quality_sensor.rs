@@ -22,12 +22,12 @@ use crate::{
     HapType,
 };
 
-/// Air Quality Sensor Service.
+/// Air Quality Sensor service.
 #[derive(Debug, Default)]
 pub struct AirQualitySensorService {
-    /// Instance ID of the Air Quality Sensor Service.
+    /// Instance ID of the Air Quality Sensor service.
     id: u64,
-    /// `HapType` of the Air Quality Sensor Service.
+    /// [`HapType`](HapType) of the Air Quality Sensor service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -36,35 +36,35 @@ pub struct AirQualitySensorService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Air Quality Characteristic (required).
+	/// Current Air Quality characteristic (required).
 	pub current_air_quality: CurrentAirQualityCharacteristic,
 
-	/// Nitrogen dioxide Density Characteristic (optional).
+	/// Nitrogen dioxide Density characteristic (optional).
 	pub nitrogen_dioxide_density: Option<NitrogenDioxideDensityCharacteristic>,
-	/// Ozone Density Characteristic (optional).
+	/// Ozone Density characteristic (optional).
 	pub ozone_density: Option<OzoneDensityCharacteristic>,
-	/// PM10 Density Characteristic (optional).
+	/// PM10 Density characteristic (optional).
 	pub pm10_density: Option<Pm10DensityCharacteristic>,
-	/// PM2.5 Density Characteristic (optional).
+	/// PM2.5 Density characteristic (optional).
 	pub pm2_5_density: Option<Pm2_5DensityCharacteristic>,
-	/// Sulphur dioxide Density Characteristic (optional).
+	/// Sulphur dioxide Density characteristic (optional).
 	pub sulphur_dioxide_density: Option<SulphurDioxideDensityCharacteristic>,
-	/// Volatile Organic Compound Density Characteristic (optional).
+	/// Volatile Organic Compound Density characteristic (optional).
 	pub volatile_organic_compound_density: Option<VolatileOrganicCompoundDensityCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Active Characteristic (optional).
+	/// Status Active characteristic (optional).
 	pub status_active: Option<StatusActiveCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
-	/// Status Low Battery Characteristic (optional).
+	/// Status Low Battery characteristic (optional).
 	pub status_low_battery: Option<StatusLowBatteryCharacteristic>,
-	/// Status Tampered Characteristic (optional).
+	/// Status Tampered characteristic (optional).
 	pub status_tampered: Option<StatusTamperedCharacteristic>,
 }
 
 impl AirQualitySensorService {
-    /// Creates a new Air Quality Sensor Service.
+    /// Creates a new Air Quality Sensor service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

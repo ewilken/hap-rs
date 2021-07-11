@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Current Temperature Characteristic.
+/// Current Temperature characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct CurrentTemperatureCharacteristic(Characteristic<f32>);
 
 impl CurrentTemperatureCharacteristic {
-    /// Creates a new Current Temperature Characteristic.
+    /// Creates a new Current Temperature characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<f32> {

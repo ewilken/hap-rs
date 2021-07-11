@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Garage Door Opener Accessory.
+/// Garage Door Opener accessory.
 #[derive(Debug, Default)]
 pub struct GarageDoorOpenerAccessory {
     /// ID of the Garage Door Opener Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Garage Door Opener Service.
+    /// Garage Door Opener service.
     pub garage_door_opener: GarageDoorOpenerService,
 }
 
 impl GarageDoorOpenerAccessory {
-    /// Creates a new Garage Door Opener Accessory.
+    /// Creates a new Garage Door Opener accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let garage_door_opener_id = accessory_information.get_characteristics().len() as u64;

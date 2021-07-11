@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Wi-Fi Satellite Status Characteristic.
+/// Wi-Fi Satellite Status characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct WiFiSatelliteStatusCharacteristic(Characteristic<u8>);
 
 impl WiFiSatelliteStatusCharacteristic {
-    /// Creates a new Wi-Fi Satellite Status Characteristic.
+    /// Creates a new Wi-Fi Satellite Status characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

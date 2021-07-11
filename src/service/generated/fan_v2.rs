@@ -18,12 +18,12 @@ use crate::{
     HapType,
 };
 
-/// Fan v2 Service.
+/// Fan v2 service.
 #[derive(Debug, Default)]
 pub struct FanV2Service {
-    /// Instance ID of the Fan v2 Service.
+    /// Instance ID of the Fan v2 service.
     id: u64,
-    /// `HapType` of the Fan v2 Service.
+    /// [`HapType`](HapType) of the Fan v2 service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -32,27 +32,27 @@ pub struct FanV2Service {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
 
-	/// Current Fan State Characteristic (optional).
+	/// Current Fan State characteristic (optional).
 	pub current_fan_state: Option<CurrentFanStateCharacteristic>,
-	/// Target Fan State Characteristic (optional).
+	/// Target Fan State characteristic (optional).
 	pub target_fan_state: Option<TargetFanStateCharacteristic>,
-	/// Lock Physical Controls Characteristic (optional).
+	/// Lock Physical Controls characteristic (optional).
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Rotation Direction Characteristic (optional).
+	/// Rotation Direction characteristic (optional).
 	pub rotation_direction: Option<RotationDirectionCharacteristic>,
-	/// Rotation Speed Characteristic (optional).
+	/// Rotation Speed characteristic (optional).
 	pub rotation_speed: Option<RotationSpeedCharacteristic>,
-	/// Swing Mode Characteristic (optional).
+	/// Swing Mode characteristic (optional).
 	pub swing_mode: Option<SwingModeCharacteristic>,
 }
 
 impl FanV2Service {
-    /// Creates a new Fan v2 Service.
+    /// Creates a new Fan v2 service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

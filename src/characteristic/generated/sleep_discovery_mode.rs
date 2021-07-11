@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Sleep Discovery Mode Characteristic.
+/// Sleep Discovery Mode characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SleepDiscoveryModeCharacteristic(Characteristic<u8>);
 
 impl SleepDiscoveryModeCharacteristic {
-    /// Creates a new Sleep Discovery Mode Characteristic.
+    /// Creates a new Sleep Discovery Mode characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

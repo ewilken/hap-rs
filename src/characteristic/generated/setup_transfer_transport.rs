@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Setup Transfer Transport Characteristic.
+/// Setup Transfer Transport characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SetupTransferTransportCharacteristic(Characteristic<Vec<u8>>);
 
 impl SetupTransferTransportCharacteristic {
-    /// Creates a new Setup Transfer Transport Characteristic.
+    /// Creates a new Setup Transfer Transport characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

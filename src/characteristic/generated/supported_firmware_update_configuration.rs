@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Supported Firmware Update Configuration Characteristic.
+/// Supported Firmware Update Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct SupportedFirmwareUpdateConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
 impl SupportedFirmwareUpdateConfigurationCharacteristic {
-    /// Creates a new Supported Firmware Update Configuration Characteristic.
+    /// Creates a new Supported Firmware Update Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<Vec<u8>> {

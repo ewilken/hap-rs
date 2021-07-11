@@ -13,12 +13,12 @@ use crate::{
     HapType,
 };
 
-/// Faucet Service.
+/// Faucet service.
 #[derive(Debug, Default)]
 pub struct FaucetService {
-    /// Instance ID of the Faucet Service.
+    /// Instance ID of the Faucet service.
     id: u64,
-    /// `HapType` of the Faucet Service.
+    /// [`HapType`](HapType) of the Faucet service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -27,17 +27,17 @@ pub struct FaucetService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Active Characteristic (required).
+	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
 
-	/// Name Characteristic (optional).
+	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
-	/// Status Fault Characteristic (optional).
+	/// Status Fault characteristic (optional).
 	pub status_fault: Option<StatusFaultCharacteristic>,
 }
 
 impl FaucetService {
-    /// Creates a new Faucet Service.
+    /// Creates a new Faucet service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

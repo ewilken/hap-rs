@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Image Mirroring Characteristic.
+/// Image Mirroring characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ImageMirroringCharacteristic(Characteristic<bool>);
 
 impl ImageMirroringCharacteristic {
-    /// Creates a new Image Mirroring Characteristic.
+    /// Creates a new Image Mirroring characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<bool> {

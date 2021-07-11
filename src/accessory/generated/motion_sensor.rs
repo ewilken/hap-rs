@@ -9,20 +9,20 @@ use crate::{
 	Result,
 };
 
-/// Motion Sensor Accessory.
+/// Motion Sensor accessory.
 #[derive(Debug, Default)]
 pub struct MotionSensorAccessory {
     /// ID of the Motion Sensor Accessory.
     id: u64,
 
-    /// Accessory Information Service.
+    /// Accessory Information service.
     pub accessory_information: AccessoryInformationService,
-    /// Motion Sensor Service.
+    /// Motion Sensor service.
     pub motion_sensor: MotionSensorService,
 }
 
 impl MotionSensorAccessory {
-    /// Creates a new Motion Sensor Accessory.
+    /// Creates a new Motion Sensor accessory.
     pub fn new(id: u64, information: AccessoryInformation) -> Result<Self> {
         let accessory_information = information.to_service(1, id)?;
         let motion_sensor_id = accessory_information.get_characteristics().len() as u64;

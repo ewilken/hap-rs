@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Received Signal Strength Indication Characteristic.
+/// Received Signal Strength Indication characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct ReceivedSignalStrengthIndicationCharacteristic(Characteristic<i32>);
 
 impl ReceivedSignalStrengthIndicationCharacteristic {
-    /// Creates a new Received Signal Strength Indication Characteristic.
+    /// Creates a new Received Signal Strength Indication characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<i32> {

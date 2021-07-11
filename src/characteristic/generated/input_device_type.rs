@@ -26,12 +26,12 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Input Device Type Characteristic.
+/// Input Device Type characteristic.
 #[derive(Debug, Default, Serialize)]
 pub struct InputDeviceTypeCharacteristic(Characteristic<u8>);
 
 impl InputDeviceTypeCharacteristic {
-    /// Creates a new Input Device Type Characteristic.
+    /// Creates a new Input Device Type characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
         let mut c = Self(Characteristic::<u8> {

@@ -22,12 +22,12 @@ use crate::{
     HapType,
 };
 
-/// Accessory Information Service.
+/// Accessory Information service.
 #[derive(Debug, Default)]
 pub struct AccessoryInformationService {
-    /// Instance ID of the Accessory Information Service.
+    /// Instance ID of the Accessory Information service.
     id: u64,
-    /// `HapType` of the Accessory Information Service.
+    /// [`HapType`](HapType) of the Accessory Information service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -36,35 +36,35 @@ pub struct AccessoryInformationService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Identify Characteristic (required).
+	/// Identify characteristic (required).
 	pub identify: IdentifyCharacteristic,
-	/// Manufacturer Characteristic (required).
+	/// Manufacturer characteristic (required).
 	pub manufacturer: ManufacturerCharacteristic,
-	/// Model Characteristic (required).
+	/// Model characteristic (required).
 	pub model: ModelCharacteristic,
-	/// Name Characteristic (required).
+	/// Name characteristic (required).
 	pub name: NameCharacteristic,
-	/// Serial Number Characteristic (required).
+	/// Serial Number characteristic (required).
 	pub serial_number: SerialNumberCharacteristic,
 
-	/// Accessory Flags Characteristic (optional).
+	/// Accessory Flags characteristic (optional).
 	pub accessory_flags: Option<AccessoryFlagsCharacteristic>,
-	/// Application Matching Identifier Characteristic (optional).
+	/// Application Matching Identifier characteristic (optional).
 	pub application_matching_identifier: Option<ApplicationMatchingIdentifierCharacteristic>,
-	/// Configured Name Characteristic (optional).
+	/// Configured Name characteristic (optional).
 	pub configured_name: Option<ConfiguredNameCharacteristic>,
-	/// Firmware Revision Characteristic (optional).
+	/// Firmware Revision characteristic (optional).
 	pub firmware_revision: Option<FirmwareRevisionCharacteristic>,
-	/// Hardware Revision Characteristic (optional).
+	/// Hardware Revision characteristic (optional).
 	pub hardware_revision: Option<HardwareRevisionCharacteristic>,
-	/// Software Revision Characteristic (optional).
+	/// Software Revision characteristic (optional).
 	pub software_revision: Option<SoftwareRevisionCharacteristic>,
-	/// Product Data Characteristic (optional).
+	/// Product Data characteristic (optional).
 	pub product_data: Option<ProductDataCharacteristic>,
 }
 
 impl AccessoryInformationService {
-    /// Creates a new Accessory Information Service.
+    /// Creates a new Accessory Information service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,

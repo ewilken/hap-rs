@@ -14,12 +14,12 @@ use crate::{
     HapType,
 };
 
-/// Accessory Runtime Information Service.
+/// Accessory Runtime Information service.
 #[derive(Debug, Default)]
 pub struct AccessoryRuntimeInformationService {
-    /// Instance ID of the Accessory Runtime Information Service.
+    /// Instance ID of the Accessory Runtime Information service.
     id: u64,
-    /// `HapType` of the Accessory Runtime Information Service.
+    /// [`HapType`](HapType) of the Accessory Runtime Information service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -28,19 +28,19 @@ pub struct AccessoryRuntimeInformationService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Ping Characteristic (required).
+	/// Ping characteristic (required).
 	pub ping: PingCharacteristic,
 
-	/// Activity Interval Characteristic (optional).
+	/// Activity Interval characteristic (optional).
 	pub activity_interval: Option<ActivityIntervalCharacteristic>,
-	/// Heart Beat Characteristic (optional).
+	/// Heart Beat characteristic (optional).
 	pub heart_beat: Option<HeartBeatCharacteristic>,
-	/// Sleep Interval Characteristic (optional).
+	/// Sleep Interval characteristic (optional).
 	pub sleep_interval: Option<SleepIntervalCharacteristic>,
 }
 
 impl AccessoryRuntimeInformationService {
-    /// Creates a new Accessory Runtime Information Service.
+    /// Creates a new Accessory Runtime Information service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
