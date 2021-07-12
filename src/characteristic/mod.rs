@@ -9,7 +9,7 @@ use serde::{
 use serde_json::json;
 use std::fmt;
 
-use crate::{event::Event, pointer, HapType, Result};
+use crate::{event::Event, pointer, Error, HapType, Result};
 
 mod generated;
 
@@ -146,10 +146,10 @@ where
     pub async fn get_value(&mut self) -> Result<T> {
         let mut val = None;
         if let Some(ref on_read) = self.on_read {
-            val = on_read();
+            val = on_read().map_err(|e| Error::ValueOnRead(e))?;
         }
         if let Some(ref on_read_async) = self.on_read_async {
-            val = on_read_async().await;
+            val = on_read_async().await.map_err(|e| Error::ValueOnRead(e))?;
         }
         if let Some(v) = val {
             self.set_value(v).await?;
@@ -174,10 +174,12 @@ where
 
         let old_val = self.value.clone();
         if let Some(ref on_update) = self.on_update {
-            on_update(&old_val, &val);
+            on_update(&old_val, &val).map_err(|e| Error::ValueOnUpdate(e))?;
         }
         if let Some(ref on_update_async) = self.on_update_async {
-            on_update_async(old_val, val.clone()).await;
+            on_update_async(old_val, val.clone())
+                .await
+                .map_err(|e| Error::ValueOnUpdate(e))?;
         }
 
         if self.event_notifications == Some(true) {
@@ -421,9 +423,12 @@ pub trait HapCharacteristicSetup {
 /// [`OnReadFn`](OnReadFn) represents a callback function to be set on a characteristic that is called every time a
 /// controller attempts to read its value. Returning a `Some(T)` from this function changes the value of the
 /// characteristic before the controller reads it so the controller reads the new value.
-pub trait OnReadFn<T: Default + Clone + Serialize + Send + Sync>: Fn() -> Option<T> + 'static + Send + Sync {}
+pub trait OnReadFn<T: Default + Clone + Serialize + Send + Sync>:
+    Fn() -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>> + 'static + Send + Sync
+{
+}
 impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFn<T> for F where
-    F: Fn() -> Option<T> + 'static + Send + Sync
+    F: Fn() -> std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>> + 'static + Send + Sync
 {
 }
 
@@ -431,19 +436,31 @@ impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFn<T> for F where
 /// controller attempts to update its value. The first argument is a reference to the current value of the
 /// characteristic and the second argument is a reference to the value the controller attempts to change the
 /// characteristic's to.
-pub trait OnUpdateFn<T: Default + Clone + Serialize + Send + Sync>: Fn(&T, &T) + 'static + Send + Sync {}
-impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFn<T> for F where F: Fn(&T, &T) + 'static + Send + Sync {}
+pub trait OnUpdateFn<T: Default + Clone + Serialize + Send + Sync>:
+    Fn(&T, &T) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> + 'static + Send + Sync
+{
+}
+impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFn<T> for F where
+    F: Fn(&T, &T) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> + 'static + Send + Sync
+{
+}
 
 /// [`OnReadFuture`](OnReadFuture) represents an async callback function to be set on a characteristic that is driven to
 /// completion by the async runtime driving the HAP server every time a controller attempts to read its value. Returning
 /// a `Some(T)` from this function changes the value of the characteristic before the controller reads it so the
 /// controller reads the new value.
 pub trait OnReadFuture<T: Default + Clone + Serialize + Send + Sync>:
-    Fn() -> BoxFuture<'static, Option<T>> + 'static + Send + Sync
+    Fn() -> BoxFuture<'static, std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>>
+    + 'static
+    + Send
+    + Sync
 {
 }
 impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFuture<T> for F where
-    F: Fn() -> BoxFuture<'static, Option<T>> + 'static + Send + Sync
+    F: Fn() -> BoxFuture<'static, std::result::Result<Option<T>, Box<dyn std::error::Error + Send + Sync>>>
+        + 'static
+        + Send
+        + Sync
 {
 }
 
@@ -452,11 +469,17 @@ impl<F, T: Default + Clone + Serialize + Send + Sync> OnReadFuture<T> for F wher
 /// value. The first argument is a reference to the current value of the characteristic and the second argument is a
 /// reference to the value the controller attempts to change the characteristic's to.
 pub trait OnUpdateFuture<T: Default + Clone + Serialize + Send + Sync>:
-    Fn(T, T) -> BoxFuture<'static, ()> + 'static + Send + Sync
+    Fn(T, T) -> BoxFuture<'static, std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>>
+    + 'static
+    + Send
+    + Sync
 {
 }
 impl<F, T: Default + Clone + Serialize + Send + Sync> OnUpdateFuture<T> for F where
-    F: Fn(T, T) -> BoxFuture<'static, ()> + 'static + Send + Sync
+    F: Fn(T, T) -> BoxFuture<'static, std::result::Result<(), Box<dyn std::error::Error + Send + Sync>>>
+        + 'static
+        + Send
+        + Sync
 {
 }
 

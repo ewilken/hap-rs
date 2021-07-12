@@ -1,6 +1,6 @@
 [package]
 name = "hap"
-version = "0.1.0-pre.9"
+version = "0.1.0-pre.10"
 authors = ["Elias Wilken <elias@wlkn.io>"]
 edition = "2018"
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
@@ -43,7 +43,7 @@ sha2 = "0.9"
 signature = "1.1"
 srp = "0.5"
 thiserror = "1.0"
-tokio = { version = "1.7", features = ["rt", "net", "time", "macros"] }
+tokio = "1.8"
 url = "2.1"
 uuid = { version = "0.8", features = ["v4", "serde"] }
 x25519-dalek = "0.6"
@@ -56,7 +56,7 @@ uuid = { version = "0.8", features = ["v4", "serde"] }
 
 [dev-dependencies]
 env_logger = "0.8"
-tokio = { version = "1.7", features = ["rt-multi-thread", "time"] }
+tokio = { version = "1.8", features = ["rt-multi-thread", "time", "macros"] }
 
 [workspace]
 members = ["codegen"]

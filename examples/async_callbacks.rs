@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
     lightbulb.lightbulb.power_state.on_read_async(Some(|| {
         async {
             println!("power_state characteristic read");
-            None
+            Ok(None)
         }
         .boxed()
     }));
@@ -31,6 +31,7 @@ async fn main() -> Result<()> {
         .on_update_async(Some(|current_val: bool, new_val: bool| {
             async move {
                 println!("power_state characteristic updated from {} to {}", current_val, new_val);
+                Ok(())
             }
             .boxed()
         }));

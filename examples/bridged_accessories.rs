@@ -37,6 +37,7 @@ async fn main() -> Result<()> {
                 "Lightbulb 1: power_state characteristic updated from {} to {}",
                 current_val, new_val
             );
+            Ok(())
         }));
     lightbulb_2
         .lightbulb
@@ -46,6 +47,7 @@ async fn main() -> Result<()> {
                 "Lightbulb 2: power_state characteristic updated from {} to {}",
                 current_val, new_val
             );
+            Ok(())
         }));
     lightbulb_3
         .lightbulb
@@ -55,6 +57,7 @@ async fn main() -> Result<()> {
                 "Lightbulb 3: power_state characteristic updated from {} to {}",
                 current_val, new_val
             );
+            Ok(())
         }));
 
     let mut storage = FileStorage::current_dir().await?;

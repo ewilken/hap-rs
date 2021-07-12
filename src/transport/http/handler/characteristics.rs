@@ -1,5 +1,6 @@
 use futures::future::{BoxFuture, FutureExt};
 use hyper::{body::Buf, Body, Response, StatusCode, Uri};
+use log::error;
 use std::collections::HashMap;
 use url::form_urlencoded;
 
@@ -72,7 +73,8 @@ impl JsonHandlerExt for GetCharacteristics {
                             }
                             res_object
                         },
-                        Err(_) => {
+                        Err(e) => {
+                            error!("error reading characteristic: {:?}", e);
                             some_err = true;
                             ReadResponseObject {
                                 iid,
@@ -159,7 +161,8 @@ impl JsonHandlerExt for UpdateCharacteristics {
                         }
                         res_object
                     },
-                    Err(_) => {
+                    Err(e) => {
+                        error!("error updating characteristic: {:?}", e);
                         some_err = true;
                         WriteResponseObject {
                             iid,

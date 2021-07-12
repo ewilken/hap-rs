@@ -29,6 +29,10 @@ pub enum Error {
     InvalidValue(Format),
     #[error("Invalid HapType string value: `{0}`.")]
     InvalidHapTypeString(String),
+    #[error("Error on value read: {0}")]
+    ValueOnRead(Box<dyn std::error::Error + Send + Sync>),
+    #[error("Error on value update: {0}")]
+    ValueOnUpdate(Box<dyn std::error::Error + Send + Sync>),
 
     // converted errors
     #[error("IO Error: {0}")]
