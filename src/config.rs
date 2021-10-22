@@ -109,14 +109,14 @@ impl Default for Config {
     }
 }
 
-// Generates a random MAC address.
+/// Generates a random MAC address.
 fn generate_random_mac_address() -> MacAddress {
     let mut csprng = OsRng {};
     let eui = csprng.gen::<[u8; 6]>();
     MacAddress::new(eui)
 }
 
-// Generates an Ed25519 keypair.
+/// Generates an Ed25519 keypair.
 fn generate_ed25519_keypair() -> Ed25519Keypair {
     let mut csprng = OsRng {};
     Ed25519Keypair::generate(&mut csprng)

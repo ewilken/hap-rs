@@ -7,7 +7,7 @@
 
 Rust implementation of the Apple HomeKit Accessory Protocol (HAP).
 
-This crate supports all HomeKit services and characteristics currently implemented by Apple and provides the ability to create custom characteristics, services and accessories.
+This crate supports all HomeKit services and characteristics currently implemented by Apple (on stable macOS versions) and provides the ability to create custom characteristics, services and accessories.
 
 The HomeKit Accessory Protocol supports transports over IP and Bluetooth LE. Currently only the transport over IP is implemented in this crate. Accessories are exposed by the implemented HAP Accessory HTTP server and announced via built-in mDNS.
 
@@ -106,11 +106,12 @@ use hap::characteristic::CharacteristicCallbacks;
 
 lightbulb.lightbulb.power_state.on_read(Some(|| {
     println!("power_state characteristic read");
-    None
+    Ok(None)
 }));
 
 lightbulb.lightbulb.power_state.on_update(Some(|current_val: &bool, new_val: &bool| {
     println!("power_state characteristic updated from {} to {}", current_val, new_val);
+    Ok(())
 }));
 ```
 
@@ -122,7 +123,7 @@ use hap::characteristic::AsyncCharacteristicCallbacks;
 lightbulb.lightbulb.power_state.on_read_async(Some(|| {
     async {
         println!("power_state characteristic read (async)");
-        None
+        Ok(None)
     }
     .boxed()
 }));
@@ -130,6 +131,7 @@ lightbulb.lightbulb.power_state.on_read_async(Some(|| {
 lightbulb.lightbulb.power_state.on_update_async(Some(|current_val: bool, new_val: bool| {
     async move {
         println!("power_state characteristic updated from {} to {} (async)", current_val, new_val);
+        Ok(())
     }
     .boxed()
 }));

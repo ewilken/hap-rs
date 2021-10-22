@@ -3,7 +3,7 @@ use futures::{
     future::{BoxFuture, FutureExt},
     lock::Mutex,
 };
-use log::info;
+use log::{error, info};
 use std::sync::Arc;
 
 use crate::{
@@ -113,7 +113,7 @@ impl IpServer {
         let mdns_responder_ = mdns_responder.clone();
 
         event_emitter.add_listener(Box::new(move |event| {
-            // let config_ = config_.clone();
+            let config_ = config_.clone();
             let storage_ = storage_.clone();
             let mdns_responder_ = mdns_responder_.clone();
             async move {
@@ -121,23 +121,23 @@ impl IpServer {
                     Event::ControllerPaired { id } => {
                         info!("controller {} paired", id);
 
-                        if let Ok(count) = storage_.lock().await.count_pairings().await {
+                        let pairing_count = storage_.lock().await.count_pairings().await;
+                        if let Ok(count) = pairing_count {
                             if count > 0 {
                                 info!("1 or more controllers paired; setting Bonjour status flag to `Zero`");
 
-                                // TODO - this deadlocks
-                                // let mut c = config_.lock().await;
-                                // c.status_flag = BonjourStatusFlag::Zero;
+                                let mut c = config_.lock().await;
+                                c.status_flag = BonjourStatusFlag::Zero;
 
-                                // storage_
-                                //     .lock()
-                                //     .await
-                                //     .save_config(&c)
-                                //     .await
-                                //     .map_err(|e| error!("error saving the config: {:?}", e))
-                                //     .ok();
+                                storage_
+                                    .lock()
+                                    .await
+                                    .save_config(&c)
+                                    .await
+                                    .map_err(|e| error!("error saving the config: {:?}", e))
+                                    .ok();
 
-                                // drop(c);
+                                drop(c);
 
                                 mdns_responder_.lock().await.update_records().await;
                             }
@@ -146,23 +146,24 @@ impl IpServer {
                     Event::ControllerUnpaired { id } => {
                         info!("controller {} unpaired", id);
 
-                        if let Ok(count) = storage_.lock().await.count_pairings().await {
+                        let pairing_count = storage_.lock().await.count_pairings().await;
+                        // TODO - `pairing_count` is an Err
+                        if let Ok(count) = pairing_count {
                             if count == 0 {
                                 info!("0 controllers paired; setting Bonjour status flag to `Not Paired`");
 
-                                // TODO - this deadlocks
-                                // let mut c = config_.lock().await;
-                                // c.status_flag = BonjourStatusFlag::NotPaired;
+                                let mut c = config_.lock().await;
+                                c.status_flag = BonjourStatusFlag::NotPaired;
 
-                                // storage_
-                                //     .lock()
-                                //     .await
-                                //     .save_config(&c)
-                                //     .await
-                                //     .map_err(|e| error!("error saving the config: {:?}", e))
-                                //     .ok();
+                                storage_
+                                    .lock()
+                                    .await
+                                    .save_config(&c)
+                                    .await
+                                    .map_err(|e| error!("error saving the config: {:?}", e))
+                                    .ok();
 
-                                // drop(c);
+                                drop(c);
 
                                 mdns_responder_.lock().await.update_records().await;
                             }
