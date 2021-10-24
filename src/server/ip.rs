@@ -93,21 +93,24 @@ impl IpServer {
         let storage_ = storage.clone();
         let mut event_emitter = EventEmitter::new();
 
-        if storage_.lock().await.count_pairings().await? > 0 {
+        let mut s = storage_.lock().await;
+        dbg!(s.count_pairings().await?);
+        if s.count_pairings().await? > 0 {
             info!("1 or more controllers paired; setting Bonjour status flag to `Zero`");
 
             let mut c = config_.lock().await;
             c.status_flag = BonjourStatusFlag::Zero;
 
-            storage_.lock().await.save_config(&c).await?;
+            s.save_config(&c).await?;
         } else {
             info!("0 controllers paired; setting Bonjour status flag to `Not Paired`");
 
             let mut c = config_.lock().await;
             c.status_flag = BonjourStatusFlag::NotPaired;
 
-            storage_.lock().await.save_config(&c).await?;
+            s.save_config(&c).await?;
         }
+        drop(s);
 
         let mdns_responder = Arc::new(Mutex::new(MdnsResponder::new(config.clone()).await));
         let mdns_responder_ = mdns_responder.clone();

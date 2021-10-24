@@ -160,10 +160,7 @@ impl Storage for FileStorage {
         self.write_bytes("config.json", config_bytes).await
     }
 
-    async fn delete_config(&mut self) -> Result<()> {
-        let key = format!("config.json");
-        self.remove_file(&key).await
-    }
+    async fn delete_config(&mut self) -> Result<()> { self.remove_file("config.json").await }
 
     async fn load_aid_cache(&self) -> Result<Vec<u64>> {
         let aid_cache_bytes = self.read_bytes("aid_cache.json").await?;
@@ -179,10 +176,7 @@ impl Storage for FileStorage {
         self.write_bytes("aid_cache.json", aid_cache_bytes).await
     }
 
-    async fn delete_aid_cache(&mut self) -> Result<()> {
-        let key = format!("aid_cache.json");
-        self.remove_file(&key).await
-    }
+    async fn delete_aid_cache(&mut self) -> Result<()> { self.remove_file("aid_cache.json").await }
 
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing> {
         let key = format!("{}.json", id.to_string());
@@ -209,8 +203,8 @@ impl Storage for FileStorage {
     async fn list_pairings(&self) -> Result<Vec<Pairing>> {
         let mut pairings = Vec::new();
         for key in self.keys_with_suffix("json").await? {
-            if &key != "config" && &key != "identifier_cache" {
-                let pairing_bytes = self.read_bytes(&key).await?;
+            if &key != "config" && &key != "aid_cache" {
+                let pairing_bytes = self.read_bytes(&format!("{}.json", key)).await?;
                 let pairing = Pairing::from_bytes(&pairing_bytes)?;
                 pairings.push(pairing);
             }
@@ -222,7 +216,7 @@ impl Storage for FileStorage {
     async fn count_pairings(&self) -> Result<usize> {
         let mut count = 0;
         for key in self.keys_with_suffix("json").await? {
-            if &key != "config" && &key != "identifier_cache" {
+            if &key != "config" && &key != "aid_cache" {
                 count += 1;
             }
         }
@@ -235,10 +229,10 @@ impl Storage for FileStorage {
 mod tests {
     use super::*;
 
-    use crate::BonjourStatusFlag;
+    use crate::{pairing::Permissions, BonjourStatusFlag};
 
-    #[tokio::test]
     /// Ensure we can write a config, then a shorter one, without corrupting data.
+    #[tokio::test]
     async fn test_shorten_config() {
         let mut config = Default::default();
         let mut storage = FileStorage::new(&std::env::temp_dir()).await.unwrap();
@@ -251,5 +245,60 @@ mod tests {
             storage.load_config().await.unwrap().status_flag,
             BonjourStatusFlag::Zero
         )
+    }
+
+    /// Ensure we can correctly create, read, list and delete [`Pairing`](Pairing)s.
+    #[tokio::test]
+    async fn test_crd_pairings() {
+        let pairing = Pairing {
+            id: Uuid::parse_str("bc158b86-cabf-432d-aee4-422ef0e3f1d5").unwrap(),
+            permissions: Permissions::Admin,
+            public_key: [
+                215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166,
+                35, 37, 175, 2, 26, 104, 247, 7, 81, 26,
+            ],
+        };
+
+        let mut temp_dir = std::env::temp_dir();
+        temp_dir.push("hap/");
+        let mut storage = FileStorage::new(&temp_dir).await.unwrap();
+
+        // a fresh file storage should count 0 pairings, list an empty Vec, and error on a non-existent ID
+        let pairing_count = storage.count_pairings().await.unwrap();
+        assert_eq!(pairing_count, 0);
+
+        let pairings = storage.list_pairings().await.unwrap();
+        assert_eq!(pairings, vec![]);
+
+        let saved_pairing = storage.load_pairing(&pairing.id).await;
+        assert!(saved_pairing.is_err());
+
+        // save a pairing
+        storage.save_pairing(&pairing).await.unwrap();
+
+        // after saving the first pairing, we should be able to count, load and list it
+        let pairing_count = storage.count_pairings().await.unwrap();
+        assert_eq!(pairing_count, 1);
+
+        let pairings = storage.list_pairings().await.unwrap();
+        assert_eq!(pairings.len(), 1);
+        assert_eq!(&pairings[0], &pairing);
+
+        let saved_pairing = storage.load_pairing(&pairing.id).await.unwrap();
+        assert_eq!(&saved_pairing, &pairing);
+
+        // delete the pairing
+        storage.delete_pairing(&pairing.id).await.unwrap();
+
+        // after deleting the previously saved pairing, it should count 0 again, list an empty
+        // Vec and error on the now non-existent ID of the deleted pairing
+        let pairing_count = storage.count_pairings().await.unwrap();
+        assert_eq!(pairing_count, 0);
+
+        let pairings = storage.list_pairings().await.unwrap();
+        assert_eq!(pairings, vec![]);
+
+        let saved_pairing = storage.load_pairing(&pairing.id).await;
+        assert!(saved_pairing.is_err());
     }
 }
