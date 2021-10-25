@@ -94,7 +94,6 @@ impl IpServer {
         let mut event_emitter = EventEmitter::new();
 
         let mut s = storage_.lock().await;
-        dbg!(s.count_pairings().await?);
         if s.count_pairings().await? > 0 {
             info!("1 or more controllers paired; setting Bonjour status flag to `Zero`");
 

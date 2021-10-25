@@ -34,7 +34,7 @@ const INVALID_PINS: [[u8; 8]; 12] = [
 /// - `99999999`
 /// - `12345678`
 /// - `87654321`
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Pin {
     pin: [u8; 8],
 }

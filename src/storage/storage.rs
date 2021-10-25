@@ -16,7 +16,7 @@ pub trait Storage: Send + Sync {
     /// Loads the AID cache from the [`Storage`](Storage).
     async fn load_aid_cache(&self) -> Result<Vec<u64>>;
     /// Saves the AID cache to the [`Storage`](Storage).
-    async fn save_aid_cache(&mut self, aid_cache: &Vec<u64>) -> Result<()>;
+    async fn save_aid_cache(&mut self, aid_cache: &[u64]) -> Result<()>;
     /// Deletes the AID cache from the [`Storage`](Storage).
     async fn delete_aid_cache(&mut self) -> Result<()>;
     /// Loads a [`Pairing`](Pairing) from the [`Storage`](Storage).
@@ -29,4 +29,10 @@ pub trait Storage: Send + Sync {
     async fn list_pairings(&self) -> Result<Vec<Pairing>>;
     /// Returns the count of [`Pairing`](Pairing)s stored on the [`Storage`](Storage).
     async fn count_pairings(&self) -> Result<usize>;
+    /// Loads arbitrary bytes from the [`Storage`](Storage).
+    async fn load_bytes(&self, key: &str) -> Result<Vec<u8>>;
+    /// Saves arbitrary bytes to the [`Storage`](Storage).
+    async fn save_bytes(&mut self, key: &str, value: &[u8]) -> Result<()>;
+    /// Deletes a set of arbitrary bytes from the [`Storage`](Storage).
+    async fn delete_bytes(&mut self, key: &str) -> Result<()>;
 }
