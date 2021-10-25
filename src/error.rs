@@ -33,6 +33,8 @@ pub enum Error {
     ValueOnRead(Box<dyn std::error::Error + Send + Sync>),
     #[error("Error on value update: {0}")]
     ValueOnUpdate(Box<dyn std::error::Error + Send + Sync>),
+    #[error("The provided storage key `{0:?}` is reserved for internal purposes.")]
+    InvalidStorageKey(String),
 
     // converted errors
     #[error("IO Error: {0}")]

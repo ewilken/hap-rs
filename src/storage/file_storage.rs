@@ -156,7 +156,7 @@ impl Storage for FileStorage {
     }
 
     async fn save_config(&mut self, config: &Config) -> Result<()> {
-        let config_bytes = serde_json::to_vec(&config)?;
+        let config_bytes = serde_json::to_vec(config)?;
         self.write_bytes("config.json", config_bytes).await
     }
 
@@ -171,8 +171,8 @@ impl Storage for FileStorage {
         Ok(aid_cache)
     }
 
-    async fn save_aid_cache(&mut self, aid_cache: &Vec<u64>) -> Result<()> {
-        let aid_cache_bytes = serde_json::to_vec(&aid_cache)?;
+    async fn save_aid_cache(&mut self, aid_cache: &[u64]) -> Result<()> {
+        let aid_cache_bytes = serde_json::to_vec(aid_cache)?;
         self.write_bytes("aid_cache.json", aid_cache_bytes).await
     }
 
@@ -223,6 +223,36 @@ impl Storage for FileStorage {
 
         Ok(count)
     }
+
+    async fn load_bytes(&self, key: &str) -> Result<Vec<u8>> {
+        let bytes = self.read_bytes(key).await?;
+
+        Ok(bytes)
+    }
+
+    async fn save_bytes(&mut self, key: &str, value: &[u8]) -> Result<()> {
+        if key == "config.json" || key == "aid_cache.json" {
+            return Err(Error::InvalidStorageKey(key.to_owned()));
+        }
+
+        self.write_bytes(key, value.to_vec()).await
+    }
+
+    async fn delete_bytes(&mut self, key: &str) -> Result<()> {
+        let pairing_files = self
+            .list_pairings()
+            .await?
+            .into_iter()
+            .map(|p| format!("{}.json", p.id))
+            .collect::<Vec<_>>();
+
+        // make sure we can't delete the config, the AID cache or any pairing
+        if key == "config.json" || key == "aid_cache.json" || pairing_files.contains(&key.to_string()) {
+            return Err(Error::InvalidStorageKey(key.to_owned()));
+        }
+
+        self.remove_file(key).await
+    }
 }
 
 #[cfg(test)]
@@ -231,25 +261,95 @@ mod tests {
 
     use crate::{pairing::Permissions, BonjourStatusFlag};
 
-    /// Ensure we can write a config, then a shorter one, without corrupting data.
+    fn prepare_test_dir(subdir: &str) -> PathBuf {
+        let mut temp_dir = std::env::temp_dir();
+
+        temp_dir.push(subdir); // separate tests in subdirectories so they can run in parallel
+
+        fs::create_dir_all(&temp_dir).unwrap();
+        for entry in fs::read_dir(&temp_dir).unwrap() {
+            fs::remove_file(entry.unwrap().path()).unwrap();
+        }
+
+        temp_dir
+    }
+
+    /// Ensure we can write a [`Config`](Config), then a shorter one, without corrupting data.
     #[tokio::test]
-    async fn test_shorten_config() {
+    async fn test_config_storage() {
         let mut config = Default::default();
-        let mut storage = FileStorage::new(&std::env::temp_dir()).await.unwrap();
+
+        let temp_dir = prepare_test_dir("hap/test_config_storage");
+
+        let mut storage = FileStorage::new(&temp_dir).await.unwrap();
+
+        // Config can't derive PartialEq
+        let config_eq = |a: &Config, b: &Config| {
+            assert_eq!(a.host, b.host);
+            assert_eq!(a.port, b.port);
+            assert_eq!(a.pin, b.pin);
+            assert_eq!(a.name, b.name);
+            assert_eq!(a.device_id, b.device_id);
+            assert_eq!(a.configuration_number, b.configuration_number);
+            assert_eq!(a.state_number, b.state_number);
+            assert_eq!(a.category, b.category);
+            assert_eq!(a.protocol_version, b.protocol_version);
+            assert_eq!(a.status_flag, b.status_flag);
+            assert_eq!(a.feature_flag, b.feature_flag);
+            assert_eq!(a.max_peers, b.max_peers);
+        };
 
         storage.save_config(&config).await.unwrap();
+
+        // config should be correctly saved
+        let saved_config = storage.load_config().await.unwrap();
+        config_eq(&saved_config, &config);
+
         config.status_flag = BonjourStatusFlag::Zero;
         storage.save_config(&config).await.unwrap();
 
-        assert_eq!(
-            storage.load_config().await.unwrap().status_flag,
-            BonjourStatusFlag::Zero
-        )
+        // config should be correctly updated (Config can't derive PartialEq)
+        let saved_config = storage.load_config().await.unwrap();
+        config_eq(&saved_config, &config);
+
+        storage.delete_config().await.unwrap();
+
+        // config should be deleted
+        let saved_config = storage.load_config().await;
+        assert!(saved_config.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_aid_cache_storage() {
+        let mut aid_cache = vec![1, 2, 3, 4];
+
+        let temp_dir = prepare_test_dir("hap/test_aid_cache_storage");
+
+        let mut storage = FileStorage::new(&temp_dir).await.unwrap();
+
+        storage.save_aid_cache(&aid_cache).await.unwrap();
+
+        // aid_cache should be correctly saved
+        let saved_aid_cache = storage.load_aid_cache().await.unwrap();
+        assert_eq!(saved_aid_cache, aid_cache);
+
+        aid_cache.push(5);
+        storage.save_aid_cache(&aid_cache).await.unwrap();
+
+        // aid_cache should be correctly updated
+        let saved_aid_cache = storage.load_aid_cache().await.unwrap();
+        assert_eq!(saved_aid_cache, aid_cache);
+
+        storage.delete_aid_cache().await.unwrap();
+
+        // aid_cache should be deleted
+        let saved_aid_cache = storage.load_aid_cache().await;
+        assert!(saved_aid_cache.is_err());
     }
 
     /// Ensure we can correctly create, read, list and delete [`Pairing`](Pairing)s.
     #[tokio::test]
-    async fn test_crd_pairings() {
+    async fn test_pairing_storage() {
         let pairing = Pairing {
             id: Uuid::parse_str("bc158b86-cabf-432d-aee4-422ef0e3f1d5").unwrap(),
             permissions: Permissions::Admin,
@@ -259,8 +359,8 @@ mod tests {
             ],
         };
 
-        let mut temp_dir = std::env::temp_dir();
-        temp_dir.push("hap/");
+        let temp_dir = prepare_test_dir("hap/test_pairing_storage");
+
         let mut storage = FileStorage::new(&temp_dir).await.unwrap();
 
         // a fresh file storage should count 0 pairings, list an empty Vec, and error on a non-existent ID
@@ -300,5 +400,61 @@ mod tests {
 
         let saved_pairing = storage.load_pairing(&pairing.id).await;
         assert!(saved_pairing.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_byte_storage() {
+        let mut bytes = vec![1, 2, 3, 4];
+
+        let temp_dir = prepare_test_dir("hap/test_byte_storage");
+
+        let mut storage = FileStorage::new(&temp_dir).await.unwrap();
+
+        storage.save_bytes("my_custom_bytes", &bytes).await.unwrap();
+
+        // bytes should be correctly saved
+        let saved_bytes = storage.load_bytes("my_custom_bytes").await.unwrap();
+        assert_eq!(saved_bytes, bytes);
+
+        bytes.push(5);
+        storage.save_bytes("my_custom_bytes", &bytes).await.unwrap();
+
+        // bytes should be correctly updated
+        let saved_bytes = storage.load_bytes("my_custom_bytes").await.unwrap();
+        assert_eq!(saved_bytes, bytes);
+
+        storage.delete_bytes("my_custom_bytes").await.unwrap();
+
+        // bytes should be deleted
+        let saved_bytes = storage.load_bytes("my_custom_bytes").await;
+        assert!(saved_bytes.is_err());
+
+        // we shouldn't be able to delete the config or AID cache
+        let config_deletion = storage.delete_bytes("config.json").await.unwrap_err();
+        let aid_cache_deletion = storage.delete_bytes("aid_cache.json").await.unwrap_err();
+        match config_deletion {
+            Error::InvalidStorageKey(key) if key == "config.json".to_string() => {},
+            _ => panic!("you shall not delete config.json"),
+        }
+        match aid_cache_deletion {
+            Error::InvalidStorageKey(key) if key == "aid_cache.json".to_string() => {},
+            _ => panic!("you shall not delete aid_cache.json"),
+        }
+
+        // we shouldn't be able to delete a stored pairing
+        let pairing = Pairing {
+            id: Uuid::parse_str("bc158b86-cabf-432d-aee4-422ef0e3f1d5").unwrap(),
+            permissions: Permissions::Admin,
+            public_key: [
+                215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166,
+                35, 37, 175, 2, 26, 104, 247, 7, 81, 26,
+            ],
+        };
+        storage.save_pairing(&pairing).await.unwrap();
+        let pairing_deletion = storage.delete_bytes(&format!("{}.json", pairing.id)).await.unwrap_err();
+        match pairing_deletion {
+            Error::InvalidStorageKey(key) if key == format!("{}.json", pairing.id) => {},
+            _ => panic!("you shall not delete pairings"),
+        }
     }
 }
