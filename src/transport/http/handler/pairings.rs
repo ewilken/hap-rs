@@ -216,8 +216,6 @@ async fn handle_remove(
 
     let uuid_str = str::from_utf8(&pairing_id)?;
     let pairing_uuid = Uuid::parse_str(uuid_str)?;
-    // let pairing_id = storage.lock().await.load_pairing(&pairing_uuid).await?.id;
-    // storage.lock().await.delete_pairing(&pairing_id).await?;
     storage.lock().await.delete_pairing(&pairing_uuid).await?;
 
     event_emitter
