@@ -1,9 +1,10 @@
+use tokio;
+
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
     characteristic::CharacteristicCallbacks,
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,

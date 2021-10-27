@@ -1,8 +1,9 @@
+use tokio;
+
 use hap::{
     accessory::{fan_v2::FanV2Accessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,

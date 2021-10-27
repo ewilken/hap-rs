@@ -1,8 +1,9 @@
+use tokio;
+
 use hap::{
     accessory::{smoke_sensor::SmokeSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,
