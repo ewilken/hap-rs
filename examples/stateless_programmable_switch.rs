@@ -1,3 +1,5 @@
+use tokio;
+
 use hap::{
     accessory::{
         stateless_programmable_switch::StatelessProgrammableSwitchAccessory,
@@ -6,7 +8,6 @@ use hap::{
     },
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,

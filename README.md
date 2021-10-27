@@ -48,11 +48,12 @@ For a full list of the predefined characteristics, services and accessories, see
 ### Creating a simple lightbulb accessory and starting the IP server
 
 ```rust
+use tokio;
+
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,

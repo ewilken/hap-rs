@@ -1,8 +1,9 @@
+use tokio;
+
 use hap::{
     accessory::{thermostat::ThermostatAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,

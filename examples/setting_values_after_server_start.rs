@@ -1,9 +1,10 @@
+use tokio;
+
 use hap::{
     accessory::{motion_sensor::MotionSensorAccessory, AccessoryCategory, AccessoryInformation},
     serde_json::Value,
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     HapType,
     MacAddress,

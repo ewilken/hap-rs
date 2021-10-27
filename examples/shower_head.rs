@@ -1,8 +1,9 @@
+use tokio;
+
 use hap::{
     accessory::{shower_head::ShowerHeadAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
-    tokio,
     Config,
     MacAddress,
     Pin,
