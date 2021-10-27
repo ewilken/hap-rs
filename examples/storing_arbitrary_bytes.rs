@@ -30,24 +30,15 @@ async fn main() -> Result<()> {
 
     let config = match storage.load_config().await {
         Ok(mut config) => {
-            // config.redetermine_local_ip();
-            // storage.save_config(&config).await?;
-            let config = Config {
-                host: [10, 0, 0, 100].into(),
-                pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
-                name: "Acme Stateful Lightbulb".into(),
-                device_id: MacAddress::new([130, 230, 30, 40, 50, 60]),
-                category: AccessoryCategory::Lightbulb,
-                ..Default::default()
-            };
+            config.redetermine_local_ip();
+            storage.save_config(&config).await?;
             config
         },
         Err(_) => {
             let config = Config {
-                host: [10, 0, 0, 100].into(),
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
                 name: "Acme Stateful Lightbulb".into(),
-                device_id: MacAddress::new([130, 230, 30, 40, 50, 60]),
+                device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
                 category: AccessoryCategory::Lightbulb,
                 ..Default::default()
             };

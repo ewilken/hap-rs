@@ -4,7 +4,7 @@ use std::{
     env,
     ffi::OsStr,
     fs,
-    io::{self, BufReader, BufWriter, ErrorKind, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
     str,
 };
@@ -27,6 +27,12 @@ impl FileStorage {
         let dir_path = spawn_blocking(move || -> Result<PathBuf> {
             fs::create_dir_all(&dir_path)?;
 
+            let dir_path_str = dir_path.to_str().expect("couldn't stringify current_dir");
+            // create subdirectory for pairings
+            fs::create_dir_all(&format!("{}/pairings", dir_path_str))?;
+            // create subdirectory for custom byte storage
+            fs::create_dir_all(&format!("{}/misc", dir_path_str))?;
+
             Ok(dir_path)
         })
         .await??;
@@ -44,14 +50,14 @@ impl FileStorage {
         Self::new(&data_path).await
     }
 
-    fn path_to_file(&self, file: &str) -> PathBuf {
-        let mut file_path = self.dir_path.clone();
-        file_path.push(file);
-        file_path
+    fn storage_path(&self, fd: &str) -> PathBuf {
+        let mut fd_path = self.dir_path.clone();
+        fd_path.push(fd);
+        fd_path
     }
 
     async fn get_reader(&self, file: &str) -> Result<BufReader<fs::File>> {
-        let file_path = self.path_to_file(file);
+        let file_path = self.storage_path(file);
         let reader = spawn_blocking(move || -> Result<BufReader<fs::File>> {
             let file = fs::OpenOptions::new().read(true).open(file_path)?;
             let reader = BufReader::new(file);
@@ -64,7 +70,7 @@ impl FileStorage {
     }
 
     async fn get_writer(&self, file: &str) -> Result<BufWriter<fs::File>> {
-        let file_path = self.path_to_file(file);
+        let file_path = self.storage_path(file);
         let writer = spawn_blocking(move || -> Result<BufWriter<fs::File>> {
             let file = fs::OpenOptions::new()
                 .write(true)
@@ -106,7 +112,7 @@ impl FileStorage {
     }
 
     async fn remove_file(&self, key: &str) -> Result<()> {
-        let file_path = self.path_to_file(key);
+        let file_path = self.storage_path(key);
         spawn_blocking(move || -> Result<()> {
             fs::remove_file(file_path)?;
 
@@ -117,30 +123,21 @@ impl FileStorage {
         Ok(())
     }
 
-    async fn keys_with_suffix(&self, suffix: &'static str) -> Result<Vec<String>> {
-        let dir_path = self.dir_path.clone();
-        let extension = Some(OsStr::new(suffix));
-        let keys = spawn_blocking(move || -> Result<Vec<String>> {
-            let mut keys = Vec::new();
-            for entry in fs::read_dir(&dir_path)? {
+    async fn list_files(&self, dir: PathBuf) -> Result<Vec<String>> {
+        let file_names = spawn_blocking(move || -> Result<Vec<String>> {
+            let mut file_names = Vec::new();
+            for entry in fs::read_dir(dir)? {
                 let entry = entry?;
                 let path = entry.path();
-                if path.extension() == extension {
-                    let key = path
-                        .file_stem()
-                        .ok_or(Error::from(io::Error::from(ErrorKind::NotFound)))?
-                        .to_os_string()
-                        .into_string()
-                        .or(Err(Error::from(io::Error::from(ErrorKind::NotFound))))?;
-                    keys.push(key);
-                }
+                let file_name = path.into_os_string().into_string().or(Err(Error::Storage))?;
+                file_names.push(file_name);
             }
 
-            Ok(keys)
+            Ok(file_names)
         })
         .await??;
 
-        Ok(keys)
+        Ok(file_names)
     }
 }
 
@@ -179,7 +176,7 @@ impl Storage for FileStorage {
     async fn delete_aid_cache(&mut self) -> Result<()> { self.remove_file("aid_cache.json").await }
 
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing> {
-        let key = format!("{}.json", id.to_string());
+        let key = format!("pairings/{}.json", id.to_string());
         let pairing_bytes = self.read_bytes(&key).await?;
 
         let pairing = Pairing::from_bytes(&pairing_bytes)?;
@@ -190,69 +187,48 @@ impl Storage for FileStorage {
     }
 
     async fn save_pairing(&mut self, pairing: &Pairing) -> Result<()> {
-        let key = format!("{}.json", pairing.id.to_string());
+        let key = format!("pairings/{}.json", pairing.id.to_string());
         let pairing_bytes = pairing.as_bytes()?;
         self.write_bytes(&key, pairing_bytes).await
     }
 
     async fn delete_pairing(&mut self, id: &Uuid) -> Result<()> {
-        let key = format!("{}.json", id.to_string());
+        let key = format!("pairings/{}.json", id.to_string());
         self.remove_file(&key).await
     }
 
     async fn list_pairings(&self) -> Result<Vec<Pairing>> {
+        let pairing_dir = self.storage_path("pairings");
+
         let mut pairings = Vec::new();
-        for key in self.keys_with_suffix("json").await? {
-            if &key != "config" && &key != "aid_cache" {
-                let pairing_bytes = self.read_bytes(&format!("{}.json", key)).await?;
-                let pairing = Pairing::from_bytes(&pairing_bytes)?;
-                pairings.push(pairing);
-            }
+        for key in self.list_files(pairing_dir).await? {
+            let pairing_bytes = self.read_bytes(&key).await?;
+            let pairing = Pairing::from_bytes(&pairing_bytes)?;
+            pairings.push(pairing);
         }
 
         Ok(pairings)
     }
 
     async fn count_pairings(&self) -> Result<usize> {
-        let mut count = 0;
-        for key in self.keys_with_suffix("json").await? {
-            if &key != "config" && &key != "aid_cache" {
-                count += 1;
-            }
-        }
+        let pairing_dir = self.storage_path("pairings");
+
+        let count = self.list_files(pairing_dir).await?.len();
 
         Ok(count)
     }
 
     async fn load_bytes(&self, key: &str) -> Result<Vec<u8>> {
-        let bytes = self.read_bytes(key).await?;
+        let bytes = self.read_bytes(&format!("misc/{}", key)).await?;
 
         Ok(bytes)
     }
 
     async fn save_bytes(&mut self, key: &str, value: &[u8]) -> Result<()> {
-        if key == "config.json" || key == "aid_cache.json" {
-            return Err(Error::InvalidStorageKey(key.to_owned()));
-        }
-
-        self.write_bytes(key, value.to_vec()).await
+        self.write_bytes(&format!("misc/{}", key), value.to_vec()).await
     }
 
-    async fn delete_bytes(&mut self, key: &str) -> Result<()> {
-        let pairing_files = self
-            .list_pairings()
-            .await?
-            .into_iter()
-            .map(|p| format!("{}.json", p.id))
-            .collect::<Vec<_>>();
-
-        // make sure we can't delete the config, the AID cache or any pairing
-        if key == "config.json" || key == "aid_cache.json" || pairing_files.contains(&key.to_string()) {
-            return Err(Error::InvalidStorageKey(key.to_owned()));
-        }
-
-        self.remove_file(key).await
-    }
+    async fn delete_bytes(&mut self, key: &str) -> Result<()> { self.remove_file(&format!("misc/{}", key)).await }
 }
 
 #[cfg(test)]
@@ -261,25 +237,13 @@ mod tests {
 
     use crate::{pairing::Permissions, BonjourStatusFlag};
 
-    fn prepare_test_dir(subdir: &str) -> PathBuf {
-        let mut temp_dir = std::env::temp_dir();
-
-        temp_dir.push(subdir); // separate tests in subdirectories so they can run in parallel
-
-        fs::create_dir_all(&temp_dir).unwrap();
-        for entry in fs::read_dir(&temp_dir).unwrap() {
-            fs::remove_file(entry.unwrap().path()).unwrap();
-        }
-
-        temp_dir
-    }
-
     /// Ensure we can write a [`Config`](Config), then a shorter one, without corrupting data.
     #[tokio::test]
     async fn test_config_storage() {
         let mut config = Default::default();
 
-        let temp_dir = prepare_test_dir("hap/test_config_storage");
+        let mut temp_dir = std::env::temp_dir();
+        temp_dir.push("hap");
 
         let mut storage = FileStorage::new(&temp_dir).await.unwrap();
 
@@ -323,7 +287,8 @@ mod tests {
     async fn test_aid_cache_storage() {
         let mut aid_cache = vec![1, 2, 3, 4];
 
-        let temp_dir = prepare_test_dir("hap/test_aid_cache_storage");
+        let mut temp_dir = std::env::temp_dir();
+        temp_dir.push("hap");
 
         let mut storage = FileStorage::new(&temp_dir).await.unwrap();
 
@@ -359,7 +324,8 @@ mod tests {
             ],
         };
 
-        let temp_dir = prepare_test_dir("hap/test_pairing_storage");
+        let mut temp_dir = std::env::temp_dir();
+        temp_dir.push("hap");
 
         let mut storage = FileStorage::new(&temp_dir).await.unwrap();
 
@@ -406,7 +372,8 @@ mod tests {
     async fn test_byte_storage() {
         let mut bytes = vec![1, 2, 3, 4];
 
-        let temp_dir = prepare_test_dir("hap/test_byte_storage");
+        let mut temp_dir = std::env::temp_dir();
+        temp_dir.push("hap");
 
         let mut storage = FileStorage::new(&temp_dir).await.unwrap();
 
@@ -428,33 +395,5 @@ mod tests {
         // bytes should be deleted
         let saved_bytes = storage.load_bytes("my_custom_bytes").await;
         assert!(saved_bytes.is_err());
-
-        // we shouldn't be able to delete the config or AID cache
-        let config_deletion = storage.delete_bytes("config.json").await.unwrap_err();
-        let aid_cache_deletion = storage.delete_bytes("aid_cache.json").await.unwrap_err();
-        match config_deletion {
-            Error::InvalidStorageKey(key) if key == "config.json".to_string() => {},
-            _ => panic!("you shall not delete config.json"),
-        }
-        match aid_cache_deletion {
-            Error::InvalidStorageKey(key) if key == "aid_cache.json".to_string() => {},
-            _ => panic!("you shall not delete aid_cache.json"),
-        }
-
-        // we shouldn't be able to delete a stored pairing
-        let pairing = Pairing {
-            id: Uuid::parse_str("bc158b86-cabf-432d-aee4-422ef0e3f1d5").unwrap(),
-            permissions: Permissions::Admin,
-            public_key: [
-                215, 90, 152, 1, 130, 177, 10, 183, 213, 75, 254, 211, 201, 100, 7, 58, 14, 225, 114, 243, 218, 166,
-                35, 37, 175, 2, 26, 104, 247, 7, 81, 26,
-            ],
-        };
-        storage.save_pairing(&pairing).await.unwrap();
-        let pairing_deletion = storage.delete_bytes(&format!("{}.json", pairing.id)).await.unwrap_err();
-        match pairing_deletion {
-            Error::InvalidStorageKey(key) if key == format!("{}.json", pairing.id) => {},
-            _ => panic!("you shall not delete pairings"),
-        }
     }
 }
