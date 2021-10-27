@@ -26,35 +26,22 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Lock Current State characteristic.
+/// NFC Access Supported Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct LockCurrentStateCharacteristic(Characteristic<u8>);
+pub struct NfcAccessSupportedConfigurationCharacteristic(Characteristic<Vec<u8>>);
 
-pub enum Value {
-	Num0 = 0,
-	Num1 = 1,
-}
-
-impl LockCurrentStateCharacteristic {
-    /// Creates a new Lock Current State characteristic.
+impl NfcAccessSupportedConfigurationCharacteristic {
+    /// Creates a new NFC Access Supported Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
-        let mut c = Self(Characteristic::<u8> {
+        let mut c = Self(Characteristic::<Vec<u8>> {
             id,
             accessory_id,
-            hap_type: HapType::LockCurrentState,
-            format: Format::UInt8,
+            hap_type: HapType::NfcAccessSupportedConfiguration,
+            format: Format::Tlv8,
             perms: vec![
-				Perm::Events,
 				Perm::PairedRead,
             ],
-			max_value: Some(3),
-			min_value: Some(0),
-			step_value: Some(1),
-			valid_values: Some(vec![
-				0, // 0
-				1, // 1
-			]),
             ..Default::default()
         });
 
@@ -71,7 +58,7 @@ impl LockCurrentStateCharacteristic {
 }
 
 #[async_trait]
-impl HapCharacteristic for LockCurrentStateCharacteristic {
+impl HapCharacteristic for NfcAccessSupportedConfigurationCharacteristic {
     fn get_id(&self) -> u64 { self.0.get_id() }
 
     fn get_type(&self) -> HapType { self.0.get_type() }
@@ -120,20 +107,20 @@ impl HapCharacteristic for LockCurrentStateCharacteristic {
     fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
 }
 
-impl HapCharacteristicSetup for LockCurrentStateCharacteristic {
+impl HapCharacteristicSetup for NfcAccessSupportedConfigurationCharacteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.0.set_event_emitter(event_emitter)
     }
 }
 
-impl CharacteristicCallbacks<u8> for LockCurrentStateCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<u8>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<Vec<u8>> for NfcAccessSupportedConfigurationCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<Vec<u8>>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<u8>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<Vec<u8>>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<u8> for LockCurrentStateCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u8>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<Vec<u8>> for NfcAccessSupportedConfigurationCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<Vec<u8>>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u8>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<Vec<u8>>>) { self.0.on_update_async(f) }
 }

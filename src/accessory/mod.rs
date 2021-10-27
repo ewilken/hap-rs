@@ -112,6 +112,7 @@ pub struct AccessoryInformation {
     ///
     /// The value must change after every firmware update.
     pub firmware_revision: Option<String>,
+    pub hardware_finish: Option<Vec<u8>>,
     /// Describes a hardware revision string x[.y[.z]] (e.g. "100.1.1") and tracked when the board
     /// or components of the same accessory is changed:
     /// - <x> is the major version number, required.
@@ -127,8 +128,8 @@ pub struct AccessoryInformation {
     ///
     /// The value must change after every hardware update.
     pub hardware_revision: Option<String>,
-    pub software_revision: Option<String>,
     pub product_data: Option<Vec<u8>>,
+    pub software_revision: Option<String>,
 }
 
 impl AccessoryInformation {
@@ -213,9 +214,10 @@ impl Default for AccessoryInformation {
             application_matching_identifier: None,
             configured_name: None,
             firmware_revision: None,
+            hardware_finish: None,
             hardware_revision: None,
-            software_revision: None,
             product_data: None,
+            software_revision: None,
         }
     }
 }

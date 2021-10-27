@@ -26,24 +26,25 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Tunneled Accessory Advertising Status characteristic.
+/// Multifunction Button characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct TunneledAccessoryAdvertisingStatusCharacteristic(Characteristic<bool>);
+pub struct MultifunctionButtonCharacteristic(Characteristic<u8>);
 
-impl TunneledAccessoryAdvertisingStatusCharacteristic {
-    /// Creates a new Tunneled Accessory Advertising Status characteristic.
+impl MultifunctionButtonCharacteristic {
+    /// Creates a new Multifunction Button characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
-        let mut c = Self(Characteristic::<bool> {
+        let mut c = Self(Characteristic::<u8> {
             id,
             accessory_id,
-            hap_type: HapType::TunneledAccessoryAdvertisingStatus,
-            format: Format::Bool,
+            hap_type: HapType::MultifunctionButton,
+            format: Format::UInt8,
             perms: vec![
 				Perm::Events,
 				Perm::PairedRead,
-				Perm::PairedWrite,
             ],
+			max_value: Some(1),
+			min_value: Some(0),
             ..Default::default()
         });
 
@@ -60,7 +61,7 @@ impl TunneledAccessoryAdvertisingStatusCharacteristic {
 }
 
 #[async_trait]
-impl HapCharacteristic for TunneledAccessoryAdvertisingStatusCharacteristic {
+impl HapCharacteristic for MultifunctionButtonCharacteristic {
     fn get_id(&self) -> u64 { self.0.get_id() }
 
     fn get_type(&self) -> HapType { self.0.get_type() }
@@ -109,20 +110,20 @@ impl HapCharacteristic for TunneledAccessoryAdvertisingStatusCharacteristic {
     fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
 }
 
-impl HapCharacteristicSetup for TunneledAccessoryAdvertisingStatusCharacteristic {
+impl HapCharacteristicSetup for MultifunctionButtonCharacteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.0.set_event_emitter(event_emitter)
     }
 }
 
-impl CharacteristicCallbacks<bool> for TunneledAccessoryAdvertisingStatusCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<bool>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<u8> for MultifunctionButtonCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<u8>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<bool>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<u8>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<bool> for TunneledAccessoryAdvertisingStatusCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<bool>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<u8> for MultifunctionButtonCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u8>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<bool>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u8>>) { self.0.on_update_async(f) }
 }

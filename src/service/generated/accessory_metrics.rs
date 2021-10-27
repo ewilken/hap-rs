@@ -6,23 +6,17 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		current_media_state::CurrentMediaStateCharacteristic,
-		target_media_state::TargetMediaStateCharacteristic,
-		airplay_enable::AirplayEnableCharacteristic,
-		configured_name::ConfiguredNameCharacteristic,
-		mute::MuteCharacteristic,
-		name::NameCharacteristic,
-		volume::VolumeCharacteristic,
+		active::ActiveCharacteristic,
 	},
     HapType,
 };
 
-/// Smart Speaker service.
+/// Accessory Metrics service.
 #[derive(Debug, Default)]
-pub struct SmartSpeakerService {
-    /// Instance ID of the Smart Speaker service.
+pub struct AccessoryMetricsService {
+    /// Instance ID of the Accessory Metrics service.
     id: u64,
-    /// [`HapType`](HapType) of the Smart Speaker service.
+    /// [`HapType`](HapType) of the Accessory Metrics service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -31,42 +25,24 @@ pub struct SmartSpeakerService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Media State characteristic (required).
-	pub current_media_state: CurrentMediaStateCharacteristic,
-	/// Target Media State characteristic (required).
-	pub target_media_state: TargetMediaStateCharacteristic,
+	/// Active characteristic (required).
+	pub active: ActiveCharacteristic,
 
-	/// AirPlay Enable characteristic (optional).
-	pub airplay_enable: Option<AirplayEnableCharacteristic>,
-	/// Configured Name characteristic (optional).
-	pub configured_name: Option<ConfiguredNameCharacteristic>,
-	/// Mute characteristic (optional).
-	pub mute: Option<MuteCharacteristic>,
-	/// Name characteristic (optional).
-	pub name: Option<NameCharacteristic>,
-	/// Volume characteristic (optional).
-	pub volume: Option<VolumeCharacteristic>,
 }
 
-impl SmartSpeakerService {
-    /// Creates a new Smart Speaker service.
+impl AccessoryMetricsService {
+    /// Creates a new Accessory Metrics service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::SmartSpeaker,
-			current_media_state: CurrentMediaStateCharacteristic::new(id + 1 + 0, accessory_id),
-			target_media_state: TargetMediaStateCharacteristic::new(id + 1 + 1, accessory_id),
-			airplay_enable: Some(AirplayEnableCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			mute: Some(MuteCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
-			volume: Some(VolumeCharacteristic::new(id + 1 + 4 + 2, accessory_id)),
+            hap_type: HapType::AccessoryMetrics,
+			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
 			..Default::default()
         }
     }
 }
 
-impl HapService for SmartSpeakerService {
+impl HapService for AccessoryMetricsService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -120,53 +96,21 @@ impl HapService for SmartSpeakerService {
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
         #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.current_media_state,
-			&self.target_media_state,
+			&self.active,
 		];
-		if let Some(c) = &self.airplay_enable {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.configured_name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.mute {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.volume {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
         #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.current_media_state,
-			&mut self.target_media_state,
+			&mut self.active,
 		];
-		if let Some(c) = &mut self.airplay_enable {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.configured_name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.mute {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.volume {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 }
 
-impl Serialize for SmartSpeakerService {
+impl Serialize for AccessoryMetricsService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

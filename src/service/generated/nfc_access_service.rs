@@ -6,23 +6,19 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		current_media_state::CurrentMediaStateCharacteristic,
-		target_media_state::TargetMediaStateCharacteristic,
-		airplay_enable::AirplayEnableCharacteristic,
-		configured_name::ConfiguredNameCharacteristic,
-		mute::MuteCharacteristic,
-		name::NameCharacteristic,
-		volume::VolumeCharacteristic,
+		configuration_state::ConfigurationStateCharacteristic,
+		nfc_access_control_point::NfcAccessControlPointCharacteristic,
+		nfc_access_supported_configuration::NfcAccessSupportedConfigurationCharacteristic,
 	},
     HapType,
 };
 
-/// Smart Speaker service.
+/// NFC Access Service service.
 #[derive(Debug, Default)]
-pub struct SmartSpeakerService {
-    /// Instance ID of the Smart Speaker service.
+pub struct NfcAccessServiceService {
+    /// Instance ID of the NFC Access Service service.
     id: u64,
-    /// [`HapType`](HapType) of the Smart Speaker service.
+    /// [`HapType`](HapType) of the NFC Access Service service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -31,42 +27,30 @@ pub struct SmartSpeakerService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Current Media State characteristic (required).
-	pub current_media_state: CurrentMediaStateCharacteristic,
-	/// Target Media State characteristic (required).
-	pub target_media_state: TargetMediaStateCharacteristic,
+	/// Configuration State characteristic (required).
+	pub configuration_state: ConfigurationStateCharacteristic,
+	/// NFC Access Control Point characteristic (required).
+	pub nfc_access_control_point: NfcAccessControlPointCharacteristic,
+	/// NFC Access Supported Configuration characteristic (required).
+	pub nfc_access_supported_configuration: NfcAccessSupportedConfigurationCharacteristic,
 
-	/// AirPlay Enable characteristic (optional).
-	pub airplay_enable: Option<AirplayEnableCharacteristic>,
-	/// Configured Name characteristic (optional).
-	pub configured_name: Option<ConfiguredNameCharacteristic>,
-	/// Mute characteristic (optional).
-	pub mute: Option<MuteCharacteristic>,
-	/// Name characteristic (optional).
-	pub name: Option<NameCharacteristic>,
-	/// Volume characteristic (optional).
-	pub volume: Option<VolumeCharacteristic>,
 }
 
-impl SmartSpeakerService {
-    /// Creates a new Smart Speaker service.
+impl NfcAccessServiceService {
+    /// Creates a new NFC Access Service service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::SmartSpeaker,
-			current_media_state: CurrentMediaStateCharacteristic::new(id + 1 + 0, accessory_id),
-			target_media_state: TargetMediaStateCharacteristic::new(id + 1 + 1, accessory_id),
-			airplay_enable: Some(AirplayEnableCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			mute: Some(MuteCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
-			volume: Some(VolumeCharacteristic::new(id + 1 + 4 + 2, accessory_id)),
+            hap_type: HapType::NfcAccessService,
+			configuration_state: ConfigurationStateCharacteristic::new(id + 1 + 0, accessory_id),
+			nfc_access_control_point: NfcAccessControlPointCharacteristic::new(id + 1 + 1, accessory_id),
+			nfc_access_supported_configuration: NfcAccessSupportedConfigurationCharacteristic::new(id + 1 + 2, accessory_id),
 			..Default::default()
         }
     }
 }
 
-impl HapService for SmartSpeakerService {
+impl HapService for NfcAccessServiceService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -120,53 +104,25 @@ impl HapService for SmartSpeakerService {
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
         #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.current_media_state,
-			&self.target_media_state,
+			&self.configuration_state,
+			&self.nfc_access_control_point,
+			&self.nfc_access_supported_configuration,
 		];
-		if let Some(c) = &self.airplay_enable {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.configured_name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.mute {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &self.volume {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
         #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.current_media_state,
-			&mut self.target_media_state,
+			&mut self.configuration_state,
+			&mut self.nfc_access_control_point,
+			&mut self.nfc_access_supported_configuration,
 		];
-		if let Some(c) = &mut self.airplay_enable {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.configured_name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.mute {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.name {
-		    characteristics.push(c);
-		}
-		if let Some(c) = &mut self.volume {
-		    characteristics.push(c);
-		}
 		characteristics
     }
 }
 
-impl Serialize for SmartSpeakerService {
+impl Serialize for NfcAccessServiceService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

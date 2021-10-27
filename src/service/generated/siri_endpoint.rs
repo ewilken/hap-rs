@@ -6,21 +6,20 @@ use crate::{
     service::HapService,
     characteristic::{
         HapCharacteristic,
-		accessory_identifier::AccessoryIdentifierCharacteristic,
-		tunnel_connection_timeout::TunnelConnectionTimeoutCharacteristic,
-		tunneled_accessory_advertising_status::TunneledAccessoryAdvertisingStatusCharacteristic,
-		tunneled_accessory_connection_status::TunneledAccessoryConnectionStatusCharacteristic,
-		tunneled_accessory_state_number::TunneledAccessoryStateNumberCharacteristic,
+		siri_endpoint_session_status::SiriEndpointSessionStatusCharacteristic,
+		version::VersionCharacteristic,
+		active_identifier::ActiveIdentifierCharacteristic,
+		manually_disabled::ManuallyDisabledCharacteristic,
 	},
     HapType,
 };
 
-/// Tunnel service.
+/// Siri Endpoint service.
 #[derive(Debug, Default)]
-pub struct TunnelService {
-    /// Instance ID of the Tunnel service.
+pub struct SiriEndpointService {
+    /// Instance ID of the Siri Endpoint service.
     id: u64,
-    /// [`HapType`](HapType) of the Tunnel service.
+    /// [`HapType`](HapType) of the Siri Endpoint service.
     hap_type: HapType,
     /// When set to true, this service is not visible to user.
     hidden: bool,
@@ -29,36 +28,33 @@ pub struct TunnelService {
     /// An array of numbers containing the instance IDs of the services that this service links to.
     linked_services: Vec<u64>,
 
-	/// Accessory Identifier characteristic (required).
-	pub accessory_identifier: AccessoryIdentifierCharacteristic,
-	/// Tunnel Connection Timeout characteristic (required).
-	pub tunnel_connection_timeout: TunnelConnectionTimeoutCharacteristic,
-	/// Tunneled Accessory Advertising Status characteristic (required).
-	pub tunneled_accessory_advertising_status: TunneledAccessoryAdvertisingStatusCharacteristic,
-	/// Tunneled Accessory Connection Status characteristic (required).
-	pub tunneled_accessory_connection_status: TunneledAccessoryConnectionStatusCharacteristic,
-	/// Tunneled Accessory State Number characteristic (required).
-	pub tunneled_accessory_state_number: TunneledAccessoryStateNumberCharacteristic,
+	/// Siri Endpoint Session Status characteristic (required).
+	pub siri_endpoint_session_status: SiriEndpointSessionStatusCharacteristic,
+	/// Version characteristic (required).
+	pub version: VersionCharacteristic,
 
+	/// Active Identifier characteristic (optional).
+	pub active_identifier: Option<ActiveIdentifierCharacteristic>,
+	/// Manually disabled characteristic (optional).
+	pub manually_disabled: Option<ManuallyDisabledCharacteristic>,
 }
 
-impl TunnelService {
-    /// Creates a new Tunnel service.
+impl SiriEndpointService {
+    /// Creates a new Siri Endpoint service.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         Self {
             id,
-            hap_type: HapType::Tunnel,
-			accessory_identifier: AccessoryIdentifierCharacteristic::new(id + 1 + 0, accessory_id),
-			tunnel_connection_timeout: TunnelConnectionTimeoutCharacteristic::new(id + 1 + 1, accessory_id),
-			tunneled_accessory_advertising_status: TunneledAccessoryAdvertisingStatusCharacteristic::new(id + 1 + 2, accessory_id),
-			tunneled_accessory_connection_status: TunneledAccessoryConnectionStatusCharacteristic::new(id + 1 + 3, accessory_id),
-			tunneled_accessory_state_number: TunneledAccessoryStateNumberCharacteristic::new(id + 1 + 4, accessory_id),
+            hap_type: HapType::SiriEndpoint,
+			siri_endpoint_session_status: SiriEndpointSessionStatusCharacteristic::new(id + 1 + 0, accessory_id),
+			version: VersionCharacteristic::new(id + 1 + 1, accessory_id),
+			active_identifier: Some(ActiveIdentifierCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			manually_disabled: Some(ManuallyDisabledCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
 			..Default::default()
         }
     }
 }
 
-impl HapService for TunnelService {
+impl HapService for SiriEndpointService {
     fn get_id(&self) -> u64 {
         self.id
     }
@@ -112,29 +108,35 @@ impl HapService for TunnelService {
     fn get_characteristics(&self) -> Vec<&dyn HapCharacteristic> {
         #[allow(unused_mut)]
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
-			&self.accessory_identifier,
-			&self.tunnel_connection_timeout,
-			&self.tunneled_accessory_advertising_status,
-			&self.tunneled_accessory_connection_status,
-			&self.tunneled_accessory_state_number,
+			&self.siri_endpoint_session_status,
+			&self.version,
 		];
+		if let Some(c) = &self.active_identifier {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.manually_disabled {
+		    characteristics.push(c);
+		}
 		characteristics
     }
 
     fn get_mut_characteristics(&mut self) -> Vec<&mut dyn HapCharacteristic> {
         #[allow(unused_mut)]
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
-			&mut self.accessory_identifier,
-			&mut self.tunnel_connection_timeout,
-			&mut self.tunneled_accessory_advertising_status,
-			&mut self.tunneled_accessory_connection_status,
-			&mut self.tunneled_accessory_state_number,
+			&mut self.siri_endpoint_session_status,
+			&mut self.version,
 		];
+		if let Some(c) = &mut self.active_identifier {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.manually_disabled {
+		    characteristics.push(c);
+		}
 		characteristics
     }
 }
 
-impl Serialize for TunnelService {
+impl Serialize for SiriEndpointService {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut state = serializer.serialize_struct("HapService", 5)?;
         state.serialize_field("iid", &self.get_id())?;

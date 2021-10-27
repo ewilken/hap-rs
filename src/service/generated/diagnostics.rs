@@ -7,6 +7,8 @@ use crate::{
     characteristic::{
         HapCharacteristic,
 		supported_diagnostics_snapshot::SupportedDiagnosticsSnapshotCharacteristic,
+		selected_diagnostics_modes::SelectedDiagnosticsModesCharacteristic,
+		supported_diagnostics_modes::SupportedDiagnosticsModesCharacteristic,
 	},
     HapType,
 };
@@ -28,6 +30,10 @@ pub struct DiagnosticsService {
 	/// Supported Diagnostics Snapshot characteristic (required).
 	pub supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic,
 
+	/// Selected Diagnostics Modes characteristic (optional).
+	pub selected_diagnostics_modes: Option<SelectedDiagnosticsModesCharacteristic>,
+	/// Supported Diagnostics Modes characteristic (optional).
+	pub supported_diagnostics_modes: Option<SupportedDiagnosticsModesCharacteristic>,
 }
 
 impl DiagnosticsService {
@@ -37,6 +43,8 @@ impl DiagnosticsService {
             id,
             hap_type: HapType::Diagnostics,
 			supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic::new(id + 1 + 0, accessory_id),
+			selected_diagnostics_modes: Some(SelectedDiagnosticsModesCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			supported_diagnostics_modes: Some(SupportedDiagnosticsModesCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
 			..Default::default()
         }
     }
@@ -98,6 +106,12 @@ impl HapService for DiagnosticsService {
         let mut characteristics: Vec<&dyn HapCharacteristic> = vec![
 			&self.supported_diagnostics_snapshot,
 		];
+		if let Some(c) = &self.selected_diagnostics_modes {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &self.supported_diagnostics_modes {
+		    characteristics.push(c);
+		}
 		characteristics
     }
 
@@ -106,6 +120,12 @@ impl HapService for DiagnosticsService {
         let mut characteristics: Vec<&mut dyn HapCharacteristic> = vec![
 			&mut self.supported_diagnostics_snapshot,
 		];
+		if let Some(c) = &mut self.selected_diagnostics_modes {
+		    characteristics.push(c);
+		}
+		if let Some(c) = &mut self.supported_diagnostics_modes {
+		    characteristics.push(c);
+		}
 		characteristics
     }
 }

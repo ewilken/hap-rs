@@ -26,35 +26,22 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Lock Current State characteristic.
+/// Supported Diagnostics Modes characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct LockCurrentStateCharacteristic(Characteristic<u8>);
+pub struct SupportedDiagnosticsModesCharacteristic(Characteristic<u32>);
 
-pub enum Value {
-	Num0 = 0,
-	Num1 = 1,
-}
-
-impl LockCurrentStateCharacteristic {
-    /// Creates a new Lock Current State characteristic.
+impl SupportedDiagnosticsModesCharacteristic {
+    /// Creates a new Supported Diagnostics Modes characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
-        let mut c = Self(Characteristic::<u8> {
+        let mut c = Self(Characteristic::<u32> {
             id,
             accessory_id,
-            hap_type: HapType::LockCurrentState,
-            format: Format::UInt8,
+            hap_type: HapType::SupportedDiagnosticsModes,
+            format: Format::UInt32,
             perms: vec![
-				Perm::Events,
 				Perm::PairedRead,
             ],
-			max_value: Some(3),
-			min_value: Some(0),
-			step_value: Some(1),
-			valid_values: Some(vec![
-				0, // 0
-				1, // 1
-			]),
             ..Default::default()
         });
 
@@ -71,7 +58,7 @@ impl LockCurrentStateCharacteristic {
 }
 
 #[async_trait]
-impl HapCharacteristic for LockCurrentStateCharacteristic {
+impl HapCharacteristic for SupportedDiagnosticsModesCharacteristic {
     fn get_id(&self) -> u64 { self.0.get_id() }
 
     fn get_type(&self) -> HapType { self.0.get_type() }
@@ -120,20 +107,20 @@ impl HapCharacteristic for LockCurrentStateCharacteristic {
     fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
 }
 
-impl HapCharacteristicSetup for LockCurrentStateCharacteristic {
+impl HapCharacteristicSetup for SupportedDiagnosticsModesCharacteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.0.set_event_emitter(event_emitter)
     }
 }
 
-impl CharacteristicCallbacks<u8> for LockCurrentStateCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<u8>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<u32> for SupportedDiagnosticsModesCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<u32>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<u8>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<u32>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<u8> for LockCurrentStateCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u8>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<u32> for SupportedDiagnosticsModesCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u32>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u8>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u32>>) { self.0.on_update_async(f) }
 }

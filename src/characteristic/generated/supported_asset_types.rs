@@ -26,23 +26,21 @@ use crate::{
 };
 
 // TODO - re-check MaximumDataLength
-/// Tunnel Connection Timeout characteristic.
+/// Supported Asset Types characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct TunnelConnectionTimeoutCharacteristic(Characteristic<i32>);
+pub struct SupportedAssetTypesCharacteristic(Characteristic<u32>);
 
-impl TunnelConnectionTimeoutCharacteristic {
-    /// Creates a new Tunnel Connection Timeout characteristic.
+impl SupportedAssetTypesCharacteristic {
+    /// Creates a new Supported Asset Types characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
-        let mut c = Self(Characteristic::<i32> {
+        let mut c = Self(Characteristic::<u32> {
             id,
             accessory_id,
-            hap_type: HapType::TunnelConnectionTimeout,
-            format: Format::Int32,
+            hap_type: HapType::SupportedAssetTypes,
+            format: Format::UInt32,
             perms: vec![
-				Perm::Events,
 				Perm::PairedRead,
-				Perm::PairedWrite,
             ],
             ..Default::default()
         });
@@ -60,7 +58,7 @@ impl TunnelConnectionTimeoutCharacteristic {
 }
 
 #[async_trait]
-impl HapCharacteristic for TunnelConnectionTimeoutCharacteristic {
+impl HapCharacteristic for SupportedAssetTypesCharacteristic {
     fn get_id(&self) -> u64 { self.0.get_id() }
 
     fn get_type(&self) -> HapType { self.0.get_type() }
@@ -109,20 +107,20 @@ impl HapCharacteristic for TunnelConnectionTimeoutCharacteristic {
     fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
 }
 
-impl HapCharacteristicSetup for TunnelConnectionTimeoutCharacteristic {
+impl HapCharacteristicSetup for SupportedAssetTypesCharacteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
         self.0.set_event_emitter(event_emitter)
     }
 }
 
-impl CharacteristicCallbacks<i32> for TunnelConnectionTimeoutCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<i32>>) { self.0.on_read(f) }
+impl CharacteristicCallbacks<u32> for SupportedAssetTypesCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<u32>>) { self.0.on_read(f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<i32>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<u32>>) { self.0.on_update(f) }
 }
 
-impl AsyncCharacteristicCallbacks<i32> for TunnelConnectionTimeoutCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<i32>>) { self.0.on_read_async(f) }
+impl AsyncCharacteristicCallbacks<u32> for SupportedAssetTypesCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<u32>>) { self.0.on_read_async(f) }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<i32>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<u32>>) { self.0.on_update_async(f) }
 }

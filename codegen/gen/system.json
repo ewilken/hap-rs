@@ -1,8 +1,7 @@
 {
-  "Version": 860,
+  "Version": 880,
   "PlistDictionary": {
     "HomeKit": {
-      "PowerOnWriteFilter": { "active": { "television": { "Values": [1] } } },
       "Notification": {
         "CoalesceNotifications": {
           "tilt.current": ["slats"],
@@ -19,12 +18,13 @@
           "display-order": ["television"],
           "position.target": ["door", "window"],
           "operating-state-response": ["doorbell"],
+          "active": ["access-code"],
           "lock-mechanism.current-state": ["garage-door-opener", "lock-mechanism"],
           "security-system-state.current": ["security-system"],
           "is-configured": ["valve"],
           "input-event": ["doorbell"],
-          "position.hold": ["door", "window"],
           "heart-beat": ["accessory-runtime-information"],
+          "position.hold": ["door", "window"],
           "configured-name": ["input-source", "television", "smart-speaker"],
           "lock-mechanism.target-state": ["garage-door-opener", "lock-mechanism"],
           "position.current": ["door", "window"],
@@ -43,6 +43,7 @@
           "position.current": ["door", "window"]
         }
       },
+      "WakeOnOperationsFilter": { "active": { "television": { "Operations": ["Write"], "Values": [1] } } },
       "Categories": {
         "faucet": { "Identifier": 29, "DefaultDescription": "Faucet", "UUID": "43CE6F7E-F7E8-44B4-80CE-5786F6E6CD47" },
         "television-set-top-box": {
@@ -212,63 +213,85 @@
           "pair-setup",
           "pair-verify",
           "pairing-features",
-          "service-signature",
-          "tunnel-connection-timeout",
-          "tunneled-accessory.advertising",
-          "tunneled-accessory.connected",
-          "tunneled-accessory.state-number"
+          "service-signature"
         ],
-        "Services": ["cloud-relay", "pairing", "protocol-information", "tunnel"]
+        "Services": ["cloud-relay", "pairing", "protocol-information"]
       },
       "BlacklistFromApplications": {
         "Characteristics": [
+          "access-code-control-point",
+          "access-code-supported-configuration",
           "accessory-flags",
           "app-matching-identifier",
+          "characteristic-value-active-transition-count",
+          "characteristic-value-transition-control",
+          "configuration-state",
           "display-order",
+          "hardware-finish",
           "identifier",
           "managed-network-enable",
           "network-access-violation-control",
           "network-client-control",
           "network-client-status-control",
+          "nfc-access-control-point",
+          "nfc-access-supported-configuration",
+          "operating-state-response",
+          "password-setting",
+          "privilege",
+          "product-data",
           "router-status",
-          "service-signature",
           "selected-audio-stream-configuration",
+          "service-signature",
           "setup-data-stream-transport",
+          "supported-characteristic-value-transition-configuration",
           "supported-data-stream-transport-configuration",
           "supported-router-configuration",
-          "privilege",
-          "password-setting",
-          "product-data",
+          "thread-control-point",
+          "wake-configuration",
           "wan-configuration-list",
           "wan-status-list",
-          "wifi-satellite-status",
-          "wake-configuration",
-          "operating-state-response",
-          "supported-characteristic-value-transition-configuration",
-          "characteristic-value-transition-control",
-          "characteristic-value-active-transition-count",
-          "thread-control-point"
+          "wifi-satellite-status"
         ],
         "Services": [
-          "camera-recording-management",
-          "camera-operating-mode",
+          "access-code",
           "access-control",
+          "assistant",
           "audio-stream-management",
+          "camera-operating-mode",
+          "camera-recording-management",
           "camera-rtp-stream-management",
           "data-stream-transport-management",
+          "nfc-access",
+          "power-management",
+          "siri",
+          "siri-endpoint",
+          "smart-speaker",
           "target-control",
           "target-control-management",
-          "siri",
           "wifi-router",
-          "wifi-satellite",
-          "power-management",
-          "smart-speaker"
+          "wifi-satellite"
         ]
       }
     },
     "HAP": {
       "Base UUID": "-0000-1000-8000-0026BB765291",
       "Characteristics": {
+        "siri-input-type": {
+          "ShortUUID": "00000132",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "Siri Input Type",
+          "Properties": 2,
+          "MaxValue": 1
+        },
+        "access-code-control-point": {
+          "DefaultDescription": "Access Code Control Point",
+          "Format": "tlv8",
+          "ShortUUID": "00000262",
+          "LocalizationKey": "",
+          "Properties": 6
+        },
         "wan-status-list": {
           "DefaultDescription": "WAN Status List",
           "Format": "tlv8",
@@ -276,12 +299,14 @@
           "LocalizationKey": "",
           "Properties": 3
         },
-        "wifi-configuration-control": {
-          "DefaultDescription": "Wi-Fi Configuration Control",
-          "Format": "tlv8",
-          "ShortUUID": "0000022D",
+        "multifunction-button": {
+          "ShortUUID": "0000026B",
+          "MinValue": 0,
+          "Format": "uint8",
           "LocalizationKey": "",
-          "Properties": 167
+          "DefaultDescription": "Multifunction Button",
+          "Properties": 3,
+          "MaxValue": 1
         },
         "in-use": {
           "ShortUUID": "000000D2",
@@ -292,6 +317,13 @@
           "Properties": 3,
           "StepValue": 1,
           "MaxValue": 1
+        },
+        "wifi-configuration-control": {
+          "DefaultDescription": "Wi-Fi Configuration Control",
+          "Format": "tlv8",
+          "ShortUUID": "0000022D",
+          "LocalizationKey": "",
+          "Properties": 167
         },
         "rotation.speed": {
           "ShortUUID": "00000029",
@@ -394,13 +426,6 @@
           "MaxValue": 360,
           "Units": "arcdegrees"
         },
-        "tunneled-accessory.connected": {
-          "DefaultDescription": "Tunneled Accessory Connection Status",
-          "Format": "bool",
-          "ShortUUID": "00000059",
-          "LocalizationKey": "",
-          "Properties": 7
-        },
         "logs": {
           "DefaultDescription": "Logs",
           "Format": "tlv8",
@@ -478,13 +503,6 @@
           "LocalizationKey": "",
           "Properties": 3
         },
-        "tunnel-connection-timeout": {
-          "DefaultDescription": "Tunnel Connection Timeout",
-          "Format": "int",
-          "ShortUUID": "00000061",
-          "LocalizationKey": "",
-          "Properties": 7
-        },
         "smoke-detected": {
           "ShortUUID": "00000076",
           "MinValue": 0,
@@ -516,13 +534,6 @@
           "MaxValue": 3600,
           "Units": "seconds"
         },
-        "tunneled-accessory.state-number": {
-          "DefaultDescription": "Tunneled Accessory State Number",
-          "Format": "int",
-          "ShortUUID": "00000058",
-          "LocalizationKey": "",
-          "Properties": 3
-        },
         "manually-disabled": {
           "DefaultDescription": "Manually disabled",
           "Format": "bool",
@@ -540,6 +551,13 @@
           "StepValue": 1,
           "MaxValue": 90,
           "Units": "arcdegrees"
+        },
+        "nfc-access-supported-configuration": {
+          "DefaultDescription": "NFC Access Supported Configuration",
+          "Format": "tlv8",
+          "ShortUUID": "00000265",
+          "LocalizationKey": "",
+          "Properties": 2
         },
         "ping": {
           "DefaultDescription": "Ping",
@@ -566,15 +584,12 @@
           "StepValue": 1,
           "MaxValue": 1
         },
-        "fan.state.current": {
-          "ShortUUID": "000000AF",
-          "MinValue": 0,
-          "Format": "uint8",
+        "access-code-supported-configuration": {
+          "DefaultDescription": "Access Code Supported Configuration",
+          "Format": "tlv8",
+          "ShortUUID": "00000261",
           "LocalizationKey": "",
-          "DefaultDescription": "Current Fan State",
-          "Properties": 3,
-          "StepValue": 1,
-          "MaxValue": 2
+          "Properties": 2
         },
         "security-system-state.target": {
           "ShortUUID": "00000067",
@@ -585,6 +600,16 @@
           "Properties": 7,
           "StepValue": 1,
           "MaxValue": 3
+        },
+        "fan.state.current": {
+          "ShortUUID": "000000AF",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "Current Fan State",
+          "Properties": 3,
+          "StepValue": 1,
+          "MaxValue": 2
         },
         "rotation.direction": {
           "ShortUUID": "00000028",
@@ -635,6 +660,13 @@
           "Properties": 3,
           "StepValue": 1,
           "MaxValue": 2
+        },
+        "hardware-finish": {
+          "DefaultDescription": "Hardware Finish",
+          "Format": "tlv8",
+          "ShortUUID": "0000026C",
+          "LocalizationKey": "",
+          "Properties": 2
         },
         "relative-humidity.target": {
           "ShortUUID": "00000034",
@@ -758,13 +790,6 @@
           "LocalizationKey": "",
           "Properties": 7
         },
-        "service-signature": {
-          "DefaultDescription": "Service Signature",
-          "Format": "tlv8",
-          "ShortUUID": "000000A5",
-          "LocalizationKey": "",
-          "Properties": 6
-        },
         "mute": {
           "DefaultDescription": "Mute",
           "Format": "bool",
@@ -778,6 +803,13 @@
           "ShortUUID": "00000223",
           "LocalizationKey": "",
           "Properties": 39
+        },
+        "service-signature": {
+          "DefaultDescription": "Service Signature",
+          "Format": "tlv8",
+          "ShortUUID": "000000A5",
+          "LocalizationKey": "",
+          "Properties": 6
         },
         "temperature.current": {
           "ShortUUID": "00000011",
@@ -848,13 +880,6 @@
           "StepValue": 1,
           "MaxValue": 100,
           "Units": "percentage"
-        },
-        "tunneled-accessory.advertising": {
-          "DefaultDescription": "Tunneled Accessory Advertising Status",
-          "Format": "bool",
-          "ShortUUID": "00000060",
-          "LocalizationKey": "",
-          "Properties": 7
         },
         "obstruction-detected": {
           "DefaultDescription": "Obstruction Detected",
@@ -980,6 +1005,22 @@
           "LocalizationKey": "",
           "Properties": 6
         },
+        "siri-listening": {
+          "ShortUUID": "00000256",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "Siri Listening",
+          "Properties": 7,
+          "MaxValue": 1
+        },
+        "product-data": {
+          "DefaultDescription": "Product Data",
+          "Format": "data",
+          "ShortUUID": "00000220",
+          "LocalizationKey": "",
+          "Properties": 2
+        },
         "water-level": {
           "ShortUUID": "000000B5",
           "MinValue": 0,
@@ -990,13 +1031,6 @@
           "StepValue": 1,
           "MaxValue": 100,
           "Units": "percentage"
-        },
-        "product-data": {
-          "DefaultDescription": "Product Data",
-          "Format": "data",
-          "ShortUUID": "00000220",
-          "LocalizationKey": "",
-          "Properties": 2
         },
         "wifi-satellite-status": {
           "ShortUUID": "0000021E",
@@ -1155,12 +1189,12 @@
           "StepValue": 1,
           "MaxValue": 3
         },
-        "supported-characteristic-value-transition-configuration": {
-          "DefaultDescription": "Supported Characteristic Value Transition Configuration",
-          "Format": "tlv8",
-          "ShortUUID": "00000144",
+        "asset-update-readiness": {
+          "DefaultDescription": "Asset Update Readiness",
+          "Format": "uint32",
+          "ShortUUID": "00000269",
           "LocalizationKey": "",
-          "Properties": 2
+          "Properties": 3
         },
         "button-event": {
           "DefaultDescription": "Button Event",
@@ -1190,6 +1224,13 @@
           "MaxValue": 1000,
           "Units": "micrograms/m^3"
         },
+        "supported-characteristic-value-transition-configuration": {
+          "DefaultDescription": "Supported Characteristic Value Transition Configuration",
+          "Format": "tlv8",
+          "ShortUUID": "00000144",
+          "LocalizationKey": "",
+          "Properties": 2
+        },
         "selected-stream-configuration": {
           "DefaultDescription": "Selected Stream Configuration",
           "Format": "tlv8",
@@ -1207,6 +1248,22 @@
           "StepValue": 1,
           "MaxValue": 2
         },
+        "airplay-enable": {
+          "ShortUUID": "0000025B",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "AirPlay Enable",
+          "Properties": 7,
+          "MaxValue": 1
+        },
+        "heart-beat": {
+          "DefaultDescription": "Heart Beat",
+          "Format": "uint32",
+          "ShortUUID": "0000024A",
+          "LocalizationKey": "",
+          "Properties": 3
+        },
         "sleep-interval": {
           "ShortUUID": "0000023A",
           "MinValue": 0,
@@ -1216,12 +1273,12 @@
           "StepValue": 1,
           "Properties": 3
         },
-        "heart-beat": {
-          "DefaultDescription": "Heart Beat",
-          "Format": "uint32",
-          "ShortUUID": "0000024A",
+        "pair-verify": {
+          "DefaultDescription": "Pair Verify",
+          "Format": "tlv8",
+          "ShortUUID": "0000004E",
           "LocalizationKey": "",
-          "Properties": 3
+          "Properties": 6
         },
         "supported-video-stream-configuration": {
           "DefaultDescription": "Supported Video Stream Configuration",
@@ -1229,13 +1286,6 @@
           "ShortUUID": "00000114",
           "LocalizationKey": "",
           "Properties": 2
-        },
-        "pair-verify": {
-          "DefaultDescription": "Pair Verify",
-          "Format": "tlv8",
-          "ShortUUID": "0000004E",
-          "LocalizationKey": "",
-          "Properties": 6
         },
         "tilt.current": {
           "ShortUUID": "000000C1",
@@ -1409,6 +1459,13 @@
           "LocalizationKey": "",
           "Properties": 7
         },
+        "configuration-state": {
+          "DefaultDescription": "Configuration State",
+          "Format": "uint16",
+          "ShortUUID": "00000263",
+          "LocalizationKey": "",
+          "Properties": 3
+        },
         "setup-transfer-transport": {
           "DefaultDescription": "Setup Transfer Transport",
           "Format": "tlv8",
@@ -1422,16 +1479,6 @@
           "ShortUUID": "00000704",
           "LocalizationKey": "",
           "Properties": 4
-        },
-        "valve-type": {
-          "ShortUUID": "000000D5",
-          "MinValue": 0,
-          "Format": "uint8",
-          "LocalizationKey": "",
-          "DefaultDescription": "Valve Type",
-          "Properties": 3,
-          "StepValue": 1,
-          "MaxValue": 3
         },
         "identifier": {
           "DefaultDescription": "Identifier",
@@ -1483,6 +1530,16 @@
           "ShortUUID": "0000020D",
           "LocalizationKey": "",
           "Properties": 134
+        },
+        "valve-type": {
+          "ShortUUID": "000000D5",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "Valve Type",
+          "Properties": 3,
+          "StepValue": 1,
+          "MaxValue": 3
         },
         "mac-retransmission-maximum": {
           "DefaultDescription": "MAC Retransmission Maximum",
@@ -1643,6 +1700,13 @@
           "StepValue": 1,
           "MaxValue": 2
         },
+        "selected-diagnostics-modes": {
+          "DefaultDescription": "Selected Diagnostics Modes",
+          "Format": "uint32",
+          "ShortUUID": "0000024D",
+          "LocalizationKey": "",
+          "Properties": 6
+        },
         "identify": {
           "DefaultDescription": "Identify",
           "Format": "bool",
@@ -1721,12 +1785,14 @@
           "LocalizationKey": "",
           "Properties": 3
         },
-        "supported-transfer-transport-configuration": {
-          "DefaultDescription": "Supported Transfer Transport Configuration",
-          "Format": "tlv8",
-          "ShortUUID": "00000202",
+        "siri-enable": {
+          "ShortUUID": "00000255",
+          "MinValue": 0,
+          "Format": "uint8",
           "LocalizationKey": "",
-          "Properties": 2
+          "DefaultDescription": "Siri Enable",
+          "Properties": 7,
+          "MaxValue": 1
         },
         "horizontal-tilt.target": {
           "ShortUUID": "0000007B",
@@ -1738,6 +1804,13 @@
           "StepValue": 1,
           "MaxValue": 90,
           "Units": "arcdegrees"
+        },
+        "supported-transfer-transport-configuration": {
+          "DefaultDescription": "Supported Transfer Transport Configuration",
+          "Format": "tlv8",
+          "ShortUUID": "00000202",
+          "LocalizationKey": "",
+          "Properties": 2
         },
         "relative-humidity.humidifier-threshold": {
           "ShortUUID": "000000CA",
@@ -1801,6 +1874,13 @@
           "LocalizationKey": "",
           "Properties": 2
         },
+        "supported-diagnostics-modes": {
+          "DefaultDescription": "Supported Diagnostics Modes",
+          "Format": "uint32",
+          "ShortUUID": "0000024C",
+          "LocalizationKey": "",
+          "Properties": 2
+        },
         "temperature.cooling-threshold": {
           "ShortUUID": "0000000D",
           "MinValue": 10,
@@ -1836,12 +1916,44 @@
           "StepValue": 1,
           "MaxValue": 2
         },
+        "siri-endpoint-session-status": {
+          "DefaultDescription": "Siri Endpoint Session Status",
+          "Format": "tlv8",
+          "ShortUUID": "00000254",
+          "LocalizationKey": "",
+          "Properties": 3
+        },
+        "nfc-access-control-point": {
+          "DefaultDescription": "NFC Access Control Point",
+          "Format": "tlv8",
+          "ShortUUID": "00000264",
+          "LocalizationKey": "",
+          "Properties": 6
+        },
+        "siri-touch-to-use": {
+          "ShortUUID": "00000257",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "Siri Touch To Use",
+          "Properties": 7,
+          "MaxValue": 1
+        },
         "transmit-power-maximum": {
           "DefaultDescription": "Maximum Transmit Power",
           "Format": "int",
           "ShortUUID": "00000243",
           "LocalizationKey": "",
           "Properties": 2
+        },
+        "serial-number": {
+          "ShortUUID": "00000030",
+          "Format": "string",
+          "LocalizationKey": "",
+          "DefaultDescription": "Serial Number",
+          "MaxLength": 64,
+          "Properties": 2,
+          "MinLength": 1
         },
         "visibility-state.target": {
           "ShortUUID": "00000134",
@@ -1852,15 +1964,6 @@
           "Properties": 7,
           "StepValue": 1,
           "MaxValue": 1
-        },
-        "serial-number": {
-          "ShortUUID": "00000030",
-          "Format": "string",
-          "LocalizationKey": "",
-          "DefaultDescription": "Serial Number",
-          "MaxLength": 64,
-          "Properties": 2,
-          "MinLength": 1
         },
         "visibility-state.current": {
           "ShortUUID": "00000135",
@@ -2002,6 +2105,15 @@
           "MaxValue": 100,
           "Units": "percentage"
         },
+        "siri-light-on-use": {
+          "ShortUUID": "00000258",
+          "MinValue": 0,
+          "Format": "uint8",
+          "LocalizationKey": "",
+          "DefaultDescription": "Siri Light On Use",
+          "Properties": 7,
+          "MaxValue": 1
+        },
         "status-active": {
           "DefaultDescription": "Status Active",
           "Format": "bool",
@@ -2015,13 +2127,6 @@
           "ShortUUID": "00000205",
           "LocalizationKey": "",
           "Properties": 3
-        },
-        "wifi-capabilities": {
-          "DefaultDescription": "Wi-Fi Capabilities",
-          "Format": "uint32",
-          "ShortUUID": "0000022C",
-          "LocalizationKey": "",
-          "Properties": 2
         },
         "activity-interval": {
           "ShortUUID": "0000023B",
@@ -2042,6 +2147,13 @@
           "StepValue": 1,
           "MaxValue": 3600,
           "Units": "seconds"
+        },
+        "wifi-capabilities": {
+          "DefaultDescription": "Wi-Fi Capabilities",
+          "Format": "uint32",
+          "ShortUUID": "0000022C",
+          "LocalizationKey": "",
+          "Properties": 2
         },
         "occupancy-detected": {
           "ShortUUID": "00000071",
@@ -2141,21 +2253,19 @@
           "LocalizationKey": "",
           "Properties": 7
         },
+        "siri-engine-revision": {
+          "DefaultDescription": "Siri Engine Version",
+          "Format": "string",
+          "ShortUUID": "0000025A",
+          "LocalizationKey": "",
+          "Properties": 2
+        },
         "position.hold": {
           "DefaultDescription": "Hold Position",
           "Format": "bool",
           "ShortUUID": "0000006F",
           "LocalizationKey": "",
           "Properties": 4
-        },
-        "siri-input-type": {
-          "ShortUUID": "00000132",
-          "MinValue": 0,
-          "Format": "uint8",
-          "LocalizationKey": "",
-          "DefaultDescription": "Siri Input Type",
-          "Properties": 2,
-          "MaxValue": 1
         },
         "remote-key": {
           "ShortUUID": "000000E1",
@@ -2166,6 +2276,13 @@
           "Properties": 4,
           "StepValue": 1,
           "MaxValue": 16
+        },
+        "supported-asset-types": {
+          "DefaultDescription": "Supported Asset Types",
+          "Format": "uint32",
+          "ShortUUID": "00000268",
+          "LocalizationKey": "",
+          "Properties": 2
         },
         "temperature.heating-threshold": {
           "ShortUUID": "00000012",
@@ -2180,12 +2297,13 @@
         }
       },
       "Properties": {
-        "notify": { "LocalizationKey": "", "DefaultDescription": "Notify", "Position": 0 },
         "hidden": { "LocalizationKey": "", "DefaultDescription": "Hidden", "Position": 6 },
+        "notify": { "LocalizationKey": "", "DefaultDescription": "Notify", "Position": 0 },
         "write": { "LocalizationKey": "", "DefaultDescription": "Write", "Position": 2 },
         "timedWrite": { "LocalizationKey": "", "DefaultDescription": "Timed Write Required", "Position": 5 },
         "aa": { "LocalizationKey": "", "DefaultDescription": "Additional Authorization Needed", "Position": 4 },
         "read": { "LocalizationKey": "", "DefaultDescription": "Read", "Position": 1 },
+        "adminOnly": { "LocalizationKey": "", "DefaultDescription": "Admin Only", "Position": 8 },
         "broadcast": { "LocalizationKey": "", "DefaultDescription": "Broadcast State Changes", "Position": 3 },
         "writeResponse": { "LocalizationKey": "", "DefaultDescription": "Write Response Needed", "Position": 7 }
       },
@@ -2204,6 +2322,12 @@
         "lock-mechanism.target-state": ["garage-door-opener", "lock-mechanism"]
       },
       "Services": {
+        "assistant": {
+          "Characteristics": { "Required": ["active", "identifier", "name"] },
+          "LocalizationKey": "",
+          "ShortUUID": "0000026A",
+          "DefaultDescription": "Assistant"
+        },
         "stateful-programmable-switch": {
           "Characteristics": { "Required": ["input-event", "output-state"], "Optional": ["name"] },
           "LocalizationKey": "",
@@ -2253,14 +2377,13 @@
           "ShortUUID": "00000089",
           "DefaultDescription": "Stateless Programmable Switch"
         },
-        "speaker": {
+        "nfc-access": {
           "Characteristics": {
-            "Required": ["mute"],
-            "Optional": ["active", "volume", "volume-control-type", "volume-selector"]
+            "Required": ["configuration-state", "nfc-access-control-point", "nfc-access-supported-configuration"]
           },
           "LocalizationKey": "",
-          "ShortUUID": "00000113",
-          "DefaultDescription": "Speaker"
+          "ShortUUID": "00000266",
+          "DefaultDescription": "NFC Access Service"
         },
         "sensor.motion": {
           "Characteristics": {
@@ -2270,6 +2393,21 @@
           "LocalizationKey": "",
           "ShortUUID": "00000085",
           "DefaultDescription": "Motion Sensor"
+        },
+        "speaker": {
+          "Characteristics": {
+            "Required": ["mute"],
+            "Optional": ["active", "volume", "volume-control-type", "volume-selector"]
+          },
+          "LocalizationKey": "",
+          "ShortUUID": "00000113",
+          "DefaultDescription": "Speaker"
+        },
+        "metrics": {
+          "Characteristics": { "Required": ["active"] },
+          "LocalizationKey": "",
+          "ShortUUID": "00000270",
+          "DefaultDescription": "Accessory Metrics"
         },
         "input-source": {
           "Characteristics": {
@@ -2424,7 +2562,10 @@
           "DefaultDescription": "Cloud Relay"
         },
         "diagnostics": {
-          "Characteristics": { "Required": ["supported-diagnostics-snapshot"], "Optional": [] },
+          "Characteristics": {
+            "Required": ["supported-diagnostics-snapshot"],
+            "Optional": ["selected-diagnostics-modes", "supported-diagnostics-modes"]
+          },
           "LocalizationKey": "",
           "ShortUUID": "00000237",
           "DefaultDescription": "Diagnostics"
@@ -2443,6 +2584,12 @@
           "LocalizationKey": "",
           "ShortUUID": "00000083",
           "DefaultDescription": "Leak Sensor"
+        },
+        "asset-update": {
+          "Characteristics": { "Required": ["asset-update-readiness", "supported-asset-types"] },
+          "LocalizationKey": "",
+          "ShortUUID": "00000267",
+          "DefaultDescription": "Asset Update"
         },
         "sensor.temperature": {
           "Characteristics": {
@@ -2623,8 +2770,27 @@
           "ShortUUID": "00000086",
           "DefaultDescription": "Occupancy Sensor"
         },
+        "siri-endpoint": {
+          "Characteristics": {
+            "Required": ["siri-endpoint-session-status", "version"],
+            "Optional": ["active-identifier", "manually-disabled"]
+          },
+          "LocalizationKey": "",
+          "ShortUUID": "00000253",
+          "DefaultDescription": "Siri Endpoint"
+        },
         "siri": {
-          "Characteristics": { "Required": ["siri-input-type"] },
+          "Characteristics": {
+            "Required": ["siri-input-type"],
+            "Optional": [
+              "multifunction-button",
+              "siri-enable",
+              "siri-engine-revision",
+              "siri-light-on-use",
+              "siri-listening",
+              "siri-touch-to-use"
+            ]
+          },
           "LocalizationKey": "",
           "ShortUUID": "00000133",
           "DefaultDescription": "Siri"
@@ -2637,6 +2803,21 @@
           "ShortUUID": "00000127",
           "DefaultDescription": "Audio Stream Management"
         },
+        "smart-speaker": {
+          "Characteristics": {
+            "Required": ["media-state.current", "media-state.target"],
+            "Optional": ["airplay-enable", "configured-name", "mute", "name", "volume"]
+          },
+          "LocalizationKey": "",
+          "ShortUUID": "00000228",
+          "DefaultDescription": "Speaker"
+        },
+        "faucet": {
+          "Characteristics": { "Required": ["active"], "Optional": ["name", "status-fault"] },
+          "LocalizationKey": "",
+          "ShortUUID": "000000D7",
+          "DefaultDescription": "Faucet"
+        },
         "door": {
           "Characteristics": {
             "Required": ["position.current", "position.state", "position.target"],
@@ -2646,12 +2827,6 @@
           "ShortUUID": "00000081",
           "DefaultDescription": "Door"
         },
-        "faucet": {
-          "Characteristics": { "Required": ["active"], "Optional": ["name", "status-fault"] },
-          "LocalizationKey": "",
-          "ShortUUID": "000000D7",
-          "DefaultDescription": "Faucet"
-        },
         "security-system": {
           "Characteristics": {
             "Required": ["security-system-state.current", "security-system-state.target"],
@@ -2660,15 +2835,6 @@
           "LocalizationKey": "",
           "ShortUUID": "0000007E",
           "DefaultDescription": "Security System"
-        },
-        "smart-speaker": {
-          "Characteristics": {
-            "Required": ["media-state.current", "media-state.target"],
-            "Optional": ["configured-name", "mute", "name", "volume"]
-          },
-          "LocalizationKey": "",
-          "ShortUUID": "00000228",
-          "DefaultDescription": "Speaker"
         },
         "camera-rtp-stream-management": {
           "Characteristics": {
@@ -2757,9 +2923,10 @@
               "app-matching-identifier",
               "configured-name",
               "firmware.revision",
+              "hardware-finish",
               "hardware.revision",
-              "software.revision",
-              "product-data"
+              "product-data",
+              "software.revision"
             ]
           },
           "ShortUUID": "0000003E",
@@ -2800,11 +2967,13 @@
           "ShortUUID": "000000B7",
           "DefaultDescription": "Fan"
         },
-        "service-label": {
-          "Characteristics": { "Required": ["service-label-namespace"] },
+        "access-code": {
+          "Characteristics": {
+            "Required": ["access-code-control-point", "access-code-supported-configuration", "configuration-state"]
+          },
           "LocalizationKey": "",
-          "ShortUUID": "000000CC",
-          "DefaultDescription": "Label"
+          "ShortUUID": "00000260",
+          "DefaultDescription": "Access Code"
         },
         "lightbulb": {
           "DefaultDescription": "Lightbulb",
@@ -2825,13 +2994,11 @@
           "LocalizationKey": "",
           "BTLE_ShortUUID": "FED2"
         },
-        "switch": {
-          "BTLE_ShortUUID": "FECD",
-          "Characteristics": { "Required": ["on"], "Optional": ["name"] },
-          "AllowAssociatedService": 1,
-          "ShortUUID": "00000049",
+        "service-label": {
+          "Characteristics": { "Required": ["service-label-namespace"] },
           "LocalizationKey": "",
-          "DefaultDescription": "Switch"
+          "ShortUUID": "000000CC",
+          "DefaultDescription": "Label"
         },
         "camera-recording-management": {
           "Characteristics": {
@@ -2848,19 +3015,13 @@
           "ShortUUID": "00000204",
           "DefaultDescription": "Camera Recording Management"
         },
-        "tunnel": {
-          "Characteristics": {
-            "Required": [
-              "accessory.identifier",
-              "tunnel-connection-timeout",
-              "tunneled-accessory.advertising",
-              "tunneled-accessory.connected",
-              "tunneled-accessory.state-number"
-            ]
-          },
+        "switch": {
+          "BTLE_ShortUUID": "FECD",
+          "Characteristics": { "Required": ["on"], "Optional": ["name"] },
+          "AllowAssociatedService": 1,
+          "ShortUUID": "00000049",
           "LocalizationKey": "",
-          "ShortUUID": "00000056",
-          "DefaultDescription": "Tunnel"
+          "DefaultDescription": "Switch"
         },
         "access-control": {
           "Characteristics": { "Required": ["privilege"], "Optional": ["password-setting"] },
@@ -2902,7 +3063,7 @@
         }
       }
     },
-    "Version": 860,
+    "Version": 880,
     "SchemaVersion": 1,
     "Assistant": {
       "Characteristics": {
@@ -3012,7 +3173,12 @@
           "Values": { "0": 1, "1": 0 },
           "Write": "door-state.target"
         },
-        "LOCK": { "Write": "lock-mechanism.target-state", "Format": "int", "Read": "lock-mechanism.current-state" },
+        "LOCK": {
+          "Read": "lock-mechanism.current-state",
+          "Values": { "0": 0, "1": 1 },
+          "Format": "int",
+          "Write": "lock-mechanism.target-state"
+        },
         "LOW_BATTERY": {
           "Values": { "BATTERY_NORMAL": 0, "BATTERY_LOW": 1 },
           "Format": "string",
