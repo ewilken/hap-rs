@@ -30,6 +30,11 @@ use crate::{
 #[derive(Debug, Default, Serialize)]
 pub struct LockTargetStateCharacteristic(Characteristic<u8>);
 
+pub enum Value {
+	Num0 = 0,
+	Num1 = 1,
+}
+
 impl LockTargetStateCharacteristic {
     /// Creates a new Lock Target State characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
@@ -47,6 +52,10 @@ impl LockTargetStateCharacteristic {
 			max_value: Some(1),
 			min_value: Some(0),
 			step_value: Some(1),
+			valid_values: Some(vec![
+				0, // 0
+				1, // 1
+			]),
             ..Default::default()
         });
 

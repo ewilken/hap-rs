@@ -1236,9 +1236,13 @@ async fn main() -> Result<()> {
 /// Services for which accessories need some level of manual adjustment and therefore we don't want to auto-generate an
 /// accesory for.
 const NON_IDIOMATIC_SERVICES: &'static [&'static str] = &[
+    "access code",
     "accessory information",
+    "accessory metrics",
     "access control",
     "accessory runtime information",
+    "asset update",
+    "assistant",
     "audio stream management",
     "battery",
     "camera operating mode",
@@ -1258,10 +1262,12 @@ const NON_IDIOMATIC_SERVICES: &'static [&'static str] = &[
     "lock management",
     "lock mechanism",
     "microphone",
+    "nfc access service",
     "pairing",
     "power management",
     "protocol information",
     "siri",
+    "siri endpoint",
     "slats",
     "speaker",
     "target control management",
@@ -1269,7 +1275,6 @@ const NON_IDIOMATIC_SERVICES: &'static [&'static str] = &[
     "television",
     "thread transport",
     "transfer transport management",
-    "tunnel",
     "valve",
     "wi-fi transport",
 ];
@@ -1294,6 +1299,7 @@ const MANUALLY_GENERATED_EXAMPLES: &'static [&'static str] = &[
     "lock.rs",
     "setting_values_after_server_start.rs",
     "shower_head.rs",
+    "storing_arbitrary_bytes.rs",
     "sprinkler.rs",
     "television.rs",
 ];
