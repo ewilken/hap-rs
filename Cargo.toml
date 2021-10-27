@@ -2,7 +2,7 @@
 name = "hap"
 version = "0.1.0-pre.12"
 authors = ["Elias Wilken <elias@wlkn.io>"]
-edition = "2018"
+edition = "2021"
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
 documentation = "https://docs.rs/hap"
 readme = "README.md"
