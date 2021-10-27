@@ -13,8 +13,7 @@ use srp::{
     server::{SrpServer, UserRecord},
     types::SrpGroup,
 };
-use std::{ops::BitXor, str, time::Duration};
-use tokio::time;
+use std::{ops::BitXor, str};
 use uuid::Uuid;
 
 use crate::{
@@ -348,14 +347,11 @@ async fn handle_exchange(
                     aead.encrypt_in_place_detached(GenericArray::from_slice(&nonce), &[], &mut encrypted_data)?;
                 encrypted_data.extend(&auth_tag);
 
-                let id = pairing.id;
-                tokio::spawn(async move {
-                    // not deferring this might make the iOS controller drop the connection if the Bonjour txt records
-                    // change before the end of PairSetup
-                    time::sleep(Duration::from_secs(5)).await;
-
-                    event_emitter.lock().await.emit(&Event::ControllerPaired { id }).await;
-                });
+                event_emitter
+                    .lock()
+                    .await
+                    .emit(&Event::ControllerPaired { id: pairing.id })
+                    .await;
 
                 info!("pair setup M6: sending exchange response");
 
