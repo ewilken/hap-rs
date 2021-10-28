@@ -7,6 +7,7 @@ use crate::{
         application_matching_identifier::ApplicationMatchingIdentifierCharacteristic,
         configured_name::ConfiguredNameCharacteristic,
         firmware_revision::FirmwareRevisionCharacteristic,
+        hardware_finish::HardwareFinishCharacteristic,
         hardware_revision::HardwareRevisionCharacteristic,
         product_data::ProductDataCharacteristic,
         software_revision::SoftwareRevisionCharacteristic,
@@ -175,6 +176,14 @@ impl AccessoryInformation {
             i.firmware_revision = None;
         }
 
+        if let Some(v) = self.hardware_finish {
+            let mut c = HardwareFinishCharacteristic::new(id + 12, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.hardware_finish = Some(c);
+        } else {
+            i.hardware_finish = None;
+        }
+
         if let Some(v) = self.hardware_revision {
             let mut c = HardwareRevisionCharacteristic::new(id + 10, accessory_id);
             executor::block_on(c.set_value(v.into()))?;
@@ -183,20 +192,20 @@ impl AccessoryInformation {
             i.hardware_revision = None;
         }
 
-        if let Some(v) = self.software_revision {
-            let mut c = SoftwareRevisionCharacteristic::new(id + 11, accessory_id);
-            executor::block_on(c.set_value(v.into()))?;
-            i.software_revision = Some(c);
-        } else {
-            i.software_revision = None;
-        }
-
         if let Some(v) = self.product_data {
             let mut c = ProductDataCharacteristic::new(id + 12, accessory_id);
             executor::block_on(c.set_value(v.into()))?;
             i.product_data = Some(c);
         } else {
             i.product_data = None;
+        }
+
+        if let Some(v) = self.software_revision {
+            let mut c = SoftwareRevisionCharacteristic::new(id + 11, accessory_id);
+            executor::block_on(c.set_value(v.into()))?;
+            i.software_revision = Some(c);
+        } else {
+            i.software_revision = None;
         }
 
         Ok(i)
