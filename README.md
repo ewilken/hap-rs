@@ -210,6 +210,7 @@ let config = match storage.load_config().await {
 Codegen is handled by the `codegen` crate in the workspace. Generated files are checked in. To run the code generation, do:
 
     cargo run --package hap-codegen
+    cargo +nightly fmt
 
 ## License
 

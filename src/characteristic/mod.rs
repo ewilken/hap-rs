@@ -44,32 +44,32 @@ pub struct Characteristic<T: fmt::Debug + Default + Clone + Serialize + Send + S
 
     /// Maximum value for the characteristic, which is only appropriate for characteristics that have a format of `Int`
     /// or `Float`.
-    max_value: Option<T>,
+    max_value: Option<T>, // TODO - use this value in `set_value`
     // Minimum value for the characteristic, which is only appropriate for characteristics that have a format of `Int`
     // or `Float`.
-    min_value: Option<T>,
+    min_value: Option<T>, // TODO - use this value in `set_value`
     /// Minimum step value for the characteristic, which is only appropriate for characteristics that have a format of
     /// ”int” or ”float”. For example, if this were 0.15, the characteris- tic value can be incremented from the min-
     /// imum value in multiples of 0.15. For “float”, the “Value” needs to be rounded on the ac- cessory side to the
     /// closest allowed value per the ”Step Value” (e.g. a value of 10.150001 received on the accessory side with a
     /// ”Step Value” of 0.15 and a ”Minimum Value” of 10.0 needs to be interpreted as 10.15).
-    step_value: Option<T>,
+    step_value: Option<T>, // TODO - use this value in `set_value`
     /// Maximum number of characters if the for- mat is ”string”. If this property is omitted for ”string” formats,
     /// then the default value is 64. The maximum value allowed is 256.
-    max_len: Option<u16>,
+    max_len: Option<u16>, // TODO - use this value in `set_value`
     /// Maximum number of characters if the format is ”data”. If this property is omitted for ”data” formats, then the
     /// default value is 2097152.
-    max_data_len: Option<u32>,
-    /// An array of numbers where each element rep- resents a valid value.
-    valid_values: Option<Vec<T>>,
+    max_data_len: Option<u32>, // TODO - use this value in `set_value`
+    /// An array of numbers where each element represents a valid value.
+    valid_values: Option<Vec<T>>, // TODO - use this value in `set_value`
     /// A 2 element array representing the starting value and ending value of the range of valid values.
-    valid_values_range: Option<[T; 2]>,
+    valid_values_range: Option<[T; 2]>, // TODO - use this value in `set_value`
 
     /// Specified TTL in milliseconds the controller requests the accessory to securely execute a write command.
     /// Maximum value of this is 9007199254740991.
-    ttl: Option<u64>,
+    ttl: Option<u64>, // TODO - use this value in `set_value`
     /// 64-bit unsigned integer assigned by the controller to uniquely identify the timed write transaction.
-    pid: Option<u64>,
+    pid: Option<u64>, // TODO - use this value in `set_value`
 
     /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
     /// Returning a `Some(T)` from this function changes the value of the characteristic before the controller reads
@@ -111,6 +111,8 @@ impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> fmt::Debug for C
             .field("max_data_len", &self.max_data_len)
             .field("valid_values", &self.valid_values)
             .field("valid_values_range", &self.valid_values_range)
+            .field("ttl", &self.ttl)
+            .field("pid", &self.pid)
             .finish()
     }
 }
@@ -119,17 +121,80 @@ impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> Characteristic<T
 where
     for<'de> T: Deserialize<'de>,
 {
+    /// Creates a new characteristic.
+    pub fn new(
+        id: u64,
+        accessory_id: u64,
+        hap_type: HapType,
+        format: Format,
+        perms: Vec<Perm>,
+        description: Option<String>,
+        event_notifications: Option<bool>,
+        value: T,
+        unit: Option<Unit>,
+        max_value: Option<T>,
+        min_value: Option<T>,
+        step_value: Option<T>,
+        max_len: Option<u16>,
+        max_data_len: Option<u32>,
+        valid_values: Option<Vec<T>>,
+        valid_values_range: Option<[T; 2]>,
+        ttl: Option<u64>,
+        pid: Option<u64>,
+    ) -> Self {
+        Self {
+            id,
+            accessory_id,
+            hap_type,
+            format,
+            perms,
+            description,
+            event_notifications,
+            value,
+            unit,
+            max_value,
+            min_value,
+            step_value,
+            max_len,
+            max_data_len,
+            valid_values,
+            valid_values_range,
+            ttl,
+            pid,
+            on_read: None,
+            on_update: None,
+            on_read_async: None,
+            on_update_async: None,
+            event_emitter: None,
+        }
+    }
+
     /// Returns the ID of the characteristic.
     pub fn get_id(&self) -> u64 { self.id }
+
+    /// Sets the ID of the characteristic.
+    pub fn set_id(&mut self, id: u64) { self.id = id; }
 
     /// Returns the [`HapType`](HapType) of the characteristic.
     pub fn get_type(&self) -> HapType { self.hap_type }
 
+    /// Sets the [`HapType`](HapType) of the characteristic.
+    pub fn set_type(&mut self, hap_type: HapType) { self.hap_type = hap_type; }
+
     /// Returns the [`Format`](Format) of the characteristic.
     pub fn get_format(&self) -> Format { self.format }
 
+    /// Sets the [`Format`](Format) of the characteristic.
+    pub fn set_format(&mut self, format: Format) { self.format = format; }
+
     /// Returns the [`Perm`](Perm)s of the characteristic.
     pub fn get_perms(&self) -> Vec<Perm> { self.perms.clone() }
+
+    /// Sets the [`Perm`](Perm)s of the characteristic.
+    pub fn set_perms(&mut self, perms: Vec<Perm>) { self.perms = perms; }
+
+    /// Returns the description of the characteristic.
+    pub fn get_description(&self) -> Option<String> { self.description.clone() }
 
     /// Sets the description of the characteristic.
     pub fn set_description(&mut self, description: Option<String>) { self.description = description; }
@@ -204,6 +269,9 @@ where
     /// Returns the [`Unit`](Unit) of the characteristic.
     pub fn get_unit(&self) -> Option<Unit> { self.unit }
 
+    /// Sets the [`Unit`](Unit) of the characteristic.
+    pub fn set_unit(&mut self, unit: Option<Unit>) { self.unit = unit; }
+
     /// Returns the maximum value of the characteristic.
     pub fn get_max_value(&self) -> Option<T> { self.max_value.clone() }
 
@@ -224,6 +292,39 @@ where
 
     /// Returns the maximum length of the characteristic.
     pub fn get_max_len(&self) -> Option<u16> { self.max_len }
+
+    /// Sets the maximum length of the characteristic.
+    pub fn set_max_len(&mut self, val: Option<u16>) { self.max_len = val; }
+
+    /// Returns the maximum data length of the characteristic.
+    pub fn get_max_data_len(&self) -> Option<u32> { self.max_data_len }
+
+    /// Sets the maximum data length of the characteristic.
+    pub fn set_max_data_len(&mut self, val: Option<u32>) { self.max_data_len = val; }
+
+    /// Returns the valid values of the characteristic.
+    pub fn get_valid_values(&self) -> Option<Vec<T>> { self.valid_values.clone() }
+
+    /// Sets the valid values of the characteristic.
+    pub fn set_valid_values(&mut self, val: Option<Vec<T>>) { self.valid_values = val; }
+
+    /// Returns the valid values range of the characteristic.
+    pub fn get_valid_values_range(&self) -> Option<[T; 2]> { self.valid_values_range.clone() }
+
+    /// Sets the valid values range of the characteristic.
+    pub fn set_valid_values_range(&mut self, val: Option<[T; 2]>) { self.valid_values_range = val; }
+
+    /// Returns the TTL of the characteristic.
+    pub fn get_ttl(&self) -> Option<u64> { self.ttl }
+
+    /// Sets the TTL of the characteristic.
+    pub fn set_ttl(&mut self, val: Option<u64>) { self.ttl = val; }
+
+    /// Returns the PID of the characteristic.
+    pub fn get_pid(&self) -> Option<u64> { self.pid }
+
+    /// Sets the PID of the characteristic.
+    pub fn set_pid(&mut self, val: Option<u64>) { self.pid = val; }
 
     /// Sets a callback function on a characteristic that is called every time a controller attempts to read its value.
     /// Returning a `Some(T)` from this function changes the value of the characteristic before the controller reads
@@ -385,12 +486,24 @@ impl Default for Format {
 pub trait HapCharacteristic: HapCharacteristicSetup + erased_serde::Serialize + Send + Sync {
     /// Returns the ID of the characteristic.
     fn get_id(&self) -> u64;
+    /// Sets the ID of the characteristic.
+    fn set_id(&mut self, id: u64);
     /// Returns the [`HapType`](HapType) of the characteristic.
     fn get_type(&self) -> HapType;
+    /// Sets the [`HapType`](HapType) of the characteristic.
+    fn set_type(&mut self, hap_type: HapType);
     /// Returns the [`Format`](Format) of the characteristic.
     fn get_format(&self) -> Format;
+    /// Sets the [`Format`](Format) of the characteristic.
+    fn set_format(&mut self, format: Format);
     /// Returns the [`Perm`](Perm)s of the characteristic.
     fn get_perms(&self) -> Vec<Perm>;
+    /// Sets the [`Perm`](Perm)s of the characteristic.
+    fn set_perms(&mut self, perms: Vec<Perm>);
+    /// Returns the description of the characteristic.
+    fn get_description(&self) -> Option<String>;
+    /// Sets the description of the characteristic.
+    fn set_description(&mut self, description: Option<String>);
     /// Returns the `event_notifications` value of the characteristic.
     fn get_event_notifications(&self) -> Option<bool>;
     /// Sets the `event_notifications` value of the characteristic.
@@ -401,14 +514,44 @@ pub trait HapCharacteristic: HapCharacteristicSetup + erased_serde::Serialize + 
     async fn set_value(&mut self, value: serde_json::Value) -> Result<()>;
     /// Returns the [`Unit`](Unit) of the characteristic.
     fn get_unit(&self) -> Option<Unit>;
+    /// Sets the [`Unit`](Unit) of the characteristic.
+    fn set_unit(&mut self, unit: Option<Unit>);
     /// Returns the maximum value of the characteristic.
     fn get_max_value(&self) -> Option<serde_json::Value>;
+    /// Sets the maximum value of the characteristic.
+    fn set_max_value(&mut self, max_value: Option<serde_json::Value>) -> Result<()>;
     /// Returns the minimum value of the characteristic.
     fn get_min_value(&self) -> Option<serde_json::Value>;
+    /// Sets the minimum value of the characteristic.
+    fn set_min_value(&mut self, min_value: Option<serde_json::Value>) -> Result<()>;
     /// Returns the step value of the characteristic.
     fn get_step_value(&self) -> Option<serde_json::Value>;
+    /// Sets the step value of the characteristic.
+    fn set_step_value(&mut self, step_value: Option<serde_json::Value>) -> Result<()>;
     /// Returns the maximum length of the characteristic.
     fn get_max_len(&self) -> Option<u16>;
+    /// Sets the maximum length of the characteristic.
+    fn set_max_len(&mut self, max_len: Option<u16>);
+    /// Returns the maximum data length of the characteristic.
+    fn get_max_data_len(&self) -> Option<u32>;
+    /// Sets the maximum data length of the characteristic.
+    fn set_max_data_len(&mut self, max_data_len: Option<u32>);
+    /// Returns the valid values of the characteristic.
+    fn get_valid_values(&self) -> Option<Vec<serde_json::Value>>;
+    /// Sets the valid values of the characteristic.
+    fn set_valid_values(&mut self, valid_values: Option<Vec<serde_json::Value>>) -> Result<()>;
+    /// Returns the valid values range of the characteristic.
+    fn get_valid_values_range(&self) -> Option<[serde_json::Value; 2]>;
+    /// Sets the valid values range of the characteristic.
+    fn set_valid_values_range(&mut self, valid_values_range: Option<[serde_json::Value; 2]>) -> Result<()>;
+    /// Returns the TTL of the characteristic.
+    fn get_ttl(&self) -> Option<u64>;
+    /// Sets the TTL of the characteristic.
+    fn set_ttl(&mut self, ttl: Option<u64>);
+    /// Returns the PID of the characteristic.
+    fn get_pid(&self) -> Option<u64>;
+    /// Sets the PID of the characteristic.
+    fn set_pid(&mut self, pid: Option<u64>);
 }
 
 serialize_trait_object!(HapCharacteristic);
