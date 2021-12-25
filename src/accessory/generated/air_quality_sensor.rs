@@ -12,7 +12,7 @@ use crate::{
 /// Air Quality Sensor accessory.
 #[derive(Debug, Default)]
 pub struct AirQualitySensorAccessory {
-    /// ID of the Air Quality Sensor Accessory.
+    /// ID of the Air Quality Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

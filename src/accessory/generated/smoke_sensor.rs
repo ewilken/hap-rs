@@ -12,7 +12,7 @@ use crate::{
 /// Smoke Sensor accessory.
 #[derive(Debug, Default)]
 pub struct SmokeSensorAccessory {
-    /// ID of the Smoke Sensor Accessory.
+    /// ID of the Smoke Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

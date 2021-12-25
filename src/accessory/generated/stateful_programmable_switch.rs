@@ -12,7 +12,7 @@ use crate::{
 /// Stateful Programmable Switch accessory.
 #[derive(Debug, Default)]
 pub struct StatefulProgrammableSwitchAccessory {
-    /// ID of the Stateful Programmable Switch Accessory.
+    /// ID of the Stateful Programmable Switch accessory.
     id: u64,
 
     /// Accessory Information service.

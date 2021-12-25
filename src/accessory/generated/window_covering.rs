@@ -12,7 +12,7 @@ use crate::{
 /// Window Covering accessory.
 #[derive(Debug, Default)]
 pub struct WindowCoveringAccessory {
-    /// ID of the Window Covering Accessory.
+    /// ID of the Window Covering accessory.
     id: u64,
 
     /// Accessory Information service.

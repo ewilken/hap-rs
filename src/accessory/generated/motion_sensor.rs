@@ -12,7 +12,7 @@ use crate::{
 /// Motion Sensor accessory.
 #[derive(Debug, Default)]
 pub struct MotionSensorAccessory {
-    /// ID of the Motion Sensor Accessory.
+    /// ID of the Motion Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

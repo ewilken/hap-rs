@@ -12,7 +12,7 @@ use crate::{
 /// Security System accessory.
 #[derive(Debug, Default)]
 pub struct SecuritySystemAccessory {
-    /// ID of the Security System Accessory.
+    /// ID of the Security System accessory.
     id: u64,
 
     /// Accessory Information service.

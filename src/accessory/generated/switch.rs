@@ -12,7 +12,7 @@ use crate::{
 /// Switch accessory.
 #[derive(Debug, Default)]
 pub struct SwitchAccessory {
-    /// ID of the Switch Accessory.
+    /// ID of the Switch accessory.
     id: u64,
 
     /// Accessory Information service.

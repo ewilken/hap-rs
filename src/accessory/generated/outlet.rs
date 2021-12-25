@@ -12,7 +12,7 @@ use crate::{
 /// Outlet accessory.
 #[derive(Debug, Default)]
 pub struct OutletAccessory {
-    /// ID of the Outlet Accessory.
+    /// ID of the Outlet accessory.
     id: u64,
 
     /// Accessory Information service.

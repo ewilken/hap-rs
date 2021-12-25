@@ -12,7 +12,7 @@ use crate::{
 /// Occupancy Sensor accessory.
 #[derive(Debug, Default)]
 pub struct OccupancySensorAccessory {
-    /// ID of the Occupancy Sensor Accessory.
+    /// ID of the Occupancy Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

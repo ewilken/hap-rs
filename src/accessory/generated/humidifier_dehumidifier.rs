@@ -12,7 +12,7 @@ use crate::{
 /// Humidifier-Dehumidifier accessory.
 #[derive(Debug, Default)]
 pub struct HumidifierDehumidifierAccessory {
-    /// ID of the Humidifier-Dehumidifier Accessory.
+    /// ID of the Humidifier-Dehumidifier accessory.
     id: u64,
 
     /// Accessory Information service.

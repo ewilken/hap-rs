@@ -12,7 +12,7 @@ use crate::{
 /// Air Purifier accessory.
 #[derive(Debug, Default)]
 pub struct AirPurifierAccessory {
-    /// ID of the Air Purifier Accessory.
+    /// ID of the Air Purifier accessory.
     id: u64,
 
     /// Accessory Information service.

@@ -12,7 +12,7 @@ use crate::{
 /// Window accessory.
 #[derive(Debug, Default)]
 pub struct WindowAccessory {
-    /// ID of the Window Accessory.
+    /// ID of the Window accessory.
     id: u64,
 
     /// Accessory Information service.
