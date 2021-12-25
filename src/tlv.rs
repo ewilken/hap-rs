@@ -4,7 +4,6 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use log::error;
 use srp::types::SrpAuthError;
 use thiserror::Error;
-use uuid;
 
 use crate::{error, pairing::Permissions};
 

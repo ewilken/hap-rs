@@ -67,8 +67,16 @@ impl HapService for LightSensorService {
         self.id
     }
 
+    fn set_id(&mut self, id: u64) {
+        self.id = id;
+    }
+
     fn get_type(&self) -> HapType {
         self.hap_type
+    }
+
+    fn set_type(&mut self, hap_type: HapType) {
+        self.hap_type = hap_type;
     }
 
     fn get_hidden(&self) -> bool {

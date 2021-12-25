@@ -10,8 +10,12 @@ pub use crate::service::generated::*;
 pub trait HapService: erased_serde::Serialize + Send + Sync {
     /// Returns the ID of the service.
     fn get_id(&self) -> u64;
+    /// Sets the ID of the service.
+    fn set_id(&mut self, id: u64);
     /// Returns the [`HapType`](HapType) of the service.
     fn get_type(&self) -> HapType;
+    /// Sets the [`HapType`](HapType) of the service.
+    fn set_type(&mut self, hap_type: HapType);
     /// Returns the `hidden` value of the service.
     fn get_hidden(&self) -> bool;
     /// Sets the `hidden` value of the service.
