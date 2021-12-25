@@ -1353,6 +1353,7 @@ const MANUALLY_GENERATED_EXAMPLES: &'static [&'static str] = &[
     "callbacks.rs",
     "cooler.rs",
     "custom_characteristics_services_accessories.rs",
+    "custom_multi_sensor.rs",
     "dehumidifier.rs",
     "faucet.rs",
     "heater.rs",
