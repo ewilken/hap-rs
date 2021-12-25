@@ -5,6 +5,7 @@ use serde::{
     ser::{Serialize, Serializer},
 };
 use std::str::FromStr;
+use uuid::Uuid;
 
 use crate::Error;
 
@@ -12,6 +13,7 @@ use crate::Error;
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum HapType {
     Unknown,
+    Custom(Uuid),
 	AccessCodeControlPoint,
 	AccessCodeSupportedConfiguration,
 	AccessControlLevel,
@@ -320,6 +322,7 @@ impl ToString for HapType {
     fn to_string(&self) -> String {
         match self {
             HapType::Unknown => "unknown".into(),
+            HapType::Custom(uuid) => uuid.to_hyphenated().to_string(),
 			HapType::AccessCodeControlPoint => "262".into(),
 			HapType::AccessCodeSupportedConfiguration => "261".into(),
 			HapType::AccessControlLevel => "E5".into(),
@@ -630,6 +633,10 @@ impl FromStr for HapType {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(uuid) = Uuid::parse_str(s) {
+            return Ok(HapType::Custom(uuid));
+        }
+
         match s {
             "unknown" => Ok(HapType::Unknown),
 			"262" => Ok(HapType::AccessCodeControlPoint),
