@@ -92,8 +92,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - name: cargo rustdoc
+      - name: cargo rustdoc -- -D rustdoc::broken_intra_doc_links
         uses: actions-rs/cargo@v1
         with:
           command: rustdoc
-          args: -- -D intra-doc-link-resolution-failure
+          args: -- -D rustdoc::broken_intra_doc_links

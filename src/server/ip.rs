@@ -24,7 +24,6 @@ pub struct IpServer {
     config: pointer::Config,
     storage: pointer::Storage,
     accessory_database: pointer::AccessoryDatabase,
-    event_emitter: pointer::EventEmitter,
     http_server: HttpServer,
     mdns_responder: pointer::MdnsResponder,
     aid_cache: Arc<Mutex<Vec<u64>>>,
@@ -185,7 +184,7 @@ impl IpServer {
             config.clone(),
             storage.clone(),
             accessory_database.clone(),
-            event_emitter.clone(),
+            event_emitter,
             mdns_responder.clone(),
         );
 
@@ -205,7 +204,6 @@ impl IpServer {
             config,
             storage,
             accessory_database,
-            event_emitter,
             http_server,
             mdns_responder,
             aid_cache,
