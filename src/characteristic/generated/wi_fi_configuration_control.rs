@@ -21,7 +21,6 @@ use crate::{
         Unit,
     },
     pointer,
-    Error,
     Result,
 };
 
@@ -63,158 +62,115 @@ impl WiFiConfigurationControlCharacteristic {
 
 #[async_trait]
 impl HapCharacteristic for WiFiConfigurationControlCharacteristic {
-    fn get_id(&self) -> u64 { self.0.get_id() }
+    fn get_id(&self) -> u64 { HapCharacteristic::get_id(&self.0) }
 
-    fn set_id(&mut self, id: u64) { self.0.set_id(id) }
+    fn set_id(&mut self, id: u64) { HapCharacteristic::set_id(&mut self.0, id) }
 
-    fn get_type(&self) -> HapType { self.0.get_type() }
+    fn get_type(&self) -> HapType { HapCharacteristic::get_type(&self.0) }
 
-    fn set_type(&mut self, hap_type: HapType) { self.0.set_type(hap_type) }
+    fn set_type(&mut self, hap_type: HapType) { HapCharacteristic::set_type(&mut self.0, hap_type) }
 
-    fn get_format(&self) -> Format { self.0.get_format() }
+    fn get_format(&self) -> Format { HapCharacteristic::get_format(&self.0) }
 
-    fn set_format(&mut self, format: Format) { self.0.set_format(format) }
+    fn set_format(&mut self, format: Format) { HapCharacteristic::set_format(&mut self.0, format) }
 
-    fn get_perms(&self) -> Vec<Perm> { self.0.get_perms() }
+    fn get_perms(&self) -> Vec<Perm> { HapCharacteristic::get_perms(&self.0) }
 
-    fn set_perms(&mut self, perms: Vec<Perm>) { self.0.set_perms(perms) }
+    fn set_perms(&mut self, perms: Vec<Perm>) { HapCharacteristic::set_perms(&mut self.0, perms) }
 
-    fn get_description(&self) -> Option<String> { self.0.get_description() }
+    fn get_description(&self) -> Option<String> { HapCharacteristic::get_description(&self.0) }
 
-    fn set_description(&mut self, description: Option<String>) { self.0.set_description(description) }
+    fn set_description(&mut self, description: Option<String>) {
+        HapCharacteristic::set_description(&mut self.0, description)
+    }
 
-    fn get_event_notifications(&self) -> Option<bool> { self.0.get_event_notifications() }
+    fn get_event_notifications(&self) -> Option<bool> { HapCharacteristic::get_event_notifications(&self.0) }
 
     fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
-        self.0.set_event_notifications(event_notifications)
+        HapCharacteristic::set_event_notifications(&mut self.0, event_notifications)
     }
 
-    async fn get_value(&mut self) -> Result<serde_json::Value> {
-        let value = self.0.get_value().await?;
-        Ok(json!(value))
-    }
+    async fn get_value(&mut self) -> Result<serde_json::Value> { HapCharacteristic::get_value(&mut self.0).await }
 
     async fn set_value(&mut self, value: serde_json::Value) -> Result<()> {
-        let v;
-        // for whatever reason, the controller is setting boolean values either as a boolean or as an integer
-        if self.0.format == Format::Bool && value.is_number() {
-            let num_v: u8 = serde_json::from_value(value)?;
-            if num_v == 0 {
-                v = serde_json::from_value(json!(false))?;
-            } else if num_v == 1 {
-                v = serde_json::from_value(json!(true))?;
-            } else {
-                return Err(Error::InvalidValue(self.get_format()));
-            }
-        } else {
-            v = serde_json::from_value(value).map_err(|_| Error::InvalidValue(self.get_format()))?;
-        }
-        self.0.set_value(v).await
+        HapCharacteristic::set_value(&mut self.0, value).await
     }
 
-    fn get_unit(&self) -> Option<Unit> { self.0.get_unit() }
+    fn get_unit(&self) -> Option<Unit> { HapCharacteristic::get_unit(&self.0) }
 
-    fn set_unit(&mut self, unit: Option<Unit>) { self.0.set_unit(unit) }
+    fn set_unit(&mut self, unit: Option<Unit>) { HapCharacteristic::set_unit(&mut self.0, unit) }
 
-    fn get_max_value(&self) -> Option<serde_json::Value> { self.0.get_max_value().map(|v| json!(v)) }
+    fn get_max_value(&self) -> Option<serde_json::Value> { HapCharacteristic::get_max_value(&self.0).map(|v| json!(v)) }
 
     fn set_max_value(&mut self, max_value: Option<serde_json::Value>) -> Result<()> {
-        self.0.set_max_value(match max_value {
-            Some(v) => Some(serde_json::from_value(v).map_err(|_| Error::InvalidValue(self.get_format()))?),
-            None => None,
-        });
-
-        Ok(())
+        HapCharacteristic::set_max_value(&mut self.0, max_value)
     }
 
-    fn get_min_value(&self) -> Option<serde_json::Value> { self.0.get_min_value().map(|v| json!(v)) }
+    fn get_min_value(&self) -> Option<serde_json::Value> { HapCharacteristic::get_min_value(&self.0).map(|v| json!(v)) }
 
     fn set_min_value(&mut self, min_value: Option<serde_json::Value>) -> Result<()> {
-        self.0.set_min_value(match min_value {
-            Some(v) => Some(serde_json::from_value(v).map_err(|_| Error::InvalidValue(self.get_format()))?),
-            None => None,
-        });
-
-        Ok(())
+        HapCharacteristic::set_min_value(&mut self.0, min_value)
     }
 
-    fn get_step_value(&self) -> Option<serde_json::Value> { self.0.get_step_value().map(|v| json!(v)) }
+    fn get_step_value(&self) -> Option<serde_json::Value> {
+        HapCharacteristic::get_step_value(&self.0).map(|v| json!(v))
+    }
 
     fn set_step_value(&mut self, step_value: Option<serde_json::Value>) -> Result<()> {
-        self.0.set_step_value(match step_value {
-            Some(v) => Some(serde_json::from_value(v).map_err(|_| Error::InvalidValue(self.get_format()))?),
-            None => None,
-        });
-
-        Ok(())
+        HapCharacteristic::set_step_value(&mut self.0, step_value)
     }
 
-    fn get_max_len(&self) -> Option<u16> { self.0.get_max_len() }
+    fn get_max_len(&self) -> Option<u16> { HapCharacteristic::get_max_len(&self.0) }
 
-    fn set_max_len(&mut self, max_len: Option<u16>) { self.0.set_max_len(max_len) }
+    fn set_max_len(&mut self, max_len: Option<u16>) { HapCharacteristic::set_max_len(&mut self.0, max_len) }
 
-    fn get_max_data_len(&self) -> Option<u32> { self.0.get_max_data_len() }
+    fn get_max_data_len(&self) -> Option<u32> { HapCharacteristic::get_max_data_len(&self.0) }
 
-    fn set_max_data_len(&mut self, max_data_len: Option<u32>) { self.0.set_max_data_len(max_data_len) }
-
-    fn get_valid_values(&self) -> Option<Vec<serde_json::Value>> {
-        self.0
-            .get_valid_values()
-            .map(|v| v.into_iter().map(|v| json!(v)).collect())
+    fn set_max_data_len(&mut self, max_data_len: Option<u32>) {
+        HapCharacteristic::set_max_data_len(&mut self.0, max_data_len)
     }
+
+    fn get_valid_values(&self) -> Option<Vec<serde_json::Value>> { HapCharacteristic::get_valid_values(&self.0) }
 
     fn set_valid_values(&mut self, valid_values: Option<Vec<serde_json::Value>>) -> Result<()> {
-        self.0.set_valid_values(match valid_values {
-            Some(v) => Some(
-                v.into_iter()
-                    .map(|v| serde_json::from_value(v).map_err(|_| Error::InvalidValue(self.get_format())))
-                    .collect::<Result<Vec<Vec<u8>>>>()?,
-            ),
-            None => None,
-        });
-
-        Ok(())
+        HapCharacteristic::set_valid_values(&mut self.0, valid_values)
     }
 
     fn get_valid_values_range(&self) -> Option<[serde_json::Value; 2]> {
-        self.0.get_valid_values_range().map(|v| [json!(v[0]), json!(v[1])])
+        HapCharacteristic::get_valid_values_range(&self.0)
     }
 
     fn set_valid_values_range(&mut self, valid_values_range: Option<[serde_json::Value; 2]>) -> Result<()> {
-        self.0.set_valid_values_range(match valid_values_range {
-            Some([start, end]) => Some(Result::<[Vec<u8>; 2]>::Ok([
-                serde_json::from_value(start).map_err(|_| Error::InvalidValue(self.get_format()))?,
-                serde_json::from_value(end).map_err(|_| Error::InvalidValue(self.get_format()))?,
-            ])?),
-            None => None,
-        });
-
-        Ok(())
+        HapCharacteristic::set_valid_values_range(&mut self.0, valid_values_range)
     }
 
-    fn get_ttl(&self) -> Option<u64> { self.0.get_ttl() }
+    fn get_ttl(&self) -> Option<u64> { HapCharacteristic::get_ttl(&self.0) }
 
-    fn set_ttl(&mut self, ttl: Option<u64>) { self.0.set_ttl(ttl) }
+    fn set_ttl(&mut self, ttl: Option<u64>) { HapCharacteristic::set_ttl(&mut self.0, ttl) }
 
-    fn get_pid(&self) -> Option<u64> { self.0.get_pid() }
+    fn get_pid(&self) -> Option<u64> { HapCharacteristic::get_pid(&self.0) }
 
-    fn set_pid(&mut self, pid: Option<u64>) { self.0.set_pid(pid) }
+    fn set_pid(&mut self, pid: Option<u64>) { HapCharacteristic::set_pid(&mut self.0, pid) }
 }
 
 impl HapCharacteristicSetup for WiFiConfigurationControlCharacteristic {
     fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
-        self.0.set_event_emitter(event_emitter)
+        HapCharacteristicSetup::set_event_emitter(&mut self.0, event_emitter)
     }
 }
 
 impl CharacteristicCallbacks<Vec<u8>> for WiFiConfigurationControlCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<Vec<u8>>>) { self.0.on_read(f) }
+    fn on_read(&mut self, f: Option<impl OnReadFn<Vec<u8>>>) { CharacteristicCallbacks::on_read(&mut self.0, f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<Vec<u8>>>) { self.0.on_update(f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<Vec<u8>>>) { CharacteristicCallbacks::on_update(&mut self.0, f) }
 }
 
 impl AsyncCharacteristicCallbacks<Vec<u8>> for WiFiConfigurationControlCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<Vec<u8>>>) { self.0.on_read_async(f) }
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<Vec<u8>>>) {
+        AsyncCharacteristicCallbacks::on_read_async(&mut self.0, f)
+    }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<Vec<u8>>>) { self.0.on_update_async(f) }
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<Vec<u8>>>) {
+        AsyncCharacteristicCallbacks::on_update_async(&mut self.0, f)
+    }
 }

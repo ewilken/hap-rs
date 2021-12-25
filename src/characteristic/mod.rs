@@ -651,6 +651,179 @@ pub trait AsyncCharacteristicCallbacks<T: fmt::Debug + Default + Clone + Seriali
     fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<T>>);
 }
 
+#[async_trait]
+impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> HapCharacteristic for Characteristic<T>
+where
+    for<'de> T: Deserialize<'de>,
+{
+    fn get_id(&self) -> u64 { Characteristic::get_id(self) }
+
+    fn set_id(&mut self, id: u64) { Characteristic::set_id(self, id) }
+
+    fn get_type(&self) -> HapType { Characteristic::get_type(self) }
+
+    fn set_type(&mut self, hap_type: HapType) { Characteristic::set_type(self, hap_type) }
+
+    fn get_format(&self) -> Format { Characteristic::get_format(self) }
+
+    fn set_format(&mut self, format: Format) { Characteristic::set_format(self, format) }
+
+    fn get_perms(&self) -> Vec<Perm> { Characteristic::get_perms(self) }
+
+    fn set_perms(&mut self, perms: Vec<Perm>) { Characteristic::set_perms(self, perms) }
+
+    fn get_description(&self) -> Option<String> { Characteristic::get_description(self) }
+
+    fn set_description(&mut self, description: Option<String>) { Characteristic::set_description(self, description) }
+
+    fn get_event_notifications(&self) -> Option<bool> { Characteristic::get_event_notifications(self) }
+
+    fn set_event_notifications(&mut self, event_notifications: Option<bool>) {
+        Characteristic::set_event_notifications(self, event_notifications)
+    }
+
+    async fn get_value(&mut self) -> Result<serde_json::Value> {
+        let value = Characteristic::get_value(self).await?;
+        Ok(json!(value))
+    }
+
+    async fn set_value(&mut self, value: serde_json::Value) -> Result<()> {
+        let v;
+        // for whatever reason, the controller is setting boolean values either as a boolean or as an integer
+        if self.format == Format::Bool && value.is_number() {
+            let num_v: u8 = serde_json::from_value(value)?;
+            if num_v == 0 {
+                v = serde_json::from_value(json!(false))?;
+            } else if num_v == 1 {
+                v = serde_json::from_value(json!(true))?;
+            } else {
+                return Err(Error::InvalidValue(Characteristic::get_format(self)));
+            }
+        } else {
+            v = serde_json::from_value(value).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))?;
+        }
+        Characteristic::set_value(self, v).await
+    }
+
+    fn get_unit(&self) -> Option<Unit> { Characteristic::get_unit(self) }
+
+    fn set_unit(&mut self, unit: Option<Unit>) { Characteristic::set_unit(self, unit) }
+
+    fn get_max_value(&self) -> Option<serde_json::Value> { Characteristic::get_max_value(self).map(|v| json!(v)) }
+
+    fn set_max_value(&mut self, max_value: Option<serde_json::Value>) -> Result<()> {
+        Characteristic::set_max_value(self, match max_value {
+            Some(v) =>
+                Some(serde_json::from_value(v).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))?),
+            None => None,
+        });
+
+        Ok(())
+    }
+
+    fn get_min_value(&self) -> Option<serde_json::Value> { Characteristic::get_min_value(self).map(|v| json!(v)) }
+
+    fn set_min_value(&mut self, min_value: Option<serde_json::Value>) -> Result<()> {
+        Characteristic::set_min_value(self, match min_value {
+            Some(v) =>
+                Some(serde_json::from_value(v).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))?),
+            None => None,
+        });
+
+        Ok(())
+    }
+
+    fn get_step_value(&self) -> Option<serde_json::Value> { Characteristic::get_step_value(self).map(|v| json!(v)) }
+
+    fn set_step_value(&mut self, step_value: Option<serde_json::Value>) -> Result<()> {
+        Characteristic::set_step_value(self, match step_value {
+            Some(v) =>
+                Some(serde_json::from_value(v).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))?),
+            None => None,
+        });
+
+        Ok(())
+    }
+
+    fn get_max_len(&self) -> Option<u16> { Characteristic::get_max_len(self) }
+
+    fn set_max_len(&mut self, max_len: Option<u16>) { Characteristic::set_max_len(self, max_len) }
+
+    fn get_max_data_len(&self) -> Option<u32> { Characteristic::get_max_data_len(self) }
+
+    fn set_max_data_len(&mut self, max_data_len: Option<u32>) { Characteristic::set_max_data_len(self, max_data_len) }
+
+    fn get_valid_values(&self) -> Option<Vec<serde_json::Value>> {
+        Characteristic::get_valid_values(self).map(|v| v.into_iter().map(|v| json!(v)).collect())
+    }
+
+    fn set_valid_values(&mut self, valid_values: Option<Vec<serde_json::Value>>) -> Result<()> {
+        Characteristic::set_valid_values(self, match valid_values {
+            Some(v) => Some(
+                v.into_iter()
+                    .map(|v| {
+                        serde_json::from_value(v).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))
+                    })
+                    .collect::<Result<Vec<T>>>()?,
+            ),
+            None => None,
+        });
+
+        Ok(())
+    }
+
+    fn get_valid_values_range(&self) -> Option<[serde_json::Value; 2]> {
+        Characteristic::get_valid_values_range(self).map(|v| [json!(v[0]), json!(v[1])])
+    }
+
+    fn set_valid_values_range(&mut self, valid_values_range: Option<[serde_json::Value; 2]>) -> Result<()> {
+        Characteristic::set_valid_values_range(self, match valid_values_range {
+            Some([start, end]) => Some(Result::<[T; 2]>::Ok([
+                serde_json::from_value(start).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))?,
+                serde_json::from_value(end).map_err(|_| Error::InvalidValue(Characteristic::get_format(self)))?,
+            ])?),
+            None => None,
+        });
+
+        Ok(())
+    }
+
+    fn get_ttl(&self) -> Option<u64> { Characteristic::get_ttl(self) }
+
+    fn set_ttl(&mut self, ttl: Option<u64>) { Characteristic::set_ttl(self, ttl) }
+
+    fn get_pid(&self) -> Option<u64> { Characteristic::get_pid(self) }
+
+    fn set_pid(&mut self, pid: Option<u64>) { Characteristic::set_pid(self, pid) }
+}
+
+impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> HapCharacteristicSetup for Characteristic<T>
+where
+    for<'de> T: Deserialize<'de>,
+{
+    fn set_event_emitter(&mut self, event_emitter: Option<pointer::EventEmitter>) {
+        Characteristic::set_event_emitter(self, event_emitter)
+    }
+}
+
+impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> CharacteristicCallbacks<T> for Characteristic<T>
+where
+    for<'de> T: Deserialize<'de>,
+{
+    fn on_read(&mut self, f: Option<impl OnReadFn<T>>) { Characteristic::on_read(self, f) }
+
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<T>>) { Characteristic::on_update(self, f) }
+}
+
+impl<T: fmt::Debug + Default + Clone + Serialize + Send + Sync> AsyncCharacteristicCallbacks<T> for Characteristic<T>
+where
+    for<'de> T: Deserialize<'de>,
+{
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<T>>) { Characteristic::on_read_async(self, f) }
+
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<T>>) { Characteristic::on_update_async(self, f) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
