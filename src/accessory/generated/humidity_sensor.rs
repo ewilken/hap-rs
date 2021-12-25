@@ -12,7 +12,7 @@ use crate::{
 /// Humidity Sensor accessory.
 #[derive(Debug, Default)]
 pub struct HumiditySensorAccessory {
-    /// ID of the Humidity Sensor Accessory.
+    /// ID of the Humidity Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

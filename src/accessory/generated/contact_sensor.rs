@@ -12,7 +12,7 @@ use crate::{
 /// Contact Sensor accessory.
 #[derive(Debug, Default)]
 pub struct ContactSensorAccessory {
-    /// ID of the Contact Sensor Accessory.
+    /// ID of the Contact Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

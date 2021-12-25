@@ -12,7 +12,7 @@ use crate::{
 /// Carbon monoxide Sensor accessory.
 #[derive(Debug, Default)]
 pub struct CarbonMonoxideSensorAccessory {
-    /// ID of the Carbon monoxide Sensor Accessory.
+    /// ID of the Carbon monoxide Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

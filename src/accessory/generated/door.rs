@@ -12,7 +12,7 @@ use crate::{
 /// Door accessory.
 #[derive(Debug, Default)]
 pub struct DoorAccessory {
-    /// ID of the Door Accessory.
+    /// ID of the Door accessory.
     id: u64,
 
     /// Accessory Information service.

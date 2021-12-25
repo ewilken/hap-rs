@@ -12,7 +12,7 @@ use crate::{
 /// Wi-Fi Satellite accessory.
 #[derive(Debug, Default)]
 pub struct WiFiSatelliteAccessory {
-    /// ID of the Wi-Fi Satellite Accessory.
+    /// ID of the Wi-Fi Satellite accessory.
     id: u64,
 
     /// Accessory Information service.

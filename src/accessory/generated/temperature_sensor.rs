@@ -12,7 +12,7 @@ use crate::{
 /// Temperature Sensor accessory.
 #[derive(Debug, Default)]
 pub struct TemperatureSensorAccessory {
-    /// ID of the Temperature Sensor Accessory.
+    /// ID of the Temperature Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

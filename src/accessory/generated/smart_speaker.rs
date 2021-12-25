@@ -12,7 +12,7 @@ use crate::{
 /// Smart Speaker accessory.
 #[derive(Debug, Default)]
 pub struct SmartSpeakerAccessory {
-    /// ID of the Smart Speaker Accessory.
+    /// ID of the Smart Speaker accessory.
     id: u64,
 
     /// Accessory Information service.

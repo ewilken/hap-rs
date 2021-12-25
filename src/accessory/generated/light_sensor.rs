@@ -12,7 +12,7 @@ use crate::{
 /// Light Sensor accessory.
 #[derive(Debug, Default)]
 pub struct LightSensorAccessory {
-    /// ID of the Light Sensor Accessory.
+    /// ID of the Light Sensor accessory.
     id: u64,
 
     /// Accessory Information service.

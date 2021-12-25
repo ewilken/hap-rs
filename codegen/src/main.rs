@@ -1161,7 +1161,7 @@ use crate::{
 /// {{service.DefaultDescription}} accessory.
 #[derive(Debug, Default)]
 pub struct {{pascal_case service.DefaultDescription}}Accessory {
-    /// ID of the {{service.DefaultDescription}} Accessory.
+    /// ID of the {{service.DefaultDescription}} accessory.
     id: u64,
 
     /// Accessory Information service.
@@ -1352,7 +1352,7 @@ const MANUALLY_GENERATED_EXAMPLES: &'static [&'static str] = &[
     "bridged_accessories.rs",
     "callbacks.rs",
     "cooler.rs",
-    "custom_characteristics_and_services.rs",
+    "custom_characteristics_services_accessories.rs",
     "dehumidifier.rs",
     "faucet.rs",
     "heater.rs",

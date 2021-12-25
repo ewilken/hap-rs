@@ -12,7 +12,7 @@ use crate::{
 /// Fan v2 accessory.
 #[derive(Debug, Default)]
 pub struct FanV2Accessory {
-    /// ID of the Fan v2 Accessory.
+    /// ID of the Fan v2 accessory.
     id: u64,
 
     /// Accessory Information service.

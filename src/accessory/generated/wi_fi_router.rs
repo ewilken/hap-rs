@@ -12,7 +12,7 @@ use crate::{
 /// Wi-Fi Router accessory.
 #[derive(Debug, Default)]
 pub struct WiFiRouterAccessory {
-    /// ID of the Wi-Fi Router Accessory.
+    /// ID of the Wi-Fi Router accessory.
     id: u64,
 
     /// Accessory Information service.

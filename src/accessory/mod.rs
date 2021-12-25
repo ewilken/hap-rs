@@ -135,7 +135,7 @@ pub struct AccessoryInformation {
 
 impl AccessoryInformation {
     /// Converts the `Information` struct to an Accessory Information Service.
-    pub(crate) fn to_service(self, id: u64, accessory_id: u64) -> Result<AccessoryInformationService> {
+    pub fn to_service(self, id: u64, accessory_id: u64) -> Result<AccessoryInformationService> {
         let mut i = AccessoryInformationService::new(id, accessory_id);
 
         executor::block_on(i.identify.set_value(serde_json::Value::Bool(false)))?;

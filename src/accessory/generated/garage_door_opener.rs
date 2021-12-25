@@ -12,7 +12,7 @@ use crate::{
 /// Garage Door Opener accessory.
 #[derive(Debug, Default)]
 pub struct GarageDoorOpenerAccessory {
-    /// ID of the Garage Door Opener Accessory.
+    /// ID of the Garage Door Opener accessory.
     id: u64,
 
     /// Accessory Information service.

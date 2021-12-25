@@ -12,7 +12,7 @@ use crate::{
 /// Thermostat accessory.
 #[derive(Debug, Default)]
 pub struct ThermostatAccessory {
-    /// ID of the Thermostat Accessory.
+    /// ID of the Thermostat accessory.
     id: u64,
 
     /// Accessory Information service.

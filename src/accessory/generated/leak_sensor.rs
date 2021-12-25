@@ -12,7 +12,7 @@ use crate::{
 /// Leak Sensor accessory.
 #[derive(Debug, Default)]
 pub struct LeakSensorAccessory {
-    /// ID of the Leak Sensor Accessory.
+    /// ID of the Leak Sensor accessory.
     id: u64,
 
     /// Accessory Information service.
