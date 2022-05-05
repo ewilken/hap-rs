@@ -30,7 +30,6 @@ pub struct AssetUpdateService {
 	pub asset_update_readiness: AssetUpdateReadinessCharacteristic,
 	/// Supported Asset Types characteristic (required).
 	pub supported_asset_types: SupportedAssetTypesCharacteristic,
-
 }
 
 impl AssetUpdateService {
@@ -39,8 +38,8 @@ impl AssetUpdateService {
         Self {
             id,
             hap_type: HapType::AssetUpdate,
-			asset_update_readiness: AssetUpdateReadinessCharacteristic::new(id + 1 + 0, accessory_id),
-			supported_asset_types: SupportedAssetTypesCharacteristic::new(id + 1 + 1, accessory_id),
+			asset_update_readiness: AssetUpdateReadinessCharacteristic::new(id  + 1, accessory_id),
+			supported_asset_types: SupportedAssetTypesCharacteristic::new(id + 1  + 1, accessory_id),
 			..Default::default()
         }
     }

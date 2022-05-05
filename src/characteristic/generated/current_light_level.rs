@@ -43,16 +43,16 @@ impl CurrentLightLevelCharacteristic {
 				Perm::PairedRead,
             ],
 			unit: Some(Unit::Lux),
-			max_value: Some(100000 as f32),
-			min_value: Some(0.0001 as f32),
+			max_value: Some(100000_f32),
+			min_value: Some(0.0001_f32),
             ..Default::default()
         });
 
         if let Some(ref min_value) = &c.0.min_value {
-            c.0.value = min_value.clone();
+            c.0.value = *min_value;
         } else if let Some(ref valid_values) = &c.0.valid_values {
-            if valid_values.len() > 0 {
-                c.0.value = valid_values[0].clone();
+            if !valid_values.is_empty() {
+                c.0.value = valid_values[0];
             }
         }
 

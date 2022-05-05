@@ -211,6 +211,7 @@ Codegen is handled by the `codegen` crate in the workspace. Generated files are 
 
     cargo run --package hap-codegen
     cargo +nightly fmt
+    cargo clippy --fix --allow-dirty
 
 ## License
 

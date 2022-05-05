@@ -37,7 +37,6 @@ pub struct AirPurifierService {
 	pub current_air_purifier_state: CurrentAirPurifierStateCharacteristic,
 	/// Target Air Purifier State characteristic (required).
 	pub target_air_purifier_state: TargetAirPurifierStateCharacteristic,
-
 	/// Lock Physical Controls characteristic (optional).
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
 	/// Name characteristic (optional).
@@ -54,13 +53,13 @@ impl AirPurifierService {
         Self {
             id,
             hap_type: HapType::AirPurifier,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			current_air_purifier_state: CurrentAirPurifierStateCharacteristic::new(id + 1 + 1, accessory_id),
-			target_air_purifier_state: TargetAirPurifierStateCharacteristic::new(id + 1 + 2, accessory_id),
-			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
-			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
-			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			current_air_purifier_state: CurrentAirPurifierStateCharacteristic::new(id + 1  + 1, accessory_id),
+			target_air_purifier_state: TargetAirPurifierStateCharacteristic::new(id + 2  + 1, accessory_id),
+			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1  + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1  + 3, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 2  + 3, accessory_id)),
+			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 3  + 3, accessory_id)),
 			..Default::default()
         }
     }

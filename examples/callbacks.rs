@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
     characteristic::CharacteristicCallbacks,

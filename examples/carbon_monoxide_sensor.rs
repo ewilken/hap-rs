@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{carbon_monoxide_sensor::CarbonMonoxideSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

@@ -32,7 +32,6 @@ pub struct SiriEndpointService {
 	pub siri_endpoint_session_status: SiriEndpointSessionStatusCharacteristic,
 	/// Version characteristic (required).
 	pub version: VersionCharacteristic,
-
 	/// Active Identifier characteristic (optional).
 	pub active_identifier: Option<ActiveIdentifierCharacteristic>,
 	/// Manually disabled characteristic (optional).
@@ -45,10 +44,10 @@ impl SiriEndpointService {
         Self {
             id,
             hap_type: HapType::SiriEndpoint,
-			siri_endpoint_session_status: SiriEndpointSessionStatusCharacteristic::new(id + 1 + 0, accessory_id),
-			version: VersionCharacteristic::new(id + 1 + 1, accessory_id),
-			active_identifier: Some(ActiveIdentifierCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			manually_disabled: Some(ManuallyDisabledCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
+			siri_endpoint_session_status: SiriEndpointSessionStatusCharacteristic::new(id  + 1, accessory_id),
+			version: VersionCharacteristic::new(id + 1  + 1, accessory_id),
+			active_identifier: Some(ActiveIdentifierCharacteristic::new(id + 1  + 2, accessory_id)),
+			manually_disabled: Some(ManuallyDisabledCharacteristic::new(id + 1 + 1  + 2, accessory_id)),
 			..Default::default()
         }
     }

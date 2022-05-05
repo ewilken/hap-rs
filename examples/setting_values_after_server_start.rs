@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{motion_sensor::MotionSensorAccessory, AccessoryCategory, AccessoryInformation},
     serde_json::Value,

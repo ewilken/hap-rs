@@ -35,7 +35,6 @@ pub struct CameraOperatingModeService {
 	pub event_snapshots_active: EventSnapshotsActiveCharacteristic,
 	/// HomeKit Camera Active characteristic (required).
 	pub homekit_camera_active: HomekitCameraActiveCharacteristic,
-
 	/// Camera Operating Mode Indicator characteristic (optional).
 	pub camera_operating_mode_indicator: Option<CameraOperatingModeIndicatorCharacteristic>,
 	/// Manually disabled characteristic (optional).
@@ -54,13 +53,13 @@ impl CameraOperatingModeService {
         Self {
             id,
             hap_type: HapType::CameraOperatingMode,
-			event_snapshots_active: EventSnapshotsActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			homekit_camera_active: HomekitCameraActiveCharacteristic::new(id + 1 + 1, accessory_id),
-			camera_operating_mode_indicator: Some(CameraOperatingModeIndicatorCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			manually_disabled: Some(ManuallyDisabledCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			night_vision: Some(NightVisionCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			periodic_snapshots_active: Some(PeriodicSnapshotsActiveCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
-			third_party_camera_active: Some(ThirdPartyCameraActiveCharacteristic::new(id + 1 + 4 + 2, accessory_id)),
+			event_snapshots_active: EventSnapshotsActiveCharacteristic::new(id  + 1, accessory_id),
+			homekit_camera_active: HomekitCameraActiveCharacteristic::new(id + 1  + 1, accessory_id),
+			camera_operating_mode_indicator: Some(CameraOperatingModeIndicatorCharacteristic::new(id + 1  + 2, accessory_id)),
+			manually_disabled: Some(ManuallyDisabledCharacteristic::new(id + 1 + 1  + 2, accessory_id)),
+			night_vision: Some(NightVisionCharacteristic::new(id + 1 + 2  + 2, accessory_id)),
+			periodic_snapshots_active: Some(PeriodicSnapshotsActiveCharacteristic::new(id + 1 + 3  + 2, accessory_id)),
+			third_party_camera_active: Some(ThirdPartyCameraActiveCharacteristic::new(id + 1 + 4  + 2, accessory_id)),
 			..Default::default()
         }
     }

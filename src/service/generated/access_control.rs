@@ -28,7 +28,6 @@ pub struct AccessControlService {
 
 	/// Access Control Level characteristic (required).
 	pub access_control_level: AccessControlLevelCharacteristic,
-
 	/// Password Setting characteristic (optional).
 	pub password_setting: Option<PasswordSettingCharacteristic>,
 }
@@ -39,8 +38,8 @@ impl AccessControlService {
         Self {
             id,
             hap_type: HapType::AccessControl,
-			access_control_level: AccessControlLevelCharacteristic::new(id + 1 + 0, accessory_id),
-			password_setting: Some(PasswordSettingCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			access_control_level: AccessControlLevelCharacteristic::new(id  + 1, accessory_id),
+			password_setting: Some(PasswordSettingCharacteristic::new(id + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

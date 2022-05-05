@@ -29,7 +29,6 @@ pub struct StatelessProgrammableSwitchService {
 
 	/// Programmable Switch Event characteristic (required).
 	pub programmable_switch_event: ProgrammableSwitchEventCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Label Index characteristic (optional).
@@ -42,9 +41,9 @@ impl StatelessProgrammableSwitchService {
         Self {
             id,
             hap_type: HapType::StatelessProgrammableSwitch,
-			programmable_switch_event: ProgrammableSwitchEventCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			label_index: Some(LabelIndexCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			programmable_switch_event: ProgrammableSwitchEventCharacteristic::new(id  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 1, accessory_id)),
+			label_index: Some(LabelIndexCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

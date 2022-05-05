@@ -43,7 +43,6 @@ pub struct CameraStreamManagementService {
 	pub supported_rtp_configuration: SupportedRtpConfigurationCharacteristic,
 	/// Supported Video Stream Configuration characteristic (required).
 	pub supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic,
-
 	/// Active characteristic (optional).
 	pub active: Option<ActiveCharacteristic>,
 }
@@ -54,13 +53,13 @@ impl CameraStreamManagementService {
         Self {
             id,
             hap_type: HapType::CameraStreamManagement,
-			selected_stream_configuration: SelectedStreamConfigurationCharacteristic::new(id + 1 + 0, accessory_id),
-			setup_endpoint: SetupEndpointCharacteristic::new(id + 1 + 1, accessory_id),
-			streaming_status: StreamingStatusCharacteristic::new(id + 1 + 2, accessory_id),
-			supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic::new(id + 1 + 3, accessory_id),
-			supported_rtp_configuration: SupportedRtpConfigurationCharacteristic::new(id + 1 + 4, accessory_id),
-			supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic::new(id + 1 + 5, accessory_id),
-			active: Some(ActiveCharacteristic::new(id + 1 + 0 + 6, accessory_id)),
+			selected_stream_configuration: SelectedStreamConfigurationCharacteristic::new(id  + 1, accessory_id),
+			setup_endpoint: SetupEndpointCharacteristic::new(id + 1  + 1, accessory_id),
+			streaming_status: StreamingStatusCharacteristic::new(id + 2  + 1, accessory_id),
+			supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic::new(id + 3  + 1, accessory_id),
+			supported_rtp_configuration: SupportedRtpConfigurationCharacteristic::new(id + 4  + 1, accessory_id),
+			supported_video_stream_configuration: SupportedVideoStreamConfigurationCharacteristic::new(id + 5  + 1, accessory_id),
+			active: Some(ActiveCharacteristic::new(id + 1  + 6, accessory_id)),
 			..Default::default()
         }
     }

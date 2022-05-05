@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{garage_door_opener::GarageDoorOpenerAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

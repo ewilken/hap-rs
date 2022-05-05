@@ -33,7 +33,6 @@ pub struct SiriService {
 
 	/// Siri Input Type characteristic (required).
 	pub siri_input_type: SiriInputTypeCharacteristic,
-
 	/// Multifunction Button characteristic (optional).
 	pub multifunction_button: Option<MultifunctionButtonCharacteristic>,
 	/// Siri Enable characteristic (optional).
@@ -54,13 +53,13 @@ impl SiriService {
         Self {
             id,
             hap_type: HapType::Siri,
-			siri_input_type: SiriInputTypeCharacteristic::new(id + 1 + 0, accessory_id),
-			multifunction_button: Some(MultifunctionButtonCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			siri_enable: Some(SiriEnableCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			siri_engine_version: Some(SiriEngineVersionCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			siri_light_on_use: Some(SiriLightOnUseCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
-			siri_listening: Some(SiriListeningCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
-			siri_touch_to_use: Some(SiriTouchToUseCharacteristic::new(id + 1 + 5 + 1, accessory_id)),
+			siri_input_type: SiriInputTypeCharacteristic::new(id  + 1, accessory_id),
+			multifunction_button: Some(MultifunctionButtonCharacteristic::new(id + 1  + 1, accessory_id)),
+			siri_enable: Some(SiriEnableCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			siri_engine_version: Some(SiriEngineVersionCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
+			siri_light_on_use: Some(SiriLightOnUseCharacteristic::new(id + 1 + 3  + 1, accessory_id)),
+			siri_listening: Some(SiriListeningCharacteristic::new(id + 1 + 4  + 1, accessory_id)),
+			siri_touch_to_use: Some(SiriTouchToUseCharacteristic::new(id + 1 + 5  + 1, accessory_id)),
 			..Default::default()
         }
     }

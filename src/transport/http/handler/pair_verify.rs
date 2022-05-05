@@ -7,7 +7,7 @@ use futures::{
 use hyper::{body::Buf, Body};
 use log::{debug, info};
 use rand::rngs::OsRng;
-use signature::{Signature, Signer, Verifier};
+use signature::{Signer, Verifier};
 use std::str;
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
@@ -72,19 +72,13 @@ impl TlvHandlerExt for PairVerify {
                     x if x == StepNumber::StartReq as u8 => {
                         let a_pub = decoded
                             .remove(&(Type::PublicKey as u8))
-                            .ok_or(tlv::ErrorContainer::new(
-                                StepNumber::StartRes as u8,
-                                tlv::Error::Unknown,
-                            ))?;
+                            .ok_or_else(|| tlv::ErrorContainer::new(StepNumber::StartRes as u8, tlv::Error::Unknown))?;
                         Ok(Step::Start { a_pub })
                     },
                     x if x == StepNumber::FinishReq as u8 => {
-                        let data = decoded
-                            .remove(&(Type::EncryptedData as u8))
-                            .ok_or(tlv::ErrorContainer::new(
-                                StepNumber::FinishRes as u8,
-                                tlv::Error::Unknown,
-                            ))?;
+                        let data = decoded.remove(&(Type::EncryptedData as u8)).ok_or_else(|| {
+                            tlv::ErrorContainer::new(StepNumber::FinishRes as u8, tlv::Error::Unknown)
+                        })?;
                         Ok(Step::Finish { data })
                     },
                     _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),

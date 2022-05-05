@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{air_purifier::AirPurifierAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

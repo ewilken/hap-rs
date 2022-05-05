@@ -30,7 +30,6 @@ pub struct FanService {
 
 	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Rotation Direction characteristic (optional).
@@ -45,10 +44,10 @@ impl FanService {
         Self {
             id,
             hap_type: HapType::Fan,
-			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			rotation_direction: Some(RotationDirectionCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			power_state: PowerStateCharacteristic::new(id  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 1, accessory_id)),
+			rotation_direction: Some(RotationDirectionCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
 			..Default::default()
         }
     }

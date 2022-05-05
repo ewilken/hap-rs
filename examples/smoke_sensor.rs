@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{smoke_sensor::SmokeSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

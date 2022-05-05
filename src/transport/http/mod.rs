@@ -40,7 +40,7 @@ enum ContentType {
 }
 
 impl ContentType {
-    pub fn to_string(self) -> String {
+    pub fn to_string(&self) -> String {
         match self {
             ContentType::PairingTLV8 => "application/pairing+tlv8".into(),
             ContentType::HapJson => "application/hap+json".into(),

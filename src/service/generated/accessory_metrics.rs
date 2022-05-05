@@ -27,7 +27,6 @@ pub struct AccessoryMetricsService {
 
 	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-
 }
 
 impl AccessoryMetricsService {
@@ -36,7 +35,7 @@ impl AccessoryMetricsService {
         Self {
             id,
             hap_type: HapType::AccessoryMetrics,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
 			..Default::default()
         }
     }

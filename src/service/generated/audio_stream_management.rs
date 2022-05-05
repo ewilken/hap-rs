@@ -30,7 +30,6 @@ pub struct AudioStreamManagementService {
 	pub supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic,
 	/// Selected Audio Stream Configuration characteristic (required).
 	pub selected_audio_stream_configuration: SelectedAudioStreamConfigurationCharacteristic,
-
 }
 
 impl AudioStreamManagementService {
@@ -39,8 +38,8 @@ impl AudioStreamManagementService {
         Self {
             id,
             hap_type: HapType::AudioStreamManagement,
-			supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic::new(id + 1 + 0, accessory_id),
-			selected_audio_stream_configuration: SelectedAudioStreamConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
+			supported_audio_stream_configuration: SupportedAudioStreamConfigurationCharacteristic::new(id  + 1, accessory_id),
+			selected_audio_stream_configuration: SelectedAudioStreamConfigurationCharacteristic::new(id + 1  + 1, accessory_id),
 			..Default::default()
         }
     }

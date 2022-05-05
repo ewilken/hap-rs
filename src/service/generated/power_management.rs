@@ -27,7 +27,6 @@ pub struct PowerManagementService {
 
 	/// Wake Configuration characteristic (required).
 	pub wake_configuration: WakeConfigurationCharacteristic,
-
 }
 
 impl PowerManagementService {
@@ -36,7 +35,7 @@ impl PowerManagementService {
         Self {
             id,
             hap_type: HapType::PowerManagement,
-			wake_configuration: WakeConfigurationCharacteristic::new(id + 1 + 0, accessory_id),
+			wake_configuration: WakeConfigurationCharacteristic::new(id  + 1, accessory_id),
 			..Default::default()
         }
     }

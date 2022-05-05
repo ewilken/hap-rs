@@ -2,7 +2,7 @@ use serde::{
     ser::{SerializeStruct, Serializer},
     Serialize,
 };
-use tokio;
+
 use uuid::Uuid;
 
 use hap::{

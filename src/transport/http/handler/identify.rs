@@ -28,7 +28,7 @@ impl JsonHandlerExt for Identify {
         _: pointer::EventEmitter,
     ) -> BoxFuture<Result<Response<Body>>> {
         let storage = storage.clone();
-        let accessory_database = accessory_database.clone();
+        let accessory_database = accessory_database;
 
         async move {
             if storage.lock().await.count_pairings().await? > 0 {

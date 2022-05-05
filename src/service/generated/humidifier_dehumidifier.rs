@@ -43,7 +43,6 @@ pub struct HumidifierDehumidifierService {
 	pub target_humidifier_dehumidifier_state: TargetHumidifierDehumidifierStateCharacteristic,
 	/// Current Relative Humidity characteristic (required).
 	pub current_relative_humidity: CurrentRelativeHumidityCharacteristic,
-
 	/// Lock Physical Controls characteristic (optional).
 	pub lock_physical_controls: Option<LockPhysicalControlsCharacteristic>,
 	/// Name characteristic (optional).
@@ -66,17 +65,17 @@ impl HumidifierDehumidifierService {
         Self {
             id,
             hap_type: HapType::HumidifierDehumidifier,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			current_humidifier_dehumidifier_state: CurrentHumidifierDehumidifierStateCharacteristic::new(id + 1 + 1, accessory_id),
-			target_humidifier_dehumidifier_state: TargetHumidifierDehumidifierStateCharacteristic::new(id + 1 + 2, accessory_id),
-			current_relative_humidity: CurrentRelativeHumidityCharacteristic::new(id + 1 + 3, accessory_id),
-			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1 + 0 + 4, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 1 + 4, accessory_id)),
-			relative_humidity_dehumidifier_threshold: Some(RelativeHumidityDehumidifierThresholdCharacteristic::new(id + 1 + 2 + 4, accessory_id)),
-			relative_humidity_humidifier_threshold: Some(RelativeHumidityHumidifierThresholdCharacteristic::new(id + 1 + 3 + 4, accessory_id)),
-			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 4 + 4, accessory_id)),
-			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 5 + 4, accessory_id)),
-			current_water_level: Some(CurrentWaterLevelCharacteristic::new(id + 1 + 6 + 4, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			current_humidifier_dehumidifier_state: CurrentHumidifierDehumidifierStateCharacteristic::new(id + 1  + 1, accessory_id),
+			target_humidifier_dehumidifier_state: TargetHumidifierDehumidifierStateCharacteristic::new(id + 2  + 1, accessory_id),
+			current_relative_humidity: CurrentRelativeHumidityCharacteristic::new(id + 3  + 1, accessory_id),
+			lock_physical_controls: Some(LockPhysicalControlsCharacteristic::new(id + 1  + 4, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1  + 4, accessory_id)),
+			relative_humidity_dehumidifier_threshold: Some(RelativeHumidityDehumidifierThresholdCharacteristic::new(id + 1 + 2  + 4, accessory_id)),
+			relative_humidity_humidifier_threshold: Some(RelativeHumidityHumidifierThresholdCharacteristic::new(id + 1 + 3  + 4, accessory_id)),
+			rotation_speed: Some(RotationSpeedCharacteristic::new(id + 1 + 4  + 4, accessory_id)),
+			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 5  + 4, accessory_id)),
+			current_water_level: Some(CurrentWaterLevelCharacteristic::new(id + 1 + 6  + 4, accessory_id)),
 			..Default::default()
         }
     }

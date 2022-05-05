@@ -42,7 +42,6 @@ pub struct InputSourceService {
 	pub name: NameCharacteristic,
 	/// Current Visibility State characteristic (required).
 	pub current_visibility_state: CurrentVisibilityStateCharacteristic,
-
 	/// Identifier characteristic (optional).
 	pub identifier: Option<IdentifierCharacteristic>,
 	/// Input Device Type characteristic (optional).
@@ -57,14 +56,14 @@ impl InputSourceService {
         Self {
             id,
             hap_type: HapType::InputSource,
-			configured_name: ConfiguredNameCharacteristic::new(id + 1 + 0, accessory_id),
-			input_source_type: InputSourceTypeCharacteristic::new(id + 1 + 1, accessory_id),
-			is_configured: IsConfiguredCharacteristic::new(id + 1 + 2, accessory_id),
-			name: NameCharacteristic::new(id + 1 + 3, accessory_id),
-			current_visibility_state: CurrentVisibilityStateCharacteristic::new(id + 1 + 4, accessory_id),
-			identifier: Some(IdentifierCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
-			input_device_type: Some(InputDeviceTypeCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
-			target_visibility_state: Some(TargetVisibilityStateCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
+			configured_name: ConfiguredNameCharacteristic::new(id  + 1, accessory_id),
+			input_source_type: InputSourceTypeCharacteristic::new(id + 1  + 1, accessory_id),
+			is_configured: IsConfiguredCharacteristic::new(id + 2  + 1, accessory_id),
+			name: NameCharacteristic::new(id + 3  + 1, accessory_id),
+			current_visibility_state: CurrentVisibilityStateCharacteristic::new(id + 4  + 1, accessory_id),
+			identifier: Some(IdentifierCharacteristic::new(id + 1  + 5, accessory_id)),
+			input_device_type: Some(InputDeviceTypeCharacteristic::new(id + 1 + 1  + 5, accessory_id)),
+			target_visibility_state: Some(TargetVisibilityStateCharacteristic::new(id + 1 + 2  + 5, accessory_id)),
 			..Default::default()
         }
     }

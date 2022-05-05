@@ -29,7 +29,6 @@ pub struct DiagnosticsService {
 
 	/// Supported Diagnostics Snapshot characteristic (required).
 	pub supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic,
-
 	/// Selected Diagnostics Modes characteristic (optional).
 	pub selected_diagnostics_modes: Option<SelectedDiagnosticsModesCharacteristic>,
 	/// Supported Diagnostics Modes characteristic (optional).
@@ -42,9 +41,9 @@ impl DiagnosticsService {
         Self {
             id,
             hap_type: HapType::Diagnostics,
-			supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic::new(id + 1 + 0, accessory_id),
-			selected_diagnostics_modes: Some(SelectedDiagnosticsModesCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			supported_diagnostics_modes: Some(SupportedDiagnosticsModesCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			supported_diagnostics_snapshot: SupportedDiagnosticsSnapshotCharacteristic::new(id  + 1, accessory_id),
+			selected_diagnostics_modes: Some(SelectedDiagnosticsModesCharacteristic::new(id + 1  + 1, accessory_id)),
+			supported_diagnostics_modes: Some(SupportedDiagnosticsModesCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

@@ -27,7 +27,6 @@ pub struct ProtocolInformationService {
 
 	/// Version characteristic (required).
 	pub version: VersionCharacteristic,
-
 }
 
 impl ProtocolInformationService {
@@ -36,7 +35,7 @@ impl ProtocolInformationService {
         Self {
             id,
             hap_type: HapType::ProtocolInformation,
-			version: VersionCharacteristic::new(id + 1 + 0, accessory_id),
+			version: VersionCharacteristic::new(id  + 1, accessory_id),
 			..Default::default()
         }
     }

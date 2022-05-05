@@ -29,7 +29,6 @@ pub struct FaucetService {
 
 	/// Active characteristic (required).
 	pub active: ActiveCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Status Fault characteristic (optional).
@@ -42,9 +41,9 @@ impl FaucetService {
         Self {
             id,
             hap_type: HapType::Faucet,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

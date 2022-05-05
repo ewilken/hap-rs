@@ -28,7 +28,6 @@ pub struct MicrophoneService {
 
 	/// Mute characteristic (required).
 	pub mute: MuteCharacteristic,
-
 	/// Volume characteristic (optional).
 	pub volume: Option<VolumeCharacteristic>,
 }
@@ -39,8 +38,8 @@ impl MicrophoneService {
         Self {
             id,
             hap_type: HapType::Microphone,
-			mute: MuteCharacteristic::new(id + 1 + 0, accessory_id),
-			volume: Some(VolumeCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			mute: MuteCharacteristic::new(id  + 1, accessory_id),
+			volume: Some(VolumeCharacteristic::new(id + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

@@ -34,7 +34,6 @@ pub struct SlatsService {
 	pub current_slat_state: CurrentSlatStateCharacteristic,
 	/// Slat Type characteristic (required).
 	pub slat_type: SlatTypeCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Swing Mode characteristic (optional).
@@ -51,12 +50,12 @@ impl SlatsService {
         Self {
             id,
             hap_type: HapType::Slats,
-			current_slat_state: CurrentSlatStateCharacteristic::new(id + 1 + 0, accessory_id),
-			slat_type: SlatTypeCharacteristic::new(id + 1 + 1, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			current_tilt_angle: Some(CurrentTiltAngleCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			target_tilt_angle: Some(TargetTiltAngleCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
+			current_slat_state: CurrentSlatStateCharacteristic::new(id  + 1, accessory_id),
+			slat_type: SlatTypeCharacteristic::new(id + 1  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 2, accessory_id)),
+			swing_mode: Some(SwingModeCharacteristic::new(id + 1 + 1  + 2, accessory_id)),
+			current_tilt_angle: Some(CurrentTiltAngleCharacteristic::new(id + 1 + 2  + 2, accessory_id)),
+			target_tilt_angle: Some(TargetTiltAngleCharacteristic::new(id + 1 + 3  + 2, accessory_id)),
 			..Default::default()
         }
     }

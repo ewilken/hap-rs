@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{thermostat::ThermostatAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

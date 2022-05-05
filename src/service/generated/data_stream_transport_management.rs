@@ -33,7 +33,6 @@ pub struct DataStreamTransportManagementService {
 	pub supported_data_stream_transport_configuration: SupportedDataStreamTransportConfigurationCharacteristic,
 	/// Version characteristic (required).
 	pub version: VersionCharacteristic,
-
 }
 
 impl DataStreamTransportManagementService {
@@ -42,9 +41,9 @@ impl DataStreamTransportManagementService {
         Self {
             id,
             hap_type: HapType::DataStreamTransportManagement,
-			setup_data_stream_transport: SetupDataStreamTransportCharacteristic::new(id + 1 + 0, accessory_id),
-			supported_data_stream_transport_configuration: SupportedDataStreamTransportConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
-			version: VersionCharacteristic::new(id + 1 + 2, accessory_id),
+			setup_data_stream_transport: SetupDataStreamTransportCharacteristic::new(id  + 1, accessory_id),
+			supported_data_stream_transport_configuration: SupportedDataStreamTransportConfigurationCharacteristic::new(id + 1  + 1, accessory_id),
+			version: VersionCharacteristic::new(id + 2  + 1, accessory_id),
 			..Default::default()
         }
     }

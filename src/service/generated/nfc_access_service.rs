@@ -33,7 +33,6 @@ pub struct NfcAccessServiceService {
 	pub nfc_access_control_point: NfcAccessControlPointCharacteristic,
 	/// NFC Access Supported Configuration characteristic (required).
 	pub nfc_access_supported_configuration: NfcAccessSupportedConfigurationCharacteristic,
-
 }
 
 impl NfcAccessServiceService {
@@ -42,9 +41,9 @@ impl NfcAccessServiceService {
         Self {
             id,
             hap_type: HapType::NfcAccessService,
-			configuration_state: ConfigurationStateCharacteristic::new(id + 1 + 0, accessory_id),
-			nfc_access_control_point: NfcAccessControlPointCharacteristic::new(id + 1 + 1, accessory_id),
-			nfc_access_supported_configuration: NfcAccessSupportedConfigurationCharacteristic::new(id + 1 + 2, accessory_id),
+			configuration_state: ConfigurationStateCharacteristic::new(id  + 1, accessory_id),
+			nfc_access_control_point: NfcAccessControlPointCharacteristic::new(id + 1  + 1, accessory_id),
+			nfc_access_supported_configuration: NfcAccessSupportedConfigurationCharacteristic::new(id + 2  + 1, accessory_id),
 			..Default::default()
         }
     }

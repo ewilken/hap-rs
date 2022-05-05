@@ -30,7 +30,6 @@ pub struct TransferTransportManagementService {
 	pub supported_transfer_transport_configuration: SupportedTransferTransportConfigurationCharacteristic,
 	/// Setup Transfer Transport characteristic (required).
 	pub setup_transfer_transport: SetupTransferTransportCharacteristic,
-
 }
 
 impl TransferTransportManagementService {
@@ -39,8 +38,8 @@ impl TransferTransportManagementService {
         Self {
             id,
             hap_type: HapType::TransferTransportManagement,
-			supported_transfer_transport_configuration: SupportedTransferTransportConfigurationCharacteristic::new(id + 1 + 0, accessory_id),
-			setup_transfer_transport: SetupTransferTransportCharacteristic::new(id + 1 + 1, accessory_id),
+			supported_transfer_transport_configuration: SupportedTransferTransportConfigurationCharacteristic::new(id  + 1, accessory_id),
+			setup_transfer_transport: SetupTransferTransportCharacteristic::new(id + 1  + 1, accessory_id),
 			..Default::default()
         }
     }

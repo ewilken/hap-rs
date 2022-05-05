@@ -27,7 +27,6 @@ pub struct LabelService {
 
 	/// Label Namespace characteristic (required).
 	pub label_namespace: LabelNamespaceCharacteristic,
-
 }
 
 impl LabelService {
@@ -36,7 +35,7 @@ impl LabelService {
         Self {
             id,
             hap_type: HapType::Label,
-			label_namespace: LabelNamespaceCharacteristic::new(id + 1 + 0, accessory_id),
+			label_namespace: LabelNamespaceCharacteristic::new(id  + 1, accessory_id),
 			..Default::default()
         }
     }

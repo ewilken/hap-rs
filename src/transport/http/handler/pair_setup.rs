@@ -6,7 +6,7 @@ use log::{debug, info};
 use num::BigUint;
 use rand::{rngs::OsRng, RngCore};
 use sha2::{digest::Digest, Sha512};
-use signature::{Signature, Signer, Verifier};
+use signature::{Signer, Verifier};
 use srp::{
     client::{srp_private_key, SrpClient},
     groups::G_3072,
@@ -81,25 +81,18 @@ impl TlvHandlerExt for PairSetup {
                 Some(method) => match method[0] {
                     x if x == StepNumber::SrpStartRequest as u8 => Ok(Step::Start),
                     x if x == StepNumber::SrpVerifyRequest as u8 => {
-                        let a_pub = decoded
-                            .remove(&(Type::PublicKey as u8))
-                            .ok_or(tlv::ErrorContainer::new(
-                                StepNumber::SrpVerifyResponse as u8,
-                                tlv::Error::Unknown,
-                            ))?;
-                        let a_proof = decoded.remove(&(Type::Proof as u8)).ok_or(tlv::ErrorContainer::new(
-                            StepNumber::SrpVerifyResponse as u8,
-                            tlv::Error::Unknown,
-                        ))?;
+                        let a_pub = decoded.remove(&(Type::PublicKey as u8)).ok_or_else(|| {
+                            tlv::ErrorContainer::new(StepNumber::SrpVerifyResponse as u8, tlv::Error::Unknown)
+                        })?;
+                        let a_proof = decoded.remove(&(Type::Proof as u8)).ok_or_else(|| {
+                            tlv::ErrorContainer::new(StepNumber::SrpVerifyResponse as u8, tlv::Error::Unknown)
+                        })?;
                         Ok(Step::Verify { a_pub, a_proof })
                     },
                     x if x == StepNumber::ExchangeRequest as u8 => {
-                        let data = decoded
-                            .remove(&(Type::EncryptedData as u8))
-                            .ok_or(tlv::ErrorContainer::new(
-                                StepNumber::ExchangeResponse as u8,
-                                tlv::Error::Unknown,
-                            ))?;
+                        let data = decoded.remove(&(Type::EncryptedData as u8)).ok_or_else(|| {
+                            tlv::ErrorContainer::new(StepNumber::ExchangeResponse as u8, tlv::Error::Unknown)
+                        })?;
                         Ok(Step::Exchange { data })
                     },
                     _ => Err(tlv::ErrorContainer::new(StepNumber::Unknown as u8, tlv::Error::Unknown)),
@@ -182,7 +175,7 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
 
     // TODO - respect pairing flags (specification p. 35 - 7.) for split pair setup
 
-    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", &config.lock().await.pin.to_string().as_bytes(), &salt); // x = H(s | H(I | ":" | P))
+    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", config.lock().await.pin.to_string().as_bytes(), &salt); // x = H(s | H(I | ":" | P))
     let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
     let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
 

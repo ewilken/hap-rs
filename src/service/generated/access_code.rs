@@ -33,7 +33,6 @@ pub struct AccessCodeService {
 	pub access_code_supported_configuration: AccessCodeSupportedConfigurationCharacteristic,
 	/// Configuration State characteristic (required).
 	pub configuration_state: ConfigurationStateCharacteristic,
-
 }
 
 impl AccessCodeService {
@@ -42,9 +41,9 @@ impl AccessCodeService {
         Self {
             id,
             hap_type: HapType::AccessCode,
-			access_code_control_point: AccessCodeControlPointCharacteristic::new(id + 1 + 0, accessory_id),
-			access_code_supported_configuration: AccessCodeSupportedConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
-			configuration_state: ConfigurationStateCharacteristic::new(id + 1 + 2, accessory_id),
+			access_code_control_point: AccessCodeControlPointCharacteristic::new(id  + 1, accessory_id),
+			access_code_supported_configuration: AccessCodeSupportedConfigurationCharacteristic::new(id + 1  + 1, accessory_id),
+			configuration_state: ConfigurationStateCharacteristic::new(id + 2  + 1, accessory_id),
 			..Default::default()
         }
     }

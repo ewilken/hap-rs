@@ -64,13 +64,13 @@ impl TlvHandlerExt for Pairings {
                     x if x == HandlerNumber::Add as u8 => {
                         let pairing_id = decoded
                             .remove(&(Type::Identifier as u8))
-                            .ok_or(tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
+                            .ok_or_else(|| tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
                         let ltpk = decoded
                             .remove(&(Type::PublicKey as u8))
-                            .ok_or(tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
+                            .ok_or_else(|| tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
                         let perms = decoded
                             .remove(&(Type::Permissions as u8))
-                            .ok_or(tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
+                            .ok_or_else(|| tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
                         let permissions = Permissions::from_byte(perms[0])
                             .map_err(|_| tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
                         Ok(HandlerType::Add {
@@ -82,7 +82,7 @@ impl TlvHandlerExt for Pairings {
                     x if x == HandlerNumber::Remove as u8 => {
                         let pairing_id = decoded
                             .remove(&(Type::Identifier as u8))
-                            .ok_or(tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
+                            .ok_or_else(|| tlv::ErrorContainer::new(StepNumber::Res as u8, tlv::Error::Unknown))?;
                         Ok(HandlerType::Remove { pairing_id })
                     },
                     x if x == HandlerNumber::List as u8 => Ok(HandlerType::List),
@@ -240,7 +240,7 @@ async fn handle_list(
     let pairings = storage.lock().await.list_pairings().await?;
     let mut list = vec![Value::State(StepNumber::Res as u8)];
     for (i, pairing) in pairings.iter().enumerate() {
-        list.push(Value::Identifier(pairing.id.to_hyphenated().to_string()));
+        list.push(Value::Identifier(pairing.id.hyphenated().to_string()));
         list.push(Value::PublicKey(pairing.public_key.to_vec()));
         list.push(Value::Permissions(pairing.permissions.clone()));
         if i < pairings.len() {
@@ -258,7 +258,7 @@ async fn check_admin(controller_id: &pointer::ControllerId, storage: &pointer::S
         .read()
         .unwrap()
         .deref()
-        .ok_or(tlv::Error::Authentication)?;
+        .ok_or_else(|| tlv::Error::Authentication)?;
     match storage.lock().await.load_pairing(&controller_id).await {
         Err(_) => Err(tlv::Error::Authentication),
         Ok(controller) => match controller.permissions {

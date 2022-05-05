@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{leak_sensor::LeakSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

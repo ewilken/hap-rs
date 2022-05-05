@@ -35,7 +35,6 @@ pub struct LightbulbService {
 
 	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
-
 	/// Brightness characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
 	/// Characteristic Value Active Transition Count characteristic (optional).
@@ -60,15 +59,15 @@ impl LightbulbService {
         Self {
             id,
             hap_type: HapType::Lightbulb,
-			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
-			brightness: Some(BrightnessCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			characteristic_value_active_transition_count: Some(CharacteristicValueActiveTransitionCountCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			characteristic_value_transition_control: Some(CharacteristicValueTransitionControlCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			color_temperature: Some(ColorTemperatureCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
-			hue: Some(HueCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 5 + 1, accessory_id)),
-			saturation: Some(SaturationCharacteristic::new(id + 1 + 6 + 1, accessory_id)),
-			supported_characteristic_value_transition_configuration: Some(SupportedCharacteristicValueTransitionConfigurationCharacteristic::new(id + 1 + 7 + 1, accessory_id)),
+			power_state: PowerStateCharacteristic::new(id  + 1, accessory_id),
+			brightness: Some(BrightnessCharacteristic::new(id + 1  + 1, accessory_id)),
+			characteristic_value_active_transition_count: Some(CharacteristicValueActiveTransitionCountCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			characteristic_value_transition_control: Some(CharacteristicValueTransitionControlCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
+			color_temperature: Some(ColorTemperatureCharacteristic::new(id + 1 + 3  + 1, accessory_id)),
+			hue: Some(HueCharacteristic::new(id + 1 + 4  + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 5  + 1, accessory_id)),
+			saturation: Some(SaturationCharacteristic::new(id + 1 + 6  + 1, accessory_id)),
+			supported_characteristic_value_transition_configuration: Some(SupportedCharacteristicValueTransitionConfigurationCharacteristic::new(id + 1 + 7  + 1, accessory_id)),
 			..Default::default()
         }
     }

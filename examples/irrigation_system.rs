@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{irrigation_system::IrrigationSystemAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

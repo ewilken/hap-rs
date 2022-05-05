@@ -33,7 +33,6 @@ pub struct AssistantService {
 	pub identifier: IdentifierCharacteristic,
 	/// Name characteristic (required).
 	pub name: NameCharacteristic,
-
 }
 
 impl AssistantService {
@@ -42,9 +41,9 @@ impl AssistantService {
         Self {
             id,
             hap_type: HapType::Assistant,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			identifier: IdentifierCharacteristic::new(id + 1 + 1, accessory_id),
-			name: NameCharacteristic::new(id + 1 + 2, accessory_id),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			identifier: IdentifierCharacteristic::new(id + 1  + 1, accessory_id),
+			name: NameCharacteristic::new(id + 2  + 1, accessory_id),
 			..Default::default()
         }
     }

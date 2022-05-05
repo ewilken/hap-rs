@@ -29,7 +29,6 @@ pub struct OutletService {
 
 	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Outlet In Use characteristic (optional).
@@ -42,9 +41,9 @@ impl OutletService {
         Self {
             id,
             hap_type: HapType::Outlet,
-			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			outlet_in_use: Some(OutletInUseCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
+			power_state: PowerStateCharacteristic::new(id  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 1, accessory_id)),
+			outlet_in_use: Some(OutletInUseCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

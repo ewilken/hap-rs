@@ -33,7 +33,6 @@ pub struct CloudRelayService {
 	pub cloud_relay_current_state: CloudRelayCurrentStateCharacteristic,
 	/// Cloud Relay Enable Status characteristic (required).
 	pub cloud_relay_enable_status: CloudRelayEnableStatusCharacteristic,
-
 }
 
 impl CloudRelayService {
@@ -42,9 +41,9 @@ impl CloudRelayService {
         Self {
             id,
             hap_type: HapType::CloudRelay,
-			cloud_relay_control_point: CloudRelayControlPointCharacteristic::new(id + 1 + 0, accessory_id),
-			cloud_relay_current_state: CloudRelayCurrentStateCharacteristic::new(id + 1 + 1, accessory_id),
-			cloud_relay_enable_status: CloudRelayEnableStatusCharacteristic::new(id + 1 + 2, accessory_id),
+			cloud_relay_control_point: CloudRelayControlPointCharacteristic::new(id  + 1, accessory_id),
+			cloud_relay_current_state: CloudRelayCurrentStateCharacteristic::new(id + 1  + 1, accessory_id),
+			cloud_relay_enable_status: CloudRelayEnableStatusCharacteristic::new(id + 2  + 1, accessory_id),
 			..Default::default()
         }
     }

@@ -30,7 +30,6 @@ pub struct AccessoryRuntimeInformationService {
 
 	/// Ping characteristic (required).
 	pub ping: PingCharacteristic,
-
 	/// Activity Interval characteristic (optional).
 	pub activity_interval: Option<ActivityIntervalCharacteristic>,
 	/// Heart Beat characteristic (optional).
@@ -45,10 +44,10 @@ impl AccessoryRuntimeInformationService {
         Self {
             id,
             hap_type: HapType::AccessoryRuntimeInformation,
-			ping: PingCharacteristic::new(id + 1 + 0, accessory_id),
-			activity_interval: Some(ActivityIntervalCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			heart_beat: Some(HeartBeatCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			sleep_interval: Some(SleepIntervalCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			ping: PingCharacteristic::new(id  + 1, accessory_id),
+			activity_interval: Some(ActivityIntervalCharacteristic::new(id + 1  + 1, accessory_id)),
+			heart_beat: Some(HeartBeatCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			sleep_interval: Some(SleepIntervalCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
 			..Default::default()
         }
     }

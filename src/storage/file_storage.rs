@@ -176,7 +176,7 @@ impl Storage for FileStorage {
     async fn delete_aid_cache(&mut self) -> Result<()> { self.remove_file("aid_cache.json").await }
 
     async fn load_pairing(&self, id: &Uuid) -> Result<Pairing> {
-        let key = format!("pairings/{}.json", id.to_string());
+        let key = format!("pairings/{}.json", id);
         let pairing_bytes = self.read_bytes(&key).await?;
 
         let pairing = Pairing::from_bytes(&pairing_bytes)?;
@@ -187,13 +187,13 @@ impl Storage for FileStorage {
     }
 
     async fn save_pairing(&mut self, pairing: &Pairing) -> Result<()> {
-        let key = format!("pairings/{}.json", pairing.id.to_string());
+        let key = format!("pairings/{}.json", pairing.id);
         let pairing_bytes = pairing.as_bytes()?;
         self.write_bytes(&key, pairing_bytes).await
     }
 
     async fn delete_pairing(&mut self, id: &Uuid) -> Result<()> {
-        let key = format!("pairings/{}.json", id.to_string());
+        let key = format!("pairings/{}.json", id);
         self.remove_file(&key).await
     }
 

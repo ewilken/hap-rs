@@ -39,7 +39,6 @@ pub struct ValveService {
 	pub in_use: InUseCharacteristic,
 	/// Valve Type characteristic (required).
 	pub valve_type: ValveTypeCharacteristic,
-
 	/// Is Configured characteristic (optional).
 	pub is_configured: Option<IsConfiguredCharacteristic>,
 	/// Name characteristic (optional).
@@ -60,15 +59,15 @@ impl ValveService {
         Self {
             id,
             hap_type: HapType::Valve,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			in_use: InUseCharacteristic::new(id + 1 + 1, accessory_id),
-			valve_type: ValveTypeCharacteristic::new(id + 1 + 2, accessory_id),
-			is_configured: Some(IsConfiguredCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
-			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
-			label_index: Some(LabelIndexCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
-			set_duration: Some(SetDurationCharacteristic::new(id + 1 + 4 + 3, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 5 + 3, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			in_use: InUseCharacteristic::new(id + 1  + 1, accessory_id),
+			valve_type: ValveTypeCharacteristic::new(id + 2  + 1, accessory_id),
+			is_configured: Some(IsConfiguredCharacteristic::new(id + 1  + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 1  + 3, accessory_id)),
+			remaining_duration: Some(RemainingDurationCharacteristic::new(id + 1 + 2  + 3, accessory_id)),
+			label_index: Some(LabelIndexCharacteristic::new(id + 1 + 3  + 3, accessory_id)),
+			set_duration: Some(SetDurationCharacteristic::new(id + 1 + 4  + 3, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 5  + 3, accessory_id)),
 			..Default::default()
         }
     }

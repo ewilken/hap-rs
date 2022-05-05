@@ -40,7 +40,6 @@ pub struct WindowCoveringService {
 	pub position_state: PositionStateCharacteristic,
 	/// Target Position characteristic (required).
 	pub target_position: TargetPositionCharacteristic,
-
 	/// Current Horizontal Tilt Angle characteristic (optional).
 	pub current_horizontal_tilt_angle: Option<CurrentHorizontalTiltAngleCharacteristic>,
 	/// Target Horizontal Tilt Angle characteristic (optional).
@@ -63,16 +62,16 @@ impl WindowCoveringService {
         Self {
             id,
             hap_type: HapType::WindowCovering,
-			current_position: CurrentPositionCharacteristic::new(id + 1 + 0, accessory_id),
-			position_state: PositionStateCharacteristic::new(id + 1 + 1, accessory_id),
-			target_position: TargetPositionCharacteristic::new(id + 1 + 2, accessory_id),
-			current_horizontal_tilt_angle: Some(CurrentHorizontalTiltAngleCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
-			target_horizontal_tilt_angle: Some(TargetHorizontalTiltAngleCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
-			obstruction_detected: Some(ObstructionDetectedCharacteristic::new(id + 1 + 3 + 3, accessory_id)),
-			hold_position: Some(HoldPositionCharacteristic::new(id + 1 + 4 + 3, accessory_id)),
-			current_vertical_tilt_angle: Some(CurrentVerticalTiltAngleCharacteristic::new(id + 1 + 5 + 3, accessory_id)),
-			target_vertical_tilt_angle: Some(TargetVerticalTiltAngleCharacteristic::new(id + 1 + 6 + 3, accessory_id)),
+			current_position: CurrentPositionCharacteristic::new(id  + 1, accessory_id),
+			position_state: PositionStateCharacteristic::new(id + 1  + 1, accessory_id),
+			target_position: TargetPositionCharacteristic::new(id + 2  + 1, accessory_id),
+			current_horizontal_tilt_angle: Some(CurrentHorizontalTiltAngleCharacteristic::new(id + 1  + 3, accessory_id)),
+			target_horizontal_tilt_angle: Some(TargetHorizontalTiltAngleCharacteristic::new(id + 1 + 1  + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2  + 3, accessory_id)),
+			obstruction_detected: Some(ObstructionDetectedCharacteristic::new(id + 1 + 3  + 3, accessory_id)),
+			hold_position: Some(HoldPositionCharacteristic::new(id + 1 + 4  + 3, accessory_id)),
+			current_vertical_tilt_angle: Some(CurrentVerticalTiltAngleCharacteristic::new(id + 1 + 5  + 3, accessory_id)),
+			target_vertical_tilt_angle: Some(TargetVerticalTiltAngleCharacteristic::new(id + 1 + 6  + 3, accessory_id)),
 			..Default::default()
         }
     }

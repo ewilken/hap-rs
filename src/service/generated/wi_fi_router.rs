@@ -51,7 +51,6 @@ pub struct WiFiRouterService {
 	pub wan_configuration_list: WanConfigurationListCharacteristic,
 	/// WAN Status List characteristic (required).
 	pub wan_status_list: WanStatusListCharacteristic,
-
 }
 
 impl WiFiRouterService {
@@ -60,15 +59,15 @@ impl WiFiRouterService {
         Self {
             id,
             hap_type: HapType::WiFiRouter,
-			configured_name: ConfiguredNameCharacteristic::new(id + 1 + 0, accessory_id),
-			managed_network_enable: ManagedNetworkEnableCharacteristic::new(id + 1 + 1, accessory_id),
-			network_access_violation_control: NetworkAccessViolationControlCharacteristic::new(id + 1 + 2, accessory_id),
-			network_client_control: NetworkClientControlCharacteristic::new(id + 1 + 3, accessory_id),
-			network_client_status_control: NetworkClientStatusControlCharacteristic::new(id + 1 + 4, accessory_id),
-			router_status: RouterStatusCharacteristic::new(id + 1 + 5, accessory_id),
-			supported_router_configuration: SupportedRouterConfigurationCharacteristic::new(id + 1 + 6, accessory_id),
-			wan_configuration_list: WanConfigurationListCharacteristic::new(id + 1 + 7, accessory_id),
-			wan_status_list: WanStatusListCharacteristic::new(id + 1 + 8, accessory_id),
+			configured_name: ConfiguredNameCharacteristic::new(id  + 1, accessory_id),
+			managed_network_enable: ManagedNetworkEnableCharacteristic::new(id + 1  + 1, accessory_id),
+			network_access_violation_control: NetworkAccessViolationControlCharacteristic::new(id + 2  + 1, accessory_id),
+			network_client_control: NetworkClientControlCharacteristic::new(id + 3  + 1, accessory_id),
+			network_client_status_control: NetworkClientStatusControlCharacteristic::new(id + 4  + 1, accessory_id),
+			router_status: RouterStatusCharacteristic::new(id + 5  + 1, accessory_id),
+			supported_router_configuration: SupportedRouterConfigurationCharacteristic::new(id + 6  + 1, accessory_id),
+			wan_configuration_list: WanConfigurationListCharacteristic::new(id + 7  + 1, accessory_id),
+			wan_status_list: WanStatusListCharacteristic::new(id + 8  + 1, accessory_id),
 			..Default::default()
         }
     }

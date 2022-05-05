@@ -35,7 +35,6 @@ pub struct SmartSpeakerService {
 	pub current_media_state: CurrentMediaStateCharacteristic,
 	/// Target Media State characteristic (required).
 	pub target_media_state: TargetMediaStateCharacteristic,
-
 	/// AirPlay Enable characteristic (optional).
 	pub airplay_enable: Option<AirplayEnableCharacteristic>,
 	/// Configured Name characteristic (optional).
@@ -54,13 +53,13 @@ impl SmartSpeakerService {
         Self {
             id,
             hap_type: HapType::SmartSpeaker,
-			current_media_state: CurrentMediaStateCharacteristic::new(id + 1 + 0, accessory_id),
-			target_media_state: TargetMediaStateCharacteristic::new(id + 1 + 1, accessory_id),
-			airplay_enable: Some(AirplayEnableCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			mute: Some(MuteCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
-			volume: Some(VolumeCharacteristic::new(id + 1 + 4 + 2, accessory_id)),
+			current_media_state: CurrentMediaStateCharacteristic::new(id  + 1, accessory_id),
+			target_media_state: TargetMediaStateCharacteristic::new(id + 1  + 1, accessory_id),
+			airplay_enable: Some(AirplayEnableCharacteristic::new(id + 1  + 2, accessory_id)),
+			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 1  + 2, accessory_id)),
+			mute: Some(MuteCharacteristic::new(id + 1 + 2  + 2, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 3  + 2, accessory_id)),
+			volume: Some(VolumeCharacteristic::new(id + 1 + 4  + 2, accessory_id)),
 			..Default::default()
         }
     }

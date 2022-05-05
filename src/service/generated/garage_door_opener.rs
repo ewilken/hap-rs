@@ -36,7 +36,6 @@ pub struct GarageDoorOpenerService {
 	pub target_door_state: TargetDoorStateCharacteristic,
 	/// Obstruction Detected characteristic (required).
 	pub obstruction_detected: ObstructionDetectedCharacteristic,
-
 	/// Lock Current State characteristic (optional).
 	pub lock_current_state: Option<LockCurrentStateCharacteristic>,
 	/// Lock Target State characteristic (optional).
@@ -51,12 +50,12 @@ impl GarageDoorOpenerService {
         Self {
             id,
             hap_type: HapType::GarageDoorOpener,
-			current_door_state: CurrentDoorStateCharacteristic::new(id + 1 + 0, accessory_id),
-			target_door_state: TargetDoorStateCharacteristic::new(id + 1 + 1, accessory_id),
-			obstruction_detected: ObstructionDetectedCharacteristic::new(id + 1 + 2, accessory_id),
-			lock_current_state: Some(LockCurrentStateCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
-			lock_target_state: Some(LockTargetStateCharacteristic::new(id + 1 + 1 + 3, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 2 + 3, accessory_id)),
+			current_door_state: CurrentDoorStateCharacteristic::new(id  + 1, accessory_id),
+			target_door_state: TargetDoorStateCharacteristic::new(id + 1  + 1, accessory_id),
+			obstruction_detected: ObstructionDetectedCharacteristic::new(id + 2  + 1, accessory_id),
+			lock_current_state: Some(LockCurrentStateCharacteristic::new(id + 1  + 3, accessory_id)),
+			lock_target_state: Some(LockTargetStateCharacteristic::new(id + 1 + 1  + 3, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2  + 3, accessory_id)),
 			..Default::default()
         }
     }

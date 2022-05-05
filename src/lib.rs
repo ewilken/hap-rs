@@ -10,7 +10,6 @@ pub use crate::{
     pin::Pin,
     transport::bonjour::{BonjourFeatureFlag, BonjourStatusFlag},
 };
-
 mod config;
 mod error;
 mod event;

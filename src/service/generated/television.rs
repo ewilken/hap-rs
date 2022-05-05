@@ -47,7 +47,6 @@ pub struct TelevisionService {
 	pub remote_key: RemoteKeyCharacteristic,
 	/// Sleep Discovery Mode characteristic (required).
 	pub sleep_discovery_mode: SleepDiscoveryModeCharacteristic,
-
 	/// Brightness characteristic (optional).
 	pub brightness: Option<BrightnessCharacteristic>,
 	/// Closed Captions characteristic (optional).
@@ -72,19 +71,19 @@ impl TelevisionService {
         Self {
             id,
             hap_type: HapType::Television,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			active_identifier: ActiveIdentifierCharacteristic::new(id + 1 + 1, accessory_id),
-			configured_name: ConfiguredNameCharacteristic::new(id + 1 + 2, accessory_id),
-			remote_key: RemoteKeyCharacteristic::new(id + 1 + 3, accessory_id),
-			sleep_discovery_mode: SleepDiscoveryModeCharacteristic::new(id + 1 + 4, accessory_id),
-			brightness: Some(BrightnessCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
-			closed_captions: Some(ClosedCaptionsCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
-			display_order: Some(DisplayOrderCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
-			current_media_state: Some(CurrentMediaStateCharacteristic::new(id + 1 + 3 + 5, accessory_id)),
-			target_media_state: Some(TargetMediaStateCharacteristic::new(id + 1 + 4 + 5, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 5 + 5, accessory_id)),
-			picture_mode: Some(PictureModeCharacteristic::new(id + 1 + 6 + 5, accessory_id)),
-			power_mode_selection: Some(PowerModeSelectionCharacteristic::new(id + 1 + 7 + 5, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			active_identifier: ActiveIdentifierCharacteristic::new(id + 1  + 1, accessory_id),
+			configured_name: ConfiguredNameCharacteristic::new(id + 2  + 1, accessory_id),
+			remote_key: RemoteKeyCharacteristic::new(id + 3  + 1, accessory_id),
+			sleep_discovery_mode: SleepDiscoveryModeCharacteristic::new(id + 4  + 1, accessory_id),
+			brightness: Some(BrightnessCharacteristic::new(id + 1  + 5, accessory_id)),
+			closed_captions: Some(ClosedCaptionsCharacteristic::new(id + 1 + 1  + 5, accessory_id)),
+			display_order: Some(DisplayOrderCharacteristic::new(id + 1 + 2  + 5, accessory_id)),
+			current_media_state: Some(CurrentMediaStateCharacteristic::new(id + 1 + 3  + 5, accessory_id)),
+			target_media_state: Some(TargetMediaStateCharacteristic::new(id + 1 + 4  + 5, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 5  + 5, accessory_id)),
+			picture_mode: Some(PictureModeCharacteristic::new(id + 1 + 6  + 5, accessory_id)),
+			power_mode_selection: Some(PowerModeSelectionCharacteristic::new(id + 1 + 7  + 5, accessory_id)),
 			..Default::default()
         }
     }

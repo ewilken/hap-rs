@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{light_sensor::LightSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

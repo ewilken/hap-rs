@@ -40,7 +40,6 @@ pub struct CameraRecordingManagementService {
 	pub supported_audio_recording_configuration: SupportedAudioRecordingConfigurationCharacteristic,
 	/// Selected Camera Recording Configuration characteristic (required).
 	pub selected_camera_recording_configuration: SelectedCameraRecordingConfigurationCharacteristic,
-
 	/// recording audio active characteristic (optional).
 	pub recording_audio_active: Option<RecordingAudioActiveCharacteristic>,
 }
@@ -51,12 +50,12 @@ impl CameraRecordingManagementService {
         Self {
             id,
             hap_type: HapType::CameraRecordingManagement,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			supported_camera_recording_configuration: SupportedCameraRecordingConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
-			supported_video_recording_configuration: SupportedVideoRecordingConfigurationCharacteristic::new(id + 1 + 2, accessory_id),
-			supported_audio_recording_configuration: SupportedAudioRecordingConfigurationCharacteristic::new(id + 1 + 3, accessory_id),
-			selected_camera_recording_configuration: SelectedCameraRecordingConfigurationCharacteristic::new(id + 1 + 4, accessory_id),
-			recording_audio_active: Some(RecordingAudioActiveCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			supported_camera_recording_configuration: SupportedCameraRecordingConfigurationCharacteristic::new(id + 1  + 1, accessory_id),
+			supported_video_recording_configuration: SupportedVideoRecordingConfigurationCharacteristic::new(id + 2  + 1, accessory_id),
+			supported_audio_recording_configuration: SupportedAudioRecordingConfigurationCharacteristic::new(id + 3  + 1, accessory_id),
+			selected_camera_recording_configuration: SelectedCameraRecordingConfigurationCharacteristic::new(id + 4  + 1, accessory_id),
+			recording_audio_active: Some(RecordingAudioActiveCharacteristic::new(id + 1  + 5, accessory_id)),
 			..Default::default()
         }
     }

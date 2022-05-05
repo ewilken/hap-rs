@@ -47,7 +47,6 @@ pub struct AccessoryInformationService {
 	pub name: NameCharacteristic,
 	/// Serial Number characteristic (required).
 	pub serial_number: SerialNumberCharacteristic,
-
 	/// Accessory Flags characteristic (optional).
 	pub accessory_flags: Option<AccessoryFlagsCharacteristic>,
 	/// Application Matching Identifier characteristic (optional).
@@ -72,19 +71,19 @@ impl AccessoryInformationService {
         Self {
             id,
             hap_type: HapType::AccessoryInformation,
-			identify: IdentifyCharacteristic::new(id + 1 + 0, accessory_id),
-			manufacturer: ManufacturerCharacteristic::new(id + 1 + 1, accessory_id),
-			model: ModelCharacteristic::new(id + 1 + 2, accessory_id),
-			name: NameCharacteristic::new(id + 1 + 3, accessory_id),
-			serial_number: SerialNumberCharacteristic::new(id + 1 + 4, accessory_id),
-			accessory_flags: Some(AccessoryFlagsCharacteristic::new(id + 1 + 0 + 5, accessory_id)),
-			application_matching_identifier: Some(ApplicationMatchingIdentifierCharacteristic::new(id + 1 + 1 + 5, accessory_id)),
-			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 2 + 5, accessory_id)),
-			firmware_revision: Some(FirmwareRevisionCharacteristic::new(id + 1 + 3 + 5, accessory_id)),
-			hardware_finish: Some(HardwareFinishCharacteristic::new(id + 1 + 4 + 5, accessory_id)),
-			hardware_revision: Some(HardwareRevisionCharacteristic::new(id + 1 + 5 + 5, accessory_id)),
-			product_data: Some(ProductDataCharacteristic::new(id + 1 + 6 + 5, accessory_id)),
-			software_revision: Some(SoftwareRevisionCharacteristic::new(id + 1 + 7 + 5, accessory_id)),
+			identify: IdentifyCharacteristic::new(id  + 1, accessory_id),
+			manufacturer: ManufacturerCharacteristic::new(id + 1  + 1, accessory_id),
+			model: ModelCharacteristic::new(id + 2  + 1, accessory_id),
+			name: NameCharacteristic::new(id + 3  + 1, accessory_id),
+			serial_number: SerialNumberCharacteristic::new(id + 4  + 1, accessory_id),
+			accessory_flags: Some(AccessoryFlagsCharacteristic::new(id + 1  + 5, accessory_id)),
+			application_matching_identifier: Some(ApplicationMatchingIdentifierCharacteristic::new(id + 1 + 1  + 5, accessory_id)),
+			configured_name: Some(ConfiguredNameCharacteristic::new(id + 1 + 2  + 5, accessory_id)),
+			firmware_revision: Some(FirmwareRevisionCharacteristic::new(id + 1 + 3  + 5, accessory_id)),
+			hardware_finish: Some(HardwareFinishCharacteristic::new(id + 1 + 4  + 5, accessory_id)),
+			hardware_revision: Some(HardwareRevisionCharacteristic::new(id + 1 + 5  + 5, accessory_id)),
+			product_data: Some(ProductDataCharacteristic::new(id + 1 + 6  + 5, accessory_id)),
+			software_revision: Some(SoftwareRevisionCharacteristic::new(id + 1 + 7  + 5, accessory_id)),
 			..Default::default()
         }
     }

@@ -27,7 +27,6 @@ pub struct WiFiSatelliteService {
 
 	/// Wi-Fi Satellite Status characteristic (required).
 	pub wi_fi_satellite_status: WiFiSatelliteStatusCharacteristic,
-
 }
 
 impl WiFiSatelliteService {
@@ -36,7 +35,7 @@ impl WiFiSatelliteService {
         Self {
             id,
             hap_type: HapType::WiFiSatellite,
-			wi_fi_satellite_status: WiFiSatelliteStatusCharacteristic::new(id + 1 + 0, accessory_id),
+			wi_fi_satellite_status: WiFiSatelliteStatusCharacteristic::new(id  + 1, accessory_id),
 			..Default::default()
         }
     }

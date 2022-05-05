@@ -32,7 +32,6 @@ pub struct LightSensorService {
 
 	/// Current Light Level characteristic (required).
 	pub current_light_level: CurrentLightLevelCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Status Active characteristic (optional).
@@ -51,12 +50,12 @@ impl LightSensorService {
         Self {
             id,
             hap_type: HapType::LightSensor,
-			current_light_level: CurrentLightLevelCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
-			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 4 + 1, accessory_id)),
+			current_light_level: CurrentLightLevelCharacteristic::new(id  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 1, accessory_id)),
+			status_active: Some(StatusActiveCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
+			status_low_battery: Some(StatusLowBatteryCharacteristic::new(id + 1 + 3  + 1, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 4  + 1, accessory_id)),
 			..Default::default()
         }
     }

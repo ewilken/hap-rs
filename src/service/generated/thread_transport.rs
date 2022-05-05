@@ -48,7 +48,6 @@ pub struct ThreadTransportService {
 	pub thread_node_capabilities: ThreadNodeCapabilitiesCharacteristic,
 	/// Thread Status characteristic (required).
 	pub thread_status: ThreadStatusCharacteristic,
-
 	/// CCA Energy Detect Threshold characteristic (optional).
 	pub cca_energy_detect_threshold: Option<CcaEnergyDetectThresholdCharacteristic>,
 	/// CCA Signal Detect Threshold characteristic (optional).
@@ -81,22 +80,22 @@ impl ThreadTransportService {
         Self {
             id,
             hap_type: HapType::ThreadTransport,
-			current_transport: CurrentTransportCharacteristic::new(id + 1 + 0, accessory_id),
-			thread_control_point: ThreadControlPointCharacteristic::new(id + 1 + 1, accessory_id),
-			thread_node_capabilities: ThreadNodeCapabilitiesCharacteristic::new(id + 1 + 2, accessory_id),
-			thread_status: ThreadStatusCharacteristic::new(id + 1 + 3, accessory_id),
-			cca_energy_detect_threshold: Some(CcaEnergyDetectThresholdCharacteristic::new(id + 1 + 0 + 4, accessory_id)),
-			cca_signal_detect_threshold: Some(CcaSignalDetectThresholdCharacteristic::new(id + 1 + 1 + 4, accessory_id)),
-			event_retransmission_maximum: Some(EventRetransmissionMaximumCharacteristic::new(id + 1 + 2 + 4, accessory_id)),
-			event_transmission_counters: Some(EventTransmissionCountersCharacteristic::new(id + 1 + 3 + 4, accessory_id)),
-			mac_retransmission_maximum: Some(MacRetransmissionMaximumCharacteristic::new(id + 1 + 4 + 4, accessory_id)),
-			mac_transmission_counters: Some(MacTransmissionCountersCharacteristic::new(id + 1 + 5 + 4, accessory_id)),
-			receiver_sensitivity: Some(ReceiverSensitivityCharacteristic::new(id + 1 + 6 + 4, accessory_id)),
-			received_signal_strength_indication: Some(ReceivedSignalStrengthIndicationCharacteristic::new(id + 1 + 7 + 4, accessory_id)),
-			signal_to_noise_ratio: Some(SignalToNoiseRatioCharacteristic::new(id + 1 + 8 + 4, accessory_id)),
-			thread_openthread_version: Some(ThreadOpenthreadVersionCharacteristic::new(id + 1 + 9 + 4, accessory_id)),
-			transmit_power: Some(TransmitPowerCharacteristic::new(id + 1 + 10 + 4, accessory_id)),
-			maximum_transmit_power: Some(MaximumTransmitPowerCharacteristic::new(id + 1 + 11 + 4, accessory_id)),
+			current_transport: CurrentTransportCharacteristic::new(id  + 1, accessory_id),
+			thread_control_point: ThreadControlPointCharacteristic::new(id + 1  + 1, accessory_id),
+			thread_node_capabilities: ThreadNodeCapabilitiesCharacteristic::new(id + 2  + 1, accessory_id),
+			thread_status: ThreadStatusCharacteristic::new(id + 3  + 1, accessory_id),
+			cca_energy_detect_threshold: Some(CcaEnergyDetectThresholdCharacteristic::new(id + 1  + 4, accessory_id)),
+			cca_signal_detect_threshold: Some(CcaSignalDetectThresholdCharacteristic::new(id + 1 + 1  + 4, accessory_id)),
+			event_retransmission_maximum: Some(EventRetransmissionMaximumCharacteristic::new(id + 1 + 2  + 4, accessory_id)),
+			event_transmission_counters: Some(EventTransmissionCountersCharacteristic::new(id + 1 + 3  + 4, accessory_id)),
+			mac_retransmission_maximum: Some(MacRetransmissionMaximumCharacteristic::new(id + 1 + 4  + 4, accessory_id)),
+			mac_transmission_counters: Some(MacTransmissionCountersCharacteristic::new(id + 1 + 5  + 4, accessory_id)),
+			receiver_sensitivity: Some(ReceiverSensitivityCharacteristic::new(id + 1 + 6  + 4, accessory_id)),
+			received_signal_strength_indication: Some(ReceivedSignalStrengthIndicationCharacteristic::new(id + 1 + 7  + 4, accessory_id)),
+			signal_to_noise_ratio: Some(SignalToNoiseRatioCharacteristic::new(id + 1 + 8  + 4, accessory_id)),
+			thread_openthread_version: Some(ThreadOpenthreadVersionCharacteristic::new(id + 1 + 9  + 4, accessory_id)),
+			transmit_power: Some(TransmitPowerCharacteristic::new(id + 1 + 10  + 4, accessory_id)),
+			maximum_transmit_power: Some(MaximumTransmitPowerCharacteristic::new(id + 1 + 11  + 4, accessory_id)),
 			..Default::default()
         }
     }

@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{window_covering::WindowCoveringAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

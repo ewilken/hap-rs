@@ -34,7 +34,6 @@ pub struct SecuritySystemService {
 	pub security_system_current_state: SecuritySystemCurrentStateCharacteristic,
 	/// Security System Target State characteristic (required).
 	pub security_system_target_state: SecuritySystemTargetStateCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 	/// Security System Alarm Type characteristic (optional).
@@ -51,12 +50,12 @@ impl SecuritySystemService {
         Self {
             id,
             hap_type: HapType::SecuritySystem,
-			security_system_current_state: SecuritySystemCurrentStateCharacteristic::new(id + 1 + 0, accessory_id),
-			security_system_target_state: SecuritySystemTargetStateCharacteristic::new(id + 1 + 1, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
-			security_system_alarm_type: Some(SecuritySystemAlarmTypeCharacteristic::new(id + 1 + 1 + 2, accessory_id)),
-			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2 + 2, accessory_id)),
-			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 3 + 2, accessory_id)),
+			security_system_current_state: SecuritySystemCurrentStateCharacteristic::new(id  + 1, accessory_id),
+			security_system_target_state: SecuritySystemTargetStateCharacteristic::new(id + 1  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 2, accessory_id)),
+			security_system_alarm_type: Some(SecuritySystemAlarmTypeCharacteristic::new(id + 1 + 1  + 2, accessory_id)),
+			status_fault: Some(StatusFaultCharacteristic::new(id + 1 + 2  + 2, accessory_id)),
+			status_tampered: Some(StatusTamperedCharacteristic::new(id + 1 + 3  + 2, accessory_id)),
 			..Default::default()
         }
     }

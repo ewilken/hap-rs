@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{faucet::FaucetAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

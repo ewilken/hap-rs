@@ -184,17 +184,17 @@ pub struct EncryptedStream {
     missing_data_for_encrypted_buf: bool,
 }
 
+type CreatedEncryptedStream = (
+    EncryptedStream,
+    UnboundedReceiver<Vec<u8>>,
+    UnboundedSender<Vec<u8>>,
+    oneshot::Sender<Session>,
+    Arc<Mutex<Option<Waker>>>,
+    Arc<Mutex<Option<Waker>>>,
+);
+
 impl EncryptedStream {
-    pub fn new(
-        stream: TcpStream,
-    ) -> (
-        EncryptedStream,
-        UnboundedReceiver<Vec<u8>>,
-        UnboundedSender<Vec<u8>>,
-        oneshot::Sender<Session>,
-        Arc<Mutex<Option<Waker>>>,
-        Arc<Mutex<Option<Waker>>>,
-    ) {
+    pub fn new(stream: TcpStream) -> CreatedEncryptedStream {
         let (sender, receiver) = oneshot::channel();
         let (incoming_sender, incoming_receiver) = mpsc::unbounded();
         let (outgoing_sender, outgoing_receiver) = mpsc::unbounded();
@@ -386,7 +386,7 @@ impl EncryptedStream {
                 Poll::Ready(Ok(())) => {
                     let data_filled = data.filled();
 
-                    if data_filled.len() == 0 {
+                    if data_filled.is_empty() {
                         return Poll::Ready(Ok(()));
                     }
 
@@ -505,7 +505,7 @@ fn decrypt_chunk(
 
     let mut buffer = Vec::new();
     buffer.extend_from_slice(data);
-    aead.decrypt_in_place_detached(Nonce::from_slice(&nonce), aad, &mut buffer, Tag::from_slice(&auth_tag))?;
+    aead.decrypt_in_place_detached(Nonce::from_slice(&nonce), aad, &mut buffer, Tag::from_slice(auth_tag))?;
 
     Ok(buffer)
 }

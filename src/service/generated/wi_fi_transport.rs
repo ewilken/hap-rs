@@ -31,7 +31,6 @@ pub struct WiFiTransportService {
 	pub current_transport: CurrentTransportCharacteristic,
 	/// Wi-Fi Capabilities characteristic (required).
 	pub wi_fi_capabilities: WiFiCapabilitiesCharacteristic,
-
 	/// Wi-Fi Configuration Control characteristic (optional).
 	pub wi_fi_configuration_control: Option<WiFiConfigurationControlCharacteristic>,
 }
@@ -42,9 +41,9 @@ impl WiFiTransportService {
         Self {
             id,
             hap_type: HapType::WiFiTransport,
-			current_transport: CurrentTransportCharacteristic::new(id + 1 + 0, accessory_id),
-			wi_fi_capabilities: WiFiCapabilitiesCharacteristic::new(id + 1 + 1, accessory_id),
-			wi_fi_configuration_control: Some(WiFiConfigurationControlCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			current_transport: CurrentTransportCharacteristic::new(id  + 1, accessory_id),
+			wi_fi_capabilities: WiFiCapabilitiesCharacteristic::new(id + 1  + 1, accessory_id),
+			wi_fi_configuration_control: Some(WiFiConfigurationControlCharacteristic::new(id + 1  + 2, accessory_id)),
 			..Default::default()
         }
     }

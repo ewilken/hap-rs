@@ -23,7 +23,7 @@ impl Pairing {
 
     /// Deserializes a [`Pairing`](Pairing) from bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Pairing> {
-        let value = serde_json::from_slice(&bytes)?;
+        let value = serde_json::from_slice(bytes)?;
         Ok(value)
     }
 
@@ -49,7 +49,7 @@ mod tests {
             ],
         };
         assert_eq!(
-            Pairing::from_bytes(&b"{\"id\":\"bc158b86-cabf-432d-aee4-422ef0e3f1d5\",\"permissions\":\"0x01\",\"public_key\":[215,90,152,1,130,177,10,183,213,75,254,211,201,100,7,58,14,225,114,243,218,166,35,37,175,2,26,104,247,7,81,26]}".to_vec()).unwrap(),
+            Pairing::from_bytes(b"{\"id\":\"bc158b86-cabf-432d-aee4-422ef0e3f1d5\",\"permissions\":\"0x01\",\"public_key\":[215,90,152,1,130,177,10,183,213,75,254,211,201,100,7,58,14,225,114,243,218,166,35,37,175,2,26,104,247,7,81,26]}".as_ref()).unwrap(),
             pairing
         );
     }

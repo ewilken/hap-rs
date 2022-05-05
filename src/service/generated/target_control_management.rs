@@ -30,7 +30,6 @@ pub struct TargetControlManagementService {
 	pub supported_target_configuration: SupportedTargetConfigurationCharacteristic,
 	/// Target List Configuration characteristic (required).
 	pub target_list_configuration: TargetListConfigurationCharacteristic,
-
 }
 
 impl TargetControlManagementService {
@@ -39,8 +38,8 @@ impl TargetControlManagementService {
         Self {
             id,
             hap_type: HapType::TargetControlManagement,
-			supported_target_configuration: SupportedTargetConfigurationCharacteristic::new(id + 1 + 0, accessory_id),
-			target_list_configuration: TargetListConfigurationCharacteristic::new(id + 1 + 1, accessory_id),
+			supported_target_configuration: SupportedTargetConfigurationCharacteristic::new(id  + 1, accessory_id),
+			target_list_configuration: TargetListConfigurationCharacteristic::new(id + 1  + 1, accessory_id),
 			..Default::default()
         }
     }

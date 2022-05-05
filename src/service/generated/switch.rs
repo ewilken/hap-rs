@@ -28,7 +28,6 @@ pub struct SwitchService {
 
 	/// Power State characteristic (required).
 	pub power_state: PowerStateCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
@@ -39,8 +38,8 @@ impl SwitchService {
         Self {
             id,
             hap_type: HapType::Switch,
-			power_state: PowerStateCharacteristic::new(id + 1 + 0, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
+			power_state: PowerStateCharacteristic::new(id  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 1, accessory_id)),
 			..Default::default()
         }
     }

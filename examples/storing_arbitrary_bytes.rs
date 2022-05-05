@@ -48,10 +48,7 @@ async fn main() -> Result<()> {
     };
 
     let state = Arc::new(Mutex::new(match storage.load_bytes("state.json").await {
-        Ok(state_bytes) => {
-            let state = serde_json::from_slice(&state_bytes)?;
-            state
-        },
+        Ok(state_bytes) => serde_json::from_slice(&state_bytes)?,
         Err(_) => {
             let state = LightbulbState { power_state: false };
             let state_bytes = serde_json::to_vec(&state)?;

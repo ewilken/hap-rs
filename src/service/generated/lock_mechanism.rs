@@ -31,7 +31,6 @@ pub struct LockMechanismService {
 	pub lock_current_state: LockCurrentStateCharacteristic,
 	/// Lock Target State characteristic (required).
 	pub lock_target_state: LockTargetStateCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
@@ -42,9 +41,9 @@ impl LockMechanismService {
         Self {
             id,
             hap_type: HapType::LockMechanism,
-			lock_current_state: LockCurrentStateCharacteristic::new(id + 1 + 0, accessory_id),
-			lock_target_state: LockTargetStateCharacteristic::new(id + 1 + 1, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 2, accessory_id)),
+			lock_current_state: LockCurrentStateCharacteristic::new(id  + 1, accessory_id),
+			lock_target_state: LockTargetStateCharacteristic::new(id + 1  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 2, accessory_id)),
 			..Default::default()
         }
     }

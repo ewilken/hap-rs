@@ -34,7 +34,6 @@ pub struct TargetControlService {
 	pub active_identifier: ActiveIdentifierCharacteristic,
 	/// Button Event characteristic (required).
 	pub button_event: ButtonEventCharacteristic,
-
 	/// Name characteristic (optional).
 	pub name: Option<NameCharacteristic>,
 }
@@ -45,10 +44,10 @@ impl TargetControlService {
         Self {
             id,
             hap_type: HapType::TargetControl,
-			active: ActiveCharacteristic::new(id + 1 + 0, accessory_id),
-			active_identifier: ActiveIdentifierCharacteristic::new(id + 1 + 1, accessory_id),
-			button_event: ButtonEventCharacteristic::new(id + 1 + 2, accessory_id),
-			name: Some(NameCharacteristic::new(id + 1 + 0 + 3, accessory_id)),
+			active: ActiveCharacteristic::new(id  + 1, accessory_id),
+			active_identifier: ActiveIdentifierCharacteristic::new(id + 1  + 1, accessory_id),
+			button_event: ButtonEventCharacteristic::new(id + 2  + 1, accessory_id),
+			name: Some(NameCharacteristic::new(id + 1  + 3, accessory_id)),
 			..Default::default()
         }
     }

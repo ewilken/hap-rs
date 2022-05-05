@@ -36,7 +36,6 @@ pub struct PairingService {
 	pub pair_verify: PairVerifyCharacteristic,
 	/// Pairing Features characteristic (required).
 	pub pairing_features: PairingFeaturesCharacteristic,
-
 }
 
 impl PairingService {
@@ -45,10 +44,10 @@ impl PairingService {
         Self {
             id,
             hap_type: HapType::Pairing,
-			list_pairings: ListPairingsCharacteristic::new(id + 1 + 0, accessory_id),
-			pair_setup: PairSetupCharacteristic::new(id + 1 + 1, accessory_id),
-			pair_verify: PairVerifyCharacteristic::new(id + 1 + 2, accessory_id),
-			pairing_features: PairingFeaturesCharacteristic::new(id + 1 + 3, accessory_id),
+			list_pairings: ListPairingsCharacteristic::new(id  + 1, accessory_id),
+			pair_setup: PairSetupCharacteristic::new(id + 1  + 1, accessory_id),
+			pair_verify: PairVerifyCharacteristic::new(id + 2  + 1, accessory_id),
+			pairing_features: PairingFeaturesCharacteristic::new(id + 3  + 1, accessory_id),
 			..Default::default()
         }
     }

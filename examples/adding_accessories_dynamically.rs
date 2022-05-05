@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{bridge::BridgeAccessory, lightbulb::LightbulbAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

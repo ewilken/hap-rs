@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{television::TelevisionAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

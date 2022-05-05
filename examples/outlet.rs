@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{outlet::OutletAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

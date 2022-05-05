@@ -30,7 +30,6 @@ pub struct BatteryService {
 
 	/// Status Low Battery characteristic (required).
 	pub status_low_battery: StatusLowBatteryCharacteristic,
-
 	/// Battery Level characteristic (optional).
 	pub battery_level: Option<BatteryLevelCharacteristic>,
 	/// Charging State characteristic (optional).
@@ -45,10 +44,10 @@ impl BatteryService {
         Self {
             id,
             hap_type: HapType::Battery,
-			status_low_battery: StatusLowBatteryCharacteristic::new(id + 1 + 0, accessory_id),
-			battery_level: Some(BatteryLevelCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			charging_state: Some(ChargingStateCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			status_low_battery: StatusLowBatteryCharacteristic::new(id  + 1, accessory_id),
+			battery_level: Some(BatteryLevelCharacteristic::new(id + 1  + 1, accessory_id)),
+			charging_state: Some(ChargingStateCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
 			..Default::default()
         }
     }

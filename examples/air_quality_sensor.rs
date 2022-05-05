@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{air_quality_sensor::AirQualitySensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

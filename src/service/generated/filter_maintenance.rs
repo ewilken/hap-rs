@@ -30,7 +30,6 @@ pub struct FilterMaintenanceService {
 
 	/// Filter Change indication characteristic (required).
 	pub filter_change_indication: FilterChangeIndicationCharacteristic,
-
 	/// Filter Life Level characteristic (optional).
 	pub filter_life_level: Option<FilterLifeLevelCharacteristic>,
 	/// Filter Reset Change Indication characteristic (optional).
@@ -45,10 +44,10 @@ impl FilterMaintenanceService {
         Self {
             id,
             hap_type: HapType::FilterMaintenance,
-			filter_change_indication: FilterChangeIndicationCharacteristic::new(id + 1 + 0, accessory_id),
-			filter_life_level: Some(FilterLifeLevelCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			filter_reset_change_indication: Some(FilterResetChangeIndicationCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			name: Some(NameCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
+			filter_change_indication: FilterChangeIndicationCharacteristic::new(id  + 1, accessory_id),
+			filter_life_level: Some(FilterLifeLevelCharacteristic::new(id + 1  + 1, accessory_id)),
+			filter_reset_change_indication: Some(FilterResetChangeIndicationCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			name: Some(NameCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
 			..Default::default()
         }
     }

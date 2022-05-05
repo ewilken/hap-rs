@@ -2,7 +2,6 @@ use serde::{
     ser::{SerializeStruct, Serializer},
     Serialize,
 };
-use tokio;
 
 use hap::{
     accessory::{AccessoryCategory, AccessoryInformation, HapAccessory},

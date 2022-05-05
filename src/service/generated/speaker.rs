@@ -31,7 +31,6 @@ pub struct SpeakerService {
 
 	/// Mute characteristic (required).
 	pub mute: MuteCharacteristic,
-
 	/// Active characteristic (optional).
 	pub active: Option<ActiveCharacteristic>,
 	/// Volume characteristic (optional).
@@ -48,11 +47,11 @@ impl SpeakerService {
         Self {
             id,
             hap_type: HapType::Speaker,
-			mute: MuteCharacteristic::new(id + 1 + 0, accessory_id),
-			active: Some(ActiveCharacteristic::new(id + 1 + 0 + 1, accessory_id)),
-			volume: Some(VolumeCharacteristic::new(id + 1 + 1 + 1, accessory_id)),
-			volume_control_type: Some(VolumeControlTypeCharacteristic::new(id + 1 + 2 + 1, accessory_id)),
-			volume_selector: Some(VolumeSelectorCharacteristic::new(id + 1 + 3 + 1, accessory_id)),
+			mute: MuteCharacteristic::new(id  + 1, accessory_id),
+			active: Some(ActiveCharacteristic::new(id + 1  + 1, accessory_id)),
+			volume: Some(VolumeCharacteristic::new(id + 1 + 1  + 1, accessory_id)),
+			volume_control_type: Some(VolumeControlTypeCharacteristic::new(id + 1 + 2  + 1, accessory_id)),
+			volume_selector: Some(VolumeSelectorCharacteristic::new(id + 1 + 3  + 1, accessory_id)),
 			..Default::default()
         }
     }
