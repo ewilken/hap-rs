@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{occupancy_sensor::OccupancySensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

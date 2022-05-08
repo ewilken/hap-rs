@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{fan_v2::FanV2Accessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

@@ -240,7 +240,7 @@ async fn handle_list(
     let pairings = storage.lock().await.list_pairings().await?;
     let mut list = vec![Value::State(StepNumber::Res as u8)];
     for (i, pairing) in pairings.iter().enumerate() {
-        list.push(Value::Identifier(pairing.id.to_hyphenated().to_string()));
+        list.push(Value::Identifier(pairing.id.hyphenated().to_string()));
         list.push(Value::PublicKey(pairing.public_key.to_vec()));
         list.push(Value::Permissions(pairing.permissions.clone()));
         if i < pairings.len() {

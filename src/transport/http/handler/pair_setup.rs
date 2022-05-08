@@ -4,15 +4,10 @@ use futures::future::{BoxFuture, FutureExt};
 use hyper::{body::Buf, Body};
 use log::{debug, info};
 use num::BigUint;
-use rand::{rngs::OsRng, RngCore};
+use rand_core::{OsRng, RngCore};
 use sha2::{digest::Digest, Sha512};
-use signature::{Signature, Signer, Verifier};
-use srp::{
-    client::{srp_private_key, SrpClient},
-    groups::G_3072,
-    server::{SrpServer, UserRecord},
-    types::SrpGroup,
-};
+use signature::{Signer, Verifier};
+use srp::{groups::G_3072, server::SrpServer, types::SrpGroup};
 use std::{ops::BitXor, str};
 use uuid::Uuid;
 
@@ -26,7 +21,6 @@ use crate::{
 
 struct Session {
     salt: [u8; 16],
-    verifier: Vec<u8>,
     b: [u8; 64],
     b_pub: Vec<u8>,
     shared_secret: Option<Vec<u8>>,
@@ -175,28 +169,18 @@ async fn handle_start(handler: &mut PairSetup, config: pointer::Config) -> Resul
     // kTLVType_Error <kTLVError_Busy>
 
     let mut csprng = OsRng {};
-    let mut salt = [0; 16]; // s
-    let mut b = [0; 64];
+    let mut salt = [0u8; 16]; // s
+    let mut b = [0u8; 64];
     csprng.fill_bytes(&mut salt);
     csprng.fill_bytes(&mut b);
 
     // TODO - respect pairing flags (specification p. 35 - 7.) for split pair setup
 
-    let private_key = srp_private_key::<Sha512>(b"Pair-Setup", &config.lock().await.pin.to_string().as_bytes(), &salt); // x = H(s | H(I | ":" | P))
-    let srp_client = SrpClient::<Sha512>::new(&private_key, &G_3072);
-    let verifier = srp_client.get_password_verifier(&private_key); // v = g^x
-
-    let user = UserRecord {
-        username: b"Pair-Setup",
-        salt: &salt,
-        verifier: &verifier,
-    };
-    let srp_server = SrpServer::<Sha512>::new(&user, b"foo", &b, &G_3072)?;
-    let b_pub = srp_server.get_b_pub();
+    let srp_server = SrpServer::<Sha512>::new(&G_3072);
+    let b_pub = srp_server.compute_public_ephemeral(&b, b"Pair-Setup");
 
     handler.session = Some(Session {
         salt,
-        verifier,
         b,
         b_pub: b_pub.clone(),
         shared_secret: None,
@@ -217,24 +201,22 @@ async fn handle_verify(handler: &mut PairSetup, a_pub: &[u8], a_proof: &[u8]) ->
     match handler.session {
         None => Err(tlv::Error::Unknown),
         Some(ref mut session) => {
-            let user = UserRecord {
-                username: b"Pair-Setup",
-                salt: &session.salt,
-                verifier: &session.verifier,
-            };
-            let srp_server = SrpServer::<Sha512>::new(&user, a_pub, &session.b, &G_3072)?;
-            let shared_secret = srp_server.get_key();
+            let srp_server = SrpServer::<Sha512>::new(&G_3072);
+
+            let verifier = srp_server.process_reply(&session.b, b"Pair-Setup", &a_pub)?;
+
+            verifier.verify_client(a_proof)?;
+
+            let shared_secret = verifier.key();
+            let b_proof = verifier.proof();
 
             session.shared_secret = Some(shared_secret.to_vec());
-
-            let b_proof =
-                verify_client_proof::<Sha512>(&session.b_pub, a_pub, a_proof, &session.salt, &shared_secret, &G_3072)?;
 
             info!("pair setup M4: sending SRP verify response");
 
             Ok(vec![
                 Value::State(StepNumber::SrpVerifyResponse as u8),
-                Value::Proof(b_proof),
+                Value::Proof(b_proof.to_vec()),
             ])
         },
     }

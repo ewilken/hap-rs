@@ -1,6 +1,6 @@
 [package]
 name = "hap"
-version = "0.1.0-pre.14"
+version = "0.1.0"
 authors = ["Elias Wilken <elias@wlkn.io>"]
 edition = "2021"
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
@@ -25,37 +25,37 @@ aead = "0.4"
 async-trait = "0.1"
 byteorder = "1.3"
 bytes = "1.0"
-chacha20poly1305 = "0.8"
+chacha20poly1305 = "0.9"
 ed25519-dalek = { version = "1.0", features = ["std", "serde"] }
 erased-serde = "0.3"
 eui48 = { version = "1.0", features = ["serde"] }
 futures = "0.3"
 get_if_addrs = "0.5"
-hkdf = "0.11"
+hkdf = "0.12"
 hyper = { version = "0.14", features = ["server", "http1"] }
-libmdns = "0.6"
+libmdns = "0.7"
 log = "0.4"
-num = "0.2"
-rand = "0.7"
+num = "0.4"
+rand_core = "0.5" # has to stay on 0.5 for now due to outdated x25519-dalek dependency
 serde = { version = "1.0", features = ["rc", "derive"] }
 serde_json = "1.0"
-sha2 = "0.9"
+sha2 = "0.10"
 signature = "1.1"
-srp = "0.5"
+srp = "0.6"
 thiserror = "1.0"
 tokio = "1.8"
 url = "2.1"
-uuid = { version = "0.8", features = ["v4", "serde"] }
-x25519-dalek = "0.6"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+x25519-dalek = "1.2"
 
 [build-dependencies]
-handlebars = "2.0"
+handlebars = "4.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-uuid = { version = "0.8", features = ["v4", "serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
 
 [dev-dependencies]
-env_logger = "0.8"
+env_logger = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.8", features = ["rt-multi-thread", "time", "macros"] }
 

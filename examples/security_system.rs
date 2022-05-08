@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{security_system::SecuritySystemAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

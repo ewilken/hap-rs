@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{contact_sensor::ContactSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

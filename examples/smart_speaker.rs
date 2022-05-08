@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{smart_speaker::SmartSpeakerAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

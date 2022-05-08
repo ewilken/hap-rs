@@ -1,6 +1,6 @@
 use ed25519_dalek::Keypair as Ed25519Keypair;
 use eui48::MacAddress;
-use rand::{rngs::OsRng, Rng};
+use rand_core::{OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 
@@ -111,8 +111,8 @@ impl Default for Config {
 
 /// Generates a random MAC address.
 fn generate_random_mac_address() -> MacAddress {
-    let mut csprng = OsRng {};
-    let eui = csprng.gen::<[u8; 6]>();
+    let mut eui = [0u8; 6];
+    OsRng.fill_bytes(&mut eui);
     MacAddress::new(eui)
 }
 

@@ -6,8 +6,8 @@ use futures::{
 };
 use hyper::{body::Buf, Body};
 use log::{debug, info};
-use rand::rngs::OsRng;
-use signature::{Signature, Signer, Verifier};
+use rand_core::OsRng;
+use signature::{Signer, Verifier};
 use std::str;
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
@@ -131,8 +131,7 @@ async fn handle_start(
     a_pub.copy_from_slice(bytes);
     let a_pub = PublicKey::from(a_pub);
 
-    let mut csprng = OsRng {};
-    let b = EphemeralSecret::new(&mut csprng);
+    let b = EphemeralSecret::new(OsRng);
     let b_pub = PublicKey::from(&b);
     let shared_secret = b.diffie_hellman(&a_pub);
 

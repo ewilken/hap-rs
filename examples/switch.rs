@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{switch::SwitchAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

@@ -1,6 +1,6 @@
 [package]
 name = "hap-codegen"
-version = "0.1.0-pre.14"
+version = "0.1.0"
 authors = ["Elias Wilken <elias@wlkn.io>"]
 edition = "2021"
 description = "Rust implementation of the Apple HomeKit Accessory Protocol (HAP)"
@@ -12,7 +12,7 @@ keywords = ["apple", "homekit"]
 publish = false
 
 [dependencies]
-handlebars = "2.0"
+handlebars = "4.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-uuid = { version = "0.8", features = ["v4", "serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }

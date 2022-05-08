@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{temperature_sensor::TemperatureSensorAccessory, AccessoryCategory, AccessoryInformation},
     server::{IpServer, Server},

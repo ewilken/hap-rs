@@ -1,5 +1,3 @@
-use tokio;
-
 use hap::{
     accessory::{
         stateless_programmable_switch::StatelessProgrammableSwitchAccessory,
