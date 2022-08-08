@@ -7,7 +7,7 @@ use futures::{
 use hyper::{body::Buf, Body};
 use log::{debug, info};
 use rand::rngs::OsRng;
-use signature::{Signature, Signer, Verifier};
+use signature::{Signer, Verifier};
 use std::str;
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
