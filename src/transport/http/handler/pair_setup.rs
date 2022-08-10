@@ -6,7 +6,7 @@ use log::{debug, info};
 use num::BigUint;
 use rand::{rngs::OsRng, RngCore};
 use sha2::{digest::Digest, Sha512};
-use signature::{Signature, Signer, Verifier};
+use signature::{ Signer, Verifier};
 use srp::{
     client::{srp_private_key, SrpClient},
     groups::G_3072,
