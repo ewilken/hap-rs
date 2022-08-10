@@ -6,7 +6,7 @@ use log::{debug, info};
 use num::BigUint;
 use rand::{rngs::OsRng, RngCore};
 use sha2::{digest::Digest, Sha512};
-use signature::{Signature, Signer, Verifier};
+use signature::{Signer, Verifier};
 use srp::{
     client::{srp_private_key, SrpClient},
     groups::G_3072,
@@ -465,10 +465,13 @@ mod tests {
 
         let b_proof = verify_client_proof::<Sha512>(&b_pub, &a_pub, &a_proof, &salt, &shared_secret, &G_3072).unwrap();
 
-        assert_eq!(b_proof, vec![
-            53, 222, 231, 209, 7, 123, 202, 208, 135, 119, 183, 90, 79, 154, 55, 155, 63, 56, 215, 210, 4, 20, 229,
-            119, 234, 168, 107, 137, 48, 172, 180, 244, 184, 142, 170, 120, 188, 106, 94, 135, 122, 4, 211, 21, 190,
-            26, 121, 180, 13, 192, 173, 246, 172, 223, 161, 192, 52, 251, 187, 66, 52, 170, 18, 85
-        ]);
+        assert_eq!(
+            b_proof,
+            vec![
+                53, 222, 231, 209, 7, 123, 202, 208, 135, 119, 183, 90, 79, 154, 55, 155, 63, 56, 215, 210, 4, 20, 229,
+                119, 234, 168, 107, 137, 48, 172, 180, 244, 184, 142, 170, 120, 188, 106, 94, 135, 122, 4, 211, 21,
+                190, 26, 121, 180, 13, 192, 173, 246, 172, 223, 161, 192, 52, 251, 187, 66, 52, 170, 18, 85
+            ]
+        );
     }
 }
