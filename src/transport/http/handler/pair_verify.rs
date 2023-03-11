@@ -137,7 +137,7 @@ async fn handle_start(
     let shared_secret = b.diffie_hellman(&a_pub);
 
     let config = config.lock().await;
-    let device_id = config.device_id.to_hex_string();
+    let device_id = config.device_id.to_string();
 
     let mut accessory_info: Vec<u8> = Vec::new();
     accessory_info.extend(b_pub.as_bytes());

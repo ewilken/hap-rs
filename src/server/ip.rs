@@ -65,7 +65,7 @@ impl IpServer {
     ///             let config = Config {
     ///                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
     ///                 name: "Acme Lightbulb".into(),
-    ///                 device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+    ///                 device_id: MacAddress::from([10, 20, 30, 40, 50, 60]),
     ///                 category: AccessoryCategory::Lightbulb,
     ///                 ..Default::default()
     ///             };

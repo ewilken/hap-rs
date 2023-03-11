@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
                 name: "Acme Sensor".into(),
-                device_id: MacAddress::new([10, 20, 30, 40, 50, 63]),
+                device_id: MacAddress::from([10, 20, 30, 40, 50, 63]),
                 category: AccessoryCategory::Sensor,
                 ..Default::default()
             };

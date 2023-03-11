@@ -1,11 +1,7 @@
 use tokio;
 
 use hap::{
-    accessory::{
-        stateful_programmable_switch::StatefulProgrammableSwitchAccessory,
-        AccessoryCategory,
-        AccessoryInformation,
-    },
+    accessory::{AccessoryCategory, AccessoryInformation, stateful_programmable_switch::StatefulProgrammableSwitchAccessory},
     server::{IpServer, Server},
     storage::{FileStorage, Storage},
     Config,
@@ -33,7 +29,7 @@ async fn main() -> Result<()> {
             let config = Config {
                 pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3])?,
                 name: "Acme Stateful Programmable Switch".into(),
-                device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+                device_id: MacAddress::from([10, 20, 30, 40, 50, 60]),
                 category: AccessoryCategory::ProgrammableSwitch,
                 ..Default::default()
             };
