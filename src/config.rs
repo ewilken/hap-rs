@@ -1,5 +1,6 @@
 use ed25519_dalek::Keypair as Ed25519Keypair;
-use eui48::MacAddress;
+//use eui48::MacAddress;
+use macaddr::MacAddr6 as MacAddress;
 use rand::{rngs::OsRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
@@ -16,7 +17,7 @@ use crate::{accessory::AccessoryCategory, BonjourFeatureFlag, BonjourStatusFlag,
 /// let config = Config {
 ///     pin: Pin::new([1, 1, 1, 2, 2, 3, 3, 3]).unwrap(),
 ///     name: "Acme Lightbulb".into(),
-///     device_id: MacAddress::new([10, 20, 30, 40, 50, 60]),
+///     device_id: MacAddress::from([10, 20, 30, 40, 50, 60]),
 ///     category: AccessoryCategory::Lightbulb,
 ///     ..Default::default()
 /// };
@@ -78,7 +79,7 @@ impl Config {
         [
             format!("c#={}", self.configuration_number),
             format!("ff={}", self.feature_flag as u8),
-            format!("id={}", self.device_id.to_hex_string()),
+            format!("id={}", self.device_id.to_string()),
             format!("md={}", self.name),
             format!("pv={}", self.protocol_version),
             format!("s#={}", self.state_number),
@@ -113,7 +114,7 @@ impl Default for Config {
 fn generate_random_mac_address() -> MacAddress {
     let mut csprng = OsRng {};
     let eui = csprng.gen::<[u8; 6]>();
-    MacAddress::new(eui)
+    MacAddress::from(eui)
 }
 
 /// Generates an Ed25519 keypair.

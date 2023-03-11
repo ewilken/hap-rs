@@ -56,7 +56,7 @@ pub enum Error {
     #[error("UTF-8 Error: {0}")]
     Utf8(#[from] str::Utf8Error),
     #[error("Parse EUI-48 Error: {0}")]
-    ParseEui48(#[from] eui48::ParseError),
+    ParseEui48(#[from] macaddr::ParseError),
     #[error("Parse Int Error: {0}")]
     ParseInt(#[from] num::ParseIntError),
     #[error("MPSC Send Error: {0}")]
