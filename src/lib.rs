@@ -1,7 +1,6 @@
 pub use ed25519_dalek::Keypair as Ed25519Keypair;
-//pub use eui48::MacAddress;
-pub use macaddr::MacAddr6 as MacAddress;
 pub use futures;
+pub use macaddr::MacAddr6 as MacAddress;
 pub use serde_json;
 
 pub use crate::{
