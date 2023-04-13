@@ -27,9 +27,6 @@ impl HeaterCoolerAccessory {
         let mut heater_cooler = HeaterCoolerService::new(1 + heater_cooler_id + 1, id);
         heater_cooler.set_primary(true);
 
-        // for some reason, the controller expects `cooling_threshold_temperature` to be `None`
-        heater_cooler.cooling_threshold_temperature = None;
-
         Ok(Self {
             id,
             accessory_information,
