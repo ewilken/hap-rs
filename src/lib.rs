@@ -1,4 +1,4 @@
-pub use ed25519_dalek::Keypair as Ed25519Keypair;
+pub use ed25519_dalek::SigningKey as Ed25519Keypair;
 pub use futures;
 pub use macaddr::MacAddr6 as MacAddress;
 pub use serde_json;

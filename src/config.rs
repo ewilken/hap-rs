@@ -1,6 +1,6 @@
-use ed25519_dalek::Keypair as Ed25519Keypair;
-//use eui48::MacAddress;
+use crate::Ed25519Keypair;
 use macaddr::MacAddr6 as MacAddress;
+
 use rand::{rngs::OsRng, Rng};
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
@@ -120,15 +120,18 @@ fn generate_random_mac_address() -> MacAddress {
 /// Generates an Ed25519 keypair.
 fn generate_ed25519_keypair() -> Ed25519Keypair {
     let mut csprng = OsRng {};
-    Ed25519Keypair::generate(&mut csprng)
+    todo!()
+    //Ed25519Keypair::generate(&mut csprng)
 }
 
 /// Returns the IP of the system's first non-loopback network interface or defaults to `127.0.0.1`.
 fn get_local_ip() -> IpAddr {
+#[cfg(get_if_addrs)]
     for iface in get_if_addrs::get_if_addrs().unwrap() {
         if !iface.is_loopback() {
             return iface.ip();
         }
     }
+#[cfg(not(get_if_addrs))]
     "127.0.0.1".parse().unwrap()
 }

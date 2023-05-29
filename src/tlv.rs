@@ -240,8 +240,8 @@ impl From<SrpAuthError> for Error {
     }
 }
 
-impl From<aead::Error> for Error {
-    fn from(err: aead::Error) -> Self {
+impl From<chacha20poly1305::Error> for Error {
+    fn from(err: chacha20poly1305::Error) -> Self {
         error!("{:?}", err);
         Error::Authentication
     }

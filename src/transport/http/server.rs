@@ -11,7 +11,7 @@ use std::{
     sync::Arc,
     task::{Context, Poll},
 };
-use tokio::net::TcpListener;
+use std::net::TcpListener;
 
 use crate::{
     event::Event,
@@ -186,12 +186,12 @@ impl Server {
             drop(config_lock);
 
             info!("binding TCP listener on {}", &socket_addr);
-            let listener = TcpListener::bind(socket_addr).await?;
+            let listener = TcpListener::bind(socket_addr)?;
 
             mdns_responder.lock().await.update_records().await;
 
             loop {
-                let (stream, _socket_addr) = listener.accept().await?;
+                let (stream, _socket_addr) = listener.accept()?;
 
                 debug!("incoming TCP stream from {}", stream.peer_addr()?);
 
@@ -255,7 +255,7 @@ impl Server {
                 http.http1_keep_alive(true);
                 http.http1_preserve_header_case(true);
 
-                tokio::spawn(encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()));
+                //tokio::spawn(encrypted_stream.map_err(|e| error!("{:?}", e)).map(|_| ()));
                 tokio::spawn(
                     http.serve_connection(stream_wrapper, api)
                         .map_err(|e| error!("{:?}", e))

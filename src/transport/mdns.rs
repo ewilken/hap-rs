@@ -1,4 +1,13 @@
-use libmdns::{Responder, Service};
+
+cfg_if::cfg_if! {
+    if #[cfg(libmdns)] {
+        use libmdns::{Responder, Service};
+    } else {
+        type Responder = ();
+        type Service= ();
+    }
+}
+
 use log::debug;
 
 use crate::pointer;
@@ -14,7 +23,14 @@ pub struct MdnsResponder {
 impl MdnsResponder {
     /// Creates a new mDNS Responder.
     pub async fn new(config: pointer::Config) -> Self {
-        let (responder, task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
+        cfg_if::cfg_if! {
+            if #[cfg(libmdns)] {
+                let (responder, task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
+            } else {
+                let (responder, task) = todo!();
+            }
+        }
+
 
         MdnsResponder {
             config,
@@ -38,9 +54,12 @@ impl MdnsResponder {
 
         drop(c);
 
+        todo!();
+        /*
         self.service = Some(self.responder.register("_hap._tcp".into(), name, port, &[
             &tr[0], &tr[1], &tr[2], &tr[3], &tr[4], &tr[5], &tr[6], &tr[7],
         ]));
+        */
 
         debug!("setting mDNS records: {:?}", &tr);
     }
@@ -51,7 +70,14 @@ impl MdnsResponder {
             Some(task) => task,
             // if the task handle is gone, recreate the whole responder
             None => {
-                let (responder, task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
+                cfg_if::cfg_if! {
+                    if #[cfg(libmdns)] {
+                        let (responder, task) = libmdns::Responder::with_default_handle().expect("creating mDNS responder");
+
+                    } else {
+                        let (responder, task) = todo!();
+                    }
+                }
                 self.responder = responder;
 
                 task

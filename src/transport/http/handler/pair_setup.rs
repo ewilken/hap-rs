@@ -1,12 +1,18 @@
-use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
-use chacha20poly1305::ChaCha20Poly1305;
+use aead::{generic_array::GenericArray};
+use chacha20poly1305::{
+    ChaCha20Poly1305,
+    KeyInit,
+    AeadInPlace,
+};
 use futures::future::{BoxFuture, FutureExt};
-use hyper::{body::Buf, Body};
 use log::{debug, info};
 use num::BigUint;
+
+use hyper::{body::Buf, Body};
 use rand::{rngs::OsRng, RngCore};
+
 use sha2::{digest::Digest, Sha512};
-use signature::{Signer, Verifier};
+use ed25519_dalek::{Signer, Verifier};
 use srp::{
     client::{srp_private_key, SrpClient},
     groups::G_3072,
@@ -276,12 +282,25 @@ async fn handle_exchange(
 
                 let sub_tlv = tlv::decode(&decrypted_data);
                 let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
-                let device_ltpk = ed25519_dalek::PublicKey::from_bytes(
-                    sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?,
+
+                let device_ltpk = ed25519_dalek::VerifyingKey::from_bytes(
+                    &TryInto::<[u8; 32]>::try_into(
+                        sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?.clone(),
+                    ).map_err(|_| tlv::Error::Unknown)?
                 )?;
+                /*
+                let device_ltpk = x25519_dalek::PublicKey::from(
+                    TryInto::<[u8; 32]>::try_into(
+                        sub_tlv.get(&(Type::PublicKey as u8)).ok_or(tlv::Error::Unknown)?.clone(),
+                    ).map_err(|_| tlv::Error::Unknown)?
+                );
+                */
+
                 let device_signature = ed25519_dalek::Signature::from_bytes(
-                    sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
-                )?;
+                    &TryInto::<[u8; 64]>::try_into(
+                        sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?.clone()
+                    ).map_err(|_| tlv::Error::Unknown)?
+                );
 
                 let device_x = hkdf_extract_and_expand(
                     b"Pair-Setup-Controller-Sign-Salt",
@@ -326,12 +345,12 @@ async fn handle_exchange(
                 let mut accessory_info: Vec<u8> = Vec::new();
                 accessory_info.extend(&accessory_x);
                 accessory_info.extend(device_id.as_bytes());
-                accessory_info.extend(config.device_ed25519_keypair.public.as_bytes());
+                accessory_info.extend(config.device_ed25519_keypair.verifying_key().as_bytes());
                 let accessory_signature = config.device_ed25519_keypair.sign(&accessory_info);
 
                 let encoded_sub_tlv = vec![
                     Value::Identifier(device_id),
-                    Value::PublicKey(config.device_ed25519_keypair.public.as_bytes().to_vec()),
+                    Value::PublicKey(config.device_ed25519_keypair.verifying_key().as_bytes().to_vec()),
                     Value::Signature(accessory_signature.to_bytes().to_vec()),
                 ]
                 .encode();

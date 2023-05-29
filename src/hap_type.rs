@@ -322,7 +322,7 @@ impl ToString for HapType {
     fn to_string(&self) -> String {
         match self {
             HapType::Unknown => "unknown".into(),
-            HapType::Custom(uuid) => uuid.to_hyphenated().to_string(),
+            HapType::Custom(uuid) => uuid.hyphenated().to_string(),
 			HapType::AccessCodeControlPoint => "262".into(),
 			HapType::AccessCodeSupportedConfiguration => "261".into(),
 			HapType::AccessControlLevel => "E5".into(),
