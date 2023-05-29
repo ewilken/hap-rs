@@ -1,7 +1,7 @@
-use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
+use aead::generic_array::GenericArray;
 use byteorder::{ByteOrder, LittleEndian};
 use bytes::{Buf, BytesMut};
-use chacha20poly1305::{ChaCha20Poly1305, Nonce, Tag};
+use chacha20poly1305::{ChaCha20Poly1305, Nonce, Tag, KeyInit, AeadInPlace};
 use futures::{
     channel::{
         mpsc::{self, UnboundedReceiver, UnboundedSender},
@@ -19,10 +19,8 @@ use std::{
     sync::{Arc, Mutex, RwLock},
     task::{Context, Poll, Waker},
 };
-use tokio::{
-    io::{AsyncRead, AsyncWrite, ReadBuf},
-    net::TcpStream,
-};
+use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
+use std::net::TcpStream;
 use uuid::Uuid;
 
 use crate::Result;
@@ -278,6 +276,7 @@ impl EncryptedStream {
         Poll::Pending
     }
 
+    /*
     fn read_stream(&mut self, cx: &mut Context, buf: &mut ReadBuf) -> Poll<std::result::Result<(), io::Error>> {
         debug!("reading from TCP stream");
 
@@ -329,7 +328,9 @@ impl EncryptedStream {
             }
         }
     }
+    */
 
+    /*
     fn poll_outgoing(self: Pin<&mut Self>, cx: &mut Context) -> Poll<std::result::Result<(), io::Error>> {
         let encrypted_stream = Pin::into_inner(self);
         loop {
@@ -360,7 +361,9 @@ impl EncryptedStream {
             }
         }
     }
+    */
 
+    /*
     fn poll_incoming(self: Pin<&mut Self>, cx: &mut Context) -> Poll<std::result::Result<(), io::Error>> {
         let encrypted_stream = Pin::into_inner(self);
 
@@ -400,8 +403,10 @@ impl EncryptedStream {
             }
         }
     }
+    */
 }
 
+/*
 impl Future for EncryptedStream {
     type Output = std::result::Result<(), io::Error>;
 
@@ -412,7 +417,8 @@ impl Future for EncryptedStream {
         EncryptedStream::poll_incoming(Pin::new(encrypted_stream), cx)
     }
 }
-
+*/
+/*
 impl AsyncRead for EncryptedStream {
     fn poll_read(
         self: Pin<&mut Self>,
@@ -445,7 +451,9 @@ impl AsyncRead for EncryptedStream {
         }
     }
 }
+*/
 
+/*
 impl AsyncWrite for EncryptedStream {
     #[allow(unused_must_use)]
     fn poll_write(self: Pin<&mut Self>, cx: &mut Context, buf: &[u8]) -> Poll<std::result::Result<usize, Error>> {
@@ -486,6 +494,7 @@ impl AsyncWrite for EncryptedStream {
         Poll::Ready(Ok(()))
     }
 }
+*/
 
 fn decrypt_chunk(
     shared_secret: &[u8; 32],

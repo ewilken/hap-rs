@@ -49,8 +49,10 @@ pub enum Error {
     Hyper(#[from] hyper::Error),
     #[error("Task Join Error: {0}")]
     TaskJoin(#[from] tokio::task::JoinError),
-    #[error("AEAD Error")]
-    Aead,
+
+    #[error("Chacha Error")]
+    Chacha,
+
     #[error("HKDF Invalid Length Error")]
     HkdfInvalidLength,
     #[error("UTF-8 Error: {0}")]
@@ -63,6 +65,6 @@ pub enum Error {
     MpscSend(#[from] mpsc::SendError<()>),
 }
 
-impl From<aead::Error> for Error {
-    fn from(_: aead::Error) -> Self { Error::Aead }
+impl From<chacha20poly1305::Error> for Error {
+    fn from(_: chacha20poly1305::Error) -> Self { Error::Chacha }
 }

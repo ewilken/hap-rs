@@ -157,8 +157,8 @@ async fn handle_add(
     let mut s = storage.lock().await;
     match s.load_pairing(&pairing_uuid).await {
         Ok(mut pairing) => {
-            if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
-                != ed25519_dalek::PublicKey::from_bytes(&ltpk)?
+            if x25519_dalek::PublicKey::from(pairing.public_key)
+                != x25519_dalek::PublicKey::from(TryInto::<[u8; 32]>::try_into(ltpk).map_err(|_| tlv::Error::Unknown)?)
             {
                 return Err(tlv::Error::Unknown);
             }
@@ -240,7 +240,7 @@ async fn handle_list(
     let pairings = storage.lock().await.list_pairings().await?;
     let mut list = vec![Value::State(StepNumber::Res as u8)];
     for (i, pairing) in pairings.iter().enumerate() {
-        list.push(Value::Identifier(pairing.id.to_hyphenated().to_string()));
+        list.push(Value::Identifier(pairing.id.hyphenated().to_string()));
         list.push(Value::PublicKey(pairing.public_key.to_vec()));
         list.push(Value::Permissions(pairing.permissions.clone()));
         if i < pairings.len() {

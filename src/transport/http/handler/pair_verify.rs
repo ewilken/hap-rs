@@ -1,5 +1,5 @@
-use aead::{generic_array::GenericArray, AeadInPlace, NewAead};
-use chacha20poly1305::ChaCha20Poly1305;
+use aead::generic_array::GenericArray;
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, AeadInPlace};
 use futures::{
     channel::oneshot,
     future::{BoxFuture, FutureExt},
@@ -11,6 +11,7 @@ use signature::{Signer, Verifier};
 use std::str;
 use uuid::Uuid;
 use x25519_dalek::{EphemeralSecret, PublicKey};
+use ed25519_dalek::VerifyingKey;
 
 use crate::{
     pointer,
@@ -217,8 +218,10 @@ async fn handle_finish(
             let device_pairing_id = sub_tlv.get(&(Type::Identifier as u8)).ok_or(tlv::Error::Unknown)?;
             debug!("raw device pairing ID: {:?}", &device_pairing_id);
             let device_signature = ed25519_dalek::Signature::from_bytes(
-                sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?,
-            )?;
+                &TryInto::<[u8; 64]>::try_into(
+                    sub_tlv.get(&(Type::Signature as u8)).ok_or(tlv::Error::Unknown)?.clone()
+                ).map_err(|_| tlv::Error::Unknown)?
+            );
             debug!("device signature: {:?}", &device_signature);
 
             let uuid_str = str::from_utf8(device_pairing_id)?;
@@ -232,7 +235,7 @@ async fn handle_finish(
             device_info.extend(device_pairing_id);
             device_info.extend(session.b_pub.as_bytes());
 
-            if ed25519_dalek::PublicKey::from_bytes(&pairing.public_key)?
+            if VerifyingKey::from_bytes(&pairing.public_key)?
                 .verify(&device_info, &device_signature)
                 .is_err()
             {
