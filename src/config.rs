@@ -72,7 +72,9 @@ pub struct Config {
 
 impl Config {
     /// Redetermines the `host` field to the IP of the system's first non-loopback network interface.
-    pub fn redetermine_local_ip(&mut self) { self.host = get_local_ip(); }
+    pub fn redetermine_local_ip(&mut self) {
+        self.host = get_local_ip();
+    }
 
     /// Derives mDNS TXT records from the `Config`.
     pub(crate) fn txt_records(&self) -> [String; 8] {
@@ -125,7 +127,7 @@ fn generate_ed25519_keypair() -> Ed25519Keypair {
 
 /// Returns the IP of the system's first non-loopback network interface or defaults to `127.0.0.1`.
 fn get_local_ip() -> IpAddr {
-    for iface in get_if_addrs::get_if_addrs().unwrap() {
+    for iface in if_addrs::get_if_addrs().unwrap() {
         if !iface.is_loopback() {
             return iface.ip();
         }

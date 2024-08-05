@@ -27,13 +27,13 @@ use crate::{
 // TODO - re-check MaximumDataLength
 /// Access Code Supported Configuration characteristic.
 #[derive(Debug, Default, Serialize)]
-pub struct AccessCodeSupportedConfigurationCharacteristic(Characteristic<Vec<u8>>);
+pub struct AccessCodeSupportedConfigurationCharacteristic(Characteristic<crate::tlv::Tlv8>);
 
 impl AccessCodeSupportedConfigurationCharacteristic {
     /// Creates a new Access Code Supported Configuration characteristic.
     pub fn new(id: u64, accessory_id: u64) -> Self {
         #[allow(unused_mut)]
-        let mut c = Self(Characteristic::<Vec<u8>> {
+        let mut c = Self(Characteristic::<crate::tlv::Tlv8> {
             id,
             accessory_id,
             hap_type: HapType::AccessCodeSupportedConfiguration,
@@ -155,18 +155,18 @@ impl HapCharacteristicSetup for AccessCodeSupportedConfigurationCharacteristic {
     }
 }
 
-impl CharacteristicCallbacks<Vec<u8>> for AccessCodeSupportedConfigurationCharacteristic {
-    fn on_read(&mut self, f: Option<impl OnReadFn<Vec<u8>>>) { CharacteristicCallbacks::on_read(&mut self.0, f) }
+impl CharacteristicCallbacks<crate::tlv::Tlv8> for AccessCodeSupportedConfigurationCharacteristic {
+    fn on_read(&mut self, f: Option<impl OnReadFn<crate::tlv::Tlv8>>) { CharacteristicCallbacks::on_read(&mut self.0, f) }
 
-    fn on_update(&mut self, f: Option<impl OnUpdateFn<Vec<u8>>>) { CharacteristicCallbacks::on_update(&mut self.0, f) }
+    fn on_update(&mut self, f: Option<impl OnUpdateFn<crate::tlv::Tlv8>>) { CharacteristicCallbacks::on_update(&mut self.0, f) }
 }
 
-impl AsyncCharacteristicCallbacks<Vec<u8>> for AccessCodeSupportedConfigurationCharacteristic {
-    fn on_read_async(&mut self, f: Option<impl OnReadFuture<Vec<u8>>>) {
+impl AsyncCharacteristicCallbacks<crate::tlv::Tlv8> for AccessCodeSupportedConfigurationCharacteristic {
+    fn on_read_async(&mut self, f: Option<impl OnReadFuture<crate::tlv::Tlv8>>) {
         AsyncCharacteristicCallbacks::on_read_async(&mut self.0, f)
     }
 
-    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<Vec<u8>>>) {
+    fn on_update_async(&mut self, f: Option<impl OnUpdateFuture<crate::tlv::Tlv8>>) {
         AsyncCharacteristicCallbacks::on_update_async(&mut self.0, f)
     }
 }

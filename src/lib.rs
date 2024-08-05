@@ -16,7 +16,7 @@ mod error;
 mod event;
 mod hap_type;
 mod pin;
-mod pointer;
+pub mod pointer;
 mod tlv;
 mod transport;
 

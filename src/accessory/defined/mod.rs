@@ -1,5 +1,7 @@
 /// Bridge accessory definition.
 pub mod bridge;
+/// Camera accessory definition.
+pub mod camera;
 /// Faucet accessory definition.
 pub mod faucet;
 /// Heater-Cooler accessory definition.
